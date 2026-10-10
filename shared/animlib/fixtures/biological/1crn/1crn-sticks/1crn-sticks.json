@@ -1,0 +1,974 @@
+{
+  "id": "1crn-sticks",
+  "kind": "model",
+  "version": 1,
+  "units": "angstrom",
+  "provenance": {
+    "source": "https://www.rcsb.org/structure/1CRN",
+    "sourceHash": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+    "creator": "W. A. Hendrickson and M. M. Teeter; wwPDB Chemical Component Dictionary",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "animlib prepare-biological-assets",
+      "version": "1",
+      "options": {
+        "sourceHashes": {
+          "1CRN.pdb": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "ALA.cif": "6d32b34d4f7b3ddf0cd3dff3f98ddaf7649bc5303ff9a8bd95ba62283f47a1ca",
+          "ARG.cif": "191c437cfa501e0a87d275ca3d39974a1a9c8dc704df61bfc442a4c314e196ac",
+          "ASN.cif": "81491bbdb49f96e2945192c07510324d206298d3479029b76defba2ed6ab2dc7",
+          "ASP.cif": "82c4a2d0b5eda0a32c36f106f0bb00edbc5bc51172db414fdc494025b7b8c858",
+          "CYS.cif": "b28c79381f9f41fe57a9e97468fc8101d5fd1064272a22da1eed6d05d27a24cc",
+          "GLU.cif": "99fa19054d31b07e7101b33ad9cc847cc6a209da60de279aed5e6a9236bb6da4",
+          "GLY.cif": "c49458946b0ebc057db6ad0a4e1557a1caaed4c80a203accd458efddccbf92ff",
+          "ILE.cif": "8166adcc6acb4661f4a167b0a4295879612dfad3f1a6b6f1b7bd0589c5bded93",
+          "LEU.cif": "fc56e022bc8baa25dc6e543b2c46664e365779aa1dda9831576fdf10b30ab84b",
+          "PHE.cif": "002c626d24aec78fd622459d4f4470c682c7c3f9f97d32414fec4313d780496e",
+          "PRO.cif": "08674e4d60bc40ad5702b8de6e5e4abb66c2bbb603832c021c31194f4b4e593c",
+          "SER.cif": "46db0296a07732854d2c3ca67ed0f74f4c82ddc5698d0e59f433039a5d7c88a0",
+          "THR.cif": "feb75dfac5bfcc7045de7a75a31575f3bf3e5b411716a06e92712924759dd554",
+          "TYR.cif": "fa0ef32f9d623e087a527b0a146c0494a5a656037c6448d956072dd2406fa554",
+          "VAL.cif": "9c3c807970c817b1e1a4b43164db91a5bf1e7bf438b3269c5649f6ce84d4c0ed"
+        },
+        "model": "1",
+        "origin": [
+          10.593499999999999,
+          10.2105,
+          6.078999999999999
+        ],
+        "connectivity": "deposited CONECT + pinned CCD intra-residue templates + explicitly enabled standard peptide rule"
+      }
+    },
+    "selection": "first model, ATOM heavy atoms; HETATM/H/D/zero occupancy excluded; chain A",
+    "modifications": [
+      "Subtract one common bounding-box center from every representation.",
+      "Atomic bond orders retained in structure metadata; display uses one cylinder per edge, including aromatic and multiple bonds.",
+      "Color by persistent residue identity, not element."
+    ],
+    "fidelity": "Deposited heavy-atom coordinates and atom/residue identities retained. Beads are CA anchors. Surface is a schematic Gaussian envelope, not a solvent-excluded or electron-density surface."
+  },
+  "parts": [
+    {
+      "id": "residue-0",
+      "vertexCount": 208,
+      "triangleCount": 208,
+      "positions": {
+        "path": "blobs/77bc17858dd0a212307aa42f82a233ba08baaaee5e87e5b258b4cb808b9f4fd6.bin",
+        "hash": "77bc17858dd0a212307aa42f82a233ba08baaaee5e87e5b258b4cb808b9f4fd6",
+        "byteLength": 2496
+      },
+      "indices": {
+        "path": "blobs/b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4.bin",
+        "hash": "b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4",
+        "byteLength": 2496
+      },
+      "normals": {
+        "path": "blobs/ed2624cd961c9129cbdd341dfcc82dab65dc092b05a37c7d72716e10c094ffc4.bin",
+        "hash": "ed2624cd961c9129cbdd341dfcc82dab65dc092b05a37c7d72716e10c094ffc4",
+        "byteLength": 2496
+      }
+    },
+    {
+      "id": "residue-1",
+      "vertexCount": 224,
+      "triangleCount": 224,
+      "positions": {
+        "path": "blobs/97876c43f1291dab86931b0fd70717400f25de46e708df32a950059b17532877.bin",
+        "hash": "97876c43f1291dab86931b0fd70717400f25de46e708df32a950059b17532877",
+        "byteLength": 2688
+      },
+      "indices": {
+        "path": "blobs/dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd.bin",
+        "hash": "dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd",
+        "byteLength": 2688
+      },
+      "normals": {
+        "path": "blobs/cfa23346a7e212d49b532b67025ba5a0a94cc0fe40bb2215999bc40e6df6078b.bin",
+        "hash": "cfa23346a7e212d49b532b67025ba5a0a94cc0fe40bb2215999bc40e6df6078b",
+        "byteLength": 2688
+      }
+    },
+    {
+      "id": "residue-2",
+      "vertexCount": 208,
+      "triangleCount": 208,
+      "positions": {
+        "path": "blobs/f56e45478aa21773c1d3bd9dbf2b5cae76017abb74509be1e394263b92f6ef85.bin",
+        "hash": "f56e45478aa21773c1d3bd9dbf2b5cae76017abb74509be1e394263b92f6ef85",
+        "byteLength": 2496
+      },
+      "indices": {
+        "path": "blobs/b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4.bin",
+        "hash": "b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4",
+        "byteLength": 2496
+      },
+      "normals": {
+        "path": "blobs/560ed534c3518cec1e50b3270a1a41575166921b78522819a4c3bcd09deb1f7f.bin",
+        "hash": "560ed534c3518cec1e50b3270a1a41575166921b78522819a4c3bcd09deb1f7f",
+        "byteLength": 2496
+      }
+    },
+    {
+      "id": "residue-3",
+      "vertexCount": 208,
+      "triangleCount": 208,
+      "positions": {
+        "path": "blobs/844cec73ce6a1600b6b242e21ed51c58b8001e2a9321c8b1daa33b8780192f7c.bin",
+        "hash": "844cec73ce6a1600b6b242e21ed51c58b8001e2a9321c8b1daa33b8780192f7c",
+        "byteLength": 2496
+      },
+      "indices": {
+        "path": "blobs/b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4.bin",
+        "hash": "b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4",
+        "byteLength": 2496
+      },
+      "normals": {
+        "path": "blobs/45df32cfac23c7ef6153a2b20975dc7aa4a874091f58aa3ba42d9e5bcae8b1da.bin",
+        "hash": "45df32cfac23c7ef6153a2b20975dc7aa4a874091f58aa3ba42d9e5bcae8b1da",
+        "byteLength": 2496
+      }
+    },
+    {
+      "id": "residue-4",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/f2f71e4b4f446750562a7648c1b79db14e4343022e8b3571a868a4a932565a4a.bin",
+        "hash": "f2f71e4b4f446750562a7648c1b79db14e4343022e8b3571a868a4a932565a4a",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/ce85e9fc98afc64256d5eeb31a36c52855b9e777601040d57ebb737906279a0d.bin",
+        "hash": "ce85e9fc98afc64256d5eeb31a36c52855b9e777601040d57ebb737906279a0d",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-5",
+      "vertexCount": 192,
+      "triangleCount": 192,
+      "positions": {
+        "path": "blobs/49b113ffdd62541db3eb6f80f5174f522d5af2a40fa1af5c2786c319220e8091.bin",
+        "hash": "49b113ffdd62541db3eb6f80f5174f522d5af2a40fa1af5c2786c319220e8091",
+        "byteLength": 2304
+      },
+      "indices": {
+        "path": "blobs/2267a7aa35d96a2c621a6ff91e43bafb18053271cba1515cd460f9595dab6edc.bin",
+        "hash": "2267a7aa35d96a2c621a6ff91e43bafb18053271cba1515cd460f9595dab6edc",
+        "byteLength": 2304
+      },
+      "normals": {
+        "path": "blobs/e63c355bb24b5b55aa1cb26ee35a5410f8095faa16a5ceec10fe1a8074eefc89.bin",
+        "hash": "e63c355bb24b5b55aa1cb26ee35a5410f8095faa16a5ceec10fe1a8074eefc89",
+        "byteLength": 2304
+      }
+    },
+    {
+      "id": "residue-6",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/21c58a0ab647f770c2ce4d90e52080e2b090fb7dd682d78dab672b2d6ed44f4d.bin",
+        "hash": "21c58a0ab647f770c2ce4d90e52080e2b090fb7dd682d78dab672b2d6ed44f4d",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/e76efb8df5c26d43aeca2dc641ae33ac00dc477a5d762d1d4f1e9ec372ada0b3.bin",
+        "hash": "e76efb8df5c26d43aeca2dc641ae33ac00dc477a5d762d1d4f1e9ec372ada0b3",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-7",
+      "vertexCount": 224,
+      "triangleCount": 224,
+      "positions": {
+        "path": "blobs/cdcdcd768e8bf5c7381f6a339e242c1a71e76be56653d3f5c491b0e00200bfeb.bin",
+        "hash": "cdcdcd768e8bf5c7381f6a339e242c1a71e76be56653d3f5c491b0e00200bfeb",
+        "byteLength": 2688
+      },
+      "indices": {
+        "path": "blobs/dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd.bin",
+        "hash": "dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd",
+        "byteLength": 2688
+      },
+      "normals": {
+        "path": "blobs/972ed457f8c4d3cc3c239737efdb6ab0def4fa7c8f872a600ec25b3abcfdb40c.bin",
+        "hash": "972ed457f8c4d3cc3c239737efdb6ab0def4fa7c8f872a600ec25b3abcfdb40c",
+        "byteLength": 2688
+      }
+    },
+    {
+      "id": "residue-8",
+      "vertexCount": 160,
+      "triangleCount": 160,
+      "positions": {
+        "path": "blobs/115dd6dce8dd495400e87283189f48fae9e1f2b25fa1b87fc0f381dd53b00158.bin",
+        "hash": "115dd6dce8dd495400e87283189f48fae9e1f2b25fa1b87fc0f381dd53b00158",
+        "byteLength": 1920
+      },
+      "indices": {
+        "path": "blobs/410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833.bin",
+        "hash": "410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833",
+        "byteLength": 1920
+      },
+      "normals": {
+        "path": "blobs/1b1344031669344736612b466ff0a89670e633e0441da59bf2b3de7643c77da7.bin",
+        "hash": "1b1344031669344736612b466ff0a89670e633e0441da59bf2b3de7643c77da7",
+        "byteLength": 1920
+      }
+    },
+    {
+      "id": "residue-9",
+      "vertexCount": 352,
+      "triangleCount": 352,
+      "positions": {
+        "path": "blobs/f9e9770e53d57979041c6ed61104b75d9869ba892848c52ad57b97976e06a906.bin",
+        "hash": "f9e9770e53d57979041c6ed61104b75d9869ba892848c52ad57b97976e06a906",
+        "byteLength": 4224
+      },
+      "indices": {
+        "path": "blobs/c9c750d16d2fbb7e93c97e53c3b5eeaf3b5f0761f6bc43d191d398ce4b7a5def.bin",
+        "hash": "c9c750d16d2fbb7e93c97e53c3b5eeaf3b5f0761f6bc43d191d398ce4b7a5def",
+        "byteLength": 4224
+      },
+      "normals": {
+        "path": "blobs/b05dcfec83e87b43a2e7245a879d4bd248a51842330f9a51be89729797b94ee1.bin",
+        "hash": "b05dcfec83e87b43a2e7245a879d4bd248a51842330f9a51be89729797b94ee1",
+        "byteLength": 4224
+      }
+    },
+    {
+      "id": "residue-10",
+      "vertexCount": 192,
+      "triangleCount": 192,
+      "positions": {
+        "path": "blobs/2f910e2c674a7eecb981c9786c44d382d8e4b8d5d274635e68040f58cb8b2d0e.bin",
+        "hash": "2f910e2c674a7eecb981c9786c44d382d8e4b8d5d274635e68040f58cb8b2d0e",
+        "byteLength": 2304
+      },
+      "indices": {
+        "path": "blobs/2267a7aa35d96a2c621a6ff91e43bafb18053271cba1515cd460f9595dab6edc.bin",
+        "hash": "2267a7aa35d96a2c621a6ff91e43bafb18053271cba1515cd460f9595dab6edc",
+        "byteLength": 2304
+      },
+      "normals": {
+        "path": "blobs/2bcff9e6b1ee03e822f8b39516abd28a02b4c1d469a283be642d91f2bf9b3065.bin",
+        "hash": "2bcff9e6b1ee03e822f8b39516abd28a02b4c1d469a283be642d91f2bf9b3065",
+        "byteLength": 2304
+      }
+    },
+    {
+      "id": "residue-11",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/a8a772c02b50c868842e6253d0354e4bdc8a25380bcc9b2f74e8b540e150196d.bin",
+        "hash": "a8a772c02b50c868842e6253d0354e4bdc8a25380bcc9b2f74e8b540e150196d",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/1c677e14f191c4e643e4749161045e0c069b15efa905a67e10f7175510e2e082.bin",
+        "hash": "1c677e14f191c4e643e4749161045e0c069b15efa905a67e10f7175510e2e082",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-12",
+      "vertexCount": 384,
+      "triangleCount": 384,
+      "positions": {
+        "path": "blobs/72cfc50a3ced5851e7599bb469ef416d3f3e31305677ca0e9e163280af6f638f.bin",
+        "hash": "72cfc50a3ced5851e7599bb469ef416d3f3e31305677ca0e9e163280af6f638f",
+        "byteLength": 4608
+      },
+      "indices": {
+        "path": "blobs/1be4dc3b3996d18ccc388333fa627e39e0eefc54dbd20adbe66ab88ce8b19b76.bin",
+        "hash": "1be4dc3b3996d18ccc388333fa627e39e0eefc54dbd20adbe66ab88ce8b19b76",
+        "byteLength": 4608
+      },
+      "normals": {
+        "path": "blobs/bd74646d7504c9c5acbac9e912d62e719e62b09965c1e25e3fc7bd9d76cea6c1.bin",
+        "hash": "bd74646d7504c9c5acbac9e912d62e719e62b09965c1e25e3fc7bd9d76cea6c1",
+        "byteLength": 4608
+      }
+    },
+    {
+      "id": "residue-13",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/44f7d0390e4acec22a074a715e26ce2e3adfc903971d2acbb9fc05298e0d2d75.bin",
+        "hash": "44f7d0390e4acec22a074a715e26ce2e3adfc903971d2acbb9fc05298e0d2d75",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/353e2ac1aa3798a4990423e0f89b9b827311ba0473f3cb8c99248f58ceabcba1.bin",
+        "hash": "353e2ac1aa3798a4990423e0f89b9b827311ba0473f3cb8c99248f58ceabcba1",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-14",
+      "vertexCount": 224,
+      "triangleCount": 224,
+      "positions": {
+        "path": "blobs/d645897bc6a0eec1ffa7dc251669c98bc4836509abc504b55c1d167553b79f41.bin",
+        "hash": "d645897bc6a0eec1ffa7dc251669c98bc4836509abc504b55c1d167553b79f41",
+        "byteLength": 2688
+      },
+      "indices": {
+        "path": "blobs/dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd.bin",
+        "hash": "dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd",
+        "byteLength": 2688
+      },
+      "normals": {
+        "path": "blobs/dbcaf1e38c6420196102a87be73a3d0b84db3964caded3c2e83d3149ec45ffa2.bin",
+        "hash": "dbcaf1e38c6420196102a87be73a3d0b84db3964caded3c2e83d3149ec45ffa2",
+        "byteLength": 2688
+      }
+    },
+    {
+      "id": "residue-15",
+      "vertexCount": 208,
+      "triangleCount": 208,
+      "positions": {
+        "path": "blobs/864181faf88fd47f79db5e7a031879201a0b7d37609a8c8eecf7aeee8923255e.bin",
+        "hash": "864181faf88fd47f79db5e7a031879201a0b7d37609a8c8eecf7aeee8923255e",
+        "byteLength": 2496
+      },
+      "indices": {
+        "path": "blobs/b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4.bin",
+        "hash": "b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4",
+        "byteLength": 2496
+      },
+      "normals": {
+        "path": "blobs/205c680d557c59ac2025d1c6d74abb51436e8de3066841f09a4afb9e16645317.bin",
+        "hash": "205c680d557c59ac2025d1c6d74abb51436e8de3066841f09a4afb9e16645317",
+        "byteLength": 2496
+      }
+    },
+    {
+      "id": "residue-16",
+      "vertexCount": 352,
+      "triangleCount": 352,
+      "positions": {
+        "path": "blobs/3acc4d5d74187a223c53b3287b2e17c2828e497df46d282dfa1158fc9cab3190.bin",
+        "hash": "3acc4d5d74187a223c53b3287b2e17c2828e497df46d282dfa1158fc9cab3190",
+        "byteLength": 4224
+      },
+      "indices": {
+        "path": "blobs/c9c750d16d2fbb7e93c97e53c3b5eeaf3b5f0761f6bc43d191d398ce4b7a5def.bin",
+        "hash": "c9c750d16d2fbb7e93c97e53c3b5eeaf3b5f0761f6bc43d191d398ce4b7a5def",
+        "byteLength": 4224
+      },
+      "normals": {
+        "path": "blobs/6f965e0e12e3a64fa836954baae61e8b370e022274397fe84c5d77db24c618bc.bin",
+        "hash": "6f965e0e12e3a64fa836954baae61e8b370e022274397fe84c5d77db24c618bc",
+        "byteLength": 4224
+      }
+    },
+    {
+      "id": "residue-17",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/824e15c3ee219946495654b12906bcc1e0b8f081f559b42d1a2d18eb13dca9dc.bin",
+        "hash": "824e15c3ee219946495654b12906bcc1e0b8f081f559b42d1a2d18eb13dca9dc",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/056fee3ac5f44352da7d43a29c051c9d8b4129df1e72e32f46f4c4d26e1c0221.bin",
+        "hash": "056fee3ac5f44352da7d43a29c051c9d8b4129df1e72e32f46f4c4d26e1c0221",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-18",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/31ff1b6ecc70d3c02417dfe12130353b4d0fa6d34465efaecd7a0c8eee671d73.bin",
+        "hash": "31ff1b6ecc70d3c02417dfe12130353b4d0fa6d34465efaecd7a0c8eee671d73",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/0a8c45e160e8a2473461402c07a5d298013f8eaf4643a380a331b7231145a982.bin",
+        "hash": "0a8c45e160e8a2473461402c07a5d298013f8eaf4643a380a331b7231145a982",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-19",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/ab81bb7b4dffd576d0833fba3b9d1383eddb3a7b3f83ff8468471d1b55b0e4ba.bin",
+        "hash": "ab81bb7b4dffd576d0833fba3b9d1383eddb3a7b3f83ff8468471d1b55b0e4ba",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d.bin",
+        "hash": "dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/fa281454c377c32d90459a545291fa72490059be7057afed13ad97dd5b13065c.bin",
+        "hash": "fa281454c377c32d90459a545291fa72490059be7057afed13ad97dd5b13065c",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "residue-20",
+      "vertexCount": 224,
+      "triangleCount": 224,
+      "positions": {
+        "path": "blobs/af0db1de64f15c94f006bd3875ff4a945c4541ecd541ddbc89416c2f2e5b1889.bin",
+        "hash": "af0db1de64f15c94f006bd3875ff4a945c4541ecd541ddbc89416c2f2e5b1889",
+        "byteLength": 2688
+      },
+      "indices": {
+        "path": "blobs/dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd.bin",
+        "hash": "dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd",
+        "byteLength": 2688
+      },
+      "normals": {
+        "path": "blobs/ba644697bbf9e36f9a5dd09f2b48de0580ceeabe75d7a8f8dc9fa6ce4bc246c7.bin",
+        "hash": "ba644697bbf9e36f9a5dd09f2b48de0580ceeabe75d7a8f8dc9fa6ce4bc246c7",
+        "byteLength": 2688
+      }
+    },
+    {
+      "id": "residue-21",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/5b62a3dcab3804d8926a66fe0a7a9e4c2644c615548cc31187e0c2622a0fd18e.bin",
+        "hash": "5b62a3dcab3804d8926a66fe0a7a9e4c2644c615548cc31187e0c2622a0fd18e",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/9ca8324eb8ee4c75e20e465e796e9a404feb54c655233f15cc7a7af853211626.bin",
+        "hash": "9ca8324eb8ee4c75e20e465e796e9a404feb54c655233f15cc7a7af853211626",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-22",
+      "vertexCount": 288,
+      "triangleCount": 288,
+      "positions": {
+        "path": "blobs/a3c25365c0c5a8a91ba1576e8216f50ea130d17491c2f2bacfb45ec3b7affcec.bin",
+        "hash": "a3c25365c0c5a8a91ba1576e8216f50ea130d17491c2f2bacfb45ec3b7affcec",
+        "byteLength": 3456
+      },
+      "indices": {
+        "path": "blobs/c076dccd43f85ca55710a88cbf095b0568182cbe8dba5fa42e6e150529850c78.bin",
+        "hash": "c076dccd43f85ca55710a88cbf095b0568182cbe8dba5fa42e6e150529850c78",
+        "byteLength": 3456
+      },
+      "normals": {
+        "path": "blobs/86c8e53ad993b2952c728631fae83750b6c792a0150cee735ec0055e320fecc6.bin",
+        "hash": "86c8e53ad993b2952c728631fae83750b6c792a0150cee735ec0055e320fecc6",
+        "byteLength": 3456
+      }
+    },
+    {
+      "id": "residue-23",
+      "vertexCount": 160,
+      "triangleCount": 160,
+      "positions": {
+        "path": "blobs/5dbc30d986d6ad3cb1d03729390063dd9bc0b4bd44ea5be8c0e621918063647c.bin",
+        "hash": "5dbc30d986d6ad3cb1d03729390063dd9bc0b4bd44ea5be8c0e621918063647c",
+        "byteLength": 1920
+      },
+      "indices": {
+        "path": "blobs/410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833.bin",
+        "hash": "410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833",
+        "byteLength": 1920
+      },
+      "normals": {
+        "path": "blobs/9ba8e29623431dcd4db954f51853b98c1431f048a08ff3aa391d6d4a56a54e84.bin",
+        "hash": "9ba8e29623431dcd4db954f51853b98c1431f048a08ff3aa391d6d4a56a54e84",
+        "byteLength": 1920
+      }
+    },
+    {
+      "id": "residue-24",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/86dd4f9c317b17d9a511390a5397f8be173b4353ab065fad2ea7c95db61d0874.bin",
+        "hash": "86dd4f9c317b17d9a511390a5397f8be173b4353ab065fad2ea7c95db61d0874",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/c4656d6fc71141a42ac93d02d6f27a9b75acd7d5c2c91684f1ead2ab743163aa.bin",
+        "hash": "c4656d6fc71141a42ac93d02d6f27a9b75acd7d5c2c91684f1ead2ab743163aa",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-25",
+      "vertexCount": 208,
+      "triangleCount": 208,
+      "positions": {
+        "path": "blobs/8ea3fbe3656dc06868e29be727f2a8a2d0f8ddd7c0d9dabdb9e60e6df0bf4324.bin",
+        "hash": "8ea3fbe3656dc06868e29be727f2a8a2d0f8ddd7c0d9dabdb9e60e6df0bf4324",
+        "byteLength": 2496
+      },
+      "indices": {
+        "path": "blobs/b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4.bin",
+        "hash": "b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4",
+        "byteLength": 2496
+      },
+      "normals": {
+        "path": "blobs/ef65295720ba96e1c205d28ce8c7f873244fb1b823ea4dc8062f0a572cf8e173.bin",
+        "hash": "ef65295720ba96e1c205d28ce8c7f873244fb1b823ea4dc8062f0a572cf8e173",
+        "byteLength": 2496
+      }
+    },
+    {
+      "id": "residue-26",
+      "vertexCount": 160,
+      "triangleCount": 160,
+      "positions": {
+        "path": "blobs/1f03804ff6f566cd0a01f32f9ec0ddd3695c11dd76eeda6f0df7ed4898e89260.bin",
+        "hash": "1f03804ff6f566cd0a01f32f9ec0ddd3695c11dd76eeda6f0df7ed4898e89260",
+        "byteLength": 1920
+      },
+      "indices": {
+        "path": "blobs/410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833.bin",
+        "hash": "410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833",
+        "byteLength": 1920
+      },
+      "normals": {
+        "path": "blobs/7c81a71abaa4bc81ac3f112c8d34b2c9d18cb6625d705d0a31cc08084e1c243a.bin",
+        "hash": "7c81a71abaa4bc81ac3f112c8d34b2c9d18cb6625d705d0a31cc08084e1c243a",
+        "byteLength": 1920
+      }
+    },
+    {
+      "id": "residue-27",
+      "vertexCount": 224,
+      "triangleCount": 224,
+      "positions": {
+        "path": "blobs/1a65028e6c3e9839ccd59ec23f93047f8f636c3d861c561728d558a458ff035c.bin",
+        "hash": "1a65028e6c3e9839ccd59ec23f93047f8f636c3d861c561728d558a458ff035c",
+        "byteLength": 2688
+      },
+      "indices": {
+        "path": "blobs/dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd.bin",
+        "hash": "dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd",
+        "byteLength": 2688
+      },
+      "normals": {
+        "path": "blobs/6d689ad3d492000c43453deb162053e68f3c188f131a0026b96652e43fcc9227.bin",
+        "hash": "6d689ad3d492000c43453deb162053e68f3c188f131a0026b96652e43fcc9227",
+        "byteLength": 2688
+      }
+    },
+    {
+      "id": "residue-28",
+      "vertexCount": 416,
+      "triangleCount": 416,
+      "positions": {
+        "path": "blobs/3de038cdb301d1203ec1ca2fbc387a154bde2d5d109e8ebe282bb4ed6b805db4.bin",
+        "hash": "3de038cdb301d1203ec1ca2fbc387a154bde2d5d109e8ebe282bb4ed6b805db4",
+        "byteLength": 4992
+      },
+      "indices": {
+        "path": "blobs/a660c8c9c8983088f45192bc2ccc9e9af8970aac0ae3985c0a21a681efc10dfe.bin",
+        "hash": "a660c8c9c8983088f45192bc2ccc9e9af8970aac0ae3985c0a21a681efc10dfe",
+        "byteLength": 4992
+      },
+      "normals": {
+        "path": "blobs/7c935a6c657f3ec30d4407a2f794e7288ec8cada31a2633d37b0547a27383dca.bin",
+        "hash": "7c935a6c657f3ec30d4407a2f794e7288ec8cada31a2633d37b0547a27383dca",
+        "byteLength": 4992
+      }
+    },
+    {
+      "id": "residue-29",
+      "vertexCount": 224,
+      "triangleCount": 224,
+      "positions": {
+        "path": "blobs/f0330106f692ff7de4abfce3846c6021492e90debbff9d404026c251058cf445.bin",
+        "hash": "f0330106f692ff7de4abfce3846c6021492e90debbff9d404026c251058cf445",
+        "byteLength": 2688
+      },
+      "indices": {
+        "path": "blobs/dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd.bin",
+        "hash": "dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd",
+        "byteLength": 2688
+      },
+      "normals": {
+        "path": "blobs/b053a11312a9663d6cace6463411bdd400fe1a8cd2021333aebf0b6c99c6cc42.bin",
+        "hash": "b053a11312a9663d6cace6463411bdd400fe1a8cd2021333aebf0b6c99c6cc42",
+        "byteLength": 2688
+      }
+    },
+    {
+      "id": "residue-30",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/ccb9c71bcdf5976b1a96ef591c20fa8b17b3377c8e303cb28718671daf49b2d0.bin",
+        "hash": "ccb9c71bcdf5976b1a96ef591c20fa8b17b3377c8e303cb28718671daf49b2d0",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d.bin",
+        "hash": "dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/dee59bf575a1b94934a6464918bf97d9da95f4d55048bfdba31a7b6275e489f8.bin",
+        "hash": "dee59bf575a1b94934a6464918bf97d9da95f4d55048bfdba31a7b6275e489f8",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "residue-31",
+      "vertexCount": 208,
+      "triangleCount": 208,
+      "positions": {
+        "path": "blobs/538ca431a6916f4ebd7bcf8e959d4f3cf84d62d545e7be0b901aa576656d3fe0.bin",
+        "hash": "538ca431a6916f4ebd7bcf8e959d4f3cf84d62d545e7be0b901aa576656d3fe0",
+        "byteLength": 2496
+      },
+      "indices": {
+        "path": "blobs/b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4.bin",
+        "hash": "b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4",
+        "byteLength": 2496
+      },
+      "normals": {
+        "path": "blobs/a26f881bf1c19e199c4839d773cc6aeec3f857828069491cbb82695f66cab4a7.bin",
+        "hash": "a26f881bf1c19e199c4839d773cc6aeec3f857828069491cbb82695f66cab4a7",
+        "byteLength": 2496
+      }
+    },
+    {
+      "id": "residue-32",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/9a83904d9786eec323569b677262be8e56270563a3e0ac36ab80b72cce9d46e7.bin",
+        "hash": "9a83904d9786eec323569b677262be8e56270563a3e0ac36ab80b72cce9d46e7",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/0ed911eab2316da2742470f266b388fd0b61c27c1657f022bfea5e7e3cb8a156.bin",
+        "hash": "0ed911eab2316da2742470f266b388fd0b61c27c1657f022bfea5e7e3cb8a156",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-33",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/3ac280427e414edb9a7c28e1bdb720b4796e51217320a1b0cb8762d4406de898.bin",
+        "hash": "3ac280427e414edb9a7c28e1bdb720b4796e51217320a1b0cb8762d4406de898",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/6c494953d08ceb736fb966dc4eb380a423409199f3768948ff87f37929e7d703.bin",
+        "hash": "6c494953d08ceb736fb966dc4eb380a423409199f3768948ff87f37929e7d703",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-34",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/c8edc1850ad64f31c6f62b2fba219e1358c9b1fbd5e7de12c63648461967121f.bin",
+        "hash": "c8edc1850ad64f31c6f62b2fba219e1358c9b1fbd5e7de12c63648461967121f",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/f3a4e9562d579fe501a591f9541b12e3c4c64fc04efb1fd2f2bc16ba509e2f57.bin",
+        "hash": "f3a4e9562d579fe501a591f9541b12e3c4c64fc04efb1fd2f2bc16ba509e2f57",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-35",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/ce9c7de11d96b857df7f3fc4dcd24d74d284adcdccf904ae17cfe123ab68566c.bin",
+        "hash": "ce9c7de11d96b857df7f3fc4dcd24d74d284adcdccf904ae17cfe123ab68566c",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/d182448d062aa7c95b533a4ec3dccb540883509c9f55a2202dc7f845222ba069.bin",
+        "hash": "d182448d062aa7c95b533a4ec3dccb540883509c9f55a2202dc7f845222ba069",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-36",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/90f4c9476b6e7377b06833ac2b2aef02b661f57298e3b0ffbb198efd604579ad.bin",
+        "hash": "90f4c9476b6e7377b06833ac2b2aef02b661f57298e3b0ffbb198efd604579ad",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d.bin",
+        "hash": "dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/d24e82d10eee2dea50ab3ca8c85e515b7ed8f5fe205bf8d6416db8435827b597.bin",
+        "hash": "d24e82d10eee2dea50ab3ca8c85e515b7ed8f5fe205bf8d6416db8435827b597",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "residue-37",
+      "vertexCount": 160,
+      "triangleCount": 160,
+      "positions": {
+        "path": "blobs/76d4340c14f5d12a9b1e81d184783abbbe82c139db59158d7bd2f6fa3372cc9b.bin",
+        "hash": "76d4340c14f5d12a9b1e81d184783abbbe82c139db59158d7bd2f6fa3372cc9b",
+        "byteLength": 1920
+      },
+      "indices": {
+        "path": "blobs/410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833.bin",
+        "hash": "410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833",
+        "byteLength": 1920
+      },
+      "normals": {
+        "path": "blobs/dc9b70fe07c8ee7fe1fb01ad4fd2c45e45a061bcf3436f8f35f585af8a66cf3a.bin",
+        "hash": "dc9b70fe07c8ee7fe1fb01ad4fd2c45e45a061bcf3436f8f35f585af8a66cf3a",
+        "byteLength": 1920
+      }
+    },
+    {
+      "id": "residue-38",
+      "vertexCount": 224,
+      "triangleCount": 224,
+      "positions": {
+        "path": "blobs/c0d3badf857a3a77c4a4617a51536cee55343339daa94b9886646678789a76f1.bin",
+        "hash": "c0d3badf857a3a77c4a4617a51536cee55343339daa94b9886646678789a76f1",
+        "byteLength": 2688
+      },
+      "indices": {
+        "path": "blobs/dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd.bin",
+        "hash": "dde5bfacaa6947962c17ebedfc30475adbfc90f8cf02e55e974b8c3db4a913dd",
+        "byteLength": 2688
+      },
+      "normals": {
+        "path": "blobs/d6b316d026e92b391978df2bea3802ebfec3d41962540b0c1d31eaee7c630c6a.bin",
+        "hash": "d6b316d026e92b391978df2bea3802ebfec3d41962540b0c1d31eaee7c630c6a",
+        "byteLength": 2688
+      }
+    },
+    {
+      "id": "residue-39",
+      "vertexCount": 208,
+      "triangleCount": 208,
+      "positions": {
+        "path": "blobs/cb7969df3139975b42b313ffe27499e07997661dd1a1d28dda0b3d307ca86933.bin",
+        "hash": "cb7969df3139975b42b313ffe27499e07997661dd1a1d28dda0b3d307ca86933",
+        "byteLength": 2496
+      },
+      "indices": {
+        "path": "blobs/b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4.bin",
+        "hash": "b0c6933a0cccd1f9ce14b05ccfc62764d6a6aa3bf331e8d10966f77548a240b4",
+        "byteLength": 2496
+      },
+      "normals": {
+        "path": "blobs/6e10ea807b4428c36bbb2381a9e39ba9b7242fef7633d07717372b6a26e95a57.bin",
+        "hash": "6e10ea807b4428c36bbb2381a9e39ba9b7242fef7633d07717372b6a26e95a57",
+        "byteLength": 2496
+      }
+    },
+    {
+      "id": "residue-40",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/f7ded95b78b400a534e390087875e8966323840feeeaf0dd6bd829318d220b6b.bin",
+        "hash": "f7ded95b78b400a534e390087875e8966323840feeeaf0dd6bd829318d220b6b",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/f3dd191bde12a58c9ca68878e761fd0d33fbf7bf68c7a1ce02943314e03c3cfd.bin",
+        "hash": "f3dd191bde12a58c9ca68878e761fd0d33fbf7bf68c7a1ce02943314e03c3cfd",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-41",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/643312dac6a61a1bc9090188746c4639488fa0bca04c73231d6dcc20ab418cdf.bin",
+        "hash": "643312dac6a61a1bc9090188746c4639488fa0bca04c73231d6dcc20ab418cdf",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d.bin",
+        "hash": "dd36474a4699a773dcc94c212b31b45af960beac13ca8fdea7706deca9731a5d",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/a18e10f066dc4b05b9857adc134bbb48b2ff65b9e7ecb6c1d0aef253ae031be4.bin",
+        "hash": "a18e10f066dc4b05b9857adc134bbb48b2ff65b9e7ecb6c1d0aef253ae031be4",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "residue-42",
+      "vertexCount": 256,
+      "triangleCount": 256,
+      "positions": {
+        "path": "blobs/48ac1922890f0e642ea2d77d6f9fcef674dc9cb47fbea3a7f08d661d1f8426bb.bin",
+        "hash": "48ac1922890f0e642ea2d77d6f9fcef674dc9cb47fbea3a7f08d661d1f8426bb",
+        "byteLength": 3072
+      },
+      "indices": {
+        "path": "blobs/45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50.bin",
+        "hash": "45640d5a6957227b9822222801842dfaa38a9a502ed08338b44054903d70bd50",
+        "byteLength": 3072
+      },
+      "normals": {
+        "path": "blobs/6da798a19a2e7257bee0ec4942ff0e2e9573c84b9def02549f8ca9df63ed867d.bin",
+        "hash": "6da798a19a2e7257bee0ec4942ff0e2e9573c84b9def02549f8ca9df63ed867d",
+        "byteLength": 3072
+      }
+    },
+    {
+      "id": "residue-43",
+      "vertexCount": 416,
+      "triangleCount": 416,
+      "positions": {
+        "path": "blobs/8d1d0f7ea2b4c5d3efc1b015511afd2bf690b6c06b6e413f121488d39ce724d3.bin",
+        "hash": "8d1d0f7ea2b4c5d3efc1b015511afd2bf690b6c06b6e413f121488d39ce724d3",
+        "byteLength": 4992
+      },
+      "indices": {
+        "path": "blobs/a660c8c9c8983088f45192bc2ccc9e9af8970aac0ae3985c0a21a681efc10dfe.bin",
+        "hash": "a660c8c9c8983088f45192bc2ccc9e9af8970aac0ae3985c0a21a681efc10dfe",
+        "byteLength": 4992
+      },
+      "normals": {
+        "path": "blobs/7047adc939e71407691c3d615e5f3dc2dc505a0a46ef2a2042bfa8413c4b2af8.bin",
+        "hash": "7047adc939e71407691c3d615e5f3dc2dc505a0a46ef2a2042bfa8413c4b2af8",
+        "byteLength": 4992
+      }
+    },
+    {
+      "id": "residue-44",
+      "vertexCount": 160,
+      "triangleCount": 160,
+      "positions": {
+        "path": "blobs/0109ae7597dd428cdbf5703718276eaa406172af2b21163cadc23ea368bae027.bin",
+        "hash": "0109ae7597dd428cdbf5703718276eaa406172af2b21163cadc23ea368bae027",
+        "byteLength": 1920
+      },
+      "indices": {
+        "path": "blobs/410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833.bin",
+        "hash": "410de4bee00bdcb381ea97c3f718300ffcb8bd8d1c2f632565382661f56fb833",
+        "byteLength": 1920
+      },
+      "normals": {
+        "path": "blobs/329704275b9f401be07ddcf613a5f7e747f1d09955cb3e485eb921442eceb6e5.bin",
+        "hash": "329704275b9f401be07ddcf613a5f7e747f1d09955cb3e485eb921442eceb6e5",
+        "byteLength": 1920
+      }
+    },
+    {
+      "id": "residue-45",
+      "vertexCount": 272,
+      "triangleCount": 272,
+      "positions": {
+        "path": "blobs/a1d710f9d83e649200ce9b8d5e8bf6a93f9bcd46fc2dfe4b1f5f6a6324a4c43e.bin",
+        "hash": "a1d710f9d83e649200ce9b8d5e8bf6a93f9bcd46fc2dfe4b1f5f6a6324a4c43e",
+        "byteLength": 3264
+      },
+      "indices": {
+        "path": "blobs/f30eb7dfae0aade902e4262a95e18bbf06c4e802326e0382a94812978a5a7a2a.bin",
+        "hash": "f30eb7dfae0aade902e4262a95e18bbf06c4e802326e0382a94812978a5a7a2a",
+        "byteLength": 3264
+      },
+      "normals": {
+        "path": "blobs/d10c779ee122eede86b5ced1c62026140d9c62df44733a7110ff380b999f10a0.bin",
+        "hash": "d10c779ee122eede86b5ced1c62026140d9c62df44733a7110ff380b999f10a0",
+        "byteLength": 3264
+      }
+    }
+  ],
+  "hash": "df56e445e9bafdaab51ed871f845297a0fe6d873de1ae34ba4d9e084e4946fcc"
+}

@@ -11,14 +11,14 @@ export default scene({background:'BLACK',end:'hold'},s=>{
     s.play(g.weights.get(e.id).fadeOut(),{duration:0});
     const label=s.latex('sans-weight-'+e.id,{tex:'\\mathsf{'+e.weight+'}',fontSize:.3});s.attach(label,g.edges.get(e.id),{anchor:'midpoint',offset:[0,.28]});
   }
-  const panel=s.rectangle('frontier-record',{position:[3.8,-2.6],width:3.7,height:1.5,fill:'PURPLE_E',stroke:'PURPLE_A',strokeWidth:.02,opacity:0});
-  const heading=s.latex('frontier-heading',{tex:'\\mathsf{frontier}',position:[3.8,-1.61],fontSize:.27,fill:'GREY_A',opacity:0});
-  const initialRoute=s.latex('route-initial',{tex:'\\mathsf{A}\\rightarrow\\mathsf{C}',position:[3.2,-2.3],fontSize:.32,opacity:0});
-  const route=s.latex('route-C',{tex:'\\mathsf{A}\\rightarrow\\mathsf{B}\\rightarrow\\mathsf{C}',position:[3.2,-2.3],fontSize:.32,opacity:0});
-  const destination=s.latex('frontier-destination',{tex:'\\mathsf{C}',position:[5,-2.3],fontSize:.33,opacity:0});
-  const badge=s.circle('destination-ring',{position:[5,-2.3],radius:.32,fill:'none',stroke:'PURPLE_A',strokeWidth:.025,opacity:0});
-  const record=s.latex('frontier-C',{tex:'\\mathsf{cost}\\quad\\animnum{cost}',numbers:{cost:5},numberFormat:{decimals:0,digits:1},fontSize:.33,position:[3.7,-2.97],opacity:0});
-  const candidate=s.latex('candidate-C',{tex:'1+1=2',position:[1.53,.02],fontSize:.36,fill:'YELLOW',opacity:0});
+  const panel=s.rectangle('frontier-record',{position:[3.05,-2.6],width:3.2,height:1.5,fill:'PURPLE_E',stroke:'PURPLE_A',strokeWidth:.02,opacity:0});
+  const heading=s.latex('frontier-heading',{tex:'\\mathsf{frontier}',position:[3.05,-1.61],fontSize:.27,fill:'GREY_A',opacity:0});
+  const initialRoute=s.latex('route-initial',{tex:'\\mathsf{A}\\rightarrow\\mathsf{C}',position:[2.45,-2.3],fontSize:.32,opacity:0});
+  const route=s.latex('route-C',{tex:'\\mathsf{A}\\rightarrow\\mathsf{B}\\rightarrow\\mathsf{C}',position:[2.45,-2.3],fontSize:.32,opacity:0});
+  const destination=s.latex('frontier-destination',{tex:'\\mathsf{C}',position:[4.2,-2.3],fontSize:.33,opacity:0});
+  const badge=s.circle('destination-ring',{position:[4.2,-2.3],radius:.32,fill:'none',stroke:'PURPLE_A',strokeWidth:.025,opacity:0});
+  const record=s.latex('frontier-C',{tex:'\\mathsf{cost}\\quad\\animnum{cost}',numbers:{cost:5},numberFormat:{decimals:0,digits:1},fontSize:.33,position:[3.05,-2.97],opacity:0});
+  const candidate=s.latex('candidate-C',{tex:'1+1=2',position:[3.7,-.55],fontSize:.36,fill:'YELLOW',opacity:0});
   // Algorithm costs change discretely when a candidate is accepted.
   s.play(g.costs.get('C').countTo({cost:5}),{duration:0});
   s.play(g.state('A','source',{stroke:'ORANGE',strokeWidth:.065}),{duration:.1});s.wait(.9);

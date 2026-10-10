@@ -1,0 +1,51 @@
+{
+  "id": "illustrative-polymerase-channel",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic local units",
+  "provenance": {
+    "source": "Original procedural C-shaped channel in prepare-biological-assets.mjs",
+    "sourceHash": "faaa18086732581ae126b89955e44497c2af2e44530c3e25135d23560aa536b3",
+    "creator": "Original animlib biological proof",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "animlib Gaussian envelope",
+      "version": "1",
+      "options": {
+        "sigma": 0.65,
+        "isoLevel": 0.95,
+        "resolution": 31,
+        "smoothingIterations": 3
+      }
+    },
+    "selection": "All96 original scaffold sites",
+    "modifications": [
+      "Gaussian union of three irregular arcs; open side and central channel retained."
+    ],
+    "fidelity": "Illustrative catalytic machinery, not a molecular structure of RNA polymerase. No atomic or source-image fidelity claimed."
+  },
+  "parts": [
+    {
+      "id": "channel",
+      "vertexCount": 5488,
+      "triangleCount": 10972,
+      "positions": {
+        "path": "blobs/61ab40a1e7bc0daabd0c8252b47a93d097e7f52e44a6b54c4b9f50f0534ee7db.bin",
+        "hash": "61ab40a1e7bc0daabd0c8252b47a93d097e7f52e44a6b54c4b9f50f0534ee7db",
+        "byteLength": 65856
+      },
+      "indices": {
+        "path": "blobs/9e073d6f93214d82f2725ec2aee23bf35fc04149d0fb6105da36e5f6ed1b5293.bin",
+        "hash": "9e073d6f93214d82f2725ec2aee23bf35fc04149d0fb6105da36e5f6ed1b5293",
+        "byteLength": 131664
+      },
+      "normals": {
+        "path": "blobs/10a3c0ed820b3a73953b9a75ba559bc4184797801af7e43f0eb1a2df6a868ab0.bin",
+        "hash": "10a3c0ed820b3a73953b9a75ba559bc4184797801af7e43f0eb1a2df6a868ab0",
+        "byteLength": 65856
+      }
+    }
+  ],
+  "hash": "19f289ef306652615f779e0bd7250baabb93957e1361433546391a0f6927a22b"
+}

@@ -87,7 +87,10 @@ animations in a single `play` run together. Explicit timestamps stay internal.
 
 The application demos cover linear algebra, organic chemistry, and
 computer algorithms. Matrices, molecules, arrays, and graphs belong to application
-helpers built from animlib's shapes, text, paths, meshes, and groups.
+stories, with built-in helpers for coordinate planes, molecular backbones, graphs,
+and identity-based collections. These use the same shapes, text, paths, meshes,
+and groups as hand-authored scenes. See [domain helpers and prepared assets](#domain-helpers-and-prepared-assets)
+for the APIs and host/scene boundary.
 
 ### Decisions from the interview
 
@@ -652,7 +655,7 @@ settings for a continuous finish, or crossfade separate objects deliberately.
 
 The material model uses the renderer's camera-relative directional light and a
 procedural studio reflection approximation. It does not reflect other scene
-objects. Scene lighting can override its ambient and directional contributions. No environment maps, image/video textures,
+objects. Scene lighting can override its ambient and directional contributions. No environment maps, video textures,
 image normal/bump maps, displacement, physically based material guarantees, or bloom
 are provided. Try the **Textures** study in `/spatial.html` for pattern, palette,
 frequency, seed, bump strength, metalness, roughness, highlight, and emission controls.
@@ -1672,7 +1675,75 @@ up, and toward the viewer in scene units; this keeps an atom label beside or in
 front of its sphere while orbiting. The molecule demo supplies tetrahedral spatial
 layout and surface-to-surface bond meshes. Procedural textures and configurable
 metalness, roughness, highlights, and emission work on spheres and meshes.
-Physically based materials and model loading are not implemented. Object interaction uses the behavior API above.
+Host-prepared static models and image textures are supported through the asset
+registry described below. Full physically based materials are not implemented.
+Object interaction uses the behavior API above.
+
+### Domain helpers and prepared assets
+
+These are public `SceneContext` methods, available in the sandbox without imports:
+
+| API | Contract |
+| --- | --- |
+| `s.plane(id,{xRange,yRange,...})` | `toWorld`, grid/axes/ticks, `path`, `vector`, `components`, sampled `curve`, upright `label`; one `map(dependencies,(point,...values)=>Vec2)` applies from original coordinates |
+| `s.graph(id,data,options)` | Authored positions, connected edges, labels/weights/cost handles and state actions; IDs remain stable |
+| `s.dijkstra(data,source)` | Immutable distances, predecessors and pop/relax/stale/frontier events; nonnegative weights, at most 256 nodes / 2,048 edges; no self-loops or parallel/opposite overlapping edges |
+| `s.collection(id,items,options)` | Identity-indexed items and slots; `swap(a,b,{start,duration,clearance})` handles equal values on separated arcs |
+| `s.molecularBackbone(id,props)` | Batched explicit segments/bonds in sticks, beads or backbone form; no bond inference |
+| `s.molecularBackboneGeometry(props)` | Pure meshes, anchors and residue ownership for fixed-topology retained motion |
+| `s.articulatedChainPose(spec,time)` | Fixed link lengths with authored bend/twist interpolation; no physics/collision solver |
+| `s.nucleicDuplex(props,opening)` / `s.nucleicTranscript(props,time)` | Pure bounded parts and anchors for explicit antiparallel complementary DNA / sequential RNA; schematic geometry |
+| `s.model(id,{asset,shading,...})` / `s.modelInfo(asset)` | Instantiate or inspect a host-catalog model; geometry references carry ID/hash/part |
+| `s.image(id,{asset,width,height,...})` | Image card, preserved aspect ratio when only one size is supplied; unlit, untinted source colors by default |
+
+```js
+export default scene({},s=>{
+  const p=s.plane('p',{xRange:[-3,3],yRange:[-2,2]});
+  p.vector('v',[1,1],{stroke:Color.YELLOW});
+  p.map([s.time],(point,t)=>[point[0]+Math.min(t/2,1)*point[1],point[1]]);
+  s.wait(3);
+});
+```
+
+Host-only `importPDBStructure` / `structureBackboneProps` preserve deposited
+heavy-atom coordinates, stable residue IDs and TER/gap breaks. Bonds must have
+CONECT, supplied template, or explicitly selected peptide-rule provenance.
+`createMolecularEnvelope` prepares schematic density meshes offline. Importing
+PDB, glTF/GLB, PNG or native binary packages never happens inside scene source.
+
+Hosts use `createAssetRegistry` with validated prepared inputs, or
+`decodeModelPackage` / `decodeImagePackage` and bounded blob reads. Pass the
+registry as `modelAssets` to `createPlayer` / `SceneSequence`; give generation
+systems its descriptor-only `catalog`. For compile-only work, `assetCatalog`
+belongs in `CompileInput`. A descriptor catalog is not a geometry resolver.
+For native exports, `withOfflineScene(source,input,use,{modelAssets:registry})`
+keeps retained callbacks and leases alive; prepare the renderer with
+`sampler.scene` and `sampler.assetGeometry`, then render `sampler.sample(time)`
+inside the callback. Sampling supports direct and reverse seeks.
+
+Images require host `colorPolicy:'source'` when the registry is created. The
+scene cannot authorize this exception to palette-only authoring. Images are
+RGBA8 / encoded sRGB / top-left / straight-alpha. Source RGB is not palette
+quantized; optional `tint` multiplies by a palette token. Supported sampling is
+nearest/linear and clamp/repeat; alpha is opaque/blend. UV0 meshes preserve
+source seams. Use `shading:'unlit'` to inspect source colors. Encoded-space
+lighting and blending do not establish linear-light PBR fidelity.
+
+Static import accepts a bounded glTF/GLB triangle and eight-bit PNG subset.
+Skins, morphs, animations, compressed data, JPEG, multiple UV sets, mipmaps,
+image clipping/outlines, image scalar/procedural combinations and full PBR are
+unsupported. Image pixels and model arrays remain host-owned; repeated model
+instances still count logical vertices toward the 100,000-point scene budget.
+Registry/individual model decoded caps are 256 MiB / 32 MiB. A renderer/device
+owns its GPU resources; each player/sequence must be disposed. Shared registries
+keep decoded memory while host references remain, even after leases reach zero.
+
+See [helpers and assets](helpers-and-assets.md) for runnable graph, collection,
+catalog and host examples, and [static import](assets-import.md) for precise
+format rejection, provenance and derivative policies. Keep original/licensed
+asset metadata separate from stylistic reference footage. Artist palettes and
+choreography are authored scene contracts, not merged helper defaults. Text
+uses bundled MathJax glyphs/TeX variants; arbitrary font loading is unavailable.
 
 ## 7. Live source submissions
 
@@ -1738,7 +1809,9 @@ startup has a separate timeout; a failed worker can be recreated on a later
 submission. These limits protect the scene-building step; they are not a complete
 budget for subsequent TeX layout, tessellation, or GPU allocation.
 
-Current data limits include 256 KB per source, 100 scenes, 2,000 object IDs per
+Current data limits include 256,000 JavaScript string units per source (the
+implementation uses `source.length`), 8 MiB compiled JSON string length, 1 MiB
+per reactive-update JSON string length, 100 scenes, 2,000 object IDs per
 builder, 100 controls, 32 view regions, 10,000 animation tracks, and a 24-hour visual timeline.
 SVG path data is limited to 20,000 characters and 20,000 normalized control
 points per path. Point arrays are limited to 20,000 entries; added scene geometry
@@ -2066,14 +2139,17 @@ and emission; procedural textures mix two palette colors. This is not a
 comprehensive physically based material system. Shape matching cannot infer semantic
 part correspondence or arbitrary mesh topology.
 
-Not yet included: custom fonts and general text shaping, images/video textures,
+Not yet included: arbitrary font loading and general text shaping, video textures,
 environment maps, image bump/normal maps, displacement, bloom, arbitrary mesh receivers or self-shadowing, general path/text hit shapes, LaTeX split/merge mappings, a full physics solver,
 infinite scenes, branching navigation, playback-rate controls,
-video export, or mobile-browser support guarantees. The initial control surface
+in-player video recording, or mobile-browser support guarantees. Native Node
+frame/video export is provided by `tools/render-frames.mjs` and
+`tools/render-video.mjs`; use `withOfflineScene` to sample retained time bindings.
+The initial control surface
 is sliders, toggles, selects, and requested orbit rotation.
 
 Useful follow-up work should be driven by the three application demos: reusable
-domain helpers in the app, accessible descriptions of visual objects, measured
+additional domain helpers, accessible descriptions of visual objects, measured
 performance improvements, richer text support, and only then additional interaction
 or rendering features. The core contract remains plain scene code, local clocks,
 explicit persistence, and reproducible frames.

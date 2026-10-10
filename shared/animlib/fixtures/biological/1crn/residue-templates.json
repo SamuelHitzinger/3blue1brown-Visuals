@@ -1,0 +1,1402 @@
+{
+  "ALA": {
+    "source": "https://files.rcsb.org/ligands/download/ALA.cif",
+    "version": "sha256:6d32b34d4f7b3ddf0cd3dff3f98ddaf7649bc5303ff9a8bd95ba62283f47a1ca",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB1",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "ARG": {
+    "source": "https://files.rcsb.org/ligands/download/ARG.cif",
+    "version": "sha256:191c437cfa501e0a87d275ca3d39974a1a9c8dc704df61bfc442a4c314e196ac",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "CD",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "HG2",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "HG3",
+        "order": "single"
+      },
+      {
+        "a": "CD",
+        "b": "NE",
+        "order": "single"
+      },
+      {
+        "a": "CD",
+        "b": "HD2",
+        "order": "single"
+      },
+      {
+        "a": "CD",
+        "b": "HD3",
+        "order": "single"
+      },
+      {
+        "a": "NE",
+        "b": "CZ",
+        "order": "single"
+      },
+      {
+        "a": "NE",
+        "b": "HE",
+        "order": "single"
+      },
+      {
+        "a": "CZ",
+        "b": "NH1",
+        "order": "single"
+      },
+      {
+        "a": "CZ",
+        "b": "NH2",
+        "order": "double"
+      },
+      {
+        "a": "NH1",
+        "b": "HH11",
+        "order": "single"
+      },
+      {
+        "a": "NH1",
+        "b": "HH12",
+        "order": "single"
+      },
+      {
+        "a": "NH2",
+        "b": "HH21",
+        "order": "single"
+      },
+      {
+        "a": "NH2",
+        "b": "HH22",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "ASN": {
+    "source": "https://files.rcsb.org/ligands/download/ASN.cif",
+    "version": "sha256:81491bbdb49f96e2945192c07510324d206298d3479029b76defba2ed6ab2dc7",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "OD1",
+        "order": "double"
+      },
+      {
+        "a": "CG",
+        "b": "ND2",
+        "order": "single"
+      },
+      {
+        "a": "ND2",
+        "b": "HD21",
+        "order": "single"
+      },
+      {
+        "a": "ND2",
+        "b": "HD22",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "ASP": {
+    "source": "https://files.rcsb.org/ligands/download/ASP.cif",
+    "version": "sha256:82c4a2d0b5eda0a32c36f106f0bb00edbc5bc51172db414fdc494025b7b8c858",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "OD1",
+        "order": "double"
+      },
+      {
+        "a": "CG",
+        "b": "OD2",
+        "order": "single"
+      },
+      {
+        "a": "OD2",
+        "b": "HD2",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "CYS": {
+    "source": "https://files.rcsb.org/ligands/download/CYS.cif",
+    "version": "sha256:b28c79381f9f41fe57a9e97468fc8101d5fd1064272a22da1eed6d05d27a24cc",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "SG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "SG",
+        "b": "HG",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "GLU": {
+    "source": "https://files.rcsb.org/ligands/download/GLU.cif",
+    "version": "sha256:99fa19054d31b07e7101b33ad9cc847cc6a209da60de279aed5e6a9236bb6da4",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "CD",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "HG2",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "HG3",
+        "order": "single"
+      },
+      {
+        "a": "CD",
+        "b": "OE1",
+        "order": "double"
+      },
+      {
+        "a": "CD",
+        "b": "OE2",
+        "order": "single"
+      },
+      {
+        "a": "OE2",
+        "b": "HE2",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "GLY": {
+    "source": "https://files.rcsb.org/ligands/download/GLY.cif",
+    "version": "sha256:c49458946b0ebc057db6ad0a4e1557a1caaed4c80a203accd458efddccbf92ff",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA3",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "ILE": {
+    "source": "https://files.rcsb.org/ligands/download/ILE.cif",
+    "version": "sha256:8166adcc6acb4661f4a167b0a4295879612dfad3f1a6b6f1b7bd0589c5bded93",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG1",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB",
+        "order": "single"
+      },
+      {
+        "a": "CG1",
+        "b": "CD1",
+        "order": "single"
+      },
+      {
+        "a": "CG1",
+        "b": "HG12",
+        "order": "single"
+      },
+      {
+        "a": "CG1",
+        "b": "HG13",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG21",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG22",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG23",
+        "order": "single"
+      },
+      {
+        "a": "CD1",
+        "b": "HD11",
+        "order": "single"
+      },
+      {
+        "a": "CD1",
+        "b": "HD12",
+        "order": "single"
+      },
+      {
+        "a": "CD1",
+        "b": "HD13",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "LEU": {
+    "source": "https://files.rcsb.org/ligands/download/LEU.cif",
+    "version": "sha256:fc56e022bc8baa25dc6e543b2c46664e365779aa1dda9831576fdf10b30ab84b",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "CD1",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "CD2",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "HG",
+        "order": "single"
+      },
+      {
+        "a": "CD1",
+        "b": "HD11",
+        "order": "single"
+      },
+      {
+        "a": "CD1",
+        "b": "HD12",
+        "order": "single"
+      },
+      {
+        "a": "CD1",
+        "b": "HD13",
+        "order": "single"
+      },
+      {
+        "a": "CD2",
+        "b": "HD21",
+        "order": "single"
+      },
+      {
+        "a": "CD2",
+        "b": "HD22",
+        "order": "single"
+      },
+      {
+        "a": "CD2",
+        "b": "HD23",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "PHE": {
+    "source": "https://files.rcsb.org/ligands/download/PHE.cif",
+    "version": "sha256:002c626d24aec78fd622459d4f4470c682c7c3f9f97d32414fec4313d780496e",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "CD1",
+        "order": "aromatic"
+      },
+      {
+        "a": "CG",
+        "b": "CD2",
+        "order": "aromatic"
+      },
+      {
+        "a": "CD1",
+        "b": "CE1",
+        "order": "aromatic"
+      },
+      {
+        "a": "CD1",
+        "b": "HD1",
+        "order": "single"
+      },
+      {
+        "a": "CD2",
+        "b": "CE2",
+        "order": "aromatic"
+      },
+      {
+        "a": "CD2",
+        "b": "HD2",
+        "order": "single"
+      },
+      {
+        "a": "CE1",
+        "b": "CZ",
+        "order": "aromatic"
+      },
+      {
+        "a": "CE1",
+        "b": "HE1",
+        "order": "single"
+      },
+      {
+        "a": "CE2",
+        "b": "CZ",
+        "order": "aromatic"
+      },
+      {
+        "a": "CE2",
+        "b": "HE2",
+        "order": "single"
+      },
+      {
+        "a": "CZ",
+        "b": "HZ",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "PRO": {
+    "source": "https://files.rcsb.org/ligands/download/PRO.cif",
+    "version": "sha256:08674e4d60bc40ad5702b8de6e5e4abb66c2bbb603832c021c31194f4b4e593c",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "CD",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "CD",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "HG2",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "HG3",
+        "order": "single"
+      },
+      {
+        "a": "CD",
+        "b": "HD2",
+        "order": "single"
+      },
+      {
+        "a": "CD",
+        "b": "HD3",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "SER": {
+    "source": "https://files.rcsb.org/ligands/download/SER.cif",
+    "version": "sha256:46db0296a07732854d2c3ca67ed0f74f4c82ddc5698d0e59f433039a5d7c88a0",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "OG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "OG",
+        "b": "HG",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "THR": {
+    "source": "https://files.rcsb.org/ligands/download/THR.cif",
+    "version": "sha256:feb75dfac5bfcc7045de7a75a31575f3bf3e5b411716a06e92712924759dd554",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "OG1",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB",
+        "order": "single"
+      },
+      {
+        "a": "OG1",
+        "b": "HG1",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG21",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG22",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG23",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "TYR": {
+    "source": "https://files.rcsb.org/ligands/download/TYR.cif",
+    "version": "sha256:fa0ef32f9d623e087a527b0a146c0494a5a656037c6448d956072dd2406fa554",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB3",
+        "order": "single"
+      },
+      {
+        "a": "CG",
+        "b": "CD1",
+        "order": "aromatic"
+      },
+      {
+        "a": "CG",
+        "b": "CD2",
+        "order": "aromatic"
+      },
+      {
+        "a": "CD1",
+        "b": "CE1",
+        "order": "aromatic"
+      },
+      {
+        "a": "CD1",
+        "b": "HD1",
+        "order": "single"
+      },
+      {
+        "a": "CD2",
+        "b": "CE2",
+        "order": "aromatic"
+      },
+      {
+        "a": "CD2",
+        "b": "HD2",
+        "order": "single"
+      },
+      {
+        "a": "CE1",
+        "b": "CZ",
+        "order": "aromatic"
+      },
+      {
+        "a": "CE1",
+        "b": "HE1",
+        "order": "single"
+      },
+      {
+        "a": "CE2",
+        "b": "CZ",
+        "order": "aromatic"
+      },
+      {
+        "a": "CE2",
+        "b": "HE2",
+        "order": "single"
+      },
+      {
+        "a": "CZ",
+        "b": "OH",
+        "order": "single"
+      },
+      {
+        "a": "OH",
+        "b": "HH",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  },
+  "VAL": {
+    "source": "https://files.rcsb.org/ligands/download/VAL.cif",
+    "version": "sha256:9c3c807970c817b1e1a4b43164db91a5bf1e7bf438b3269c5649f6ce84d4c0ed",
+    "bonds": [
+      {
+        "a": "N",
+        "b": "CA",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H",
+        "order": "single"
+      },
+      {
+        "a": "N",
+        "b": "H2",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "C",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "CB",
+        "order": "single"
+      },
+      {
+        "a": "CA",
+        "b": "HA",
+        "order": "single"
+      },
+      {
+        "a": "C",
+        "b": "O",
+        "order": "double"
+      },
+      {
+        "a": "C",
+        "b": "OXT",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG1",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "CG2",
+        "order": "single"
+      },
+      {
+        "a": "CB",
+        "b": "HB",
+        "order": "single"
+      },
+      {
+        "a": "CG1",
+        "b": "HG11",
+        "order": "single"
+      },
+      {
+        "a": "CG1",
+        "b": "HG12",
+        "order": "single"
+      },
+      {
+        "a": "CG1",
+        "b": "HG13",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG21",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG22",
+        "order": "single"
+      },
+      {
+        "a": "CG2",
+        "b": "HG23",
+        "order": "single"
+      },
+      {
+        "a": "OXT",
+        "b": "HXT",
+        "order": "single"
+      }
+    ]
+  }
+}

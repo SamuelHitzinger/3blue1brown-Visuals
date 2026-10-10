@@ -34,6 +34,20 @@ Keep these instructions in nonspoken planning; they are not narration.
   produce smooth native meshes from supplied positions, with explicit density
   scale, threshold, grid resolution and smoothing. No automatic atomic surfaces, bond inference,
   folding physics, biological assembly reconstruction or mmCIF parsing.
+- **Ordered molecular mechanisms:** explicit backbone segments, residue identity,
+  sticks/beads/smooth backbones and fixed-length articulated chain poses. The
+  structure importer preserves first-model deposited heavy atoms and explicit
+  gaps; bonds require CONECT, supplied templates, or opted-in peptide rules.
+  Explicit antiparallel DNA duplex and sequential complementary RNA factories
+  support schematic opening/incorporation. These do not infer atomistic chemistry
+  or simulate folding. Keep measured structure and illustrative machinery distinct.
+- **Prepared models and images:** the host can provide a descriptor catalog of
+  immutable static model/image assets. Scene authors instantiate named assets;
+  source geometry and pixels stay outside the scene VM. Models support UV0 and
+  PNG-derived RGBA8 source-color images, with explicit host source-color permission,
+  unlit or stylized shading, and planar image cards. The static glTF/GLB converter
+  accepts a documented subset; it does not reproduce full PBR, animation or skins.
+  Plan an import/preparation step if the needed licensed asset is absent.
 - **Surface appearance:** spheres and meshes support checker, stripe, noise,
   marble, and wood patterns using two palette colors. Patterns stay attached under
   object transforms. Adjustable procedural bump perturbs lighting normals for
@@ -141,8 +155,9 @@ put this context in the introducing beat's `Content needed` or `Notes`.
 
 Specify observable relationships and invariants; leave API choices to the scene
 author. Live connectors can keep edges attached, but do not fix their length.
-Rigid groups can move together; articulated groups can bend at authored joints
-with fixed offsets. There is no built-in fixed-distance chain solver. Request
+Rigid groups can move together; the articulated-chain helper computes authored
+bend/twist poses with fixed link lengths. It does not solve collisions or energetic
+constraints. Request
 only relationships needed by the lesson, and preserve reveal order: preparing
 an object for a later fold does not mean showing that fold early.
 
@@ -170,9 +185,12 @@ dragged an object. Custom behaviors require host-registered implementations.
 
 ## Diagrams assembled by scene code
 
-Matrices, coordinate systems, charts, molecules, arrays, graphs, trees, and
-algorithm traces are built from the primitives above; dedicated domain APIs are
-not built into animlib. Suitable requests include:
+Built-in coordinate-plane helpers apply one map to a grid, vectors, component
+paths and label anchors. Graph helpers provide authored node positions, connected
+edges, weights/costs and immutable Dijkstra frontier/relaxation traces. Collection
+helpers preserve item identity through swaps, including duplicate values. Authors
+still choose each reveal and attention state. Matrices, charts and trees can
+compose these helpers with ordinary primitives. Suitable requests include:
 
 - Show a matrix acting on two basis vectors and a small grid, with the same
   vectors carried into a second view.
@@ -189,15 +207,16 @@ not built into animlib. Suitable requests include:
 - Grow a plant from a stem, curved leaves, and branching roots; group each leaf
   with its vein at the attachment point and coordinate their bends.
 
-State the exact example values and teaching relation. Do not assume symbolic
-algebra, chemistry simulation, automatic graph layout, or an algorithm simulator.
+State the exact example values and teaching relation. Dijkstra handles bounded
+nonnegative weights; do not assume symbolic algebra, chemistry simulation,
+automatic graph layout, or a general algorithm simulator.
 Scene code can calculate modest examples with JavaScript and provided math
 helpers; it cannot import packages, fetch data, access the surrounding page, or
 run asynchronous builders.
 
 ## Current boundaries
 
-- No image/video textures, UV mapping, imported 3D models, photorealistic materials,
+- No video textures, general glTF/PBR fidelity, photorealistic materials,
   image bump/normal maps, displacement, environment maps, self-shadowing, arbitrary mesh shadow receivers, bloom, point/spot lights,
   full physics solver, or automatic extrusion. Prefer schematic geometry.
 - SVG support accepts path geometry, not complete SVG files or their styling.
@@ -208,7 +227,7 @@ run asynchronous builders.
   can expose approximation limits. Curved outlines do not add general path
   picking or automatic surface-clipped connectors; those retain their existing
   supported shapes.
-- Text uses bundled glyphs. Custom fonts, emoji, broad international text
+- Text uses bundled MathJax glyphs and TeX variants. Arbitrary font loading, emoji, broad international text
   coverage, full document TeX, and automatic multiline text layout are not
   available. Use short labels and supported mathematical notation; narration
   language support does not imply matching on-canvas glyph support.
@@ -224,7 +243,8 @@ run asynchronous builders.
   constant radius and authored centerline samples; avoid immediate reversals and
   self-intersections. Caps close ends but do not resolve intersecting geometry.
 - No branching lesson navigation, infinite scenes, playback-rate controls, or
-  built-in video export. Interactive controls vary visuals within the lesson.
+  in-player video recording. Native Node tools export frames and MP4 through the
+  same absolute-time evaluator. Interactive controls vary visuals within the lesson.
 - Target modest explanatory scenes rather than dense particle simulations or
   huge datasets. There is no large-scene performance guarantee.
   Section caps require closed nonbranching contours and do not repair
@@ -233,6 +253,17 @@ run asynchronous builders.
   automatically. Scalar ramps require sufficient surface sampling for detail. Compiler
   ceilings include 2,000 object IDs per builder and 32 view regions; these are
   hard limits, not recommended scene sizes.
+
+The VM memory ceiling remains 32 MiB, source length 256,000 string units,
+compiled JSON 8 MiB and each reactive update 1 MiB. Aggregate scene geometry is
+limited to 100,000 points; repeated asset vertices still count. Prepared reuse
+reduces payload and upload duplication, not these limits or the need to measure.
+
+Choose a separate visual contract for each requested reference: mathematical
+construction, graph/frontier explanation, neural event/rate/state, logistic
+residual emphasis, and biological mechanism have different palettes, typography
+and attention sequences. Helpers alone do not establish reference-style fidelity.
+Research footage and screenshots do not grant a license to reuse film assets.
 
 For implementation details, the scene author receives the full
 [API reference](reference.md). Maintain this summary alongside changes to that

@@ -1,6 +1,6 @@
 # Biological structure and transcription implementation design
 
-2026-10-11, `amilibsam`. Pure bounded factories first; root/image worker owns shared runtime integration. Existing `importPDB` stays compatible. This is an original transcription mechanism and deposited-structure slice, not whole-film fidelity.
+2026-10-11, `amilibsam`. Pure bounded factories and public host/QuickJS scene integration are implemented. Existing `importPDB` stays compatible. This is an original transcription mechanism and deposited-structure slice, not whole-film fidelity.
 
 ## Scientific preparation API (host only)
 
@@ -30,7 +30,7 @@ createNucleicBuilders(molecular: {
 
 `NucleicDuplexProps`: required axis Vec3[] (one center per pair, 2–128), ordered `template: {id,base:'A'|'C'|'G'|'T'}[]` in **3′→5′**, ordered `coding` in **5′→3′**, explicit `pairs: [templateId,codingId][]` in axis order, `initialNormal`, `radius`, `backboneRadius`, `twistPerBase`, `window: {start,end,separation}`, optional geometry quality. Directions are required literal fields and validated. IDs must be globally unique and every explicit pair complementary. Arrays are aligned by the explicit pairs; arbitrary/missing pairing is rejected instead of guessed. No chemical atom geometry is claimed. Existing ordered-backbone meshes are reused; shaped extruded purine/pyrimidine plates and their covalent stems form bounded native batches.
 
-Opening ∈[0,1] is explicit absolute phase. A smooth local window relaxes twist and separates strands; sites outside the window keep their authored helical targets. Desired adjacent directions are normalized and integrated using baseline per-strand link lengths, then recentered as a whole. Thus backbone lengths stay fixed throughout the schematic opening; minor coupled axial repositioning is permitted and documented. This is schematic constrained geometry, not molecular dynamics or measured DNA geometry. Rotation-minimizing centerline frames position/orient bases and expose anchors; poles/reversals are rejected explicitly.
+Opening ∈[0,1] is explicit absolute phase. A smooth local window relaxes twist and separates strands. Twist relaxation accumulates along the axis, so downstream orientation targets can rotate even outside the opening window; the separation offset is local. Desired adjacent directions are normalized and integrated using baseline per-strand link lengths, then recentered as a whole. Actual positions outside the window can consequently move. No perfect outside anchoring or unchanged distal orientations are promised. Backbone lengths stay fixed throughout this schematic opening. This is constrained geometry, not molecular dynamics or measured DNA geometry. Rotation-minimizing centerline frames position/orient bases and expose anchors; poles/reversals are rejected explicitly.
 
 Result: bounded `{parts: {id,geometry,role}[], anchors: {id,base,strand,backbone,tip,tangent,normal}[], pairs, ends, linkLengths, provenance}` with consistent IDs/topology and finite frames at equal settings. Both strands are continuous and antiparallel; no bridges are invented across missing pairs because incomplete duplexes are explicitly unsupported in v1 (call separately for separate segments).
 
@@ -40,6 +40,6 @@ Proof stages: full curved helix → opening window → stable open template with
 
 ## Evidence used and gates
 
-Author independently viewed all 64 complete-frame thumbnails covering transcription32–63.5s in four ordered half-second sheets. Source visibly reveals the bubble through purple machinery, docks nucleotides, grows red RNA with 5′ label, then pulls wide. Viewed Nucleus0–31s in 32 ordered one-second frames; larger environmental coverage is still being gathered by root. More source inspection and exact coverage report follow. No screenshots are production assets.
+Author independently viewed full-duration sampled chronologies of all three biological sources and denser ordered motion samples. Exact coverage and observations are in `biological-reference-inspection.md`. No screenshots are production assets.
 
 Tests first: dense/sparse validation, explicit antiparallel Watson–Crick pairing, frame orientation and finite normals, stable IDs/indices/colors, link invariants at interior opening values, independent/reverse time sampling, no premature transcript bonds, accurate first-model/alt/TER/gap semantics and precise budgets. Native proof at1280×720 and960×720, 5–8s, with ordered decoded-frame review; independent evaluation remains separate.

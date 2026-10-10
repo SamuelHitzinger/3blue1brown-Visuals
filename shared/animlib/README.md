@@ -55,8 +55,10 @@ backends render these through the same geometry pipeline. The default player
 renders and handles input on its canvas; it creates
 no surrounding DOM. Generic drag/spring/custom behaviors and live attachments or
 connectors compose with the authored timeline. Isolated groups let overlapping
-parts fade as one object. Domain helpers for matrices, molecules, arrays, and graphs belong in the
-surrounding app. Internal dependencies are allowed; the public API requires no
+parts fade as one object. Built-in coordinate planes, graphs with Dijkstra traces,
+identity-based collections, and molecular/backbone helpers compose these same
+primitives. Host-side preparation supplies larger static models and images.
+Internal dependencies are allowed; the public API requires no
 framework.
 
 Spatial builders include `surface` for `z = f(x, y)`, `parametricSurface` for
@@ -76,8 +78,10 @@ marble, and wood patterns, plus `material` for metalness, roughness, specular
 highlights, and emissive color/intensity. Patterns use local XYZ and two palette
 colors on both GPU backends; `texture.bumpStrength` adds raised or recessed relief
 to the lighting normals. Metal reflections approximate a studio environment.
-Ordinary controls can rebuild their parameters. There are no image textures,
-image normal maps, displacement, scene reflections, or bloom. See
+Ordinary controls can rebuild their parameters. Host-prepared RGBA8 images and UV0
+base-color textures also work on both backends, with explicit host source-color
+permission. Image normal maps, displacement, scene reflections, and bloom remain
+unsupported. See
 [textures and materials](docs/reference.md#procedural-textures-and-materials).
 
 Open `http://localhost:5173/spatial.html` for interactive function, flower, and
@@ -89,7 +93,8 @@ compilation and CPU rendering measurements (GPU calls are stubbed).
 The library enforces a color palette, defaulting to 3Blue1Brown's Manim colors
 with a black background and white foreground. Scene styles use typed tokens such
 as `Color.BLUE` and `Color.NONE`; raw CSS colors are rejected by TypeScript and
-runtime validation. The host can remap named slots with a custom palette through
+runtime validation. Source-color image assets are a separate host-authorized
+exception; scene code cannot enable that policy. The host can remap named slots with a custom palette through
 `createPlayer`, `SceneSequence`, or `compileSource`. Transparency is preserved.
 See [color palettes](docs/reference.md#color-palettes) for configuration and shading behavior.
 
@@ -140,6 +145,14 @@ DOM controls now require an explicit `controlsRoot`; existing applications that
 want the native overlay should pass `canvas.parentElement` or another host.
 
 ## Development
+
+Start with [helpers and assets](docs/helpers-and-assets.md) for API boundaries,
+runnable examples, and efficient reuse. The [static importer guide](docs/assets-import.md)
+defines the accepted glTF/GLB and PNG subset; [molecular coordinates](docs/molecules.md)
+covers the original deposited-coordinate workflow. Source research and visual
+acceptance records live separately in `docs/animlib-expansion` at repository root.
+Creator palettes and choreography remain scene choices, not a single blended
+library style. Reference footage is research evidence, not licensed production assets.
 
 Use Node.js 22.16 or newer. From the repository root:
 

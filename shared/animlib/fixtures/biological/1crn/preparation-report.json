@@ -1,0 +1,53 @@
+{
+  "atoms": 327,
+  "residues": 46,
+  "bonds": 337,
+  "bondProvenance": {
+    "CONECT": 3,
+    "template": 289,
+    "peptide-rule": 45
+  },
+  "segments": 1,
+  "models": [
+    {
+      "id": "1crn-sticks",
+      "parts": 46,
+      "vertices": 10784,
+      "triangles": 10784,
+      "stats": {
+        "decodedBytes": 4141056,
+        "pinnedBytes": 0,
+        "leases": 0,
+        "models": 1
+      }
+    },
+    {
+      "id": "1crn-beads",
+      "parts": 46,
+      "vertices": 4476,
+      "triangles": 7328,
+      "stats": {
+        "decodedBytes": 2083840,
+        "pinnedBytes": 0,
+        "leases": 0,
+        "models": 1
+      }
+    },
+    {
+      "id": "1crn-surface",
+      "parts": 45,
+      "vertices": 5492,
+      "triangles": 8676,
+      "stats": {
+        "decodedBytes": 2516480,
+        "pinnedBytes": 0,
+        "leases": 0,
+        "models": 1
+      }
+    }
+  ],
+  "shell": {
+    "vertices": 5488,
+    "triangles": 10972
+  }
+}

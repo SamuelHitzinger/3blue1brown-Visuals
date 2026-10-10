@@ -18,8 +18,9 @@ export default scene({background:'BLACK',end:'hold'},s=>{
       const k=p.path('kernel-'+j,points,{stroke:c,strokeWidth:.012,opacity:0,strokeEnd:0});kernels.push(k);
     });
     const trace=p.curve('rate',t=>[t,rate(r,t)],[0,4],321,{stroke:c,strokeWidth:.036,strokeEnd:0});traces.push(trace);
-    // Map only the horizontal domain: vertical rates and row baselines stay fixed.
-    p.map([s.time],([u,v],t)=>[u*(1-.8/2.325*layout(t)),v]);
+    // Only traces compress: ticks/kernels finish fading at3.4s, before layout starts at3.5s.
+    const tracePoints=Array.from({length:321},(_,i)=>{const u=4*i/320;return[u,rate(r,u)];});
+    s.bind(trace,[s.time],t=>({points:tracePoints.map(([u,v])=>[-4.65+2.325*(u*(1-.8/2.325*layout(t))),y+rateScale*v])}));
     const m=s.circle('sample-'+r,{position:[x(selected,0),y+rateScale*rate(r,selected)],radius:.066,fill:c,opacity:0});
     s.bind(m,[s.time],t=>({position:[x(selected,t),y+rateScale*rate(r,selected)]}));markers.push(m);
     const e=s.latex('entry-'+r,{tex:'f_'+(r+1)+'(2)=\\animnum{r}',numbers:{r:rate(r,selected)},numberFormat:{decimals:2,digits:1},position:[3.1,y+.15],fontSize:.37,fill:c,opacity:0});entries.push(e);

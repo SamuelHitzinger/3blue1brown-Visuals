@@ -2,6 +2,12 @@
 
 Research date: 2026-10-11. Read-only code/reference investigation; no implementation changes. Branch inspected: `amilibsam`.
 
+Later handoff: root completed half-second complete-frame sampling across almost
+all transcription runtime; see `transcription-motion-supplement.md`. Original
+coverage limits below describe this investigator's initial pass. Molecular
+implementation and review status now lives in the implementation reports and
+progress ledger; this document preserves the evidence that preceded it.
+
 ## Evidence status
 
 The three requested URLs were opened in independent browser tabs and actual video content was inspected. This report is **not a claim of complete temporal viewing or native extracted-frame coverage**. Evidence consists of the complete video image at the timestamps below, observed through browser screenshots, plus several explicitly marked obstructed frames. Fullscreen screenshots were 2195 × 1235; these are browser output, not source-native frame files. Short periods of playback occurred, but the tool only exposed sparse ordered screenshots, so temporal smoothness, exact transition timing, and all intervening frames remain unverified. No reference frames are assets for original demos.
