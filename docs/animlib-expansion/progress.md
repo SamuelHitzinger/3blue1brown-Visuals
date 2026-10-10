@@ -26,7 +26,12 @@
   additional routine design approvals would obstruct the requested orchestration.
 - Keep shared branch and assign distinct owned files; serialize commits at root.
 - Investigators record supported observations and limits rather than invent fidelity.
-- Optional channel-identity clarification sent; supplied URL remains primary evidence.
+- User clarified channel identity: Visually Explained (linked channel) only.
+- Planning baseline committed locally as `6415bfa`; .git required sandbox
+  escalation, which automatic approval accepted. No remote operation performed.
+- Initial CPU geometry benchmark (30 frames, GPU calls mocked): linear algebra
+  median/p95 1.49/3.53 ms; organic chemistry 0.20/0.76 ms; sorting 0.12/0.53 ms;
+  interactive views 0.26/0.41 ms. These are diagnostic host measurements only.
 
 ## Preflight boundaries
 
@@ -38,3 +43,25 @@
 | Implementation / evaluator | original source, renders, reference evidence | Separate author and visual reviewer. |
 
 No implementation task is complete yet.
+
+## Native GPU baseline
+
+`npm run test:gpu --workspace animlib` before implementation: 143 pass, 4 fail.
+
+- Two recovery cases force Vulkan and fail because Vulkan adapter is unavailable.
+- Material/texture retained-versus-rebuilt pixel equality fails at control 0.1,
+  time 1.5 in `gpu.smoke.ts:376`.
+- Identical translucent arrow3D morph pixel equality fails at opacity 0.45,
+  time 1.000001 in `gpu.smoke.ts:715`.
+- Default native adapter works; external-sandbox adapter probe also succeeds.
+  These are baseline findings, not introduced by expansion. Assign focused GPU
+  diagnosis before final integrated acceptance.
+
+## First research handoff
+
+- math_algorithm_reference completed initial report. Dense local Euler samples,
+  targeted creator screenshots/playback, explicit sparse-coverage limits. Broader
+  creator motion coverage remains outstanding.
+- infrastructure started: `infrastructure-brief.md`. Sampling API agreed:
+  `withOfflineScene(source, input, use, limits?)`, sampler has `scene` and
+  `sample(time = scene.duration): Frame`; scope includes asset architecture audit.

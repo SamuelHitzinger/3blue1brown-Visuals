@@ -71,8 +71,8 @@ an observed requirement and have a bounded integration surface.
   builders, retained deformations, molecular beads, PDB import, smooth envelopes,
   procedural textures/materials, outlines/sections, multiple views, and controls.
 - Asset support currently exposes audio; general model/image asset reuse is absent.
-- The supplied label “Quantum Sense” points to `@VisuallyExplained`; investigators
-  must keep the linked channel and any separately identified Quantum Sense distinct.
+- The supplied label “Quantum Sense” points to `@VisuallyExplained`. The user
+  clarified scope: **Visually Explained (linked channel)** only.
 - Offline video/frame tools compile once and call `evaluateScene`; retained
   absolute-time callbacks need an explicit evaluation audit before new motion
   proofs use those tools.
