@@ -7,7 +7,7 @@ import { readFile, writeFile, mkdir, rename, rm } from 'node:fs/promises';
 import { resolve, dirname, basename, extname, join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { CanvasRenderer } from '../dist/renderer.js';
-import { compileSource, evaluateScene } from '../dist/core.js';
+import { withOfflineScene } from '../dist/core.js';
 
 function argumentsFor(argv) {
   const options = { width: 1280, height: 720, fps: 24, crf: 18, preset: 'medium', ffmpeg: 'ffmpeg' };
@@ -103,38 +103,40 @@ async function main() {
     for (const entry of manifest.scenes) {
       if (aborted) throw new Error('Export interrupted.');
       const source = await readFile(join(dirname(manifestPath), entry.file), 'utf8');
-      const compiled = await compileSource(source, { previous });
-      if (Math.abs(compiled.duration - entry.duration) > 0.001) throw new Error(`Scene ${entry.id}: compiled duration ${compiled.duration} differs from manifest ${entry.duration}.`);
-      if (compiled.options.audio) throw new Error(`Scene ${entry.id} declares audio; silent export requires silent source scenes.`);
-      await renderer.prepare([compiled]);
-      const sceneEnd = sceneStart + entry.duration;
-      const endFrame = Math.min(frameCount, Math.ceil(sceneEnd * fps - 1e-8));
-      process.stderr.write(`Rendering ${entry.id}: frames ${frameIndex}–${endFrame - 1}\n`);
-      while (frameIndex < endFrame) {
-        if (aborted) throw new Error('Export interrupted.');
-        if (encoderError || encoder.exitCode !== null) throw encoderError ?? new Error(`FFmpeg exited early (${encoder.exitCode}).`);
-        const time = Math.max(0, Math.min(compiled.duration, frameIndex / fps - sceneStart));
-        if (process.env.ANIMLIB_EXPORT_DEBUG) process.stderr.write(`frame ${frameIndex}: evaluate/render\n`);
-        renderer.render(evaluateScene(compiled, time), compiled.options);
-        if (renderError) throw renderError;
-        const commands = device.createCommandEncoder();
-        commands.copyTextureToBuffer({ texture }, { buffer: readback, bytesPerRow, rowsPerImage: height }, [width, height]);
-        device.queue.submit([commands.finish()]);
-        if (process.env.ANIMLIB_EXPORT_DEBUG) process.stderr.write(`frame ${frameIndex}: readback\n`);
-        await readback.mapAsync(GPUMapMode.READ);
-        try {
-          const mapped = new Uint8Array(readback.getMappedRange());
-          for (let y = 0; y < height; y++) rgba.set(mapped.subarray(y * bytesPerRow, y * bytesPerRow + width * 4), y * width * 4);
-          if (format === 'bgra8unorm') for (let i = 0; i < rgba.length; i += 4) [rgba[i], rgba[i + 2]] = [rgba[i + 2], rgba[i]];
-        } finally { readback.unmap(); }
-        if (renderError) throw renderError;
-        if (process.env.ANIMLIB_EXPORT_DEBUG) process.stderr.write(`frame ${frameIndex}: encode\n`);
-        // Await the write callback: bounded pipe buffering and safe reuse of the RGBA buffer.
-        await new Promise((resolveWrite, rejectWrite) => encoder.stdin.write(rgba, error => error ? rejectWrite(error) : resolveWrite()));
-        frameIndex++;
-      }
-      previous = evaluateScene(compiled, compiled.duration);
-      sceneStart = sceneEnd;
+      previous = await withOfflineScene(source, { previous }, async sampler => {
+        const compiled = sampler.scene;
+        if (Math.abs(compiled.duration - entry.duration) > 0.001) throw new Error(`Scene ${entry.id}: compiled duration ${compiled.duration} differs from manifest ${entry.duration}.`);
+        if (compiled.options.audio) throw new Error(`Scene ${entry.id} declares audio; silent export requires silent source scenes.`);
+        await renderer.prepare([compiled]);
+        const sceneEnd = sceneStart + entry.duration;
+        const endFrame = Math.min(frameCount, Math.ceil(sceneEnd * fps - 1e-8));
+        process.stderr.write(`Rendering ${entry.id}: frames ${frameIndex}–${endFrame - 1}\n`);
+        while (frameIndex < endFrame) {
+          if (aborted) throw new Error('Export interrupted.');
+          if (encoderError || encoder.exitCode !== null) throw encoderError ?? new Error(`FFmpeg exited early (${encoder.exitCode}).`);
+          const time = Math.max(0, Math.min(compiled.duration, frameIndex / fps - sceneStart));
+          if (process.env.ANIMLIB_EXPORT_DEBUG) process.stderr.write(`frame ${frameIndex}: evaluate/render\n`);
+          renderer.render(sampler.sample(time), compiled.options);
+          if (renderError) throw renderError;
+          const commands = device.createCommandEncoder();
+          commands.copyTextureToBuffer({ texture }, { buffer: readback, bytesPerRow, rowsPerImage: height }, [width, height]);
+          device.queue.submit([commands.finish()]);
+          if (process.env.ANIMLIB_EXPORT_DEBUG) process.stderr.write(`frame ${frameIndex}: readback\n`);
+          await readback.mapAsync(GPUMapMode.READ);
+          try {
+            const mapped = new Uint8Array(readback.getMappedRange());
+            for (let y = 0; y < height; y++) rgba.set(mapped.subarray(y * bytesPerRow, y * bytesPerRow + width * 4), y * width * 4);
+            if (format === 'bgra8unorm') for (let i = 0; i < rgba.length; i += 4) [rgba[i], rgba[i + 2]] = [rgba[i + 2], rgba[i]];
+          } finally { readback.unmap(); }
+          if (renderError) throw renderError;
+          if (process.env.ANIMLIB_EXPORT_DEBUG) process.stderr.write(`frame ${frameIndex}: encode\n`);
+          // Await the write callback: bounded pipe buffering and safe reuse of the RGBA buffer.
+          await new Promise((resolveWrite, rejectWrite) => encoder.stdin.write(rgba, error => error ? rejectWrite(error) : resolveWrite()));
+          frameIndex++;
+        }
+        sceneStart = sceneEnd;
+        return sampler.sample();
+      });
     }
     encoder.stdin.end();
     const result = await encoderDone;

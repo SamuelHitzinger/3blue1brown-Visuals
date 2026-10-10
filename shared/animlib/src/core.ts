@@ -2,6 +2,8 @@
 export { compileSource, SceneCompileError } from "./compiler.js";
 export { SceneSequence } from "./sequence.js";
 export { evaluateScene } from "./timeline.js";
+export { withOfflineScene } from './offline-sampling.js';
+export type { OfflineSceneSampler } from './offline-sampling.js';
 export { detectOverlaps, detectSceneOverlaps } from "./overlap.js";
 export { validateRenderableScene } from './render-validation.js';
 export { getLocalBounds, getWorldBounds, getCameraBounds, getScreenBounds } from "./bounds.js";

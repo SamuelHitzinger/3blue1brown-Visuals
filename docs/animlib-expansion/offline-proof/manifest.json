@@ -1,0 +1,1 @@
+{"scenes":[{"id":"motion","file":"motion.js","duration":2},{"id":"hold","file":"hold.js","duration":1}],"captions":[{"start":0,"end":2,"text":"Absolute-time motion"},{"start":2,"end":3,"text":"Endpoint handoff"}]}
