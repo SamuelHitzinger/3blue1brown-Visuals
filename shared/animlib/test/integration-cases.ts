@@ -1,5 +1,6 @@
 import type { Frame, CompiledScene, Geometry } from '../src/types.js';
 import type { SceneSequence } from '../src/sequence.js';
+import { pathRenderCase } from './path-render-cases.js';
 
 /** Shared assertions against real native WebGPU and browser WebGL2 readback. */
 export interface IntegrationSample { pixels: Uint8Array; resources: number; indexed: number; uploads: number; }
@@ -43,6 +44,7 @@ export const combinedSource = `export default scene({mode:'3d',lighting:{ambient
 });`;
 
 export const integrationCases: {name:string;run:(host:IntegrationHost)=>Promise<void>}[] = [
+{name:'arc-length paths, continuous dashes, retained points and reverse seeks',run:pathRenderCase},
  {name:'deformed capped scalar solids use final lit geometry and shadows in isolated views',run:async host=>{
   const scene=await load(host,combinedSource),identity=scene;
   let first:Uint8Array|undefined;

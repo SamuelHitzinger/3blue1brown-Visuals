@@ -6,8 +6,8 @@ export interface MoleculeProps extends Omit<ElementStyle, 'billboard' | 'billboa
   positions: number[];
   /** Display radius in the same units as positions. Required and positive. */
   radius: number;
-  /** 0: octahedra (8 faces/site); 1: subdivided octahedra (32 faces/site). Default 0. */
-  detail?: 0 | 1;
+  /** Octahedral subdivision level: 0/1/2/3 = 8/32/128/512 faces per site. Default 0. Total output remains <=500000 vertices and triangles. */
+  detail?: 0 | 1 | 2 | 3;
   /** Subtracted from every coordinate before the group transform. Default [0,0,0]. */
   origin?: Vec3;
   material?: Material;

@@ -1,4 +1,6 @@
 import { project, rotate } from './geometry.js';
+import { resolveAssetGeometry } from './asset-geometry.js';
+import type { AssetGeometryResolver } from './asset-types.js';
 import type { CameraState, ElementState, Frame, Ray, Vec3 } from './types.js';
 
 export const add = (a: Vec3, b: Vec3): Vec3 => a.map((v, i) => v + b[i]) as Vec3;
@@ -63,7 +65,7 @@ export function planePoint(ray: Ray, point: Vec3, normal: Vec3): Vec3 | undefine
 }
 
 /** Built-in hit shapes: spheres, planar circles/rectangles and triangle meshes. */
-export function pick(frame: Frame, ray: Ray, targets: Set<string>, camera: CameraState, width: number, height: number, view?: string, screenPoint?: [number, number]): { id: string; element: string; point: Vec3; distance: number } | undefined {
+export function pick(frame: Frame, ray: Ray, targets: Set<string>, camera: CameraState, width: number, height: number, view?: string, screenPoint?: [number, number], assetGeometry?:AssetGeometryResolver): { id: string; element: string; point: Vec3; distance: number } | undefined {
   const space = new SpatialFrame(frame);
   let best: { id: string; element: string; point: Vec3; distance: number } | undefined;
   for (const element of frame.elements) {
@@ -86,7 +88,7 @@ export function pick(frame: Frame, ray: Ray, targets: Set<string>, camera: Camer
     };
     const o = toLocal(r.origin), d = sub(toLocal(add(r.origin, r.direction)), o);
     let t = Infinity;
-    const g = element.geometry;
+    const g = resolveAssetGeometry(element.geometry,assetGeometry);
     if (g.kind === 'sphere') {
       const radius = space.radius(element.id)/chain.reduce((n, e) => n * e.scale, 1);
       const a = dot(d,d), b = dot(o,d), c = dot(o,o)-radius*radius, discriminant = b*b-a*c;

@@ -12,10 +12,13 @@ import { layoutLatex, layoutLatexGeometry } from './latex.js';
 import type { LatexPath } from './latex.js';
 import { morphPathContours, pathContours } from './path.js';
 import type { PathContour } from './path.js';
+import { strokeContours } from './path-stroke.js';
 import { meshTriangles, morphMeshNormals } from './mesh-shading.js';
 import { explainMesh, outlineEdges, scalarVertexColors, morphExplanatory, type Corner, type RGBA } from './explanatory.js';
 import { cameraRay, dot } from './spatial.js';
 import { applyLabelOcclusion, type LabelAnchor } from './label-occlusion.js';
+import { resolveAssetGeometry } from './asset-geometry.js';
+import type { AssetGeometryResolver } from './asset-types.js';
 
 export function textTex(text:string):string {return String.raw`\text{`+text.replace(/[\\{}$&#%_^~]/g,c=>({'\\':String.raw`\backslash `,'{':String.raw`\{`,'}':String.raw`\}`,'$':String.raw`\$`,'&':String.raw`\&`,'#':String.raw`\#`,'%':String.raw`\%`,'_':String.raw`\_`,'^':String.raw`\textasciicircum `,'~':String.raw`\textasciitilde `}[c]!))+'}';}
 function contains(contour:Vec3[],point:Vec3):boolean {
@@ -50,10 +53,10 @@ export interface GeometryDrawItem extends DrawItem { elementId: string; castShad
 const isText = (geometry: Geometry): boolean => geometry.kind === 'text' || geometry.kind === 'latex';
 
 /** textOnly skips shape tessellation while retaining groups and the text portions of mixed morphs. */
-export function buildDrawItems(frame:Frame,camera:CameraState,width:number,height:number,palette:PaletteResolver,view?:string,textOnly=false,retained?:RetainedGeometry,elementIds?:ReadonlySet<string>):GeometryDrawItem[] {
+export function buildDrawItems(frame:Frame,camera:CameraState,width:number,height:number,palette:PaletteResolver,view?:string,textOnly=false,retained?:RetainedGeometry,elementIds?:ReadonlySet<string>,assetGeometry?:AssetGeometryResolver):GeometryDrawItem[] {
   // Anchor visibility needs opaque occluders even during text overlap inspection.
   if((textOnly || elementIds) && frame.elements.some(e=>e.view===view && (!elementIds || elementIds.has(e.id)) && [e.geometry,e.morph?.from,e.morph?.to].some(g=>g?.labelOcclusion && g.labelOcclusion!=='depth'))) {
-    return buildDrawItems(frame,camera,width,height,palette,view,false,retained)
+    return buildDrawItems(frame,camera,width,height,palette,view,false,retained,undefined,assetGeometry)
       .filter(item=>(!textOnly || item.component==='content') && (!elementIds || elementIds.has(item.elementId)));
   }
   const parents=new Map<string,ElementState>();
@@ -70,6 +73,8 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
     if(element.geometry.kind==='group'||element.view!==view)continue;
     if(elementIds&&!elementIds.has(element.id))continue;
     if(textOnly && !(element.morph ? isText(element.morph.from)||isText(element.morph.to) : isText(element.geometry)))continue;
+    // Check the live lease even on a retained-cache hit; cached GPU geometry is not authorization.
+    if(element.geometry.asset) resolveAssetGeometry(element.geometry,assetGeometry);
     const chain:ElementState[]=[element];let parent=parents.get(element.id);const seen=new Set([element.id]);
     while(parent&&!seen.has(parent.id)){chain.push(parent);seen.add(parent.id);parent=parents.get(parent.id);}
     const viewportOffset=[0,1].map(axis=>chain.reduce((sum,e)=>sum+(e.viewportOffset?.[axis]??0),0));
@@ -120,8 +125,8 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
       const primitive=canonicalPrimitive(element);
       const local:ElementState={...element,geometry:primitive.geometry,id:'',view:undefined,position:[0,0,0],rotation:[0,0,0],scale:1,
         opacity,billboard:false,billboardOffset:undefined,viewportOffset:undefined};
-      const key=paletteKey+JSON.stringify([local.geometry,local.fill,local.stroke,local.strokeWidth,local.strokeProfile,local.space,opacity]);
-      const meshes=retained.get(key,()=>buildDrawItems({...frame,elements:[local]},camera,width,height,palette),element.geometry.kind==='arrow',JSON.stringify([view,element.id]));
+      const key=paletteKey+JSON.stringify([local.geometry,local.fill,local.stroke,local.strokeWidth,local.strokeProfile,local.space,opacity,local.strokeStart,local.strokeEnd,local.dashArray,local.dashOffset]);
+      const meshes=retained.get(key,()=>buildDrawItems({...frame,elements:[local]},camera,width,height,palette,undefined,false,undefined,undefined,assetGeometry),element.geometry.kind==='arrow',JSON.stringify([view,element.id]));
       const instanceBasis=primitive.axes.map(p=>p.map((_,axis)=>p.reduce((sum,v,i)=>sum+v*basis[i][axis],0)) as Vec3);
       const instanceOrigin=origin.map((v,axis)=>v+primitive.origin.reduce((sum,p,i)=>sum+p*basis[i][axis],0)) as Vec3;
       const instance=new Float32Array([...instanceBasis[0],0,...instanceBasis[1],0,...instanceBasis[2],0,...instanceOrigin,1,elementIndex,scale*primitive.scale,...viewportOffset]);
@@ -199,7 +204,7 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
     };
     const drawPath=(paths:PathContour[],alpha=1):void=> {
       contours(paths.filter(path=>path.closed).map(path=>path.points),alpha);
-      for(const path of paths)stroke(path.points,path.closed,alpha);
+      for(const path of strokeContours(paths,element))stroke(path.points,path.closed,alpha);
     };
     const latexPaths=(paths:LatexPath[],size:number,alpha:number,offset:Vec3=[0,0,0]):void=> {
       const color=element.fill==='none'?element.stroke:element.fill;
@@ -254,6 +259,7 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
       if(element.fill!=='none')addTriangles(mesh.points,element.fill,alpha,normals,'fill',true,geometry.texture,geometry.material);
     };
     const drawGeometry=(geometry:Geometry,alpha=1):void=> {
+      geometry=resolveAssetGeometry(geometry,assetGeometry);
       if(textOnly&&!isText(geometry))return;
       if(geometry.kind==='text'||geometry.kind==='latex'){latexPaths((geometry.kind==='text'?layoutLatex(textTex(geometry.text??'')):layoutLatexGeometry(geometry)).paths,geometry.fontSize??(element.space==='screen'?(geometry.kind==='text'?16:24):(geometry.kind==='text'?0.4:0.6)),alpha);return;}
       if(geometry.kind==='mesh'){addMesh(geometry,alpha);return;}
@@ -266,7 +272,10 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
       if(geometry.kind==='path'&&(geometry.d!==undefined||geometry.curve==='smooth')){drawPath(pathContours(geometry,pathTolerance),alpha);return;}
       const shape=outline(geometry);if(!shape||!shape.points.length)return;
       if(geometry.kind==='arrow'&&shape.points.length>1) {
-        const points=shape.points.filter((p,i)=>!i||Math.hypot(...p.map((v,j)=>v-shape.points[i-1][j]))>1e-10),end=points.at(-1)!;
+        const visible=strokeContours([shape],element);
+        for(const fragment of visible.slice(0,-1))stroke(fragment.points,false,alpha);
+        const tip=visible.at(-1);if(!tip || element.stroke==='none' || element.strokeWidth<=0)return;
+        const points=tip.points.filter((p,i)=>!i||Math.hypot(...p.map((v,j)=>v-tip.points[i-1][j]))>1e-10),end=points.at(-1)!;
         const lengths=points.slice(1).map((p,i)=>Math.hypot(...p.map((v,j)=>v-points[i][j]))),length=lengths.reduce((a,b)=>a+b,0);
         if(length>1e-10) {
           const headLength=Math.min(length*0.45,Math.max(element.space==='screen'?6:0.16,element.strokeWidth*4));
@@ -282,7 +291,7 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
             addTriangles(head.points,element.stroke,alpha,head.normals,'stroke');
           } else addTriangles([end,base.map((v,i)=>v+side[i]) as Vec3,base.map((v,i)=>v-side[i]) as Vec3],element.stroke,alpha,undefined,'stroke');
         }
-      } else {if(shape.closed)contours([shape.points],alpha);stroke(shape.points,shape.closed,alpha);}
+      } else {if(shape.closed)contours([shape.points],alpha);for(const part of strokeContours([shape],element))stroke(part.points,part.closed,alpha);}
 
     };
     const morph=element.morph;

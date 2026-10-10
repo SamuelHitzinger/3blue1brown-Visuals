@@ -54,7 +54,7 @@ function nondegenerate([a, b, c]: Vec3[]): boolean {
 
 function triangles(frame: Frame, ids: Set<string>, root: ElementState, camera: CameraState, width: number, height: number, options: BoundsOptions,
   consume: (triangle: Vec3[], screen: boolean, offset: Vec2) => void): void {
-  for (const item of buildDrawItems(presentation(frame, options), camera, width, height, paletteResolver(options.palette), root.view, false, undefined, ids)) {
+  for (const item of buildDrawItems(presentation(frame, options), camera, width, height, paletteResolver(options.palette), root.view, false, undefined, ids, options.assetGeometry)) {
     if (options.includeStroke === false && item.component === 'stroke') continue;
     const data = item.vertices;
     for (let i = 0; i < data.length; i += 3 * VERTEX_FLOATS) {

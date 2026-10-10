@@ -1,5 +1,6 @@
 import { GeometryCache } from './cache.js';
 import { vec3 } from './geometry.js';
+import { assetGeometryIdentity } from './asset-geometry.js';
 import type { Geometry, Vec3 } from './types.js';
 
 interface MeshTriangles { points: Vec3[]; normals?: Vec3[] }
@@ -16,7 +17,8 @@ const unit = (normal: Vec3, fallback: Vec3 = [0, 0, 1]): Vec3 => {
 /** Expand an indexed mesh, computing flat or area-weighted smooth local normals. */
 export function meshTriangles(geometry: Geometry): MeshTriangles {
   const shading = geometry.shading ?? 'unlit';
-  const key = JSON.stringify([geometry.vertices, geometry.triangles, shading, shading === 'smooth' ? geometry.normals : undefined]);
+  const identity=assetGeometryIdentity(geometry);
+  const key = identity ? `asset:${identity}:${shading}` : JSON.stringify([geometry.vertices, geometry.triangles, shading, shading === 'smooth' ? geometry.normals : undefined]);
   const cached = meshes.get(key);
   if (cached) return cached;
 

@@ -8,6 +8,7 @@ import { resolve, dirname, basename, extname, join } from 'node:path';
 import { spawn } from 'node:child_process';
 import { CanvasRenderer } from '../dist/renderer.js';
 import { withOfflineScene } from '../dist/core.js';
+import { loadAssetRegistry } from './load-assets.mjs';
 
 function argumentsFor(argv) {
   const options = { width: 1280, height: 720, fps: 24, crf: 18, preset: 'medium', ffmpeg: 'ffmpeg' };
@@ -55,6 +56,7 @@ async function main() {
   const options = argumentsFor(process.argv.slice(2));
   const manifestPath = resolve(options.manifest);
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+  const modelAssets=manifest.modelAssets?await loadAssetRegistry(manifest.modelAssets.map(path=>resolve(dirname(manifestPath),path))):undefined;
   const duration = validateManifest(manifest);
   const output = resolve(options.output);
   await mkdir(dirname(output), { recursive: true });
@@ -107,7 +109,7 @@ async function main() {
         const compiled = sampler.scene;
         if (Math.abs(compiled.duration - entry.duration) > 0.001) throw new Error(`Scene ${entry.id}: compiled duration ${compiled.duration} differs from manifest ${entry.duration}.`);
         if (compiled.options.audio) throw new Error(`Scene ${entry.id} declares audio; silent export requires silent source scenes.`);
-        await renderer.prepare([compiled]);
+        await renderer.prepare([compiled],sampler.assetGeometry);
         const sceneEnd = sceneStart + entry.duration;
         const endFrame = Math.min(frameCount, Math.ceil(sceneEnd * fps - 1e-8));
         process.stderr.write(`Rendering ${entry.id}: frames ${frameIndex}–${endFrame - 1}\n`);
@@ -136,7 +138,7 @@ async function main() {
         }
         sceneStart = sceneEnd;
         return sampler.sample();
-      });
+      },{modelAssets});
     }
     encoder.stdin.end();
     const result = await encoderDone;

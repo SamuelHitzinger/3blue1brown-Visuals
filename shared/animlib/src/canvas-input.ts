@@ -2,6 +2,7 @@ import { BehaviorRuntime } from './behaviors.js';
 import { cameraRay, pick, SpatialFrame } from './spatial.js';
 import { rotate } from './geometry.js';
 import type { InteractionSnapshot, Ray } from './types.js';
+import type { AssetGeometryResolver } from './asset-types.js';
 
 /** Canvas-only behavior input. Native camera gestures receive every unclaimed event. */
 export class CanvasInput {
@@ -12,6 +13,7 @@ export class CanvasInput {
   constructor(private canvas: HTMLCanvasElement, private runtime: BehaviorRuntime,
     private snapshot: (view?: string) => InteractionSnapshot | undefined,
     private invalidate: () => void,
+    private assetGeometry?: AssetGeometryResolver,
   ) { this.listen(true); }
   private listen(add: boolean): void {
     if (!this.canvas.addEventListener) return;
@@ -51,7 +53,7 @@ export class CanvasInput {
     let view = [...(snapshot.frame.views ?? [])].reverse().find(v => x >= v.rect[0] && y >= v.rect[1] && x < v.rect[0]+v.rect[2] && y < v.rect[1]+v.rect[3])?.id ?? '';
     let p = this.coordinates(event, view); if (!p) return;
     const hitAt = (p: NonNullable<ReturnType<CanvasInput['coordinates']>>, targets: Set<string>, view: string) =>
-      pick(p.snapshot.frame, cameraRay(p.x, p.y, p.snapshot.camera, p.snapshot.width, p.snapshot.height), targets, p.snapshot.camera, p.snapshot.width, p.snapshot.height, view || undefined, [p.x, p.y]);
+      pick(p.snapshot.frame, cameraRay(p.x, p.y, p.snapshot.camera, p.snapshot.width, p.snapshot.height), targets, p.snapshot.camera, p.snapshot.width, p.snapshot.height, view || undefined, [p.x, p.y], this.assetGeometry);
     let hit;
     if (view) {
       // Global screen content is rendered after regional views and wins input too.

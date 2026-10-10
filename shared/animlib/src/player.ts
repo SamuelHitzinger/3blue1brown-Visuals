@@ -44,11 +44,12 @@ export class Player {
   constructor(options: PlayerOptions) {
     const palette = paletteResolver(options.palette).palette;
     this.palette = palette;
-    this.renderer = new CanvasRenderer(options.canvas, palette);
+    this.renderer = new CanvasRenderer(options.canvas, palette, { resolve:ref=>this.sequence.assetGeometry.resolve(ref) });
     this.behaviors = new BehaviorRuntime(options.behaviors);
-    this.input = new CanvasInput(options.canvas, this.behaviors, view => this.renderer.interactionSnapshot(view), () => this.invalidateFrame());
+    this.input = new CanvasInput(options.canvas, this.behaviors, view => this.renderer.interactionSnapshot(view), () => this.invalidateFrame(), { resolve:ref=>this.sequence.assetGeometry.resolve(ref) });
     this.audio = new AudioClock(options.assets);
     this.sequence = new SceneSequence({
+      modelAssets: options.modelAssets,
       palette,
       seed: options.seed,
       executionLimitMs: options.executionLimitMs,
@@ -115,7 +116,7 @@ export class Player {
     if (!main || !element) return;
     const snapshot = element.view === undefined ? main : this.getInteractionSnapshot(element.view);
     if (!snapshot) return;
-    const settings = { ...options, width: snapshot.width, height: snapshot.height, camera: snapshot.camera, palette: this.displayPalette ?? this.palette };
+    const settings = { ...options, assetGeometry:this.sequence.assetGeometry, width: snapshot.width, height: snapshot.height, camera: snapshot.camera, palette: this.displayPalette ?? this.palette };
     switch (options.space ?? 'screen') {
       case 'local': return getLocalBounds(snapshot.frame, id, settings);
       case 'world': return getWorldBounds(snapshot.frame, id, settings);

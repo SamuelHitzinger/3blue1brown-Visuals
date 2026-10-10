@@ -2,10 +2,13 @@ import type { ColorPalette, CompiledScene, ElementState, Geometry } from './type
 import { paletteResolver } from './palette.js';
 import { textTex } from './render-geometry.js';
 import { layoutLatex, layoutLatexGeometry, validateLatexMap } from './latex.js';
+import { resolveAssetGeometry } from './asset-geometry.js';
+import type { AssetGeometryResolver } from './asset-types.js';
 
 /** CPU preparation shared by author validation and both rendering backends. */
-export function validateRenderableScene(scene: CompiledScene, hostPalette?: ColorPalette): void {
+export function validateRenderableScene(scene: CompiledScene, hostPalette?: ColorPalette, assetGeometry?: AssetGeometryResolver): void {
   const prepareGeometry = (geometry: Geometry): void => {
+    geometry=resolveAssetGeometry(geometry,assetGeometry);
     if (geometry.kind === 'latex') layoutLatexGeometry(geometry);
     if (geometry.kind === 'text') layoutLatex(textTex(geometry.text ?? ''));
   };

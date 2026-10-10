@@ -46,7 +46,11 @@ the engine worker may own `s.paths` with reveal utilities.
 Pure source API `s.dijkstra(data, source)` is approved. Graph data is limited to
 256 nodes/2048 edges; trace snapshots stop at 100,000 total frontier records.
 Unreachable distance is Infinity in algorithm data (never sent as geometry).
-Static weights render exact strings; mutable cost labels use six integer digit
-slots (native countTo validates overflow). Opposite-direction edges sharing the
+Static weights render exact strings; mutable cost labels default to six integer
+digits and the maximum edge decimal precision capped at four places. Optional
+`costFormat: {decimals?: number, digits?: number}` accepts 0–4 fractional places
+and 1–6 integer digits. Values finer than the selected precision are rounded;
+algorithm distances remain full precision. Native countTo validates overflow.
+Opposite-direction edges sharing the
 same node pair are rejected along with parallel edges because straight arrow
 overdraw would be misleading. Cycles through three or more nodes remain valid.

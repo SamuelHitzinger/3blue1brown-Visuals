@@ -14,7 +14,10 @@ export function applyBindings(frame: Frame, bindings: BindingDeclaration[] = [],
     const ids = b.type === 'attach' ? [b.source] : [b.from, b.to];
     for (const source of ids) { visit(source); if (!space.elements.has(source)) { e.opacity = 0; return; } }
     if (b.type === 'attach') {
-      e.position = space.local(id, add(space.world(b.source), b.offset ?? [0, 0, 0]), true);
+      const points = space.elements.get(b.source)!.geometry.points;
+      const midpoint: Vec3 = b.anchor === 'midpoint' && points?.length
+        ? [0,1,2].map(axis => ((points[0][axis] ?? 0) + (points.at(-1)![axis] ?? 0))/2) as Vec3 : [0,0,0];
+      e.position = space.local(id, add(space.world(b.source, midpoint), b.offset ?? [0, 0, 0]), true);
     } else {
       const from = space.world(b.from), to = space.world(b.to), delta = sub(to, from), length = Math.hypot(...delta);
       const direction = unit(delta), reference: Vec3 = Math.abs(direction[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];

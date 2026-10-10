@@ -2,7 +2,7 @@ import { validateSurfaceAppearance } from './appearance-validation.js';
 import { paletteResolver } from './palette.js';
 import type { CompiledScene, ElementState, ReactiveProperties, ReactiveUpdate, Vec3 } from './types.js';
 
-const keys = new Set(['radius', 'position', 'rotation', 'scale', 'opacity', 'fill', 'vertices', 'normals', 'material', 'texture', 'scalarColors']);
+const keys = new Set(['radius', 'position', 'rotation', 'scale', 'opacity', 'fill', 'vertices', 'normals', 'material', 'texture', 'scalarColors', 'points', 'strokeStart', 'strokeEnd', 'dashOffset']);
 function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 const finite = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && Math.abs(value) <= 1e6;
 
@@ -11,7 +11,18 @@ export function validateReactiveProperties(properties: ReactiveProperties, targe
   check(properties && typeof properties === 'object' && !Array.isArray(properties), 'Invalid reactive properties');
   check(Object.keys(properties).length > 0 && Object.keys(properties).every(key => keys.has(key)), 'Unsupported reactive property');
   for (const [key, value] of Object.entries(properties)) {
+    check(!target.geometry.asset || !['vertices','normals','scalarColors'].includes(key), 'Referenced model assets cannot deform');
     if (key === 'fill') paletteResolver(scene.options.palette).validate(value);
+    else if (key === 'points') {
+      check(['path','line','arrow'].includes(target.geometry.kind) && target.geometry.d === undefined, 'Reactive points requires a point-authored path, line, or arrow');
+      check(!scene.bindings?.some(b=>b.type==='connect' && b.target===target.id), 'Reactive points conflicts with connected endpoints');
+      check(Array.isArray(value) && value.length === target.geometry.points?.length && value.length <= 20000, 'Reactive points must preserve point count and topology');
+      for (const point of value) check(Array.isArray(point) && (point.length===2 || point.length===3) && point.every(finite), 'Invalid reactive points');
+    }
+    else if (key === 'strokeStart' || key === 'strokeEnd' || key === 'dashOffset') {
+      check(['path','line','arrow'].includes(target.geometry.kind), `Reactive ${key} requires a path, line, or arrow`);
+      check(finite(value) && (key==='dashOffset' || value>=0 && value<=1), `Invalid reactive ${key}`);
+    }
     else if (key === 'scalarColors') {
       check(target.geometry.kind === 'mesh', 'Reactive scalarColors requires a mesh');
       if (value === null) continue;
@@ -77,7 +88,8 @@ export function validateReactiveBindings(scene: CompiledScene): void {
     owners.set(binding.target, owned);
     for (const track of scene.tracks) if (track.action.ids.includes(binding.target)) {
       check(!properties.some(key => Object.hasOwn(track.action.properties ?? {}, key)
-        || ['radius', 'vertices', 'normals', 'material', 'texture', 'scalarColors'].includes(key) && track.action.type === 'morph'), 'A reactive binding and timeline cannot own the same property');
+        || ['radius', 'vertices', 'normals', 'material', 'texture', 'scalarColors', 'points'].includes(key) && track.action.type === 'morph'), 'A reactive binding and timeline cannot own the same property');
+      if (properties.some(key=>['strokeStart','strokeEnd','dashOffset'].includes(key)) && track.action.type==='morph') check(['path','line','arrow'].includes(track.action.geometry!.kind), 'Reactive stroke controls require path, line, or arrow morph destinations');
     }
     if (properties.includes('position')) {
       check(!scene.bindings?.some(b => b.target === binding.target) && !scene.behaviors?.some(b => b.target === binding.target), 'Reactive position conflicts with an attachment or behavior');
@@ -105,7 +117,7 @@ export function applyReactiveProperties(element: ElementState, properties: React
   // Moving vertices invalidates authored normals unless this patch replaces them.
   if (properties.vertices !== undefined) delete element.geometry.normals;
   for (const [key, value] of Object.entries(properties)) {
-    if (['vertices', 'normals', 'material', 'texture', 'scalarColors'].includes(key)) {
+    if (['vertices', 'normals', 'material', 'texture', 'scalarColors', 'points'].includes(key)) {
       if (value === null) delete (element.geometry as unknown as Record<string, unknown>)[key];
       else Object.assign(element.geometry, { [key]: structuredClone(value) });
     }

@@ -18,6 +18,7 @@ import { rotate } from './geometry.js';
 import { buildDrawItems } from './render-geometry.js';
 export { triangulateContours } from './render-geometry.js';
 import { validateRenderableScene } from './render-validation.js';
+import type { AssetGeometryResolver } from './asset-types.js';
 
 const shader=`
 struct Camera { focus: vec4f, angles: vec4f, viewport: vec4f, light: vec4f, ambient: vec4f };
@@ -120,7 +121,7 @@ export class CanvasRenderer {
   private format:GPUTextureFormat|undefined;
   private initializing:Promise<void>|undefined;
   private disposed=false;
-  constructor(private canvas:HTMLCanvasElement, private hostPalette?:ColorPalette) {
+  constructor(private canvas:HTMLCanvasElement, private hostPalette?:ColorPalette, private assetGeometry?:AssetGeometryResolver) {
     this.originalCanvas=canvas;
     if(hostPalette)this.hostPalette=paletteResolver(hostPalette).palette;
     this.observer=new ResizeObserver(()=>{this.resize();if(this.onInvalidate)this.onInvalidate();else if(this.lastFrame&&this.lastOptions)this.render(this.lastFrame,this.lastOptions);});
@@ -240,7 +241,7 @@ export class CanvasRenderer {
           const snapshot=this.interactionSnapshot(region.id);if(!snapshot)return;
           const px=(x-left)/width*snapshot.width,py=(y-top)/height*snapshot.height;
           const targets=new Set(snapshot.frame.elements.filter(e=>e.view===region.id).map(e=>e.id));
-          if(!pick(snapshot.frame,cameraRay(px,py,snapshot.camera,snapshot.width,snapshot.height),targets,snapshot.camera,snapshot.width,snapshot.height,region.id,[px,py]))return;
+          if(!pick(snapshot.frame,cameraRay(px,py,snapshot.camera,snapshot.width,snapshot.height),targets,snapshot.camera,snapshot.width,snapshot.height,region.id,[px,py],this.assetGeometry))return;
         }
         return region.id;
       }
@@ -342,9 +343,10 @@ export class CanvasRenderer {
     context.configure({device,format:this.format,alphaMode:'opaque'});
     this.resize();this.ready=true;
   }
-  async prepare(scenes:CompiledScene[]):Promise<void> {
+  async prepare(scenes:CompiledScene[], assetGeometry:AssetGeometryResolver|undefined=this.assetGeometry):Promise<void> {
     if(this.disposed)throw new Error('Renderer is disposed.');
-    for(const scene of scenes)validateRenderableScene(scene,this.hostPalette);
+    for(const scene of scenes)validateRenderableScene(scene,this.hostPalette,assetGeometry);
+    this.assetGeometry=assetGeometry;
     if(!this.initializing)this.initializing=this.initialize().catch(error=>{this.initializing=undefined;throw error;});
     await this.initializing;
   }
@@ -379,7 +381,7 @@ export class CanvasRenderer {
     const lighting=frame.lighting??options.lighting;
     this.retained.beginFrame();
     const retention=retentionForFrame({...frame,lighting})?this.retained:undefined;
-    const mainItems=addPlanarShadows(buildDrawItems(frame,camera,width,height,palette,undefined,false,retention),lighting,camera,palette);
+    const mainItems=addPlanarShadows(buildDrawItems(frame,camera,width,height,palette,undefined,false,retention,undefined,this.assetGeometry),lighting,camera,palette);
     const batches=[{camera,width,height,rect:undefined as number[]|undefined,items:mainItems.filter(i=>!i.screen),id:''}];
     for(const region of this.regions) {
       const [left,top,w,h]=region.rect;
@@ -389,7 +391,7 @@ export class CanvasRenderer {
       if(pixelWidth<1||pixelHeight<1)continue;
       const viewWidth=width*pixelWidth/this.canvas.width,viewHeight=height*pixelHeight/this.canvas.height;
       const viewCamera=this.effectiveCamera(region.camera,region.orbit,region.id);
-      batches.push({camera:viewCamera,width:viewWidth,height:viewHeight,rect:[x,y,pixelWidth,pixelHeight],items:addPlanarShadows(buildDrawItems(frame,viewCamera,viewWidth,viewHeight,palette,region.id,false,retention),lighting,viewCamera,palette),id:region.id});
+      batches.push({camera:viewCamera,width:viewWidth,height:viewHeight,rect:[x,y,pixelWidth,pixelHeight],items:addPlanarShadows(buildDrawItems(frame,viewCamera,viewWidth,viewHeight,palette,region.id,false,retention,undefined,this.assetGeometry),lighting,viewCamera,palette),id:region.id});
     }
     // Scene-wide screen labels stay above every regional 3D view.
     if(mainItems.some(i=>i.screen))batches.push({camera,width,height,rect:undefined,items:mainItems.filter(i=>i.screen),id:''});

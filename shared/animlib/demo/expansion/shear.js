@@ -1,0 +1,21 @@
+export default scene({background:'BLACK',end:'hold'},s=>{
+  const options={xRange:[-5,6],yRange:[-3,4],origin:[-2,-1.1],scale:1.3,step:1,ticks:false};
+  const original=s.plane('original',{...options,grid:{stroke:'GREY_C',strokeWidth:.009,opacity:.32},axes:{stroke:'GREY_B',strokeWidth:.012,opacity:.6}});
+  original.vector('v',[2,1],{stroke:'GREY_A',strokeWidth:.025,opacity:.3});
+  original.path('square',[[0,0],[1,0],[1,1],[0,1]],{closed:true,stroke:'GREY_A',strokeWidth:.014,opacity:.3});
+  const p=s.plane('sheared',{...options,grid:{stroke:'BLUE_D',strokeWidth:.012,opacity:.34},axes:false});
+  p.path('square',[[0,0],[1,0],[1,1],[0,1]],{closed:true,fill:{color:'BLUE_D',opacity:.13},stroke:'BLUE_B',strokeWidth:.025});
+  p.vector('e1',[1,0],{stroke:'TEAL',strokeWidth:.048});
+  p.vector('e2',[0,1],{stroke:'ORANGE',strokeWidth:.048});
+  p.vector('v',[2,1],{stroke:'WHITE',strokeWidth:.04});
+  p.label('e1-label','e_1',[1,0],[0,-.34],{fill:'TEAL',fontSize:.32});
+  p.label('e2-label','e_2',[0,1],[-.4,.2],{fill:'ORANGE',fontSize:.32});
+  p.label('v-label','v',[2,1],[.27,.26],{fontSize:.4});
+  const components=p.components('components',[2,1],{x:{stroke:'TEAL',strokeWidth:.035,opacity:0},y:{stroke:'ORANGE',strokeWidth:.035,opacity:0}});
+  const xLabel=p.label('x-coefficient','2e_1',[1,0],[0,-.8],{fill:'TEAL',fontSize:.36,opacity:0});
+  const yLabel=p.label('y-coefficient','e_2',[2,.5],[.42,0],{fill:'ORANGE',fontSize:.36,opacity:0});
+  p.map([s.time],([x,y],time)=>{const u=Math.max(0,Math.min(1,(time-1)/2.5));const k=u*u*(3-2*u);return [x+k*y,y];});
+  s.wait(4);
+  s.play([components.x.fadeIn(),components.y.fadeIn(),xLabel.fadeIn(),yLabel.fadeIn()],{duration:.6});
+  s.wait(1.9);
+});

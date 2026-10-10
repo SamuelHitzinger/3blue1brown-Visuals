@@ -5,6 +5,8 @@ import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { CanvasRenderer } from '../dist/renderer.js';
 import { withOfflineScene } from '../dist/core.js';
+import { loadAssetRegistry } from './load-assets.mjs';
+import { dirname, resolve } from 'node:path';
 
 function png(width, height, rgba) {
   const crc = data => { let c=0xffffffff; for(const b of data){c^=b;for(let i=0;i<8;i++)c=(c>>>1)^((c&1)?0xedb88320:0);}return (c^0xffffffff)>>>0; };
@@ -29,6 +31,7 @@ async function readPixels(device, texture, format) {
 async function main() {
   const input=JSON.parse(await readFile(process.argv[2],'utf8'));
   if(!Array.isArray(input.times)||!input.times.length||input.times.length>16)throw new Error('Expected 1–16 sample times.');
+  const modelAssets=input.modelAssets?await loadAssetRegistry(input.modelAssets.map(path=>resolve(dirname(process.argv[2]),path))):undefined;
   await withOfflineScene(input.source,{previous:input.previousFrame},async sampler=>{
     const compiled=sampler.scene;
     if(!input.times.every(t=>Number.isFinite(t)&&t>=0&&t<=compiled.duration))throw new Error('Invalid sample time.');
@@ -49,7 +52,7 @@ async function main() {
       const canvas={width,height,style:{},getBoundingClientRect:()=>({width,height}),getContext:kind=>kind==='webgpu'?context:null,addEventListener(){},removeEventListener(){}};
       const renderer=new CanvasRenderer(canvas);renderer.onError=e=>errors.push(e.message);
       try {
-        await renderer.prepare([compiled]);
+        await renderer.prepare([compiled],sampler.assetGeometry);
         const cellW=640,cellH=Math.round(height*cellW/width),sheetW=cellW*2;
         for(let start=0;start<input.times.length;start+=6) {
           const times=input.times.slice(start,start+6),sheetH=cellH*Math.ceil(times.length/2),sheet=new Uint8Array(sheetW*sheetH*4);
@@ -74,6 +77,6 @@ async function main() {
     }
     await writeFile(join(input.directory,'frames.json'),JSON.stringify(manifest,null,2));
     process.stdout.write(JSON.stringify(manifest));
-  });
+  },{modelAssets});
 }
 main().then(()=>process.exit(0),error=>{console.error(error instanceof Error?error.message:String(error));process.exit(1);});

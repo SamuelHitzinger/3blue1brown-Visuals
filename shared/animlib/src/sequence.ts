@@ -3,9 +3,12 @@ import { SourceCompiler } from "./compiler-client.js";
 import { evaluateScene } from "./timeline.js";
 import { paletteResolver } from "./palette.js";
 import { mergeReactiveUpdates } from './reactive.js';
+import { SceneAssets } from './scene-assets.js';
+import type { AssetRegistry } from './asset-types.js';
 import type { ColorPalette, CompiledScene, ControlValue, Frame, SceneSource, Submission, SubmitResult } from "./types.js";
 
 export interface SequenceOptions {
+  modelAssets?: AssetRegistry;
   palette?: ColorPalette;
   seed?: number;
   executionLimitMs?: number;
@@ -25,8 +28,10 @@ export class SceneSequence {
   private queue: Promise<unknown> = Promise.resolve();
   private compiler = new SourceCompiler();
   private disposed = false;
+  readonly assetGeometry: SceneAssets;
   constructor(private options: SequenceOptions = {}) {
     this.options = { ...options, palette: paletteResolver(options.palette).palette };
+    this.assetGeometry = new SceneAssets(options.modelAssets);
   }
 
   index(id: string): number {
@@ -52,7 +57,7 @@ export class SceneSequence {
           const candidate = await this.reconstruct(this.sources, this.values);
           this.compiled = candidate.compiled; this.values = candidate.values;
           scene = this.compiled[index];
-        } finally { this.compiler.retain(this.compiled); }
+        } finally { this.compiler.retain(this.compiled); this.assetGeometry.retain(this.compiled); }
       }
       return this.sampleScene(scene, time);
     });
@@ -73,10 +78,12 @@ export class SceneSequence {
   }
   private async reconstruct(sources: SceneSource[], values: Map<string, Record<string, ControlValue>>, prefix: CompiledScene[] = [], outgoing?: Frame) {
     const compiled: CompiledScene[] = prefix.slice();
+    for (const scene of compiled) this.assetGeometry.prepare(scene);
     let previous: Frame | undefined = sources.length > prefix.length ? outgoing ?? (compiled.length ? evaluateScene(await this.sampleScene(compiled.at(-1)!, compiled.at(-1)!.duration), compiled.at(-1)!.duration) : undefined) : undefined;
     for (const source of sources.slice(prefix.length)) {
       try {
-        const scene = await this.compiler.compile(source.source, { previous, controls: values.get(source.id), seed: this.options.seed ?? 1, palette: this.options.palette }, this.options);
+        const scene = await this.compiler.compile(source.source, { previous, controls: values.get(source.id), seed: this.options.seed ?? 1, palette: this.options.palette, assetCatalog: this.options.modelAssets?.catalog }, this.options);
+        this.assetGeometry.prepare(scene);
         await this.options.prepare?.([scene]);
         if (this.disposed) throw new Error("Scene sequence is disposed");
         compiled.push(scene); previous = evaluateScene(await this.sampleScene(scene, scene.duration), scene.duration);
@@ -116,7 +123,7 @@ export class SceneSequence {
         return { ok: true, revision: this.revision, diagnostics: [] };
       } catch (error) {
         return { ok: false, revision: this.revision, diagnostics: [error instanceof SceneCompileError ? error.diagnostic : { severity: "error", code: "SUBMISSION", message: error instanceof Error ? error.message : String(error) }] };
-      } finally { this.compiler.retain(this.compiled); }
+      } finally { this.compiler.retain(this.compiled); this.assetGeometry.retain(this.compiled); }
     });
   }
   setControl(sceneId: string, id: string, value: ControlValue): Promise<void> {
@@ -148,12 +155,13 @@ export class SceneSequence {
           const candidate = await this.reconstruct(this.sources, values, control.reactive ? this.compiled.slice(0, index) : []);
           this.compiled = candidate.compiled; this.values = candidate.values;
         }
-      } finally { this.compiler.retain(this.compiled); }
+      } finally { this.compiler.retain(this.compiled); this.assetGeometry.retain(this.compiled); }
     });
   }
 
   dispose(): void {
     this.disposed = true;
     this.compiler.dispose();
+    this.assetGeometry.dispose();
   }
 }

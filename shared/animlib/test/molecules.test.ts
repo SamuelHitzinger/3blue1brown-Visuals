@@ -65,7 +65,21 @@ describe('batched molecular geometry', () => {
     for(const positions of [[0,0],[0,NaN,0],[0,,0],Array(30003).fill(0)]) expect(()=>builders().molecule({positions:positions as number[],radius:1})).toThrow();
     for(const radius of [0,-1,NaN]) expect(()=>builders().molecule({positions:[0,0,0],radius})).toThrow();
     expect(()=>builders().molecule({positions:[1e6,0,0],radius:1})).toThrow();
-    expect(()=>builders().molecule({positions:[0,0,0],radius:1,detail:2 as 0})).toThrow('detail');
+    expect(()=>builders().molecule({positions:[0,0,0],radius:1,detail:4 as 0})).toThrow('detail');
+  });
+  it('offers bounded smooth bead detail with owned outputs and unchanged mesh budgets',()=>{
+    const api=builders();
+    for(const [detail,vertices,triangles] of [[2,66,128],[3,258,512]] as const){
+      const first=api.molecule({positions:[2,3,4],radius:.5,detail})[0];
+      expect(first.vertices).toHaveLength(vertices);expect(first.triangles).toHaveLength(triangles);
+      for(const v of first.vertices!)expect(Math.hypot(v[0]-2,v[1]-3,(v[2]??0)-4)).toBeCloseTo(.5,12);
+      const original=structuredClone(first);first.vertices![0][0]=100;first.normals![0][0]=100;first.triangles![0][0]=100;
+      expect(api.molecule({positions:[2,3,4],radius:.5,detail})[0]).toEqual(original);
+      const batches=api.molecule({positions:Array.from({length:160},(_,i)=>[i,0,0]).flat(),radius:.5,detail});
+      expect(batches.length).toBeGreaterThan(1);expect(batches.every(m=>m.vertices!.length<=20000&&m.triangles!.length<=20000)).toBe(true);
+      expect(batches.reduce((n,m)=>n+m.triangles!.length,0)).toBe(160*triangles);
+    }
+    expect(()=>api.molecule({positions:Array.from({length:977},(_,i)=>[i,0,0]).flat(),radius:.5,detail:3})).toThrow(/total.*budget/i);
   });
   it('compiles in the production VM and moves all batches together', async () => {
     const scene=await compileSource(`export default scene({mode:'3d'},s=>{const m=s.molecule('protein',{positions:[0,0,0,1,0,0],radius:0.2,fill:'BLUE',position:[2,0,0]});s.play(m.moveTo([4,0,0]),{duration:1});});`);
@@ -73,6 +87,11 @@ describe('batched molecular geometry', () => {
     expect(frame.elements.find(e=>e.id==='protein')?.position).toEqual([4,0,0]);
     expect(frame.elements.filter(e=>e.geometry.kind==='mesh')).toHaveLength(1);
     expect(frame.elements.find(e=>e.geometry.kind==='mesh')?.fill).toBe('BLUE');
+  });
+  it.each([[2,132,256],[3,516,1024]])('compiles optional detail %s in the production VM',async(detail,vertices,triangles)=>{
+    const scene=await compileSource(`export default scene({mode:'3d'},s=>{s.molecule('m',{positions:[0,0,0,1,0,0],radius:.2,detail:${detail}});});`);
+    const mesh=evaluateScene(scene,0).elements.find(e=>e.geometry.kind==='mesh')!.geometry;
+    expect(mesh.vertices).toHaveLength(vertices);expect(mesh.triangles).toHaveLength(triangles);
   });
 });
 

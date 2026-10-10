@@ -69,7 +69,7 @@ export function evaluateScene(scene: CompiledScene, requestedTime: number, optio
           e.geometry.numbers[key] = interpolate(from.geometry.numbers?.[key],target,t) as number;
         }
       } else for (const [key, target] of Object.entries(track.action.properties ?? {})) {
-        const start=key==='viewportOffset'?from.viewportOffset??[0,0]:from[key as keyof ElementState];
+        const start=key==='viewportOffset'?from.viewportOffset??[0,0]:key==='strokeEnd'?from.strokeEnd??1:key==='strokeStart'||key==='dashOffset'?from[key]??0:from[key as keyof ElementState];
         (e as unknown as Record<string, unknown>)[key] = key === "fill" || key === "stroke" ? palette.interpolate(start as ColorValue, target as ColorValue, t) : interpolate(start, target, t);
       }
     }

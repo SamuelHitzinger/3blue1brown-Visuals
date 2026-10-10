@@ -23,7 +23,7 @@ s.play(protein.rotateTo([0, 0.8, 0]), { duration: 2 });
   10,000 sites per call. Coordinates and generated vertices must remain within
   ±1,000,000. Sparse and nonfinite arrays are rejected.
 - `radius`: required positive finite display radius. Uniform per call.
-- `detail`: `0` (default, 8 triangular faces/site) or `1` (32 faces/site).
+- `detail`: octahedral subdivision `0` (default, 8 faces/site), `1` (32), `2` (128), or `3` (512). Private unit templates are reused; output meshes remain independently owned. Total output is bounded to 500,000 vertices and triangles in addition to the existing per-mesh limits. Live deformation also remains subject to the separate reactive-update payload limit, so larger models may require lower detail.
   Smooth radial normals affect shading; silhouettes remain polygonal.
 - `origin`: optional common coordinate origin, default `[0,0,0]`. For chains of
   one structure, use the **same** origin and scale to preserve their relationship.

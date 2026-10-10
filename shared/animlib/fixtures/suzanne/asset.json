@@ -1,0 +1,59 @@
+{
+  "id": "suzanne-geometry",
+  "kind": "model",
+  "version": 1,
+  "units": "metre (glTF 2.0 coordinate convention)",
+  "provenance": {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Suzanne",
+    "sourceHash": "c4c95fd543e9092c4cb5e711a9a0d49778c6050b7841601e2fb1c1664cd2e9f0",
+    "creator": "UX3D / Norbert Nopper (2017); Blender Suzanne source model",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "animlib prepare-suzanne-geometry",
+      "version": "1",
+      "options": {
+        "sourceJSONHash": "7e8ae013010aff530162ef2795cec74c2646019e224af17bcfb691664f0f0aec",
+        "sourceBinaryHash": "b85c2727aa41318e00673d8892f5879d46fb6e476e280f28ee1febd07602b6b8",
+        "geometryOnly": true,
+        "axisConversion": "identity",
+        "scale": 1,
+        "recenter": [
+          0,
+          0,
+          0
+        ]
+      }
+    },
+    "selection": "scene 0 / node Suzanne / mesh Suzanne / primitive 0",
+    "modifications": [
+      "Explicit geometry-only derivative: UV0 and tangents omitted.",
+      "Source base-color and metallic-roughness textures/material omitted; scene-authored palette fill and stylized lighting replace appearance.",
+      "Uint16 source indices widened losslessly to Uint32; positions and normals copied byte-for-byte."
+    ],
+    "fidelity": "All 11808 source vertex tuples and 3936 triangles retained. No coordinate transform, welding, decimation or smoothing. Source appearance fidelity is not claimed."
+  },
+  "parts": [
+    {
+      "id": "body",
+      "vertexCount": 11808,
+      "triangleCount": 3936,
+      "positions": {
+        "path": "blobs/6b6fd0dea76033eaa0f7d726985a104af4b8c90b08542ab4123b9c2044cd78ef.bin",
+        "hash": "6b6fd0dea76033eaa0f7d726985a104af4b8c90b08542ab4123b9c2044cd78ef",
+        "byteLength": 141696
+      },
+      "normals": {
+        "path": "blobs/3fb914d419b6180bbde7ecd147f98d8d7d87591f15942edacc0e9747e4401d5c.bin",
+        "hash": "3fb914d419b6180bbde7ecd147f98d8d7d87591f15942edacc0e9747e4401d5c",
+        "byteLength": 141696
+      },
+      "indices": {
+        "path": "blobs/0c251e2cca460ee474427143774cbbc8a89adab27d3727c96f8135365b472d70.bin",
+        "hash": "0c251e2cca460ee474427143774cbbc8a89adab27d3727c96f8135365b472d70",
+        "byteLength": 47232
+      }
+    }
+  ],
+  "hash": "e495f4db5776bdb564946a3110b71c1466d6f12a01836bb3e2376bcb99d32062"
+}

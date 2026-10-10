@@ -5,8 +5,16 @@ import { buildScene } from "./runtime.js";
 import { createSurfaceBuilders } from "./surfaces.js";
 import { createSolidBuilders } from "./solids.js";
 import { createMoleculeBuilders } from './molecules.js';
+import { createAssetBuilders } from './asset-builders.js';
+import { catalogPart, validateAssetCatalog } from './asset-catalog.js';
+import type { ModelAssetDescriptor } from './asset-types.js';
+import { createMolecularBackboneBuilders } from './molecular-backbone.js';
+import { createCoordinateBuilders } from './diagrams/coordinates.js';
+import { createGraphAlgorithms, createGraphBuilders } from './diagrams/graphs.js';
+import { createCollectionBuilders } from './diagrams/collections.js';
 import { validateLighting } from "./lighting.js";
 import { validatePath } from "./path.js";
+import { validatePathStroke } from './path-stroke.js';
 import { Color, enforceScenePalette, paletteResolver, validateColor } from "./palette.js";
 import type { CameraState, CompileInput, CompiledScene, ControlValue, Diagnostic, ElementState, Geometry, ReactiveUpdate } from "./types.js";
 import { mergeReactiveUpdates, validateReactiveBindings } from './reactive.js';
@@ -21,8 +29,12 @@ function check(condition: unknown, message: string): asserts condition {
 }
 function number(value: unknown, label: string) { check(typeof value === "number" && Number.isFinite(value) && Math.abs(value) <= 1e6, `Invalid ${label}`); }
 function vec(value: unknown, label: string, size = 3) { check(Array.isArray(value) && value.length === size, `Invalid ${label}`); value.forEach(n => number(n, label)); }
-function geometry(g: Geometry) {
+function geometry(g: Geometry, catalog: ModelAssetDescriptor[] = []) {
   check(g && kinds.has(g.kind), "Invalid geometry kind");
+  if(g.asset) {
+    check(g.kind==='mesh'&&g.vertices===undefined&&g.triangles===undefined&&g.normals===undefined&&g.scalarColors===undefined,'Referenced model assets cannot contain inline or deformed geometry');
+    catalogPart(g.asset,catalog);
+  }
   for (const key of ["radius", "width", "height", "fontSize"] as const) if (g[key] !== undefined) { number(g[key], key); check(g[key]! >= 0, `${key} must be nonnegative`); }
   for (const key of ["points", "vertices"] as const) if (g[key]) {
     check(Array.isArray(g[key]) && g[key]!.length <= 20000, `Invalid or oversized ${key}`);
@@ -82,14 +94,15 @@ function geometry(g: Geometry) {
     check(g.kind === "mesh" && Array.isArray(g.normals) && g.normals.length === g.vertices?.length, "Mesh normals must match vertices");
     for (const normal of g.normals) { vec(normal, "mesh normal"); check(Math.hypot(...normal) > 0, "Mesh normals must be nonzero"); }
   }
-  if (g.kind === "mesh") {
+  if (g.kind === "mesh" && !g.asset) {
     check(Array.isArray(g.vertices) && Array.isArray(g.triangles) && g.triangles.length <= 20000, "Mesh requires vertices and triangles");
     for (const triangle of g.triangles) check(triangle.length === 3 && triangle.every(i => Number.isInteger(i) && i >= 0 && i < g.vertices!.length), "Invalid mesh triangle index");
   }
 }
-function element(e: ElementState) {
+function element(e: ElementState, catalog: ModelAssetDescriptor[] = []) {
   check(e && typeof e.id === "string" && e.id.length <= 512, "Invalid element ID");
-  geometry(e.geometry); vec(e.position, "position"); vec(e.rotation, "rotation");
+  geometry(e.geometry,catalog); vec(e.position, "position"); vec(e.rotation, "rotation");
+  validatePathStroke(e, e.geometry.kind);
   number(e.scale, "scale"); number(e.opacity, "opacity"); number(e.strokeWidth, "strokeWidth");
   check(e.scale >= 0 && e.opacity >= 0 && e.opacity <= 1 && e.strokeWidth >= 0, "Invalid element style range");
   for (const key of ["fill", "stroke"] as const) {
@@ -115,7 +128,8 @@ function camera(c: CameraState) {
 }
 
 /** Validate the VM boundary: scene code may only return bounded plain animation data. */
-export function validateCompiledScene(scene: CompiledScene): void {
+export function validateCompiledScene(scene: CompiledScene, catalog: ModelAssetDescriptor[] = []): void {
+  validateAssetCatalog(catalog);
   check(scene && typeof scene === "object", "Source must default-export a scene() definition");
   number(scene.duration, "scene duration"); check(scene.duration >= 0 && scene.duration <= 86400, "Scene duration must be between 0 and 24 hours");
   check(scene.options && ["2d", "3d"].includes(scene.options.mode) && ["hold", "advance"].includes(scene.options.end), "Invalid scene options");
@@ -136,10 +150,10 @@ export function validateCompiledScene(scene: CompiledScene): void {
     camera(view.camera);
   }
   const checkView = (e: ElementState) => check(e.view === undefined || typeof e.view === "string" && viewIds.has(e.view), "Element references unknown view");
-  check(Array.isArray(scene.initial) && scene.initial.length <= 2000, "Invalid initial elements"); scene.initial.forEach(e => { element(e); checkView(e); });
+  check(Array.isArray(scene.initial) && scene.initial.length <= 2000, "Invalid initial elements"); scene.initial.forEach(e => { element(e,catalog); checkView(e); });
   check(Array.isArray(scene.lifecycle) && scene.lifecycle.length <= 20000, "Invalid lifecycle");
   let totalPoints = 0;
-  const examine = (e: ElementState) => { element(e); checkView(e); totalPoints += (e.geometry.kind === 'path' ? validatePath(e.geometry) : e.geometry.points?.length ?? 0) + (e.geometry.vertices?.length ?? 0); check(totalPoints <= 100000, "Scene geometry budget exceeded"); };
+  const examine = (e: ElementState) => { element(e,catalog); checkView(e); totalPoints += (e.geometry.kind === 'path' ? validatePath(e.geometry) : e.geometry.points?.length ?? 0) + (e.geometry.asset ? catalogPart(e.geometry.asset,catalog).vertexCount : e.geometry.vertices?.length ?? 0); check(totalPoints <= 100000, "Scene geometry budget exceeded"); };
   const groupGraph = new Map<string, string[]>();
   for (const e of scene.initial) if (e.geometry.children) groupGraph.set(e.id, e.geometry.children);
   for (const event of scene.lifecycle) {
@@ -196,7 +210,11 @@ export function validateCompiledScene(scene: CompiledScene): void {
     const target = all.get(b.target)!;
     const sources = b.type === "attach" ? [b.source] : [b.from, b.to];
     for (const id of sources) check(all.has(id) && all.get(id)!.view === target.view && all.get(id)!.space === target.space, "Bindings require existing elements in the same view and space");
-    if (b.type === "attach") { if (b.offset !== undefined) vec(b.offset, "attachment offset"); }
+    if (b.type === "attach") {
+      if (b.offset !== undefined) vec(b.offset, "attachment offset");
+      check(b.anchor===undefined || b.anchor==='origin' || b.anchor==='midpoint', 'Invalid attachment anchor');
+      if(b.anchor==='midpoint') check(['line','arrow'].includes(all.get(b.source)!.geometry.kind), 'Midpoint attachment requires a line or arrow');
+    }
     else {
       check(["line", "arrow"].includes(target.geometry.kind), "Connect requires a line or arrow");
       check(b.endpoints === undefined || ["center", "surface"].includes(b.endpoints), "Invalid connector endpoints");
@@ -233,7 +251,7 @@ export function validateCompiledScene(scene: CompiledScene): void {
     checkGroups();
   }
   check(Array.isArray(scene.tracks) && scene.tracks.length <= 10000, "Invalid animation tracks");
-  const animatedKeys = new Set(["position", "rotation", "scale", "opacity", "fill", "stroke", "strokeWidth", "viewportOffset"]);
+  const animatedKeys = new Set(["position", "rotation", "scale", "opacity", "fill", "stroke", "strokeWidth", "viewportOffset", "strokeStart", "strokeEnd", "dashOffset"]);
   for (const track of scene.tracks) {
     number(track.start, "track start"); number(track.duration, "track duration");
     check(track.start >= 0 && track.duration >= 0 && track.start + track.duration <= scene.duration + 1e-6, "Track outside scene duration");
@@ -249,18 +267,20 @@ export function validateCompiledScene(scene: CompiledScene): void {
       check(track.from && typeof track.from === "object", "Missing animation starting states");
       for (const id of a.ids) {
         check(typeof id === "string" && Object.hasOwn(track.from, id), "Missing animation element");
-        const from = track.from[id]; element(from); checkView(from);
+        const from = track.from[id]; element(from,catalog); checkView(from);
         check(from.id === id, "Mismatched animation starting ID");
         if (a.type === "morph") {
-          geometry(a.geometry!);
+          check(!from.geometry.asset&&!a.geometry?.asset,'Referenced model assets cannot morph');
+          geometry(a.geometry!,catalog);
+          validatePathStroke(from, a.geometry!.kind);
           if (a.map) check(typeof a.map === "object" && Object.entries(a.map).every(([x, y]) => typeof x === "string" && typeof y === "string"), "Invalid morph map");
         } else if (a.type === "numbers") {
           check(from.geometry.kind === "latex" && from.geometry.numbers && a.values && typeof a.values === "object" && !Array.isArray(a.values), "countTo requires LaTeX numeric slots and values");
           check(Object.keys(a.values).every(key => Object.hasOwn(from.geometry.numbers!,key)), "Unknown numeric slot in countTo");
-          geometry({ ...from.geometry, numbers: { ...from.geometry.numbers, ...a.values } });
+          geometry({ ...from.geometry, numbers: { ...from.geometry.numbers, ...a.values } },catalog);
         } else {
           check(Object.keys(a.properties ?? {}).every(key => animatedKeys.has(key)), "Unknown animatable property");
-          element({ ...from, ...a.properties } as ElementState);
+          element({ ...from, ...a.properties } as ElementState,catalog);
         }
       }
     }
@@ -292,7 +312,8 @@ export async function createSceneProgram(source: string, input: CompileInput = {
   let retained = false;
   try {
     const resolver = paletteResolver(input.palette);
-    input = { ...input, palette: resolver.palette };
+    validateAssetCatalog(input.assetCatalog);
+    input = { ...input, assetCatalog: structuredClone(input.assetCatalog ?? []), palette: resolver.palette };
     check(typeof source === "string" && source.length <= 256000, "Scene source limit exceeded (256 KB)");
     const ast = parse(source, { ecmaVersion: "latest", sourceType: "module", locations: true });
     const exports = ast.body.filter(node => node.type === "ExportDefaultDeclaration");
@@ -327,7 +348,8 @@ export async function createSceneProgram(source: string, input: CompileInput = {
       const palette = Object.freeze({ ...__input.palette, colors: __tokens(Object.fromEntries(Object.keys(__input.palette.colors).map(name => [name, name]))) });
       const __buildScene = ${buildScene.toString()};
       const __meshBuilders = Object.freeze({ ...(${createSurfaceBuilders.toString()})(), ...(${createSolidBuilders.toString()})(), ...(${createMoleculeBuilders.toString()})() });
-      const scene = (options, builder) => __buildScene(options, builder, __input, update => { globalThis.__animlibUpdate = update; }, __meshBuilders);
+      const __domainFactories = Object.freeze({createAssetBuilders:${createAssetBuilders.toString()},createCoordinateBuilders:${createCoordinateBuilders.toString()},createGraphAlgorithms:${createGraphAlgorithms.toString()},createGraphBuilders:${createGraphBuilders.toString()},createCollectionBuilders:${createCollectionBuilders.toString()},createMolecularBackboneBuilders:${createMolecularBackboneBuilders.toString()}});
+      const scene = (options, builder) => __buildScene(options, builder, __input, update => { globalThis.__animlibUpdate = update; }, __meshBuilders, __domainFactories);
       let __seed = ${JSON.stringify(input.seed ?? 1)} >>> 0;
       Math.random = () => { __seed = (__seed * 1664525 + 1013904223) >>> 0; return __seed / 4294967296; };
       const math = Object.freeze(Math);
@@ -337,7 +359,7 @@ export async function createSceneProgram(source: string, input: CompileInput = {
     const json = execute("JSON.stringify(globalThis.__animlibResult)", "result.js");
     check(json && json.length <= 8 * 1024 * 1024, "Invalid or oversized compiled scene");
     const compiled = JSON.parse(json) as CompiledScene;
-    validateCompiledScene(compiled);
+    validateCompiledScene(compiled,input.assetCatalog);
     enforceScenePalette(compiled, resolver);
     retained = true;
     return {

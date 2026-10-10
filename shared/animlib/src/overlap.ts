@@ -57,7 +57,7 @@ function inspectFrame(frame: Frame, options: OverlapOptions, excluded: ReadonlyS
   for (const region of regions) {
     const [left, top, w, h] = region.rect, width = w * options.width, height = h * options.height;
     if (width <= 0 || height <= 0) continue;
-    for (const item of buildDrawItems(frame, region.camera, width, height, palette, region.id, true)) {
+    for (const item of buildDrawItems(frame, region.camera, width, height, palette, region.id, true, undefined, undefined, options.assetGeometry)) {
       if (item.component !== 'content' || excluded.has(item.elementId)) continue;
       const data = item.vertices, opacity = data[6] * (item.groups ?? []).reduce((n, group) => n * group.opacity, 1);
       if (opacity <= 0 || opacity < minOpacity) continue;

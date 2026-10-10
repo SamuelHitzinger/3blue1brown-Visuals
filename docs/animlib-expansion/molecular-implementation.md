@@ -31,6 +31,25 @@ articulatedChainPose(spec: ArticulatedChainSpec, time: number): Vec3[];
 
 The geometry method is pure: it creates no scene elements and returns independently owned meshes and correspondence metadata. The convenience method returns an ordinary group handle, with generated mesh children; anchor lookup stays in the geometry result. Use `s.bind(mesh,[s.time],time => ({vertices, normals}))` to rebuild an equal-topology batch from the pure geometry method. Cross-representation changes use separate same-conformer meshes and opacities; they do not pretend bead/tube/surface vertex indices correspond.
 
-Actual fixed bead tessellation delegates detail 1 to the existing molecule builder (18 vertices / 32 triangles per residue). Sticks use uncapped cylinders and can combine with beads to cover joints. Single-anchor segments render in beads, and produce no backbone tube. Backbone closed loops/reversals require explicit segmentation. The specified seed normal fixes the first ring; motions that make it parallel to the first tangent are unsupported and rejected. Each disconnected backbone segment uses the same supplied seed. Round stick bonds permit a deterministic fallback seed when parallel; these symmetric rods have no chemically meaningful roll.
+Bead tessellation delegates to the existing molecule builder. Optional `beadDetail`
+0/1/2/3 uses 6/18/66/258 vertices and 8/32/128/512 triangles per residue; default
+1 preserves existing geometry. Unit sphere templates are private and reused by
+the factory; returned meshes own their vertices, normals and triangle arrays.
+Sticks use uncapped cylinders and can combine with beads to cover joints.
+Single-anchor segments render in beads, and produce no backbone tube. Backbone
+closed loops/reversals require explicit segmentation. The specified seed normal
+fixes the first ring; motions that make it parallel to the first tangent are
+unsupported and rejected. Each disconnected backbone segment uses the same seed.
+Sticks project normalized `initialNormal` onto each bond's perpendicular plane.
+They reject sine of separation below 1e-7, including parallel and antiparallel
+seeds, without an automatic fallback. Choose an initialNormal separated from all
+bond tangents throughout the intended motion (e.g. X for a Z-axis bond). This
+policy is continuous on its supported domain, not a globally continuous frame
+for arbitrary orientations across a pole.
+
+Higher bead detail preserves the same native and aggregate geometry caps. The
+live reactive-update payload cap is independent: the 33-residue proof at detail
+3 exceeds it, while detail 2 passes. Use smaller models or lower detail for live
+deformation; no cap was increased for this option.
 
 All per-mesh ceilings remain 20000 vertices and triangles. Total output is bounded to 500000 vertices and triangles, with triangle preflight before ring allocation. Link output rejects coordinate-relative floating-point loss above 1e-8 relative length error; recenter/rescale tiny chains at large origins. Scientific/schematic provenance is required. Neither the joint pose nor the Gaussian surface is a physical folding model.

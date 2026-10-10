@@ -1,12 +1,21 @@
 import type { AnimationAction, CameraState, CompileInput, CompiledScene, ControlDefinition, ControlValue, ElementHandle, ElementProps, ElementState, ElementStyle, Geometry, ReactiveDependency, ReactiveProperties, ReactiveUpdate, SceneContext, SceneOptions, SliderHandle, SliderOptions, Vec2, Vec3, ViewState } from "./types.js";
-import type { createSurfaceBuilders } from "./surfaces.js";
-import type { createSolidBuilders } from "./solids.js";
-import type { createMoleculeBuilders } from './molecules.js';
+import { createSurfaceBuilders } from "./surfaces.js";
+import { createSolidBuilders } from "./solids.js";
+import { createMoleculeBuilders } from './molecules.js';
+import { createAssetBuilders } from './asset-builders.js';
+import { createMolecularBackboneBuilders } from './molecular-backbone.js';
+import { createCoordinateBuilders } from './diagrams/coordinates.js';
+import { createGraphAlgorithms, createGraphBuilders } from './diagrams/graphs.js';
+import { createCollectionBuilders } from './diagrams/collections.js';
 
 type MeshBuilders = ReturnType<typeof createSurfaceBuilders> & ReturnType<typeof createSolidBuilders> & ReturnType<typeof createMoleculeBuilders>;
+type DomainFactories = {createAssetBuilders: typeof createAssetBuilders; createCoordinateBuilders: typeof createCoordinateBuilders; createGraphAlgorithms: typeof createGraphAlgorithms; createGraphBuilders: typeof createGraphBuilders; createCollectionBuilders: typeof createCollectionBuilders; createMolecularBackboneBuilders: typeof createMolecularBackboneBuilders};
 
 /** Self-contained on purpose: the function is installed inside QuickJS, never eval'd by the host. */
-export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders?: MeshBuilders): CompiledScene {
+export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders: MeshBuilders = {...createSurfaceBuilders(), ...createSolidBuilders(), ...createMoleculeBuilders()}, domainFactories: DomainFactories = {createAssetBuilders, createCoordinateBuilders, createGraphAlgorithms, createGraphBuilders, createCollectionBuilders, createMolecularBackboneBuilders}): CompiledScene {
+  const algorithms = domainFactories.createGraphAlgorithms();
+  const molecular = domainFactories.createMolecularBackboneBuilders(meshBuilders);
+  const assets = domainFactories.createAssetBuilders(input.assetCatalog);
   const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
   const vector = (value: number[] = [0, 0, 0]): Vec3 => [value[0] ?? 0, value[1] ?? 0, value[2] ?? 0];
   const rotation = (value: number | number[] = 0): Vec3 => typeof value === "number" ? [0, 0, value] : vector(value);
@@ -107,7 +116,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     scaleTo: scale => ({ ids: [id], type: "animate", properties: { scale } }),
     fadeIn: () => ({ ids: [id], type: "animate", properties: { opacity: 1 }, fromOpacity: 0 }),
     fadeOut: () => ({ ids: [id], type: "animate", properties: { opacity: 0 } }),
-    morphTo: (geometry, morphOptions = {}) => { numericFormat(geometry.numberFormat);return { ids: [id], type: "morph", geometry: clone(geometry), map: morphOptions.map }; },
+    morphTo: (geometry, morphOptions = {}) => { if(geometry.asset || descendants(id).some(id=>states.get(id)?.geometry.asset)) throw new Error('Referenced model assets cannot morph'); numericFormat(geometry.numberFormat);return { ids: [id], type: "morph", geometry: clone(geometry), map: morphOptions.map }; },
     countTo: values => ({ ids: [id], type: "numbers", values: clone(values) }),
   });
 
@@ -116,13 +125,17 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     if (used.has(id)) throw new Error(`Duplicate element ID: ${id}`);
     if (used.size >= 2000) throw new Error("Scene element limit exceeded (2000)");
     used.add(id);
-    const { position, rotation: r, scale, opacity, fill, stroke, strokeWidth, strokeProfile, space, castShadow, billboard, billboardOffset, viewportOffset, ...geometry } = props;
+    const { position, rotation: r, scale, opacity, fill, stroke, strokeWidth, strokeProfile, strokeStart, strokeEnd, dashArray, dashOffset, space, castShadow, billboard, billboardOffset, viewportOffset, ...geometry } = props;
     numericFormat(geometry.numberFormat);
     const element: ElementState = {
       id, geometry: { kind, ...clone(geometry) }, position: vector(position), rotation: rotation(r),
       scale: scale ?? 1, opacity: opacity ?? 1, fill: fill === undefined ? (kind === "line" || kind === "arrow" ? "none" : (input.palette?.foreground ?? "WHITE")) : fill,
       stroke: stroke === undefined ? (kind === "line" || kind === "arrow" ? (input.palette?.foreground ?? "WHITE") : "none") : stroke, strokeWidth: strokeWidth ?? (space === "screen" ? 1 : 0.04),
       ...(strokeProfile !== undefined ? { strokeProfile } : {}),
+      ...(strokeStart !== undefined ? { strokeStart } : {}),
+      ...(strokeEnd !== undefined ? { strokeEnd } : {}),
+      ...(dashArray !== undefined ? { dashArray: clone(dashArray) } : {}),
+      ...(dashOffset !== undefined ? { dashOffset } : {}),
       ...(castShadow !== undefined ? { castShadow } : {}),
       space: space ?? "world", ...(billboard !== undefined ? { billboard } : {}), ...(billboardOffset !== undefined ? { billboardOffset:vector(billboardOffset) } : {}), viewportOffset: viewportOffset !== undefined ? viewport(viewportOffset) : [0,0], ...(currentView ? { view: currentView } : {}), persistent: false,
     };
@@ -212,6 +225,17 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     text: (id, props) => add("text", id, { fontSize: props.space === "screen" ? 16 : 0.4, ...props }),
     latex: (id, props) => add("latex", id, { fontSize: props.space === "screen" ? 24 : 0.6, ...props }),
     mesh: (id, props) => add("mesh", id, props),
+    modelInfo: id => assets.modelInfo(id),
+    model: (id, props) => {
+      idCheck(id);
+      const children=assets.model(props).map(part=>generatedMesh(`${id}.${part.id}`,part.geometry,{
+        fill:props.fill,stroke:props.stroke,strokeWidth:props.strokeWidth,strokeProfile:props.strokeProfile,material:props.material,
+        texture:props.texture,clipPlanes:props.clipPlanes,outline:props.outline,space:props.space,
+      }));
+      for(const child of children) groups.add(child.id);
+      return add('group',id,{children:children.map(child=>child.id),position:props.position,rotation:props.rotation,scale:props.scale,
+        opacity:props.opacity,space:props.space,castShadow:props.castShadow,viewportOffset:props.viewportOffset,billboard:props.billboard,billboardOffset:props.billboardOffset});
+    },
     surface: (id, props) => generatedMesh(id, meshBuilders!.surface(props), props),
     parametricSurface: (id, props) => generatedMesh(id, meshBuilders!.parametricSurface(props), props),
     box: (id, props = {}) => generatedMesh(id, meshBuilders!.box(props), props),
@@ -229,13 +253,27 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
       return add('group', id, {children: children.map(child => child.id), position: props.position, rotation: props.rotation,
         scale: props.scale, opacity: props.opacity, space: props.space, castShadow: props.castShadow, viewportOffset: props.viewportOffset});
     },
+    molecularBackbone: (id, props) => {
+      idCheck(id);
+      const children = molecular.molecularBackbone(props).meshes.map((geometry,i)=>generatedMesh(`${id}/batch-${i}`,geometry,{
+        fill:props.fill,stroke:props.stroke,strokeWidth:props.strokeWidth,strokeProfile:props.strokeProfile,material:props.material,space:props.space,
+      }));
+      for(const child of children)groups.add(child.id);
+      return add('group',id,{children:children.map(child=>child.id),position:props.position,rotation:props.rotation,scale:props.scale,opacity:props.opacity,space:props.space,castShadow:props.castShadow,viewportOffset:props.viewportOffset});
+    },
+    molecularBackboneGeometry: props => molecular.molecularBackbone(props),
+    articulatedChainPose: (spec,time) => molecular.articulatedChainPose(spec,time),
+    plane: (id,options) => domainFactories.createCoordinateBuilders(context).plane(id,options),
+    graph: (id,data,options) => domainFactories.createGraphBuilders(context,algorithms).graph(id,data,options),
+    collection: (id,items,options) => domainFactories.createCollectionBuilders(context).collection(id,items,options),
+    dijkstra: (data,source) => algorithms.dijkstra(data,source),
     behavior: (target, behavior) => {
       descendants(target.id);
       behaviors.push({ target: target.id, behavior: clone(behavior) });
     },
     attach: (target, source, spec = {}) => {
       descendants(target.id); descendants(source.id);
-      bindings.push({ type: "attach", target: target.id, source: source.id, ...(spec.offset ? { offset: vector(spec.offset) } : {}) });
+      bindings.push({ type: "attach", target: target.id, source: source.id, ...(spec.anchor !== undefined ? {anchor:spec.anchor} : {}), ...(spec.offset ? { offset: vector(spec.offset) } : {}) });
     },
     connect: (target, from, to, spec = {}) => {
       descendants(target.id); descendants(from.id); descendants(to.id);
@@ -333,6 +371,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     deform: (target, dependencies, callback) => {
       descendants(target.id);
       const geometry = states.get(target.id)!.geometry;
+      if(geometry.asset) throw new Error('Referenced model assets cannot deform');
       if (geometry.kind !== 'mesh' || typeof callback !== 'function') throw new Error('s.deform requires a mesh and a callback');
       const rest = geometry.vertices!.map(point => vector(point));
       context.bind(target, dependencies, (...values) => ({ vertices: rest.map((point, index) => {
@@ -381,7 +420,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
   // Retained callbacks may calculate property values, but cannot mutate the builder.
   for (const key of Object.keys(context)) {
     const fn = (context as unknown as Record<string, unknown>)[key];
-    if (typeof fn === 'function') (context as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => {
+    if (typeof fn === 'function' && !['molecularBackboneGeometry','articulatedChainPose','dijkstra'].includes(key)) (context as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => {
       if (!building) throw new Error('Scene building APIs cannot be called from reactive bindings');
       return fn(...args);
     };
@@ -393,7 +432,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     const output = binding.callback(...binding.dependencies.map(dep => dep === timeHandle ? time ?? 0 : values[(dep as SliderHandle).id] as number));
     if (!output || typeof output !== 'object' || Array.isArray(output)) throw new Error('Reactive bindings must return property objects');
     const keys = Object.keys(output).sort();
-    if (!keys.length || keys.some(key => !['radius','position','rotation','scale','opacity','fill','vertices','normals','material','texture','scalarColors'].includes(key))) throw new Error('Unsupported reactive property');
+    if (!keys.length || keys.some(key => !['radius','position','rotation','scale','opacity','fill','vertices','normals','material','texture','scalarColors','points','strokeStart','strokeEnd','dashOffset'].includes(key))) throw new Error('Unsupported reactive property');
     if (binding.keys && JSON.stringify(keys) !== JSON.stringify(binding.keys)) throw new Error('Reactive bindings must return the same property keys on every update');
     binding.keys ??= keys;
     const properties = { ...output };

@@ -1,9 +1,19 @@
 import type { ExplanatoryGeometry, ScalarColors } from "./explanatory-types.js";
+import type { AssetGeometryRef, AssetGeometryResolver, AssetRegistry, ModelAssetDescriptor, ModelProps } from './asset-types.js';
+export type * from './asset-types.js';
 export type { ClipPlane, MeshOutline, ScalarRamp, ScalarColors, SurfaceScalar, ExplanatoryGeometry } from "./explanatory-types.js";
 import type { Color, PaletteColor } from "./palette.js";
 import type { SurfaceProps, ParametricSurfaceProps } from "./surface-types.js";
 import type { BoxProps, CylinderProps, ConeProps, TorusProps, TubeProps } from "./solid-types.js";
 import type { MoleculeProps } from './molecule-types.js';
+import type { MolecularBackboneProps, MolecularBackboneResult, ArticulatedChainSpec } from './molecular-backbone-types.js';
+import type { PlaneOptions, CoordinatePlane } from './diagrams/coordinate-types.js';
+import type { GraphData, GraphOptions, GraphDiagram, SearchTrace } from './diagrams/graph-types.js';
+import type { CollectionItem, CollectionOptions, CollectionDiagram } from './diagrams/collection-types.js';
+export type * from './molecular-backbone-types.js';
+export type * from './diagrams/coordinate-types.js';
+export type * from './diagrams/graph-types.js';
+export type * from './diagrams/collection-types.js';
 export type * from './molecule-types.js';
 export type { Color, PaletteColor } from "./palette.js";
 export type { SurfaceProps, ParametricSurfaceProps } from "./surface-types.js";
@@ -55,6 +65,8 @@ export interface Material {
 }
 
 export interface Geometry extends ExplanatoryGeometry {
+  /** Static host-owned mesh; inline vertices/indices/normals are mutually exclusive. */
+  asset?: AssetGeometryRef;
   /** Text/LaTeX: default depth tests glyphs; other modes act on the whole label anchor. */
   labelOcclusion?: "depth" | "overlay" | "hide" | "fade";
   kind: "circle" | "sphere" | "rectangle" | "path" | "line" | "arrow" | "text" | "latex" | "mesh" | "group";
@@ -91,7 +103,16 @@ export interface Geometry extends ExplanatoryGeometry {
   numberFormat?: { decimals?: number; digits?: number };
 }
 
-export interface ElementStyle {
+export interface PathStrokeStyle {
+  /** Normalized cumulative local arc length. Start >= end hides the stroke, not fill. */
+  strokeStart?: number;
+  strokeEnd?: number;
+  /** Positive local lengths, alternating painted and unpainted; odd arrays repeat. */
+  dashArray?: number[];
+  /** Signed local distance into the dash pattern. */
+  dashOffset?: number;
+}
+export interface ElementStyle extends PathStrokeStyle {
   position?: Position;
   rotation?: Position | number;
   scale?: number;
@@ -111,7 +132,7 @@ export interface ElementStyle {
 }
 
 export type ElementProps = Omit<Geometry, "kind"> & ElementStyle;
-export interface ElementState {
+export interface ElementState extends PathStrokeStyle {
   id: string;
   geometry: Geometry;
   position: Vec3;
@@ -255,7 +276,7 @@ export interface SliderOptions extends ControlPlacement {
 export interface TimeHandle { readonly time: true }
 export type ReactiveDependency = SliderHandle | TimeHandle;
 /** Absolute property replacements. Mesh connectivity is never writable. */
-export type ReactiveProperties = Pick<ElementStyle, 'position' | 'rotation' | 'scale' | 'opacity' | 'fill'> & Pick<Geometry, 'radius' | 'vertices'> & {
+export type ReactiveProperties = Pick<ElementStyle, 'position' | 'rotation' | 'scale' | 'opacity' | 'fill' | 'strokeStart' | 'strokeEnd' | 'dashOffset'> & Pick<Geometry, 'radius' | 'vertices' | 'points'> & {
   /** Null (or vertices without normals) recomputes shading normals. */
   normals?: Vec3[] | null;
   /** Whole-object replacements; null restores the original untextured/simple appearance. */
@@ -304,7 +325,7 @@ export type BehaviorSpec =
   | { type: "custom"; name: string; options?: JsonValue };
 export interface BehaviorDeclaration { target: string; behavior: BehaviorSpec; }
 export type BindingDeclaration =
-  | { type: "attach"; target: string; source: string; offset?: Vec3 }
+  | { type: "attach"; target: string; source: string; anchor?: 'origin' | 'midpoint'; offset?: Vec3 }
   | { type: "connect"; target: string; from: string; to: string; endpoints?: "center" | "surface"; offset?: number };
 export interface Ray { origin: Vec3; direction: Vec3; }
 export interface InteractionSnapshot {
@@ -351,6 +372,7 @@ export interface Bounds2D { left: number; top: number; right: number; bottom: nu
 /** Axis-aligned bounds in local/world units or camera coordinates. */
 export interface Bounds3D { min: Vec3; max: Vec3; }
 export interface BoundsOptions {
+  assetGeometry?: AssetGeometryResolver;
   /** Optional tessellation viewport; defaults to 800 × 450 CSS pixels. */
   width?: number;
   height?: number;
@@ -390,6 +412,7 @@ export interface OverlapDiagnostic {
   witness: Vec2;
 }
 export interface OverlapOptions {
+  assetGeometry?: AssetGeometryResolver;
   /** Logical canvas size in CSS pixels. Required: projection depends on aspect ratio. */
   width: number;
   height: number;
@@ -414,7 +437,7 @@ export interface SceneOverlapSample {
 
 export interface ElementHandle {
   readonly id: string;
-  animate(properties: Omit<ElementStyle, "space" | "billboard" | "billboardOffset" | "strokeProfile" | "castShadow">): AnimationAction;
+  animate(properties: Omit<ElementStyle, "space" | "billboard" | "billboardOffset" | "strokeProfile" | "castShadow" | "dashArray">): AnimationAction;
   moveTo(position: Position): AnimationAction;
   rotateTo(rotation: Position | number): AnimationAction;
   scaleTo(scale: number): AnimationAction;
@@ -425,6 +448,8 @@ export interface ElementHandle {
 }
 
 export interface SceneContext {
+  model(id: string, props: ModelProps): ElementHandle;
+  modelInfo(asset: string): ModelAssetDescriptor;
   circle(id: string, props?: ElementProps): ElementHandle;
   sphere(id: string, props?: ElementProps): ElementHandle;
   rectangle(id: string, props?: ElementProps): ElementHandle;
@@ -446,9 +471,16 @@ export interface SceneContext {
   torus(id: string, props?: TorusProps): ElementHandle;
   tube(id: string, props: TubeProps): ElementHandle;
   molecule(id: string, props: MoleculeProps): ElementHandle;
+  molecularBackbone(id: string, props: MolecularBackboneProps): ElementHandle;
+  molecularBackboneGeometry(props: MolecularBackboneProps): MolecularBackboneResult;
+  articulatedChainPose(spec: ArticulatedChainSpec, time: number): Vec3[];
+  plane(id: string, options: PlaneOptions): CoordinatePlane;
+  graph(id: string, data: GraphData, options?: GraphOptions): GraphDiagram;
+  dijkstra(data: GraphData, source: string): SearchTrace;
+  collection(id: string, items: readonly CollectionItem[], options?: CollectionOptions): CollectionDiagram;
   group(id: string, children: ElementHandle[], options?: { isolated?: boolean; castShadow?: boolean }): ElementHandle;
   behavior(target: ElementHandle, behavior: BehaviorSpec): void;
-  attach(target: ElementHandle, source: ElementHandle, options?: { offset?: Position }): void;
+  attach(target: ElementHandle, source: ElementHandle, options?: { anchor?: 'origin' | 'midpoint'; offset?: Position }): void;
   connect(target: ElementHandle, from: ElementHandle, to: ElementHandle, options?: { endpoints?: "center" | "surface"; offset?: number }): void;
   play(actions: AnimationAction | AnimationAction[], options: { duration: number; ease?: Ease }): void;
   wait(seconds: number): void;
@@ -506,6 +538,8 @@ export interface PlayerState {
 }
 
 export interface CompileInput {
+  /** Descriptor-only catalog; no bytes or resolver capabilities enter the VM. */
+  assetCatalog?: ModelAssetDescriptor[];
   /** Defaults to THREE_BLUE_ONE_BROWN_PALETTE. */
   palette?: ColorPalette;
   previous?: Frame;
@@ -515,6 +549,8 @@ export interface CompileInput {
 
 export interface Asset { kind: "audio"; url: string }
 export interface PlayerOptions {
+  /** Host-owned static models; existing audio assets remain independent. */
+  modelAssets?: AssetRegistry;
   /** Defaults to THREE_BLUE_ONE_BROWN_PALETTE; applies to every scene. */
   palette?: ColorPalette;
   /** Player owns the drawing surface until disposal. Mount it in an unmanaged host

@@ -27,6 +27,20 @@ afterEach(() => {
 });
 
 describe("off-thread source compiler", () => {
+  it('serializes retained points and stroke phase through worker requests and snapshots',async()=>{
+    const source=`export default scene({},s=>{const p=s.line('p',{dashArray:[.5,.2]});s.bind(p,[s.time],t=>({points:[[0,0],[1,t]],strokeEnd:t/2,dashOffset:-t}));s.wait(2);});`;
+    const program=await createSceneProgram(source);
+    try {
+      vi.stubGlobal('Worker',TestWorker);const instance=compiler(),loading=instance.compile(source);
+      const worker=TestWorker.instances[0],session=worker.requests[0].id;worker.respond({id:session,ok:true,scene:structuredClone(program.scene)});
+      const scene=await loading,updating=instance.update(scene,{},[],{},1),request=worker.requests.at(-1)!;
+      if(request.type!=='update')throw Error('Expected update');
+      const updates=JSON.parse(JSON.stringify(program.update(request.values,request.changed,request.time,request.duration)));
+      worker.respond({id:request.id,ok:true,updates});
+      expect(await updating).toEqual([{target:'p',properties:{points:[[0,0],[1,1]],strokeEnd:.5,dashOffset:-1}}]);
+      expect(scene.reactiveBindings![0].properties.points).toEqual([[0,0],[1,0]]);
+    } finally {program.dispose();}
+  });
   it('sends callback updates to the retained worker program and releases discarded programs', async () => {
     const scene=await compileSource(`export default scene({},s=>{
       const r=s.slider('r',{reactive:true,default:1,min:0,max:3});const a=s.sphere('a');
