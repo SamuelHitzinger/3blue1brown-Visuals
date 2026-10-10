@@ -6,7 +6,7 @@ Date: 2026-10-11. Branch: `amilibsam`. Starting commit: `2b666eb`.
 
 Make the existing animlib efficient for original animations with motion, visual
 flow, and rendering comparable to the supplied mathematical, algorithmic,
-neuroscience, quantum, and molecular references. Reuse existing assets, textures,
+neuroscience, ML/optimization, and molecular references. Reuse existing assets, textures,
 and external model data where appropriate. Distinct artists retain distinct
 visual contracts. The user explicitly authorizes autonomous implementation,
 multiple Astra/high agents, and repeated independent evaluation until satisfied.

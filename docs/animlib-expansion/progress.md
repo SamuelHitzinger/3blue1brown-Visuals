@@ -15,10 +15,10 @@
 
 | Agent | Model / effort | Ownership | Status |
 |---|---|---|---|
-| molecular_reference | gpt-6-astra / high | molecular-reference.md | inspecting supplied videos |
-| math_algorithm_reference | gpt-6-astra / high | math-algorithm-reference.md | inspecting 3Blue1Brown / Reducible |
-| neuroscience_quantum_reference | gpt-6-astra / high | neuroscience-quantum-reference.md | inspecting Artem / linked channel |
-| root | orchestrator | design, plan, progress, integration | baseline and architecture audit |
+| molecular_builder | gpt-6-astra / high | molecular-backbone modules, tests, proof | core tests pass, proof in progress |
+| math_builder | gpt-6-astra / high | diagrams modules, tests, proofs | core tests pass, integration regressions pending |
+| path_engine | gpt-6-astra / high | shared path engine and helper integration | implementing pinned APIs |
+| root | orchestrator | design, plan, progress, integration | reference coverage and next asset wave |
 
 ## Decisions
 
@@ -42,7 +42,9 @@
 | Domain / export workers | absolute-time scene evaluation | Export must use production retained evaluation. |
 | Implementation / evaluator | original source, renders, reference evidence | Separate author and visual reviewer. |
 
-No implementation task is complete yet.
+Infrastructure export repair is complete and independently reviewed. Domain
+helpers remain pending integrated rendering and independent acceptance. Broad
+reference coverage and artist fidelity remain open; no whole-library parity claim.
 
 ## Native GPU baseline
 
@@ -65,3 +67,33 @@ No implementation task is complete yet.
 - infrastructure started: `infrastructure-brief.md`. Sampling API agreed:
   `withOfflineScene(source, input, use, limits?)`, sampler has `scene` and
   `sample(time = scene.duration): Frame`; scope includes asset architecture audit.
+
+## Implementation and review handoff
+
+- `85be910`: initial reference reports and implementation boundaries committed.
+- `be2755a`: native exporters now evaluate retained absolute-time motion through
+  scoped `withOfflineScene`; six regressions, total 670 tests passed at that
+  snapshot, typecheck/build passed. Native three-frame and 24-frame video proof.
+- Independent infrastructure reviewer: spec ready, code quality ready, no
+  blocking findings; viewed both native sheets and all 24 decoded MP4 frames.
+  Asset proposal needs explicit image storage and shared geometry resolver
+  contracts before implementation. See `infrastructure-review.md`.
+- Molecular source report completed. Sticks, sequence-colored beads, folded
+  sticks and smooth surface are observed in Protein Folding; ribbons are inferred
+  extension only. Transcription and Nucleus remain separate cinematic styles.
+- Math/graph/collection host helpers and molecular ordered-backbone/kinematic
+  helpers now exist in disjoint modules. Production API and moving connector
+  midpoint regressions intentionally await path_engine integration.
+- Root extended transcription evidence with complete, decoded readyState=4
+  frames at 2 fps from 94.033 seconds onward. Initial seek-slider captures with
+  clipped frames were excluded; player-container frame stepping fixes framing.
+- Follow-up completed sampled transcription chronology: 329 valid complete frames
+  at nominal 2 fps across 0–163.533 s; all contact sheets viewed, final unready
+  sample excluded. Whole-sequence requirements in `transcription-motion-supplement.md`.
+- Public domain scene APIs installed by path_engine; root build and molecular
+  `--integrated` generation passed. Re-rendered 28 molecular frames and 240-frame
+  MP4 through public methods. Three math proofs rendered at both aspect ratios,
+  plus native 30 fps MP4s (shear195, graph210, collection120 frames).
+  Initial root QA found literal `quad` in graph label; independent domain review
+  also identified numerical/immutability/orientation issues. Acceptance pending.
+- All commits remain local on `amilibsam`; no push or merge.

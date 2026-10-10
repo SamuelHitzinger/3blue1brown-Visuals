@@ -24,7 +24,7 @@ Required behavior:
 - Consume ordered, explicitly identified residue anchors, explicit chain breaks,
   and an explicit representation choice. Reject invalid/duplicate identities and
   nonfinite coordinates. Do not infer connectivity across gaps or chains.
-- Produce smooth tube/ribbon backbone geometry with stable vertex correspondence
+- Produce smooth tube/backbone geometry with stable vertex correspondence
   for equal topology. Transport orientation consistently without arbitrary flips.
   Preserve residue order, segment identity, and color mapping across representation
   changes; support native budget-sized chunks if needed.
@@ -48,7 +48,10 @@ stable topology, known orientations, determinism/backward seeks, and budgets.
 
 Write a folding-specific style contract from inspected reference. Author an
 original 3–8 second proof: persistent residue colors and adjacency, actual chain
-bending, endpoint hold, smooth native ribbon/tube rather than disconnected beads.
+bending, endpoint hold, and stable sticks/beads/surface correspondence. The actual
+folding reference shows sticks, residue beads, folded sticks, and a sequence-colored
+surface. Ribbons are an inferred extension, not an observed requirement; implement
+them only after the observed representation/motion needs work.
 Retain source, manifest, and frames/video under ignored `data/animlib-expansion`
 where bulky. Use native animlib; independent visual reviewer follows.
 
