@@ -1,3 +1,4 @@
+import { createNucleicBuilders } from './nucleic-structures.js';
 import type { AnimationAction, CameraState, CompileInput, CompiledScene, ControlDefinition, ControlValue, ElementHandle, ElementProps, ElementState, ElementStyle, Geometry, ReactiveDependency, ReactiveProperties, ReactiveUpdate, SceneContext, SceneOptions, SliderHandle, SliderOptions, Vec2, Vec3, ViewState } from "./types.js";
 import { createSurfaceBuilders } from "./surfaces.js";
 import { createSolidBuilders } from "./solids.js";
@@ -9,12 +10,13 @@ import { createGraphAlgorithms, createGraphBuilders } from './diagrams/graphs.js
 import { createCollectionBuilders } from './diagrams/collections.js';
 
 type MeshBuilders = ReturnType<typeof createSurfaceBuilders> & ReturnType<typeof createSolidBuilders> & ReturnType<typeof createMoleculeBuilders>;
-type DomainFactories = {createAssetBuilders: typeof createAssetBuilders; createCoordinateBuilders: typeof createCoordinateBuilders; createGraphAlgorithms: typeof createGraphAlgorithms; createGraphBuilders: typeof createGraphBuilders; createCollectionBuilders: typeof createCollectionBuilders; createMolecularBackboneBuilders: typeof createMolecularBackboneBuilders};
+type DomainFactories = {createAssetBuilders: typeof createAssetBuilders; createCoordinateBuilders: typeof createCoordinateBuilders; createGraphAlgorithms: typeof createGraphAlgorithms; createGraphBuilders: typeof createGraphBuilders; createCollectionBuilders: typeof createCollectionBuilders; createMolecularBackboneBuilders: typeof createMolecularBackboneBuilders; createNucleicBuilders: typeof createNucleicBuilders};
 
 /** Self-contained on purpose: the function is installed inside QuickJS, never eval'd by the host. */
-export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders: MeshBuilders = {...createSurfaceBuilders(), ...createSolidBuilders(), ...createMoleculeBuilders()}, domainFactories: DomainFactories = {createAssetBuilders, createCoordinateBuilders, createGraphAlgorithms, createGraphBuilders, createCollectionBuilders, createMolecularBackboneBuilders}): CompiledScene {
+export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders: MeshBuilders = {...createSurfaceBuilders(), ...createSolidBuilders(), ...createMoleculeBuilders()}, domainFactories: DomainFactories = {createAssetBuilders, createCoordinateBuilders, createGraphAlgorithms, createGraphBuilders, createCollectionBuilders, createMolecularBackboneBuilders, createNucleicBuilders}): CompiledScene {
   const algorithms = domainFactories.createGraphAlgorithms();
   const molecular = domainFactories.createMolecularBackboneBuilders(meshBuilders);
+  const nucleic = domainFactories.createNucleicBuilders(molecular);
   const assets = domainFactories.createAssetBuilders(input.assetCatalog);
   const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
   const vector = (value: number[] = [0, 0, 0]): Vec3 => [value[0] ?? 0, value[1] ?? 0, value[2] ?? 0];
@@ -225,6 +227,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     text: (id, props) => add("text", id, { fontSize: props.space === "screen" ? 16 : 0.4, ...props }),
     latex: (id, props) => add("latex", id, { fontSize: props.space === "screen" ? 24 : 0.6, ...props }),
     mesh: (id, props) => add("mesh", id, props),
+    image: (id,props) => generatedMesh(id,assets.image(props),props),
     modelInfo: id => assets.modelInfo(id),
     model: (id, props) => {
       idCheck(id);
@@ -261,6 +264,8 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
       for(const child of children)groups.add(child.id);
       return add('group',id,{children:children.map(child=>child.id),position:props.position,rotation:props.rotation,scale:props.scale,opacity:props.opacity,space:props.space,castShadow:props.castShadow,viewportOffset:props.viewportOffset});
     },
+    nucleicDuplex: (props, opening) => nucleic.nucleicDuplex(props, opening),
+    nucleicTranscript: (props, time) => nucleic.nucleicTranscript(props, time),
     molecularBackboneGeometry: props => molecular.molecularBackbone(props),
     articulatedChainPose: (spec,time) => molecular.articulatedChainPose(spec,time),
     plane: (id,options) => domainFactories.createCoordinateBuilders(context).plane(id,options),
@@ -420,7 +425,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
   // Retained callbacks may calculate property values, but cannot mutate the builder.
   for (const key of Object.keys(context)) {
     const fn = (context as unknown as Record<string, unknown>)[key];
-    if (typeof fn === 'function' && !['molecularBackboneGeometry','articulatedChainPose','dijkstra'].includes(key)) (context as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => {
+    if (typeof fn === 'function' && !['molecularBackboneGeometry','articulatedChainPose','dijkstra','nucleicDuplex','nucleicTranscript'].includes(key)) (context as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => {
       if (!building) throw new Error('Scene building APIs cannot be called from reactive bindings');
       return fn(...args);
     };

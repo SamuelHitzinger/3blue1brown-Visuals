@@ -3,18 +3,18 @@ import { CanvasRenderer } from '../src/renderer.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
-it.each(['adapter', 'device', 'shader', 'opaque-pipeline', 'transparent-pipeline'])(
+it.each(['adapter', 'device', 'shader', 'opaque-pipeline', 'transparent-pipeline', 'image-shader', 'image-opaque-pipeline', 'image-transparent-pipeline'])(
   'disposal during %s initialization cannot reclaim a replacement canvas or allocate resources', async stage => {
     let release = () => {}, entered = () => {};
     const gate = new Promise<void>(resolve => { release = resolve; });
     const reached = new Promise<void>(resolve => { entered = resolve; });
     const wait = async (name: string) => { if (stage === name) { entered(); await gate; } };
     const pipeline = { getBindGroupLayout: () => ({}) };
-    let pipelineCount = 0;
+    let pipelineCount = 0,shaderCount=0;
     const device = {
       addEventListener: vi.fn(), lost: new Promise(() => {}), destroy: vi.fn(),
-      createShaderModule: () => ({ getCompilationInfo: async () => { await wait('shader'); return { messages: [] }; } }),
-      createRenderPipelineAsync: vi.fn(async () => { await wait(++pipelineCount === 1 ? 'opaque-pipeline' : 'transparent-pipeline'); return pipeline; }),
+      createShaderModule: () => ({ getCompilationInfo: async () => { await wait(++shaderCount===1?'shader':'image-shader'); return { messages: [] }; } }),
+      createRenderPipelineAsync: vi.fn(async () => { await wait(['opaque-pipeline','transparent-pipeline','image-opaque-pipeline','image-transparent-pipeline'][pipelineCount++]); return pipeline; }),
       createBuffer: vi.fn(() => ({ destroy: vi.fn() })), createBindGroup: vi.fn(),
     };
     const requestDevice = vi.fn(async () => { await wait('device'); return device; });

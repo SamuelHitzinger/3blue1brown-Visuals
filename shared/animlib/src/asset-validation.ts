@@ -1,3 +1,4 @@
+import { validateImageGeometry } from './image-validation.js';
 import type { Bounds3D, Geometry, Vec3 } from './types.js';
 import type { PreparedModelInput, ModelAssetDescriptor } from './asset-types.js';
 
@@ -56,24 +57,25 @@ export function validatePreparedModel(input: PreparedModelInput): { model: Prepa
   assetCheck(Array.isArray(input.parts) && input.parts.length > 0 && input.parts.length <= ASSET_LIMITS.parts, 'model part limit exceeded');
   const ids = new Set<string>(); let bytes = 0;
   for (const part of input.parts) {
-    assetKeys(part, ['id','vertices','triangles','normals']);
+    assetKeys(part, ['id','vertices','triangles','normals','uv0','imageTexture']);
     assetId(part.id); assetCheck(!ids.has(part.id), 'duplicate part ID'); ids.add(part.id);
     assetCheck(Array.isArray(part.vertices) && part.vertices.length > 0 && part.vertices.length <= ASSET_LIMITS.vertices, 'vertex count limit exceeded');
     assetCheck(Array.isArray(part.triangles) && part.triangles.length > 0 && part.triangles.length <= ASSET_LIMITS.triangles, 'triangle count limit exceeded');
-    for (const point of part.vertices) assetCheck(Array.isArray(point) && point.length === 3 && point.every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 1e6), 'invalid coordinates');
-    for (const face of part.triangles) assetCheck(Array.isArray(face) && face.length === 3 && face.every(v => Number.isInteger(v) && v >= 0 && v < part.vertices.length), 'invalid indices');
+    for (const point of part.vertices) assetCheck(Array.isArray(point) && point.length === 3 && Array.from(point).every(v => typeof v === 'number' && Number.isFinite(v) && Math.abs(v) <= 1e6), 'invalid coordinates');
+    for (const face of part.triangles) assetCheck(Array.isArray(face) && face.length === 3 && Array.from(face).every(v => Number.isInteger(v) && v >= 0 && v < part.vertices.length), 'invalid indices');
     if (part.normals !== undefined) {
       assetCheck(Array.isArray(part.normals) && part.normals.length === part.vertices.length, 'normals count mismatch');
-      for (const n of part.normals) assetCheck(Array.isArray(n) && n.length === 3 && n.every(v=>typeof v === 'number' && Number.isFinite(v) && Math.abs(v)<=1e6) && Math.hypot(...n)>0, 'invalid normals');
+      for (const n of part.normals) assetCheck(Array.isArray(n) && n.length === 3 && Array.from(n).every(v=>typeof v === 'number' && Number.isFinite(v) && Math.abs(v)<=1e6) && Math.hypot(...n)>0, 'invalid normals');
     }
+    validateImageGeometry({kind:'mesh',...part});
     // Conservative accounting for boxed JS triples, not just their packed wire size.
-    bytes += (part.vertices.length + part.triangles.length + (part.normals?.length ?? 0)) * 128;
+    bytes += (part.vertices.length + part.triangles.length + (part.normals?.length ?? 0) + (part.uv0?.length ?? 0)) * 128;
     assetCheck(bytes <= ASSET_LIMITS.modelBytes, 'decoded model memory limit exceeded');
   }
   const model = structuredClone(input), meshes = new Map<string,Geometry>();
   const parts = model.parts.map(part => {
-    meshes.set(part.id, freezeAsset({kind:'mesh',vertices:part.vertices,triangles:part.triangles,...(part.normals?{normals:part.normals}:{})} as Geometry));
-    return { id: part.id, vertexCount: part.vertices.length, triangleCount: part.triangles.length, bounds: bounds(part.vertices) };
+    meshes.set(part.id, freezeAsset({kind:'mesh',vertices:part.vertices,triangles:part.triangles,...(part.normals?{normals:part.normals}:{}),...(part.uv0?{uv0:part.uv0}:{}),...(part.imageTexture?{imageTexture:part.imageTexture}:{})} as Geometry));
+    return { id: part.id, vertexCount: part.vertices.length, triangleCount: part.triangles.length, bounds: bounds(part.vertices), ...(part.uv0?{hasUV0:true}:{}),...(part.imageTexture?{imageTexture:part.imageTexture}:{}) };
   });
   const overall = bounds(parts.flatMap(part=>[part.bounds.min,part.bounds.max]));
   return { model:freezeAsset(model), descriptor:{id:model.id,kind:'model',parts,bounds:overall}, meshes, bytes };

@@ -1,5 +1,5 @@
 /** Packed vertex layout shared by tessellation, composition, inspection and both GPUs. */
-export const VERTEX_FLOATS = 31;
+export const VERTEX_FLOATS = 34;
 export const texturePatterns = ['checker', 'stripes', 'noise', 'marble', 'wood'] as const;
 
 // Equivalent bounded value-noise and filtered pattern functions for the two backends.

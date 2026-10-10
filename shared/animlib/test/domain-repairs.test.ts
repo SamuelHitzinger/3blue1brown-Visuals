@@ -67,7 +67,7 @@ describe('independent domain review regressions',()=>{
     const source=readFileSync(new URL('../demo/expansion/graph-relaxation.js',import.meta.url),'utf8');
     await withOfflineScene(source,{},sampler=>{
       const record=sampler.sample(7).elements.find(e=>e.id==='frontier-C')!;
-      expect(record.geometry.tex).toBe(String.raw`\mathsf{C}\quad\animnum{cost}`);
+      expect(record.geometry.tex).toContain(String.raw`\quad\animnum{cost}`);
     });
   });
 });

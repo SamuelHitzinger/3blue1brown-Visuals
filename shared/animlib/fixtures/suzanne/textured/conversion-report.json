@@ -1,0 +1,112 @@
+{
+  "parts": 1,
+  "images": 1,
+  "geometryBytes": 5038080,
+  "decodedImageBytes": 4194304,
+  "dependencies": [
+    {
+      "uri": "Suzanne.bin",
+      "hash": "b85c2727aa41318e00673d8892f5879d46fb6e476e280f28ee1febd07602b6b8",
+      "bytes": 590400
+    },
+    {
+      "uri": "Suzanne_BaseColor.png",
+      "hash": "1c009f45e53b260ceecd383f2c356ed08b08e05acd4633bcc713213319b2092b",
+      "bytes": 493251
+    }
+  ],
+  "transforms": [
+    {
+      "node": 0,
+      "matrix": [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      "reflected": false
+    }
+  ],
+  "omitted": [
+    "TANGENT",
+    "back-face culling",
+    "metallic-roughness and PBR lighting"
+  ],
+  "packages": [
+    "suzanne-textured-image-0.json",
+    "suzanne-textured.json"
+  ],
+  "catalog": [
+    {
+      "id": "suzanne-textured-image-0",
+      "kind": "image",
+      "hash": "7b6d11391e4ad914059848c31ba8bd9069c55ae87daa23c7a820548365ddc05f",
+      "width": 1024,
+      "height": 1024
+    },
+    {
+      "id": "suzanne-textured",
+      "kind": "model",
+      "parts": [
+        {
+          "id": "node-0-primitive-0",
+          "vertexCount": 11808,
+          "triangleCount": 3936,
+          "bounds": {
+            "min": [
+              -1.3369139432907104,
+              -0.9746090173721313,
+              -0.8007810115814209
+            ],
+            "max": [
+              1.3369139432907104,
+              0.9501950144767761,
+              0.8256840109825134
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "suzanne-textured-image-0",
+              "hash": "7b6d11391e4ad914059848c31ba8bd9069c55ae87daa23c7a820548365ddc05f"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "repeat"
+          }
+        }
+      ],
+      "bounds": {
+        "min": [
+          -1.3369139432907104,
+          -0.9746090173721313,
+          -0.8007810115814209
+        ],
+        "max": [
+          1.3369139432907104,
+          0.9501950144767761,
+          0.8256840109825134
+        ]
+      },
+      "hash": "25367deaa71928273d7bec0c8545014bcf9fad7287c079fd4253778f1511ed58"
+    }
+  ],
+  "stats": {
+    "decodedBytes": 9232384,
+    "pinnedBytes": 0,
+    "leases": 0,
+    "models": 1
+  }
+}

@@ -2,6 +2,9 @@ import { VERTEX_FLOATS } from '../src/texture-shader.js';
 import { afterEach, expect, it, vi } from 'vitest';
 import { compileSource } from '../src/compiler.js';
 import { evaluateScene } from '../src/timeline.js';
+import {createAssetRegistry} from '../src/asset-registry.js';
+import {SceneAssets} from '../src/scene-assets.js';
+import {imageInput} from './image-fixture.js';
 
 // These tests verify selection/lifetime/submission contracts, NOT rasterization.
 // Actual GLSL compilation and pixels are tested by webgl.browser.ts in a browser.
@@ -13,6 +16,15 @@ vi.mock('../src/webgl.js', () => ({ WebGLBackend: class {
   dispose = glState.dispose;
 } }));
 import { CanvasRenderer } from '../src/renderer.js';
+
+it('rejects images exceeding actual device limits during preparation',async()=>{
+  const {renderer,device}=setup();device.limits.maxTextureDimension2D=1;
+  const registry=await createAssetRegistry([imageInput()],{colorPolicy:'source'});
+  const scene=await compileSource("export default scene({},s=>s.image('card',{asset:'corners'}));",{assetCatalog:registry.catalog});
+  const assets=new SceneAssets(registry);assets.prepare(scene);
+  try{await expect(renderer.prepare([scene],assets)).rejects.toThrow(/image.*dimension/i);}
+  finally{renderer.dispose();assets.dispose();}
+});
 
 afterEach(() => { vi.unstubAllGlobals(); vi.clearAllMocks(); });
 function setup(failure = '') {

@@ -1,3 +1,5 @@
+import { createNucleicBuilders } from './nucleic-structures.js';
+import { validateImageGeometry } from "./image-validation.js";
 import { validateSurfaceAppearance } from "./appearance-validation.js";
 import { parse } from "acorn";
 import { getQuickJS } from "quickjs-emscripten";
@@ -6,8 +8,8 @@ import { createSurfaceBuilders } from "./surfaces.js";
 import { createSolidBuilders } from "./solids.js";
 import { createMoleculeBuilders } from './molecules.js';
 import { createAssetBuilders } from './asset-builders.js';
-import { catalogPart, validateAssetCatalog } from './asset-catalog.js';
-import type { ModelAssetDescriptor } from './asset-types.js';
+import { catalogImage, catalogPart, validateAssetCatalog } from './asset-catalog.js';
+import type { AssetDescriptor } from './asset-types.js';
 import { createMolecularBackboneBuilders } from './molecular-backbone.js';
 import { createCoordinateBuilders } from './diagrams/coordinates.js';
 import { createGraphAlgorithms, createGraphBuilders } from './diagrams/graphs.js';
@@ -29,12 +31,15 @@ function check(condition: unknown, message: string): asserts condition {
 }
 function number(value: unknown, label: string) { check(typeof value === "number" && Number.isFinite(value) && Math.abs(value) <= 1e6, `Invalid ${label}`); }
 function vec(value: unknown, label: string, size = 3) { check(Array.isArray(value) && value.length === size, `Invalid ${label}`); value.forEach(n => number(n, label)); }
-function geometry(g: Geometry, catalog: ModelAssetDescriptor[] = []) {
+function geometry(g: Geometry, catalog: AssetDescriptor[] = []) {
   check(g && kinds.has(g.kind), "Invalid geometry kind");
   if(g.asset) {
-    check(g.kind==='mesh'&&g.vertices===undefined&&g.triangles===undefined&&g.normals===undefined&&g.scalarColors===undefined,'Referenced model assets cannot contain inline or deformed geometry');
+    check(g.kind==='mesh'&&g.vertices===undefined&&g.triangles===undefined&&g.normals===undefined&&g.scalarColors===undefined&&g.uv0===undefined,'Referenced model assets cannot contain inline or deformed geometry');
     catalogPart(g.asset,catalog);
   }
+  const part=g.asset?catalogPart(g.asset,catalog):undefined;
+  validateImageGeometry(g,part?.vertexCount,part?.hasUV0??Boolean(g.uv0));
+  if(g.imageTexture)catalogImage(g.imageTexture.image,catalog);
   for (const key of ["radius", "width", "height", "fontSize"] as const) if (g[key] !== undefined) { number(g[key], key); check(g[key]! >= 0, `${key} must be nonnegative`); }
   for (const key of ["points", "vertices"] as const) if (g[key]) {
     check(Array.isArray(g[key]) && g[key]!.length <= 20000, `Invalid or oversized ${key}`);
@@ -99,7 +104,7 @@ function geometry(g: Geometry, catalog: ModelAssetDescriptor[] = []) {
     for (const triangle of g.triangles) check(triangle.length === 3 && triangle.every(i => Number.isInteger(i) && i >= 0 && i < g.vertices!.length), "Invalid mesh triangle index");
   }
 }
-function element(e: ElementState, catalog: ModelAssetDescriptor[] = []) {
+function element(e: ElementState, catalog: AssetDescriptor[] = []) {
   check(e && typeof e.id === "string" && e.id.length <= 512, "Invalid element ID");
   geometry(e.geometry,catalog); vec(e.position, "position"); vec(e.rotation, "rotation");
   validatePathStroke(e, e.geometry.kind);
@@ -128,7 +133,7 @@ function camera(c: CameraState) {
 }
 
 /** Validate the VM boundary: scene code may only return bounded plain animation data. */
-export function validateCompiledScene(scene: CompiledScene, catalog: ModelAssetDescriptor[] = []): void {
+export function validateCompiledScene(scene: CompiledScene, catalog: AssetDescriptor[] = []): void {
   validateAssetCatalog(catalog);
   check(scene && typeof scene === "object", "Source must default-export a scene() definition");
   number(scene.duration, "scene duration"); check(scene.duration >= 0 && scene.duration <= 86400, "Scene duration must be between 0 and 24 hours");
@@ -348,7 +353,7 @@ export async function createSceneProgram(source: string, input: CompileInput = {
       const palette = Object.freeze({ ...__input.palette, colors: __tokens(Object.fromEntries(Object.keys(__input.palette.colors).map(name => [name, name]))) });
       const __buildScene = ${buildScene.toString()};
       const __meshBuilders = Object.freeze({ ...(${createSurfaceBuilders.toString()})(), ...(${createSolidBuilders.toString()})(), ...(${createMoleculeBuilders.toString()})() });
-      const __domainFactories = Object.freeze({createAssetBuilders:${createAssetBuilders.toString()},createCoordinateBuilders:${createCoordinateBuilders.toString()},createGraphAlgorithms:${createGraphAlgorithms.toString()},createGraphBuilders:${createGraphBuilders.toString()},createCollectionBuilders:${createCollectionBuilders.toString()},createMolecularBackboneBuilders:${createMolecularBackboneBuilders.toString()}});
+      const __domainFactories = Object.freeze({createAssetBuilders:${createAssetBuilders.toString()},createCoordinateBuilders:${createCoordinateBuilders.toString()},createGraphAlgorithms:${createGraphAlgorithms.toString()},createGraphBuilders:${createGraphBuilders.toString()},createCollectionBuilders:${createCollectionBuilders.toString()},createMolecularBackboneBuilders:${createMolecularBackboneBuilders.toString()},createNucleicBuilders:${createNucleicBuilders.toString()}});
       const scene = (options, builder) => __buildScene(options, builder, __input, update => { globalThis.__animlibUpdate = update; }, __meshBuilders, __domainFactories);
       let __seed = ${JSON.stringify(input.seed ?? 1)} >>> 0;
       Math.random = () => { __seed = (__seed * 1664525 + 1013904223) >>> 0; return __seed / 4294967296; };

@@ -1,0 +1,6 @@
+{
+  "scenes": [{"id":"images","file":"image-assets.js","duration":6}],
+  "captions": [],
+  "colorPolicy": "source",
+  "modelAssets": ["../../fixtures/suzanne/textured/suzanne-textured-image-0.json", "../../fixtures/suzanne/textured/suzanne-textured.json"]
+}

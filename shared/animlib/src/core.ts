@@ -18,5 +18,8 @@ export { createCollectionBuilders } from './diagrams/collections.js';
 export { createMolecularBackboneBuilders } from './molecular-backbone.js';
 export { strokeContours } from './path-stroke.js';
 export { createAssetRegistry } from './asset-registry.js';
-export { decodeModelPackage } from './asset-package.js';
+export { decodeModelPackage, decodeImagePackage } from './asset-package.js';
 export { resolveAssetGeometry, sceneAssetRefs } from './asset-geometry.js';
+
+export { createNucleicBuilders } from './nucleic-structures.js';
+export { importPDBStructure, structureBackboneProps } from './molecular-structure-data.js';

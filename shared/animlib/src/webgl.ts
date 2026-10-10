@@ -1,3 +1,4 @@
+import { GLImages } from './image-resources.js';
 import { lightingUniform } from './lighting.js';
 import { IDENTITY_INSTANCE, MAX_INSTANCES } from './retained-geometry.js';
 import type { RetainedMesh } from './retained-geometry.js';
@@ -35,6 +36,7 @@ layout(location=10) in float texSeed;
 layout(location=11) in vec3 material;
 layout(location=12) in vec3 emission;
 layout(location=13) in float bumpStrength;
+layout(location=14) in vec3 imageUV;
 uniform mat4 objectTransform[${MAX_INSTANCES}];
 uniform vec4 objectInfo[${MAX_INSTANCES}];
 uniform vec4 focus;
@@ -52,6 +54,7 @@ out vec3 vMaterial;
 out vec3 vEmission;
 out vec3 vViewPosition;
 out float vBumpStrength;
+out vec3 vImageUV;
 void main() {
   mat4 transform=objectTransform[gl_InstanceID];
   vec4 info=objectInfo[gl_InstanceID];
@@ -76,7 +79,7 @@ void main() {
   gl_Position=position;
   vec3 n=vec3(normal.x*cy+normal.z*sy,normal.y,-normal.x*sy+normal.z*cy);
   vNormal=vec3(n.x,n.y*cp-n.z*sp,n.y*sp+n.z*cp);
-  vLit=lit; vColor=color;
+  vLit=lit; vColor=color;vImageUV=imageUV;
   vTexPosition=texPosition;vTexKind=texKind;vTexColor=texColor;vTexSeed=texSeed;
   vMaterial=material;vEmission=emission;vViewPosition=p;vBumpStrength=bumpStrength*info.y;vViewDirection=mix(vec3(0.,0.,1.),vec3(-p.x,-p.y,depth),angles.w);
 }`;
@@ -94,6 +97,8 @@ in vec3 vMaterial;
 in vec3 vEmission;
 in vec3 vViewPosition;
 in float vBumpStrength;
+in vec3 vImageUV;
+uniform sampler2D imageColor;
 out vec4 outputColor;
 uniform vec4 light;
 uniform vec4 ambient;
@@ -101,6 +106,7 @@ ${textureGLSL}
 ${materialGLSL}
 void main() {
   vec4 color=vColor;
+  if(vImageUV.z>0.5){vec4 sampled=texture(imageColor,vImageUV.xy);color*=vec4(sampled.rgb,vImageUV.z<1.5?1.:sampled.a);}
   vec3 footprint=fwidth(vTexPosition);
   float height=0.;
   if(vTexKind>0.5){height=textureMix(vTexPosition,vTexKind,vTexSeed,footprint);color=mix(color,vTexColor,height);}
@@ -122,6 +128,7 @@ void main() {
 /** WebGL2 submission only; scene evaluation, tessellation and ordering live in CanvasRenderer. */
 export class WebGLBackend {
   private program: WebGLProgram;
+  private images?:GLImages;
   private buffer: WebGLBuffer;
   private vao: WebGLVertexArrayObject;
   private focus: WebGLUniformLocation;
@@ -180,7 +187,7 @@ export class WebGLBackend {
 
   private attributes(): void {
     const gl = this.gl;
-    for (const [location, size, offset] of [[0,3,0],[1,4,12],[2,1,28],[3,3,32],[4,1,44],[5,1,48],[6,2,52],[7,3,60],[8,1,72],[9,4,76],[10,1,92],[11,3,96],[12,3,108],[13,1,120]]) {
+    for (const [location, size, offset] of [[0,3,0],[1,4,12],[2,1,28],[3,3,32],[4,1,44],[5,1,48],[6,2,52],[7,3,60],[8,1,72],[9,4,76],[10,1,92],[11,3,96],[12,3,108],[13,1,120],[14,3,124]]) {
       gl.enableVertexAttribArray(location); gl.vertexAttribPointer(location, size, gl.FLOAT, false, VERTEX_FLOATS*4, offset);
     }
   }
@@ -217,6 +224,7 @@ export class WebGLBackend {
     gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.clearColor(clear[0], clear[1], clear[2], 1); gl.clearDepth(1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+    this.images?.beginFrame();
     const used = new Set<RetainedMesh>();
     let first = 0;
     for (const batch of batches) {
@@ -238,6 +246,7 @@ export class WebGLBackend {
       const draw = (command: Extract<RenderCommand,{first:number}>) => {
         gl.useProgram(this.program);gl.bindVertexArray(this.vao);gl.depthMask(command.opaque);
         gl.blendFuncSeparate(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+        if(command.imageBinding){this.images??=new GLImages(gl);this.images.bind(command.imageBinding);gl.uniform1i(gl.getUniformLocation(this.program,'imageColor'),3);}
         const instances = command.instances ?? [IDENTITY_INSTANCE];
         const matrices = new Float32Array(instances.length*16), info = new Float32Array(instances.length*4);
         instances.forEach((instance,i) => { matrices.set(instance.subarray(0,16),i*16); info.set(instance.subarray(16,20),i*4); });
@@ -254,6 +263,7 @@ export class WebGLBackend {
       } else for (const command of commands) if ('first' in command) draw(command);
       first += count;
     }
+    this.images?.endFrame();
     gl.depthMask(true); gl.disable(gl.SCISSOR_TEST); gl.bindVertexArray(null);
     for (const [mesh,resource] of this.meshes) if (!used.has(mesh)) {
       gl.deleteBuffer(resource.vertices); gl.deleteBuffer(resource.indices); gl.deleteVertexArray(resource.vao); this.meshes.delete(mesh);
@@ -261,6 +271,7 @@ export class WebGLBackend {
   }
 
   dispose(): void {
+    this.images?.dispose();
     this.compositor?.dispose();
     for (const resource of this.meshes.values()) {
       this.gl.deleteBuffer(resource.vertices); this.gl.deleteBuffer(resource.indices); this.gl.deleteVertexArray(resource.vao);

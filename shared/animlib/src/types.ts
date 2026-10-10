@@ -1,5 +1,8 @@
+import type { NucleicDuplexProps, NucleicDuplexResult, NucleicTranscriptProps, NucleicTranscriptResult } from './nucleic-types.js';
+export type * from './nucleic-types.js';
+export type * from './molecular-structure-types.js';
 import type { ExplanatoryGeometry, ScalarColors } from "./explanatory-types.js";
-import type { AssetGeometryRef, AssetGeometryResolver, AssetRegistry, ModelAssetDescriptor, ModelProps } from './asset-types.js';
+import type { AssetGeometryRef, AssetGeometryResolver, AssetRegistry, AssetDescriptor, ModelAssetDescriptor, ModelProps, ImageProps, ImageTexture } from './asset-types.js';
 export type * from './asset-types.js';
 export type { ClipPlane, MeshOutline, ScalarRamp, ScalarColors, SurfaceScalar, ExplanatoryGeometry } from "./explanatory-types.js";
 import type { Color, PaletteColor } from "./palette.js";
@@ -89,6 +92,8 @@ export interface Geometry extends ExplanatoryGeometry {
   shading?: "unlit" | "flat" | "smooth";
   /** Optional per-vertex local normals for smooth mesh shading; normalized when rendered. */
   normals?: Vec3[];
+  uv0?: Vec2[];
+  imageTexture?: ImageTexture;
   /** Procedural fill on meshes and spheres only. */
   texture?: ProceduralTexture;
   /** Configurable lighting on spheres and meshes. */
@@ -450,6 +455,7 @@ export interface ElementHandle {
 export interface SceneContext {
   model(id: string, props: ModelProps): ElementHandle;
   modelInfo(asset: string): ModelAssetDescriptor;
+  image(id: string, props: ImageProps): ElementHandle;
   circle(id: string, props?: ElementProps): ElementHandle;
   sphere(id: string, props?: ElementProps): ElementHandle;
   rectangle(id: string, props?: ElementProps): ElementHandle;
@@ -472,6 +478,8 @@ export interface SceneContext {
   tube(id: string, props: TubeProps): ElementHandle;
   molecule(id: string, props: MoleculeProps): ElementHandle;
   molecularBackbone(id: string, props: MolecularBackboneProps): ElementHandle;
+  nucleicDuplex(props: NucleicDuplexProps, opening: number): NucleicDuplexResult;
+  nucleicTranscript(props: NucleicTranscriptProps, time: number): NucleicTranscriptResult;
   molecularBackboneGeometry(props: MolecularBackboneProps): MolecularBackboneResult;
   articulatedChainPose(spec: ArticulatedChainSpec, time: number): Vec3[];
   plane(id: string, options: PlaneOptions): CoordinatePlane;
@@ -539,7 +547,7 @@ export interface PlayerState {
 
 export interface CompileInput {
   /** Descriptor-only catalog; no bytes or resolver capabilities enter the VM. */
-  assetCatalog?: ModelAssetDescriptor[];
+  assetCatalog?: AssetDescriptor[];
   /** Defaults to THREE_BLUE_ONE_BROWN_PALETTE. */
   palette?: ColorPalette;
   previous?: Frame;

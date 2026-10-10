@@ -44,7 +44,7 @@ export class Player {
   constructor(options: PlayerOptions) {
     const palette = paletteResolver(options.palette).palette;
     this.palette = palette;
-    this.renderer = new CanvasRenderer(options.canvas, palette, { resolve:ref=>this.sequence.assetGeometry.resolve(ref) });
+    this.renderer = new CanvasRenderer(options.canvas, palette, { resolve:ref=>this.sequence.assetGeometry.resolve(ref), resolveImage:ref=>this.sequence.assetGeometry.resolveImage(ref) });
     this.behaviors = new BehaviorRuntime(options.behaviors);
     this.input = new CanvasInput(options.canvas, this.behaviors, view => this.renderer.interactionSnapshot(view), () => this.invalidateFrame(), { resolve:ref=>this.sequence.assetGeometry.resolve(ref) });
     this.audio = new AudioClock(options.assets);

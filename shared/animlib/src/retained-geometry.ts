@@ -2,9 +2,11 @@ import { vec3 } from './geometry.js';
 import type { CameraState, ElementState, Frame, Geometry, Vec3 } from './types.js';
 import type { GeometryDrawItem } from './render-geometry.js';
 import { VERTEX_FLOATS } from './texture-shader.js';
+import type { ImageBinding } from './composition.js';
 
 /** Geometry is immutable once submitted; backends key resources by this identity. */
 export interface RetainedMesh {
+  imageBinding?:ImageBinding;
   vertices: Float32Array<ArrayBuffer>;
   indices: Uint32Array<ArrayBuffer>;
   centers: Vec3[];
@@ -61,7 +63,7 @@ export function indexGeometry(items: GeometryDrawItem[]): RetainedMesh {
     if (count) for (let axis = 0; axis < 3; axis++) center[axis] /= count;
     centers.push(center);
   }
-  return { vertices: new Float32Array(values), indices: new Uint32Array(indices), centers, magnitude, component: items[0]?.component ?? 'fill' };
+  return { vertices: new Float32Array(values), indices: new Uint32Array(indices), centers, magnitude, component: items[0]?.component ?? 'fill',...(items[0]?.imageBinding?{imageBinding:items[0].imageBinding}:{}) };
 }
 
 /** Narrowing local coordinates and a compensating transform separately can erase

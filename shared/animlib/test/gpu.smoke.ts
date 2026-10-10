@@ -4,6 +4,7 @@ import { capClippingCases, capClippingIssues, explanatoryCases, explanatoryMorph
 import {beforeAll,afterAll,describe,it,expect,vi} from 'vitest';
 import {create,globals} from 'webgpu';
 import {VertexBufferLimitError} from '../src/vertex-buffer.js';
+import {VERTEX_FLOATS} from '../src/texture-shader.js';
 import {createPlayer} from '../src/player.js';
 import {CanvasRenderer} from '../src/renderer.js';
 import {SceneSequence} from '../src/sequence.js';
@@ -140,14 +141,17 @@ describe('native WebGPU rendering',()=> {
       expect(controlled).toEqual([]);expect(errors).toEqual([]);
       const buffers=create.mock.calls.map(([descriptor])=>descriptor).filter(d=>(d.usage&GPUBufferUsage.VERTEX)!==0);
       expect(buffers.map(d=>d.size)).toEqual([limit]); // payload fits; doubled growth does not.
-      expect(write.mock.calls.some(([, ,data])=>(data as ArrayBufferView).byteLength===208320744)).toBe(true);
+      const expandedBytes=(count:number)=>(count*100*100*6*14+6)*VERTEX_FLOATS*4;
+      expect(expandedBytes(2)).toBeLessThanOrEqual(limit);expect(expandedBytes(2)*2).toBeGreaterThan(limit);
+      expect(write.mock.calls.some(([, ,data])=>(data as ArrayBufferView).byteLength===expandedBytes(2))).toBe(true);
       const before=await pixels();expect(changedPixels(before)).toBeGreaterThan(1000);
       const oversized=await sequence.submit({type:'load',scenes:[{id:'large-shadow',source:source(3)}]});
       expect(oversized.ok,JSON.stringify(oversized)).toBe(true);
       const allocationCount=create.mock.calls.length,submitCount=submit.mock.calls.length,writeCount=write.mock.calls.length;
       renderer.render(sequence.frame(0,0),sequence.compiled[0].options);
       expect(controlled).toHaveLength(1);expect(controlled[0]).toBeInstanceOf(VertexBufferLimitError);
-      expect(controlled[0].message).toContain('312480744');
+      expect(expandedBytes(3)).toBeGreaterThan(limit);
+      expect(controlled[0].message).toContain(String(expandedBytes(3)));
       expect(create).toHaveBeenCalledTimes(allocationCount);expect(submit).toHaveBeenCalledTimes(submitCount);expect(write).toHaveBeenCalledTimes(writeCount);
       expect(renderer.backend).toBe('webgpu');expect(Buffer.from(await pixels())).toEqual(Buffer.from(before));
       expect(errors).toEqual([]);

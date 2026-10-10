@@ -1,7 +1,7 @@
 /** Node-only package I/O. The browser registry has no filesystem or network capability. */
 import { open, realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
-import { decodeModelPackage } from '../dist/asset-package.js';
+import { decodeModelPackage,decodeImagePackage,assetPackageDecodedBytes } from '../dist/asset-package.js';
 import { createAssetRegistry } from '../dist/asset-registry.js';
 
 function contained(root, path) {
@@ -20,24 +20,25 @@ async function boundedRead(path, limit, exact) {
     return bytes;
   } finally {await file.close();}
 }
-export async function loadModelPackage(manifestPath) {
+async function packageInput(manifestPath) {
   const file=await realpath(resolve(manifestPath)), root=await realpath(dirname(file));
   const manifest=JSON.parse((await boundedRead(file,1024*1024)).toString('utf8'));
-  return decodeModelPackage(manifest,async(path,byteLength)=> {
+  return {manifest,read:async(path,byteLength)=> {
     const candidate=resolve(root,path); contained(root,candidate);
     const resolved=await realpath(candidate); contained(root,resolved);
     return new Uint8Array(await boundedRead(resolved,byteLength,byteLength));
-  });
+  }};
 }
-export async function loadAssetRegistry(manifestPaths) {
+export async function loadModelPackage(manifestPath) {
+  const {manifest,read}=await packageInput(manifestPath);
+  return (manifest.kind==='image'?decodeImagePackage:decodeModelPackage)(manifest,read);
+}
+export async function loadAssetRegistry(manifestPaths,options={}) {
   if(!Array.isArray(manifestPaths)||manifestPaths.length>128) throw new Error('Asset package count limit exceeded');
-  const models=[]; let bytes=0;
-  // Sequential loading bounds transient allocations; registry validates the aggregate.
-  for(const path of manifestPaths) {
-    const model=await loadModelPackage(path);
-    bytes+=model.parts.reduce((n,p)=>n+(p.vertices.length+p.triangles.length+(p.normals?.length??0))*128,0);
-    if(bytes>256*1024*1024)throw new Error('Asset aggregate decoded memory limit exceeded');
-    models.push(model);
-  }
-  return createAssetRegistry(models);
+  const packages=[];let bytes=0;
+  // Read bounded manifests first; reject aggregate decoded memory before any blob.
+  for(const path of manifestPaths){const pkg=await packageInput(path);if(pkg.manifest.kind==='image'&&options.colorPolicy!=='source')throw new Error('Source image colors require host colorPolicy source');bytes+=assetPackageDecodedBytes(pkg.manifest);if(bytes>256*1024*1024)throw new Error('Asset aggregate decoded memory limit exceeded');packages.push(pkg);}
+  const models=[];
+  for(const {manifest,read} of packages)models.push(await (manifest.kind==='image'?decodeImagePackage:decodeModelPackage)(manifest,read));
+  return createAssetRegistry(models,options);
 }

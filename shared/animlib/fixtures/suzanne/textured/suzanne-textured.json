@@ -1,0 +1,100 @@
+{
+  "id": "suzanne-textured",
+  "kind": "model",
+  "version": 1,
+  "units": "metre (glTF 2.0 coordinate convention)",
+  "provenance": {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Suzanne",
+    "sourceHash": "7e8ae013010aff530162ef2795cec74c2646019e224af17bcfb691664f0f0aec",
+    "creator": "UX3D / Norbert Nopper (2017)",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "animlib static-gltf",
+      "version": "1",
+      "options": {
+        "scene": 0,
+        "materialPolicy": "base-color-only",
+        "dependencies": [
+          {
+            "uri": "Suzanne.bin",
+            "hash": "b85c2727aa41318e00673d8892f5879d46fb6e476e280f28ee1febd07602b6b8",
+            "bytes": 590400
+          },
+          {
+            "uri": "Suzanne_BaseColor.png",
+            "hash": "1c009f45e53b260ceecd383f2c356ed08b08e05acd4633bcc713213319b2092b",
+            "bytes": 493251
+          }
+        ],
+        "transforms": [
+          {
+            "node": 0,
+            "matrix": [
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0,
+              0,
+              0,
+              1
+            ],
+            "reflected": false
+          }
+        ]
+      }
+    },
+    "selection": "scene 0",
+    "modifications": [
+      "Baked node transforms; inverse-transpose normals; reflected winding; native Float32 geometry serialization.",
+      "Explicit base-color-only derivative omits: TANGENT, back-face culling, metallic-roughness and PBR lighting."
+    ],
+    "fidelity": "Geometry/base-color samples retained; omitted channels and stylized lighting prevent PBR equivalence."
+  },
+  "parts": [
+    {
+      "id": "node-0-primitive-0",
+      "vertexCount": 11808,
+      "triangleCount": 3936,
+      "positions": {
+        "path": "blobs/6b6fd0dea76033eaa0f7d726985a104af4b8c90b08542ab4123b9c2044cd78ef.bin",
+        "hash": "6b6fd0dea76033eaa0f7d726985a104af4b8c90b08542ab4123b9c2044cd78ef",
+        "byteLength": 141696
+      },
+      "indices": {
+        "path": "blobs/0c251e2cca460ee474427143774cbbc8a89adab27d3727c96f8135365b472d70.bin",
+        "hash": "0c251e2cca460ee474427143774cbbc8a89adab27d3727c96f8135365b472d70",
+        "byteLength": 47232
+      },
+      "normals": {
+        "path": "blobs/3fb914d419b6180bbde7ecd147f98d8d7d87591f15942edacc0e9747e4401d5c.bin",
+        "hash": "3fb914d419b6180bbde7ecd147f98d8d7d87591f15942edacc0e9747e4401d5c",
+        "byteLength": 141696
+      },
+      "uv0": {
+        "path": "blobs/bdf89bad63fa5b219482bab3aee5a86fc8f88826b91045e9d280633cb87bcb9a.bin",
+        "hash": "bdf89bad63fa5b219482bab3aee5a86fc8f88826b91045e9d280633cb87bcb9a",
+        "byteLength": 94464
+      },
+      "imageTexture": {
+        "image": {
+          "id": "suzanne-textured-image-0",
+          "hash": "7b6d11391e4ad914059848c31ba8bd9069c55ae87daa23c7a820548365ddc05f"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "repeat"
+      }
+    }
+  ],
+  "hash": "9ccbcdbaa5fe1a53848badbdd65cfa46acafe6bf6c86896874ba386c122a94fc"
+}

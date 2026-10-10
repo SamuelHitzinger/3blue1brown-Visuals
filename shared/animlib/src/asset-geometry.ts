@@ -1,4 +1,4 @@
-import type { AssetGeometryRef, AssetGeometryResolver } from './asset-types.js';
+import type { AssetRef, AssetGeometryRef, AssetGeometryResolver } from './asset-types.js';
 import type { CompiledScene, Geometry } from './types.js';
 import { assetCheck } from './asset-validation.js';
 
@@ -17,9 +17,9 @@ export function resolveAssetGeometry(geometry: ReferencedGeometry, resolver?: As
   return resolved;
 }
 /** Includes dormant lifecycle elements and track snapshots before a candidate is committed. */
-export function sceneAssetRefs(scenes: readonly CompiledScene[]): AssetGeometryRef[] {
-  const refs = new Map<string,AssetGeometryRef>();
-  const visit = (geometry?: ReferencedGeometry) => { if (geometry?.asset) refs.set(JSON.stringify(geometry.asset),geometry.asset); };
+export function sceneAssetRefs(scenes: readonly CompiledScene[]): AssetRef[] {
+  const refs = new Map<string,AssetRef>();
+  const visit = (geometry?: ReferencedGeometry) => { if (geometry?.asset) refs.set(JSON.stringify(geometry.asset),geometry.asset); if(geometry?.imageTexture)refs.set(JSON.stringify(geometry.imageTexture.image),geometry.imageTexture.image); };
   for (const scene of scenes) {
     for (const element of [...scene.initial,...scene.lifecycle.flatMap(event=>event.elements??[])]) { visit(element.geometry); visit(element.morph?.from); visit(element.morph?.to); }
     for (const track of scene.tracks) { visit(track.action.geometry); for (const element of Object.values(track.from)) { visit(element.geometry); visit(element.morph?.from); visit(element.morph?.to); } }

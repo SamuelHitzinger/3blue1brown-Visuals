@@ -2,6 +2,7 @@
 import {afterEach,expect,it,vi} from 'vitest';
 import {create,globals} from 'webgpu';
 import {createPlayer} from '../src/player.js';
+import {VERTEX_FLOATS} from '../src/texture-shader.js';
 
 const small="export default scene({},s=>{s.rectangle('r',{width:3,height:2,fill:'PURE_RED'});s.wait(1)});";
 const oversized=`export default scene({mode:'3d',lighting:{directional:{direction:[0,1,0],space:'world',shadow:{quality:'high'}},receiver:{size:[8,8]}}},s=>{
@@ -16,9 +17,9 @@ it.each([false,true])('public Player preserves an async backend error, prior bud
   vi.stubGlobal('ResizeObserver',class {observe(){}disconnect(){}});
   vi.stubGlobal('devicePixelRatio',1);
   vi.stubGlobal('requestAnimationFrame',vi.fn(()=>1));vi.stubGlobal('cancelAnimationFrame',vi.fn());
-  const gpu=create(['backend=vulkan']),adapter=await gpu.requestAdapter();
-  if(!adapter)throw new Error('Recovery regression requires a real Vulkan WebGPU adapter.');
-  const device=await adapter.requestDevice(),format=gpu.getPreferredCanvasFormat();
+  const gpu=create([]),adapter=await gpu.requestAdapter();
+  if(!adapter)throw new Error('Recovery regression requires a real native WebGPU adapter.');
+  const device=await adapter.requestDevice({requiredLimits:{maxBufferSize:256*1024*1024}}),format=gpu.getPreferredCanvasFormat();
   const width=640,height=480,errors:string[]=[];
   device.addEventListener('uncapturederror',event=>errors.push(event.error.message));
   const texture=device.createTexture({size:[width,height],format,usage:GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC});
@@ -33,7 +34,10 @@ it.each([false,true])('public Player preserves an async backend error, prior bud
   try{
     expect((await load(budgetFirst?oversized:small)).ok).toBe(true);
     expect(player.getState().status).toBe(budgetFirst?'blocked':'paused');
-    if(budgetFirst)expect(player.getState().error).toContain('312480744');
+    // Three 100x100 surfaces, fourteen shadow copies and a six-vertex receiver.
+    const oversizedBytes=(3*100*100*6*14+6)*VERTEX_FLOATS*4;
+    expect(oversizedBytes).toBeGreaterThan(device.limits.maxBufferSize);
+    if(budgetFirst)expect(player.getState().error).toContain(String(oversizedBytes));
     expect(errors).toEqual([]); // The shadow/budget scene itself raises no GPU error.
 
     // Deliberate native fault injection, outside animlib's controlled allocation.

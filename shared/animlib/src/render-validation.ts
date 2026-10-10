@@ -9,6 +9,10 @@ import type { AssetGeometryResolver } from './asset-types.js';
 export function validateRenderableScene(scene: CompiledScene, hostPalette?: ColorPalette, assetGeometry?: AssetGeometryResolver): void {
   const prepareGeometry = (geometry: Geometry): void => {
     geometry=resolveAssetGeometry(geometry,assetGeometry);
+    if(geometry.imageTexture) {
+      if(!assetGeometry?.resolveImage)throw new Error('Image texture requires a held image lease');
+      assetGeometry.resolveImage(geometry.imageTexture.image);
+    }
     if (geometry.kind === 'latex') layoutLatexGeometry(geometry);
     if (geometry.kind === 'text') layoutLatex(textTex(geometry.text ?? ''));
   };

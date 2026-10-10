@@ -22,3 +22,7 @@ unchanged scale/origin, source selection, hashes and fidelity notes in asset.jso
 The preparation script only accepts the exact pinned source; it is not a general
 glTF converter. Images, PBR, vertex colors, skins and animation remain unsupported
 by this model package version and may not be silently added to its schema.
+
+## Textured companion
+
+The newer `textured/` companion retains UV0 and the original base-color PNG through the general bounded static importer. It is a separately named, explicitly base-color-only derivative with PBR omissions documented in `textured/README.md`. The geometry-only fixture above remains unchanged. See `../../docs/assets-import.md` for the now-supported native image/package API and importer subset.

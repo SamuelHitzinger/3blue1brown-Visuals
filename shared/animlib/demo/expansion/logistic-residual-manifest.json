@@ -1,0 +1,25 @@
+{
+  "scenes": [
+    {
+      "id": "logistic-residual",
+      "file": "logistic-residual.js",
+      "duration": 7
+    }
+  ],
+  "captions": [],
+  "palette": {
+    "colors": {
+      "BLACK": "#191F23",
+      "YELLOW": "#F3EB75",
+      "BLUE": "#9FC7DA",
+      "RED": "#E59A9F",
+      "WHITE": "#E5E7EA",
+      "GREY": "#69717A",
+      "GREY_D": "#30383D",
+      "GREY_E": "#353E44",
+      "GREY_C": "#78858D"
+    },
+    "background": "BLACK",
+    "foreground": "WHITE"
+  }
+}

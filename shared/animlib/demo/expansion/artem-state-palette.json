@@ -1,0 +1,17 @@
+{
+  "colors": {
+    "BLACK": "#0C1029",
+    "RED": "#F38C9A",
+    "GREEN": "#AED49E",
+    "PURPLE": "#B9A1D4",
+    "YELLOW": "#F5D378",
+    "BLUE": "#7BCEE9",
+    "GREY_B": "#BDC6DF",
+    "GREY_C": "#8793B2",
+    "GREY_A": "#E0E5F1",
+    "GREY": "#D6DAE8",
+    "WHITE": "#E5E9F3"
+  },
+  "background": "BLACK",
+  "foreground": "WHITE"
+}

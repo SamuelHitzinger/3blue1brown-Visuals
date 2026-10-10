@@ -56,7 +56,7 @@ async function main() {
   const options = argumentsFor(process.argv.slice(2));
   const manifestPath = resolve(options.manifest);
   const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
-  const modelAssets=manifest.modelAssets?await loadAssetRegistry(manifest.modelAssets.map(path=>resolve(dirname(manifestPath),path))):undefined;
+  const modelAssets=manifest.modelAssets?await loadAssetRegistry(manifest.modelAssets.map(path=>resolve(dirname(manifestPath),path)),{colorPolicy:manifest.colorPolicy}):undefined;
   const duration = validateManifest(manifest);
   const output = resolve(options.output);
   await mkdir(dirname(output), { recursive: true });
@@ -105,7 +105,7 @@ async function main() {
     for (const entry of manifest.scenes) {
       if (aborted) throw new Error('Export interrupted.');
       const source = await readFile(join(dirname(manifestPath), entry.file), 'utf8');
-      previous = await withOfflineScene(source, { previous }, async sampler => {
+      previous = await withOfflineScene(source, { previous, palette: manifest.palette }, async sampler => {
         const compiled = sampler.scene;
         if (Math.abs(compiled.duration - entry.duration) > 0.001) throw new Error(`Scene ${entry.id}: compiled duration ${compiled.duration} differs from manifest ${entry.duration}.`);
         if (compiled.options.audio) throw new Error(`Scene ${entry.id} declares audio; silent export requires silent source scenes.`);

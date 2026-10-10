@@ -1,0 +1,41 @@
+{
+  "id": "suzanne-textured-image-0",
+  "kind": "image",
+  "version": 1,
+  "width": 1024,
+  "height": 1024,
+  "storage": "rgba8",
+  "encoding": "srgb",
+  "origin": "top-left",
+  "alpha": "straight",
+  "colorPolicy": "source",
+  "provenance": {
+    "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Suzanne#Suzanne_BaseColor.png",
+    "sourceHash": "1c009f45e53b260ceecd383f2c356ed08b08e05acd4633bcc713213319b2092b",
+    "creator": "UX3D / Norbert Nopper (2017)",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "animlib static-gltf + pngjs",
+      "version": "1 / pngjs 7.0.0",
+      "options": {
+        "sourceHashes": {
+          "Suzanne.gltf": "7e8ae013010aff530162ef2795cec74c2646019e224af17bcfb691664f0f0aec",
+          "Suzanne.bin": "b85c2727aa41318e00673d8892f5879d46fb6e476e280f28ee1febd07602b6b8",
+          "Suzanne_BaseColor.png": "1c009f45e53b260ceecd383f2c356ed08b08e05acd4633bcc713213319b2092b"
+        }
+      }
+    },
+    "selection": "image 0",
+    "modifications": [
+      "Decoded unchanged RGB to RGBA8 top-left rows; no palette quantization."
+    ],
+    "fidelity": "Original base-color samples; no PBR equivalence."
+  },
+  "pixels": {
+    "path": "blobs/b1aaf9bd7af54d30527bdad3b1f2d7bbe02ae34ccb160141f707f08587924e24.bin",
+    "hash": "b1aaf9bd7af54d30527bdad3b1f2d7bbe02ae34ccb160141f707f08587924e24",
+    "byteLength": 4194304
+  },
+  "hash": "a92b59f6d20e9841d0130d127bf450745fe01077a01972526fea2af3df91ff6e"
+}

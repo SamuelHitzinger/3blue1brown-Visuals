@@ -31,8 +31,8 @@ async function readPixels(device, texture, format) {
 async function main() {
   const input=JSON.parse(await readFile(process.argv[2],'utf8'));
   if(!Array.isArray(input.times)||!input.times.length||input.times.length>16)throw new Error('Expected 1–16 sample times.');
-  const modelAssets=input.modelAssets?await loadAssetRegistry(input.modelAssets.map(path=>resolve(dirname(process.argv[2]),path))):undefined;
-  await withOfflineScene(input.source,{previous:input.previousFrame},async sampler=>{
+  const modelAssets=input.modelAssets?await loadAssetRegistry(input.modelAssets.map(path=>resolve(dirname(process.argv[2]),path)),{colorPolicy:input.colorPolicy}):undefined;
+  await withOfflineScene(input.source,{previous:input.previousFrame,palette:input.palette},async sampler=>{
     const compiled=sampler.scene;
     if(!input.times.every(t=>Number.isFinite(t)&&t>=0&&t<=compiled.duration))throw new Error('Invalid sample time.');
     Object.assign(globalThis,globals);

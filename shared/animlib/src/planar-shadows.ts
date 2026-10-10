@@ -21,8 +21,9 @@ function clip(points: Vec3[], axis: number, edge: number, sign: number): Vec3[] 
 }
 function triangles(points: Vec3[], output: number[], color: number[], lit: number): void {
   for (let i = 1; i + 1 < points.length; i++) for (const p of [points[0], points[i], points[i + 1]]) {
-    // Same 31-float layout as regular geometry; no material/texture/emission.
-    output.push(...p, ...color, 0, 0, 1, 0, lit, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
+    const vertex=new Array<number>(VERTEX_FLOATS).fill(0);
+    vertex.splice(0,7,...p,...color);vertex[9]=1;vertex[11]=lit;
+    output.push(...vertex);
   }
 }
 

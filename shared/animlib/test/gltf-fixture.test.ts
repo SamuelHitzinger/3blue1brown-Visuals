@@ -1,0 +1,23 @@
+import {readFile} from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+import {resolve} from 'node:path';
+import {it,expect} from 'vitest';
+import {decodeImagePackage,decodeModelPackage} from '../src/asset-package.js';
+import {createAssetRegistry} from '../src/asset-registry.js';
+import {decodePNG} from '../tools/png-assets.mjs';
+const root=fileURLToPath(new URL('../fixtures/suzanne/',import.meta.url));
+it('roundtrips the real native fixture with exact source RGB, source vertex/normal/UV pairing and catalog identities',async()=>{
+ const native=resolve(root,'textured'),read=async(path:string)=>new Uint8Array(await readFile(resolve(native,path)));
+ const imageManifest=JSON.parse(await readFile(resolve(native,'suzanne-textured-image-0.json'),'utf8'));
+ const modelManifest=JSON.parse(await readFile(resolve(native,'suzanne-textured.json'),'utf8'));
+ const image=await decodeImagePackage(imageManifest,read),model=await decodeModelPackage(modelManifest,read);
+ const png=decodePNG(new Uint8Array(await readFile(resolve(root,'source/Suzanne_BaseColor.png'))));
+ expect(Buffer.compare(Buffer.from(image.pixels),Buffer.from(png.pixels))).toBe(0);expect([image.width,image.height]).toEqual([1024,1024]);
+ const gltf=JSON.parse(await readFile(resolve(root,'source/Suzanne.gltf'),'utf8')),buffer=await readFile(resolve(root,'source/Suzanne.bin'));
+ const attribute=(name:string)=>{const accessor=gltf.accessors[gltf.meshes[0].primitives[0].attributes[name]],view=gltf.bufferViews[accessor.bufferView],n=accessor.type==='VEC2'?2:3,values=[];
+ for(let i=0;i<accessor.count;i++){const tuple=[];for(let j=0;j<n;j++)tuple.push(buffer.readFloatLE((view.byteOffset??0)+(accessor.byteOffset??0)+i*(view.byteStride??n*4)+j*4));values.push(tuple);}return values;};
+ expect(model.parts[0].vertices).toEqual(attribute('POSITION'));expect(model.parts[0].normals).toEqual(attribute('NORMAL'));expect(model.parts[0].uv0).toEqual(attribute('TEXCOORD_0'));
+ const registry=await createAssetRegistry([image,model],{colorPolicy:'source'}),report=JSON.parse(await readFile(resolve(native,'conversion-report.json'),'utf8'));
+ expect(registry.catalog).toEqual(report.catalog);expect(registry.stats().decodedBytes).toBe(9232384);
+ expect(model.provenance.license).toBe('CC0-1.0');expect(model.provenance.modifications.join(' ')).toContain('back-face culling');
+});

@@ -1,3 +1,4 @@
+import { GPUImages } from './image-resources.js';
 /// <reference types="@webgpu/types" />
 import { VertexBufferLimitError, vertexBufferCapacity } from './vertex-buffer.js';
 import { lightingUniform } from './lighting.js';
@@ -19,14 +20,15 @@ import { buildDrawItems } from './render-geometry.js';
 export { triangulateContours } from './render-geometry.js';
 import { validateRenderableScene } from './render-validation.js';
 import type { AssetGeometryResolver } from './asset-types.js';
+import {sceneAssetRefs} from './asset-geometry.js';
 
 const shader=`
 struct Camera { focus: vec4f, angles: vec4f, viewport: vec4f, light: vec4f, ambient: vec4f };
 @group(0) @binding(0) var<uniform> camera: Camera;
 struct ObjectState { transform: mat4x4f, info: vec4f };
 @group(1) @binding(0) var<uniform> objects: array<ObjectState,32>;
-struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @location(1) normal: vec3f, @location(2) lit: f32, @location(3) texPosition: vec3f, @location(4) texKind: f32, @location(5) texColor: vec4f, @location(6) texSeed: f32, @location(7) viewDirection: vec3f, @location(8) material: vec3f, @location(9) emission: vec3f, @location(10) viewPosition: vec3f, @location(11) bumpStrength: f32 };
-@vertex fn vertex(@builtin(instance_index) instanceIndex:u32, @location(0) localWorld: vec3f, @location(1) color: vec4f, @location(2) screen: f32, @location(3) localNormal: vec3f, @location(4) lit: f32, @location(5) localLayer: f32, @location(6) localViewportOffset: vec2f, @location(7) texPosition: vec3f, @location(8) texKind: f32, @location(9) texColor: vec4f, @location(10) texSeed: f32, @location(11) material: vec3f, @location(12) emission: vec3f, @location(13) bumpStrength: f32) -> Output {
+struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @location(1) normal: vec3f, @location(2) lit: f32, @location(3) texPosition: vec3f, @location(4) texKind: f32, @location(5) texColor: vec4f, @location(6) texSeed: f32, @location(7) viewDirection: vec3f, @location(8) material: vec3f, @location(9) emission: vec3f, @location(10) viewPosition: vec3f, @location(11) bumpStrength: f32, @location(12) imageUV: vec3f };
+@vertex fn vertex(@builtin(instance_index) instanceIndex:u32, @location(0) localWorld: vec3f, @location(1) color: vec4f, @location(2) screen: f32, @location(3) localNormal: vec3f, @location(4) lit: f32, @location(5) localLayer: f32, @location(6) localViewportOffset: vec2f, @location(7) texPosition: vec3f, @location(8) texKind: f32, @location(9) texColor: vec4f, @location(10) texSeed: f32, @location(11) material: vec3f, @location(12) emission: vec3f, @location(13) bumpStrength: f32, @location(14) imageUV: vec3f) -> Output {
   let object=objects[instanceIndex];
   let world=(object.transform*vec4f(localWorld,1.)).xyz;
   let normal=(object.transform*vec4f(localNormal,0.)).xyz/object.info.y;
@@ -49,7 +51,7 @@ struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @
   var n=normal;
   n=vec3f(n.x*cy+n.z*sy,n.y,-n.x*sy+n.z*cy);
   n=vec3f(n.x,n.y*cp-n.z*sp,n.y*sp+n.z*cp);
-  output.normal=n;output.lit=lit;output.color=color;
+  output.normal=n;output.lit=lit;output.color=color;output.imageUV=imageUV;
   output.texPosition=texPosition;output.texKind=texKind;output.texColor=texColor;output.texSeed=texSeed;
   output.material=material;output.emission=emission;output.viewPosition=p;output.bumpStrength=bumpStrength*object.info.y;
   output.viewDirection=mix(vec3f(0.,0.,1.),vec3f(-p.x,-p.y,depth),camera.angles.w);
@@ -75,12 +77,19 @@ ${materialWGSL}
   }
   return vec4f(color.rgb+input.emission,color.a); }
 `;
+const imageShader=shader.replace('struct Camera', '@group(2) @binding(0) var imageColor: texture_2d<f32>;\n@group(2) @binding(1) var imageSampler: sampler;\nstruct Camera').replace('var color=input.color;', 'var color=input.color; let sample=textureSample(imageColor,imageSampler,input.imageUV.xy); color*=vec4f(sample.rgb,select(sample.a,1.,input.imageUV.z<1.5));');
 export class CanvasRenderer {
   onCanvasChange:((canvas:HTMLCanvasElement)=>void)|undefined;
   onRecovered:(()=>void)|undefined;
   private gl:WebGLBackend|undefined;
   private retained=new RetainedGeometry();
   private gpuRetained:GPURetained|undefined;
+  private gpuImages:GPUImages|undefined;
+  private imagePipeline:GPURenderPipeline|undefined;
+  private imageTransparentPipeline:GPURenderPipeline|undefined;
+  private imageDepthPipeline:GPURenderPipeline|undefined;
+  private imageDescriptor:GPURenderPipelineDescriptor|undefined;
+  private imageCameras=new Map<GPURenderPipeline,Map<GPUBuffer,GPUBindGroup>>();
   private contextLost=false;
   private ready=false;
   private errorKind:'budget'|'backend'|undefined;
@@ -145,6 +154,7 @@ export class CanvasRenderer {
   }
   private releaseGPU():void {
     this.gpuRetained?.dispose();this.gpuRetained=undefined;
+    this.gpuImages?.dispose();this.gpuImages=undefined;this.imagePipeline=undefined;this.imageTransparentPipeline=undefined;this.imageDepthPipeline=undefined;this.imageDescriptor=undefined;this.imageCameras.clear();
     this.compositor?.dispose();this.compositor=undefined;
     this.depthOnlyPipeline=undefined;this.pipelineDescriptor=undefined;
     for(const resource of this.viewResources.values())resource.uniform.destroy();this.viewResources.clear();
@@ -324,7 +334,7 @@ export class CanvasRenderer {
     if(this.disposed)throw new Error('Renderer is disposed.');
     const errors=compilation.messages.filter(m=>m.type==='error');if(errors.length)throw new Error(errors.map(m=>m.message).join('\n'));
     this.format=navigator.gpu.getPreferredCanvasFormat();
-    const descriptor:GPURenderPipelineDescriptor={layout:'auto',vertex:{module,entryPoint:'vertex',buffers:[{arrayStride:VERTEX_FLOATS*4,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32x4'},{shaderLocation:2,offset:28,format:'float32'},{shaderLocation:3,offset:32,format:'float32x3'},{shaderLocation:4,offset:44,format:'float32'},{shaderLocation:5,offset:48,format:'float32'},{shaderLocation:6,offset:52,format:'float32x2'},{shaderLocation:7,offset:60,format:'float32x3'},{shaderLocation:8,offset:72,format:'float32'},{shaderLocation:9,offset:76,format:'float32x4'},{shaderLocation:10,offset:92,format:'float32'},{shaderLocation:11,offset:96,format:'float32x3'},{shaderLocation:12,offset:108,format:'float32x3'},{shaderLocation:13,offset:120,format:'float32'}]}]},fragment:{module,entryPoint:'fragment',targets:[{format:navigator.gpu.getPreferredCanvasFormat(),blend:{color:{srcFactor:'src-alpha',dstFactor:'one-minus-src-alpha',operation:'add'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'}}}]},primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less-equal'},multisample:{count:4}};
+    const descriptor:GPURenderPipelineDescriptor={layout:'auto',vertex:{module,entryPoint:'vertex',buffers:[{arrayStride:VERTEX_FLOATS*4,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32x4'},{shaderLocation:2,offset:28,format:'float32'},{shaderLocation:3,offset:32,format:'float32x3'},{shaderLocation:4,offset:44,format:'float32'},{shaderLocation:5,offset:48,format:'float32'},{shaderLocation:6,offset:52,format:'float32x2'},{shaderLocation:7,offset:60,format:'float32x3'},{shaderLocation:8,offset:72,format:'float32'},{shaderLocation:9,offset:76,format:'float32x4'},{shaderLocation:10,offset:92,format:'float32'},{shaderLocation:11,offset:96,format:'float32x3'},{shaderLocation:12,offset:108,format:'float32x3'},{shaderLocation:13,offset:120,format:'float32'},{shaderLocation:14,offset:124,format:'float32x3'}]}]},fragment:{module,entryPoint:'fragment',targets:[{format:navigator.gpu.getPreferredCanvasFormat(),blend:{color:{srcFactor:'src-alpha',dstFactor:'one-minus-src-alpha',operation:'add'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'}}}]},primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less-equal'},multisample:{count:4}};
     this.pipelineDescriptor=descriptor;
     const pipeline=await device.createRenderPipelineAsync(descriptor);
     if(this.disposed)throw new Error('Renderer is disposed.');
@@ -332,6 +342,15 @@ export class CanvasRenderer {
     const transparentPipeline=await device.createRenderPipelineAsync({...descriptor,depthStencil:{...descriptor.depthStencil!,depthWriteEnabled:false}});
     if(this.disposed)throw new Error('Renderer is disposed.');
     this.transparentPipeline=transparentPipeline;
+    const imageModule=device.createShaderModule({code:imageShader});
+    const imageInfo=await imageModule.getCompilationInfo();
+    if(this.disposed)throw new Error('Renderer is disposed.');
+    if(imageInfo.messages.some(m=>m.type==='error'))throw new Error(imageInfo.messages.filter(m=>m.type==='error').map(m=>m.message).join('\n'));
+    this.imageDescriptor={...descriptor,vertex:{...descriptor.vertex,module:imageModule},fragment:{...descriptor.fragment!,module:imageModule}};
+    this.imagePipeline=await device.createRenderPipelineAsync(this.imageDescriptor);
+    if(this.disposed)throw new Error('Renderer is disposed.');
+    this.imageTransparentPipeline=await device.createRenderPipelineAsync({...this.imageDescriptor,depthStencil:{...descriptor.depthStencil!,depthWriteEnabled:false}});
+    if(this.disposed)throw new Error('Renderer is disposed.');
     this.uniform=device.createBuffer({size:80,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
     this.bindGroup=device.createBindGroup({layout:this.pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:this.uniform}}]});
     this.transparentBindGroup=device.createBindGroup({layout:this.transparentPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:this.uniform}}]});
@@ -349,6 +368,21 @@ export class CanvasRenderer {
     this.assetGeometry=assetGeometry;
     if(!this.initializing)this.initializing=this.initialize().catch(error=>{this.initializing=undefined;throw error;});
     await this.initializing;
+    for(const ref of sceneAssetRefs(scenes))if(!('part' in ref)) {
+      const image=assetGeometry!.resolveImage!(ref),limit=this.device?.limits.maxTextureDimension2D??this.gl!.gl.getParameter(this.gl!.gl.MAX_TEXTURE_SIZE);
+      if(image.width>limit||image.height>limit)throw new Error('Image exceeds device texture dimension limit');
+    }
+  }
+  private drawGPU(pass:GPURenderPassEncoder,command:Extract<import('./composition.js').RenderCommand,{first:number}>,camera:GPUBuffer,pipeline:GPURenderPipeline,depthOnly:boolean):void {
+    if(command.imageBinding){
+      if(depthOnly)this.imageDepthPipeline??=this.device!.createRenderPipeline({...this.imageDescriptor!,fragment:{...this.imageDescriptor!.fragment!,targets:[{format:this.format!,writeMask:0}]}});
+      pipeline=depthOnly?this.imageDepthPipeline!:command.opaque?this.imagePipeline!:this.imageTransparentPipeline!;
+      let cameras=this.imageCameras.get(pipeline);if(!cameras){cameras=new Map();this.imageCameras.set(pipeline,cameras);}
+      let group=cameras.get(camera);if(!group){group=this.device!.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:camera}}]});cameras.set(camera,group);}
+      pass.setPipeline(pipeline);pass.setBindGroup(0,group);
+      this.gpuImages??=new GPUImages(this.device!);this.gpuImages.bind(pass,pipeline,command.imageBinding);
+    }
+    this.gpuRetained!.draw(pass,pipeline,command,this.vertices);
   }
   private reportError(error:Error):void {
     this.errorGeneration++;
@@ -420,9 +454,9 @@ export class CanvasRenderer {
     if(this.gl){this.gl.render(data,ordered,clear,this.canvas.width,this.canvas.height);this.frameRendered();return;}
     const device=this.device!;
     this.gpuRetained??=new GPURetained(device);
-    this.gpuRetained.beginFrame();
+    this.gpuRetained.beginFrame();this.gpuImages?.beginFrame();
     const viewIds=new Set(this.regions.map(v=>v.id));
-    for(const [id,resource] of this.viewResources)if(!viewIds.has(id)){resource.uniform.destroy();this.viewResources.delete(id);}
+    for(const [id,resource] of this.viewResources)if(!viewIds.has(id)){resource.uniform.destroy();for(const cameras of this.imageCameras.values())cameras.delete(resource.uniform);this.viewResources.delete(id);}
     if(data.byteLength>this.capacity){this.vertices?.destroy();this.capacity=capacity;this.vertices=device.createBuffer({size:this.capacity,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});}
     if(data.length)device.queue.writeBuffer(this.vertices!,0,data);
     const encoder=device.createCommandEncoder();
@@ -444,17 +478,17 @@ export class CanvasRenderer {
         const depthBindGroup=device.createBindGroup({layout:this.depthOnlyPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:resources.uniform}}]});
         this.compositor.render(encoder,batch.commands,descriptor,batch.rect,this.canvas.width,this.canvas.height,(pass,command,depthOnly)=>{
           pass.setPipeline(depthOnly?this.depthOnlyPipeline!:command.opaque?this.pipeline!:this.transparentPipeline!);pass.setBindGroup(0,depthOnly?depthBindGroup:command.opaque?resources!.bindGroup:resources!.transparentBindGroup);
-          this.gpuRetained!.draw(pass,depthOnly?this.depthOnlyPipeline!:command.opaque?this.pipeline!:this.transparentPipeline!,command,this.vertices);
+          this.drawGPU(pass,command,resources!.uniform,depthOnly?this.depthOnlyPipeline!:command.opaque?this.pipeline!:this.transparentPipeline!,Boolean(depthOnly));
         });
       } else {
         const pass=encoder.beginRenderPass(descriptor);
         if(batch.rect){const [x,y,w,h]=batch.rect;pass.setViewport(x,y,w,h,0,1);pass.setScissorRect(x,y,w,h);}
-        for(const command of batch.commands)if('first' in command){pass.setPipeline(command.opaque?this.pipeline!:this.transparentPipeline!);pass.setBindGroup(0,command.opaque?resources.bindGroup:resources.transparentBindGroup);this.gpuRetained.draw(pass,command.opaque?this.pipeline!:this.transparentPipeline!,command,this.vertices);}
+        for(const command of batch.commands)if('first' in command){pass.setPipeline(command.opaque?this.pipeline!:this.transparentPipeline!);pass.setBindGroup(0,command.opaque?resources.bindGroup:resources.transparentBindGroup);this.drawGPU(pass,command,resources.uniform,command.opaque?this.pipeline!:this.transparentPipeline!,false);}
         pass.end();
       }
     }
     device.queue.submit([encoder.finish()]);
-    this.gpuRetained.endFrame();
+    this.gpuRetained.endFrame();this.gpuImages?.endFrame();
     this.frameRendered();
     } catch(error) {
       if(error instanceof VertexBufferLimitError){this.reportError(error);return;}

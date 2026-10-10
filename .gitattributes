@@ -9,3 +9,7 @@ docs/demos/spatial-proofs/*.js -text
 shared/animlib/demo/proofs/data/*.pdb -text -whitespace
 shared/animlib/demo/proofs/data/*.cif -text -whitespace
 shared/animlib/demo/proofs/data/*.json -text
+# Content-addressed native asset blobs must survive checkout byte-for-byte.
+shared/animlib/fixtures/**/*.bin binary
+shared/animlib/fixtures/**/*.pdb -text -whitespace
+shared/animlib/fixtures/**/*.cif -text -whitespace

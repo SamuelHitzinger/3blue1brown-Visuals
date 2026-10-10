@@ -1,3 +1,4 @@
+import {VERTEX_FLOATS} from '../src/texture-shader.js';
 import { expect, it } from 'vitest';
 import { createAssetRegistry } from '../src/asset-registry.js';
 import { model } from './asset-fixture.js';
@@ -19,7 +20,7 @@ it('renders repeated refs through one retained mesh and streams the same geometr
     expect(first).toHaveLength(2); expect(first[0].mesh).toBeDefined(); expect(first[1].mesh).toBe(first[0].mesh);
     expect(composeItems(first,0).commands).toHaveLength(1);
     cache.beginFrame();const second=draw(cache);cache.endFrame();expect(second[0].mesh).toBe(first[0].mesh);
-    const cpu=draw();expect(cpu[0].vertices.length).toBe(3*31);expect(cpu.every(item=>!item.mesh)).toBe(true);
+    const cpu=draw();expect(cpu[0].vertices.length).toBe(3*VERTEX_FLOATS);expect(cpu.every(item=>!item.mesh)).toBe(true);
     expect(getWorldBounds(frame,'b',{assetGeometry:sampler.assetGeometry})).toEqual({min:[1,0,0],max:[2,1,0]});
     expect(pick(frame,{origin:[1.2,0.2,3],direction:[0,0,-1]},new Set(['b']),frame.camera,800,450,undefined,undefined,sampler.assetGeometry)?.id).toBe('b');
     expect(JSON.stringify(frame)).toBe(before);
