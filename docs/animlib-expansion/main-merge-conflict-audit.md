@@ -104,3 +104,11 @@ This audit does **not** claim a merged tree builds or passes tests: the virtual 
 Run `npm run typecheck`, `npm test`, and `npm run build`; also validate the backend build/typecheck/tests because its model contracts changed. Exercise main's `models.test.ts`, `connector-bounds.test.ts`, `models.gpu.ts` and browser model coverage, plus branch asset/image integration, path animation, offline sampling, runtime ownership, and depth-focus coverage. Native GPU checks need the required adapter; report a missing backend as a limitation rather than a pass.
 
 Add mixed-format render evidence: prepared image + prepared scientific mesh + textured GLB in one scene, alternating draws and transparency, retained path changes, focus/shadows, context restoration, and disposal. Export at multiple times to demonstrate scientific motion still changes, and run a backend-produced GLB frame-render request. Keep baseline rendering and performance evidence for both original branches when assessing the resolved merge.
+
+## Post-showcase checkpoint verification — 2026-10-11
+
+Repeated the same disposable-object virtual merge after the accepted showcase and documentation checkpoint, using branch commit `7891407f0c75d318e1131014b9d25aad03027c6c` against the unchanged fetched main commit `6fb7c22d8e226ff9c948f178cd541eb17b469a72`. The common ancestor remains `2b666eb55d154e36710b0c450fffb3ca1c6061ab`; divergence is now **13 branch-only / 49 main-only commits**.
+
+Git again returned exit status **1**, with **20 content-conflicted files**, virtual tree `f0f8bcfec17bc07a0c5eec2111d9e7505f272c66`. Comparing the conflict path sets to the original audit found **zero added and zero removed paths**. The exact file list, semantic findings, and recommended resolution order above remain applicable. This focused rerun does not claim the unresolved virtual tree passes build or tests.
+
+Raw local evidence: `.aha/main-merge-audit/merge-tree-post-checkpoint.txt`. No actual merge, index/ref update, or source edit was performed; only this report was appended.
