@@ -173,6 +173,7 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
   const caption = captionsEnabled && captionScene ? captionAt([captionScene], state.sceneTime ?? 0) : ''
   return <div className={`player-page ${captionsEnabled ? 'has-captions' : ''} ${state.playing ? 'is-playing' : ''} ${cursorHidden && autoHideControls ? 'is-player-idle' : ''}`} ref={screen} tabIndex={-1} onContextMenu={openQuestion} onPointerMove={revealCursor} onPointerDown={revealCursor} onKeyDown={revealCursor} onFocusCapture={revealCursor}>
     <div className="player-menu-anchor"><button className={`icon-button player-menu-toggle ${menuOpen ? 'is-open' : ''}`} aria-label="Open video menu" aria-expanded={menuOpen} aria-controls="navigation-drawer" onClick={onMenu}><MenuGlyph/></button>{menuContent}</div>
+    <h1 className="player-title">{manifest?.title || lesson.title}</h1>
     {(connection || manifest?.recovery || (state.ready && state.generationError)) && <p className="player-notice" role="status">{state.generationError || connection || manifest?.recovery?.message}</p>}
     <div className="player-stage">
       <div ref={canvasHost} className="lesson-canvas-host"/>

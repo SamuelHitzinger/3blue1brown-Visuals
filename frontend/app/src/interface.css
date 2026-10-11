@@ -34,8 +34,8 @@
 html, body, #root { min-height: 100%; background: var(--bg); transition: background-color .35s ease, color .35s ease; }
 :root .player-page { --player-bg: #000; --player-ink: #fff; --art-bg: var(--player-bg); background: var(--player-bg); color: var(--player-ink); }
 .player-page.is-player-idle, .player-page.is-player-idle * { cursor: none !important; }
-.player-page .player-menu-anchor, .player-page .player-controls { opacity: 1; transition: opacity .25s ease; }
-.player-page.is-player-idle .player-menu-anchor, .player-page.is-player-idle .player-controls { opacity: 0; pointer-events: none; }
+.player-page .player-menu-anchor, .player-page .player-controls, .player-page .player-title { opacity: 1; transition: opacity .25s ease; }
+.player-page.is-player-idle .player-menu-anchor, .player-page.is-player-idle .player-controls, .player-page.is-player-idle .player-title { opacity: 0; pointer-events: none; }
 
 .app-shell { max-width: 1220px; padding: 0 40px; }
 .settings-shell { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
@@ -131,6 +131,7 @@ html, body, #root { min-height: 100%; background: var(--bg); transition: backgro
 
 /* The lesson canvas keeps only the subject, title, illustration, and playback. */
 .player-menu-anchor { top: 28px; left: 28px; z-index: 20; }
+.player-title { position: absolute; z-index: 10; top: 35px; left: 88px; right: 28px; margin: 0; font-family: inherit; font-size: clamp(18px, 2vw, 22px); font-weight: 500; line-height: 1.35; color: var(--player-ink); text-shadow: 0 1px 5px #000b; pointer-events: none; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
 .player-menu-toggle { background: transparent; color: var(--ink); }
 .lesson-stage { padding: 100px 0 130px; }
 .lesson-text h1 { font-family: DynaPuff, sans-serif; font-size: clamp(42px, 5vw, 72px); font-weight: 600; letter-spacing: -2px; line-height: 1.15; }
@@ -192,6 +193,7 @@ html, body, #root { min-height: 100%; background: var(--bg); transition: backgro
   .about-settings-card { padding: 20px; border-radius: 25px; font-size: 15px; gap: 13px; }
   .modal { border-radius: 30px; }
   .player-menu-anchor { top: 20px; left: 20px; }
+  .player-title { top: 28px; left: 76px; right: 20px; }
   .lesson-stage { width: calc(100vw - 48px); padding: 112px 0 160px; }
   .lesson-text h1 { font-size: clamp(34px, 9vw, 48px); letter-spacing: -1.4px; margin: 17px 0; }
   .lesson-subject { font-size: 12px; }
