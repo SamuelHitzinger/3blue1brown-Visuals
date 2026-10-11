@@ -10,7 +10,6 @@ import { PLANNING_CONTRACT, parsePlannedLesson } from './planning.js';
 import type { PlannedLesson } from './planning.js';
 import type { AgentRunner, AgentTask } from './runtime.js';
 import { logEvent, logStage } from '../logging.js';
-import { animationQualityPolicy } from './quality-policy.js';
 import { INSTRUCTION_VERSION, instructionSnapshot, loadPrompt } from './prompts.js';
 
 export interface EditorialReview {
@@ -47,14 +46,12 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
   const runId = randomUUID(), runDirectory = join(directory, 'editorial', runId);
   await mkdir(runDirectory, { recursive: true, mode: 0o700 });
   const messages = await buildStorylineMessages(JSON.stringify(request), request.sceneRequest);
-  const [guidance, quality] = await Promise.all([
-    loadPrompt('story-review'), animationQualityPolicy(),
-  ]);
+  const guidance = await loadPrompt('story-review');
   let repair: { lesson: PlannedLesson; issues: EditorialReview['issues'] } | undefined;
   for (let attempt = 0; attempt < 3; attempt++) {
     signal.throwIfAborted();
     const task: AgentTask = {
-      systemPrompt: `${messages[0].content}\n\n${PLANNING_CONTRACT}\n\n${quality}`,
+      systemPrompt: `${messages[0].content}\n\n${PLANNING_CONTRACT}`,
       prompt: repair
         ? `Revise the complete lesson and plan to correct the material editorial errors below. Preserve sound content, requested scope, stable entity IDs/meanings, and scene IDs where possible. Update narration and nonspoken planning together. Return the full planning envelope.\n${JSON.stringify({ request, draft: repair.lesson, issues: repair.issues })}`
         : `Write ${request.sceneRequest ? "one inserted scene" : "a concise visual lesson"} and its plan from this request:\n${messages[1].content}`,
@@ -68,7 +65,7 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
     const draft = JSON.stringify(lesson, null, 2);
     await atomicWrite(join(runDirectory, `lesson-draft-${attempt}.json`), draft);
     const reviewTask: AgentTask = {
-      systemPrompt: `${guidance}\n\nExplanation guidance:\n${messages[0].content}\n\nAuthoring contract to check (do not return its format):\n${PLANNING_CONTRACT}\n\n${quality}\n\nThe review response contract takes priority over all authoring output formats and return instructions above.`,
+      systemPrompt: `${guidance}\n\nExplanation guidance:\n${messages[0].content}\n\nAuthoring contract to check (do not return its format):\n${PLANNING_CONTRACT}\n\nThe review response contract takes priority over all authoring output formats and return instructions above.`,
       prompt: `Review this complete lesson before speech synthesis. Source images are attached in the same order as the authoring call.\n${JSON.stringify({ request, draft: lesson, parsedScenes: parseStoryline(lesson.markdown).beats })}`,
       signal, images, validate: async output => { parseEditorialReview(output, lesson); },
       logContext: { videoId, stage: 'review' },

@@ -398,7 +398,9 @@ test.each(['classic', 'interactive', undefined] as const)('%s requests generate 
     }
     const input = JSON.parse(task.prompt.slice(task.prompt.indexOf('\n') + 1));
     expect(task.systemPrompt.split(await loadPrompt('scene-craft'))).toHaveLength(2);
-    expect(task.systemPrompt).toContain(await loadPrompt('viewing-mode'));
+    expect(task.systemPrompt).toContain('orbitHitTest: "geometry"');
+    expect(task.systemPrompt).not.toContain('# Viewing mode policy');
+    expect(task.systemPrompt).not.toContain('# Current animation quality policy');
     expect(task.systemPrompt).toContain('# animlib scene-authoring reference');
     expect(task.systemPrompt).not.toContain('### Player API');
     expect(task.systemPrompt).not.toContain('3D is the default');

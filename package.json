@@ -14,7 +14,6 @@
     "agents:status": "npm run agents:status --workspace @aha/backend",
     "agents:check": "npm run agents:check --workspace @aha/backend",
     "agents:logout": "npm run agents:logout --workspace @aha/backend",
-    "agents:review": "npm run agents:review --workspace @aha/backend --",
     "agents:thumbnails": "npm run agents:thumbnails --workspace @aha/backend --",
     "dev": "npm run dev --workspace animlib",
     "build": "npm run build --workspace animlib && npm run build:preview --workspace @aha/backend",

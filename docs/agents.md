@@ -103,14 +103,13 @@ PR #19. Requested audience, scene count, duration, and pause preferences take
 priority over defaults. Explicit thinking pauses need natural spoken invitations;
 visual holds do not require scripted silence.
 
-`shared/animlib/docs/capabilities.md` is the compact visual-capability brief for
-the top-level storyboard planner and its editorial reviewer. It covers supported
-geometry, sampled 3D surfaces/solids, procedural textures and materials, motion,
-math, 3D views, interaction, scene continuity, diagrams assembled
-from primitives, and current limitations. The host adds it to the system guidance
-on every draft and review, including repairs; the reviewer checks visual feasibility
-before speech synthesis. Scene authors continue to receive the full API reference.
-Keep the brief aligned with the public API and reference when capabilities change.
+The planner receives `guidance.md` and the code-owned planning contract. The
+editorial reviewer receives those rules plus `story-review.md`. Compact visual
+cohesion and reusable-object requirements live in guidance; the planner describes
+what must be shown and why, leaving exact API choices to the scene author.
+`capabilities.md`, `viewing-mode.md`, and `animation-quality.md` are not loaded.
+Scene authors receive `scene-craft.md`, including interaction policy, and selected
+authoring sections of the current animlib reference.
 
 Planning and scene craft adapt the useful parts of PR #21 into the existing calls.
 The plan records the audience/prerequisites, central question, learning goal,
@@ -249,28 +248,14 @@ are heuristic. These checks do not rewrite existing saved scenes. Quality and
 end-to-end latency gains still require comparing generated lessons; the smoke
 test measures rendering correctness and overhead only.
 
-### Optional rendered review after generation
+### Rendered verification and repair
 
-After capturing 1-5 screenshots or timestamped contact sheets of a scene, run:
-
-```sh
-npm run agents:review -- VIDEO_UUID SCENE_INDEX /absolute/path/frame.png
-```
-
-Use the same `AGENT_DATA_DIR` as the generation server. Indices start at zero.
-This makes an explicit model call with the samples, saved authoring task, current
-source, and captured canonical input. It applies the visual-review checklist
-adapted from PR #21: collisions, framing, legibility, teaching, continuity, and
-motion. Unknown sample times remain null; still samples cannot certify continuous
-motion or acoustic sync. Supply timestamps for precise findings.
-
-The result is `scene-N.review.json` and, when a repair is proposed, a validated
-`scene-N.review.js` draft. Validation uses the captured inherited start and preserves the audio ID,
-end mode, measured duration, planned controls, and carry/cleanup declarations.
-Reviewing does not replace published scenes or run automatically during generation.
-Render the draft again to assess its visual changes. An upstream replacement also
-requires downstream revalidation. The command needs artifacts saved by the new
-generator; older videos remain playable without review inputs.
+New scenes use `scene-verify.md` to inspect rendered evidence before publication.
+A failed verification can invoke one bounded `scene-repair.md` patch, followed by
+validation, rendering and another verification. Both tasks inherit the scene
+author's assembled prompt. They do not append a separate animation-quality policy.
+The optional `agents:review` command and its `scene-review.md` prompt are retired;
+historical review artifacts remain readable files.
 
 ## Local setup
 

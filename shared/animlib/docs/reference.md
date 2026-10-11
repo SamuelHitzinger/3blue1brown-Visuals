@@ -401,6 +401,12 @@ Builders are synchronous and describe a finite animation. Ordinary variables,
 loops, conditionals, and helper functions are supported. There are no sleeps,
 timers, DOM operations, network requests, or per-frame mutation loops in scene code.
 
+Scene options are `mode: '2d' | '3d'`, `end: 'hold' | 'advance'`, an optional
+registered `audio` ID, `orbit`, a palette-token `background`, and `lighting`
+(`'studio'` or the lighting object documented below). Set `orbit: false` explicitly
+when viewer rotation is unwanted; 3D mode otherwise enables whole-scene orbit by
+default. The application may impose stricter controls/orbit rules than the library.
+
 ### Local timing
 
 The cursor starts at zero. A `play` occupies a duration and advances the cursor by
@@ -553,8 +559,9 @@ animation or reactive binding targets.
   Sample coverage is averaged with normalized full-coverage opacity at every quality,
   including on dark receiver colors.
 
-Only opaque world-space **mesh and sphere fills** cast, including generated solids
-and surfaces, final morphed/deformed triangles, and group transforms. Unlit meshes
+Only opaque world-space **mesh, sphere, and imported-model fills** cast, including generated solids
+and surfaces, final morphed/deformed triangles, and group transforms. Alpha-masked
+model primitives do not cast. Unlit meshes
 can still cast. Strokes, labels, billboards, screen objects, viewport-offset geometry,
 translucent fills/textures and members of translucent isolated groups do not cast.
 `castShadow: false` on an element or `s.group(id, children, {castShadow: false})`
@@ -1151,9 +1158,11 @@ GPU handles are rebuilt after recovery;
 geometry unused by the current frame is released. See [performance](performance.md)
 for measurements and remaining limits.
 
-Common animatable properties include position, rotation, scale, opacity, fill,
-stroke, stroke width, and geometry. Elements expose actions such as `moveTo`,
-`rotateTo`, `scaleTo`, `fadeIn`, `fadeOut`, `animate`, and `morphTo`.
+`animate` accepts position, rotation, uniform scalar scale, opacity, fill,
+stroke, stroke width, and viewport offset. Geometry changes use `morphTo`,
+fixed-topology `s.deform`, or the supported reactive properties below; construction
+parameters are not ordinary animation properties. Elements also expose `moveTo`,
+`rotateTo`, `scaleTo`, `fadeIn`, `fadeOut`, and `countTo` for named formula numbers.
 
 ```js
 s.play(dot.animate({ scale: 1.5, fill: Color.WHITE }), { duration: 0.6 });
@@ -1672,8 +1681,9 @@ export default scene({}, s => {
 
 Left-button dragging rotates only the view where the drag started, even when the
 pointer leaves it. Set `orbitHitTest: "geometry"` alongside `orbit: true` to require
-a hit on a visible sphere, circle, rectangle, or triangle mesh before starting
-orbit. Standalone text, paths, lines and empty space do not start rotation;
+a hit on a visible sphere, circle, rectangle, triangle mesh, or imported model before starting
+orbit. Imported models use primitive bounding boxes, so gaps inside those boxes may
+also start orbit. Standalone text, paths, lines and space outside pickable geometry do not start rotation;
 billboard labels stay upright and may sit over pickable model surfaces. Keep
 explanatory text outside the model view. Omit this option for legacy region-wide
 orbit. Pan gestures remain available across the region. The setting is saved in
@@ -1903,7 +1913,7 @@ per reactive-update JSON string length, 100 scenes, 2,000 object IDs per
 builder, 100 controls, 32 view regions, 10,000 animation tracks, and a 24-hour visual timeline.
 SVG path data is limited to 20,000 characters and 20,000 normalized control
 points per path. Point arrays are limited to 20,000 entries; added scene geometry
-has a 100,000-point budget, including SVG path control points.
+has a 100,000-point budget, including mesh vertices and SVG path control points.
 The VM boundary validates finite numbers, geometry sizes, mesh indices, object
 lifetimes, and group references. The library intentionally does not expose
 arbitrary browser callbacks in the animation data.

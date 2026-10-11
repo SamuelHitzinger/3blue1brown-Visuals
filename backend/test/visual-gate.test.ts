@@ -7,6 +7,7 @@ import { reviewGeneratedScene, sampleReviewTimes } from '../src/agents/visual-ga
 import type { AgentTask } from '../src/agents/runtime.js';
 import { sourceHash } from '../src/agents/visual-edits.js';
 import { createModelGLB, parseModelGLB } from 'animlib/core';
+import { loadPrompt } from '../src/agents/prompts.js';
 const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(root=>rm(root,{recursive:true,force:true})));});
 const source=`export default scene({audio:'voice',end:'hold'},s=>{s.text('label',{text:'DNA',position:[5,0]});s.wait(4);});`;
@@ -47,7 +48,10 @@ test('image rejection produces an automatically repaired candidate that must be 
   expect(result).toBe(repair);expect(rendered).toEqual([source,repair]);
   expect(tasks.map(task=>task.logContext?.stage)).toEqual(['review','repair','review']);
   expect(tasks[0].images).toHaveLength(2);expect(tasks[2].images).toHaveLength(2);
-  expect(tasks[2].prompt).toContain(repair);expect(tasks[0].systemPrompt).toContain('Current animation quality policy');
+  expect(tasks[2].prompt).toContain(repair);
+  expect(tasks[0].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-verify')}`);
+  expect(tasks[1].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-repair')}`);
+  expect(tasks[2].systemPrompt).toBe(tasks[0].systemPrompt);
   const receipt=JSON.parse(await readFile(join(input.directory,'scene-0.visual-review.json'),'utf8'));
   expect(receipt.approved).toBe(true);expect(receipt.attempt).toBe(1);expect(receipt.sourceSha256).toHaveLength(64);
 });

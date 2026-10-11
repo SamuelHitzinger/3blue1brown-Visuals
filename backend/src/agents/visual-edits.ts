@@ -1,7 +1,9 @@
 import { createHash } from 'node:crypto';
-import type { SceneReview } from './review.js';
 
-export type VisualVerification = Pick<SceneReview, 'approved' | 'findings'>;
+export interface VisualVerification {
+  approved: boolean;
+  findings: { timeSec: number | null; objectIds: string[]; problem: string; fix: string }[];
+}
 export const sourceHash = (source: string) => createHash('sha256').update(source).digest('hex');
 
 function record(value: unknown): value is Record<string, unknown> {

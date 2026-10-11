@@ -118,7 +118,8 @@ test('scene author receives original visual request and persists library final s
   const generate = createPiGenerator({ async run(task) {
     const input = JSON.parse(task.prompt.slice(task.prompt.indexOf('\n') + 1));
     expect(input.request.topic).toBe(request.topic);
-    expect(task.systemPrompt).toContain('Current animation quality policy');
+    expect(task.systemPrompt).toContain('# Scene craft');
+    expect(task.systemPrompt).not.toContain('# Current animation quality policy');
     await task.validate!(literal); return literal;
   } }, f.narration, f.root);
   await generate(request, 0, f.context);

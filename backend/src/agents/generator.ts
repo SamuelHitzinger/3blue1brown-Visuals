@@ -17,7 +17,6 @@ import { parsePlannedLesson, scenePlanningContext, validateStory } from './plann
 import { authorReviewedLesson } from './editorial.js';
 import type { LessonPlan } from './planning.js';
 import { validateSceneQuality } from './scene-quality.js';
-import { animationQualityPolicy } from './quality-policy.js';
 import { validateScenePlan, validateViewingMode } from './scene-plan.js';
 import { instructionSnapshot, loadPrompt } from './prompts.js';
 import { buildAuthoringReference } from './authoring-reference.js';
@@ -185,9 +184,9 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     const path = join(directory, subtitles ? `scene-${index}.subtitles.js` : `scene-${index}.js`);
     let source = await saved(path);
     if (!source) {
-      const [reference, craft, viewingMode, quality] = await Promise.all([
+      const [reference, craft] = await Promise.all([
         readFile(new URL("../../../shared/animlib/docs/reference.md", import.meta.url), "utf8").then(buildAuthoringReference),
-        loadPrompt('scene-craft'), loadPrompt('viewing-mode'), animationQualityPolicy(),
+        loadPrompt('scene-craft'),
       ]);
       const reviewDirectory = join(directory, 'scene-inspection', `${index}-${crypto.randomUUID()}`);
       let inspectionNumber = 0;
@@ -226,7 +225,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
         systemPrompt: `Use publish_model when imported or custom mesh assets help the explanation. Existing model assets are listed in the input. Geometry/image bytes belong in assets, never scene code.\n${instructions.replace("Return animlib SceneSource { id, source }.", "Return only JavaScript with one default-exported scene, without a JSON wrapper.")}\nFor video delivery, end your timeline at exactly durationSec using a final s.wait() as needed. Validate your complete output using inspect_scene or validate_output before finishing. The host output/timing contract and viewing-mode policy take priority over illustrative API examples; implement the approved plan within those constraints.
 Before final submission, call inspect_scene on your complete candidate. Reuse the returned candidateId for later tool calls; send source again only when revising it. Inspect relevant reveal/settled timestamps and specific object bounds as needed. Reports are advisory: distinguish intentional entrances, exits and overlaps from defects. Four inspections are available.
 ${options.preview ? 'Then call preview_scene to see up to six actual rendered frames. Choose important reveals, settled layouts and at least one transition midpoint using local narration times. Two preview batches are available: review once, repair concrete defects if needed, and use the second to verify. Optional focusObjectId crops one object. Avoid cosmetic iteration. If rendering is unavailable, use analytical feedback and finish; never claim you saw unavailable frames.' : 'Visual preview is unavailable for this run; use analytical feedback.'}
-Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned controls during repairs. Inspection and preview never submit the scene.\n\n${viewingMode}\n\n${craft}\n\n${quality}\n\n${reference}`,
+Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned controls during repairs. Inspection and preview never submit the scene.\n\n${craft}\n\n${reference}`,
         prompt: `Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify({ ...packet, modelAssets: modelMetadata() })}`, validate, signal,
         logContext: { videoId, sceneIndex: index, stage: 'scene' as const }, sceneTools,
       };

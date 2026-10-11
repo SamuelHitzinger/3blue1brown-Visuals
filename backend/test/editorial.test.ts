@@ -39,9 +39,9 @@ test.each(['classic', 'interactive', undefined] as const)('viewing preference %s
   tasks.forEach((task, index) => {
     const payload = JSON.parse(task.prompt.slice(task.prompt.indexOf('\n') + 1));
     expect((index === 0 ? payload : payload.request).videoMode).toBe(videoMode);
-    expect(task.systemPrompt).toContain('All new app videos use `interactive`');
-    expect(task.systemPrompt).toContain('Every planned `interactions` array is empty');
-    expect(task.systemPrompt).toContain('No minimum count or quota applies');
+    expect(task.systemPrompt).toContain('Use `classic` when `videoMode` is absent');
+    expect(task.systemPrompt).toContain('empty `interactions` arrays');
+    expect(task.systemPrompt).toContain('0–2');
   });
 });
 
@@ -70,15 +70,13 @@ test('editorial repairs update speech and plan together, forward sources, and pr
   expect(tasks[1].prompt).toContain('parsedScenes');
   for (const task of tasks) {
     expect(task.systemPrompt).toContain(await loadPrompt('guidance'));
-    expect(task.systemPrompt).toContain(await loadPrompt('viewing-mode'));
     expect(task.systemPrompt).toContain(PLANNING_CONTRACT);
-    expect(task.systemPrompt).toContain('## Visual model planning');
-    expect(task.systemPrompt).toContain('# Current animation quality policy');
+    expect(task.systemPrompt).not.toContain('# Viewing mode policy');
+    expect(task.systemPrompt).not.toContain('# Current animation quality policy');
+    expect(task.systemPrompt).not.toContain('# Animlib capabilities for storyboard planning');
     expect(task.systemPrompt).not.toContain('3D is the default');
   }
   expect(tasks[1].systemPrompt).toContain('Visual plans and reveal guards belong in nonspoken context');
-  const capabilities = await readFile(new URL('../../shared/animlib/docs/capabilities.md', import.meta.url), 'utf8');
-  tasks.forEach(task => expect(task.systemPrompt).toContain(capabilities));
   expect(tasks[2].prompt).toContain('Correct speech and all plan values');
   expect(approved.instructionVersion).toBe(INSTRUCTION_VERSION);
   const run = join(root, 'editorial', approved.editorialReview.runId);
@@ -183,6 +181,8 @@ test('inserted scene authoring, review and repair receive no lesson duration or 
   expect(tasks).toHaveLength(4);
   for (const task of tasks) {
     expect(task.systemPrompt).toContain('# Inserted scene guidance');
+    expect(task.systemPrompt).toContain('## Plan feasible visuals');
+    expect(task.systemPrompt).toContain('All new app videos use `interactive`');
     expect(task.systemPrompt).not.toContain('# Storyline agent guidance');
     expect(task.systemPrompt).not.toMatch(/2–6 minutes|20-30 spoken words|30-60 words|within 30 seconds|125–150 words/);
     expect(task.prompt).not.toContain('concise visual lesson');

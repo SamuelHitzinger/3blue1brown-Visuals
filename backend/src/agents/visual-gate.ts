@@ -2,14 +2,13 @@ import type { RenderModelAssets } from '../model-assets.js';
 import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { compileSource } from 'animlib/core';
-import type { CompiledScene } from 'animlib/core';
+import type { CompiledScene, Frame } from 'animlib/core';
 import type { AgentRunner, AgentTask, AgentRunMetrics } from './runtime.js';
 import { renderSceneFrames } from './frame-renderer.js';
 import type { FrameRenderer } from './frame-renderer.js';
 import { applyVisualEdits, parseVisualVerification, sourceHash } from './visual-edits.js';
 import type { VisualVerification } from './visual-edits.js';
-import type { ReviewInput } from './review.js';
-import { animationQualityPolicy } from './quality-policy.js';
+import type { ScenePlan } from './planning.js';
 import { loadPrompt } from './prompts.js';
 import { atomicWrite } from '../narration/service.js';
 import { logStage } from '../logging.js';
@@ -31,8 +30,16 @@ export function sampleReviewTimes(scene: CompiledScene): number[] {
   return [...times].sort((a,b)=>a-b);
 }
 
+export interface SceneVerificationInput {
+  audioAssetId: string; endMode: 'hold' | 'advance'; scene: { id: string; durationSec: number };
+  videoMode?: 'classic' | 'interactive'; legacyPlan?: boolean;
+  /** Absent in historical scene packets, before targeted orbit became policy. */
+  instructionVersion?: number;
+  previousFrame?: Frame; planning: { current?: ScenePlan };
+}
+
 export interface VisualGateInput {
-  runner: AgentRunner; source: string; input: ReviewInput;
+  runner: AgentRunner; source: string; input: SceneVerificationInput;
   task: Pick<AgentTask,'systemPrompt'|'prompt'>;
   directory: string; index: number; videoId: string; signal: AbortSignal;
   validate: (source: string) => Promise<unknown>;
@@ -44,15 +51,12 @@ export interface VisualGateInput {
 export async function reviewGeneratedScene(options: VisualGateInput): Promise<string> {
   const {runner,input,directory,index,videoId,signal}=options;
   signal.throwIfAborted();
-  const [guidance, repairGuidance, quality, style] = await Promise.all([
+  const [guidance, repairGuidance, style] = await Promise.all([
     loadPrompt('scene-verify'),
     loadPrompt('scene-repair'),
-    animationQualityPolicy(),
     readFile(new URL('../../prompts/visual-style-reference.jpg',import.meta.url)),
   ]);
-  // The author already receives this policy. Avoid pasting it twice without dropping context.
-  const authorContract = options.task.systemPrompt.includes(quality)
-    ? options.task.systemPrompt : `${options.task.systemPrompt}\n\n${quality}`;
+  const authorContract = options.task.systemPrompt;
   let source=options.source;
   let previousReview: VisualVerification | undefined;
   const run = async (task: AgentTask, attemptDirectory: string, phase: 'review' | 'repair', attempt: number) => {

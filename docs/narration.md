@@ -4,7 +4,7 @@ The narration stage normalizes AI-written Markdown, synthesizes the requested Al
 
 ## Give the storyline writer its instructions
 
-`backend/prompts/guidance.md` owns explanation guidance and the Markdown **Output contract**. `buildStorylineMessages(material)` loads it with the shared viewing-mode policy and animation capabilities, keeping source material in a separate user message. The production lesson author returns a structured plan and Markdown script; a separate editorial review must pass before the host calls `NarrationService.submit(owner, markdown)`. See [instruction architecture](instruction-architecture.md) for prompt ownership and precedence. Release smoke checks verify that the prompts ship.
+`backend/prompts/guidance.md` owns explanation guidance, compact visual cohesion, and the Markdown **Output contract**. `buildStorylineMessages(material)` loads only that file, keeping source material in a separate user message. The production lesson author returns a structured plan and Markdown script; a separate editorial review must pass before the host calls `NarrationService.submit(owner, markdown)`. Scene craft owns detailed interaction rules. See [instruction architecture](instruction-architecture.md) for prompt ownership and precedence. Release smoke checks verify that the prompts ship.
 
 Preferred output:
 
