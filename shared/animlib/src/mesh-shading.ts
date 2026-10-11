@@ -27,29 +27,35 @@ export function meshTriangles(geometry: Geometry): MeshTriangles {
   const points = triangles.flatMap(face => face.map(index => vertices[index]));
   if (shading === 'unlit') return meshes.set(key, { points }, (vertices.length + points.length) * 64);
 
-  const faceNormals = triangles.map(([a, b, c]): Vec3 => {
+  const faceNormal = ([a, b, c]: number[]): Vec3 => {
     const u = vertices[b].map((value, axis) => value - vertices[a][axis]);
     const v = vertices[c].map((value, axis) => value - vertices[a][axis]);
     return [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
-  });
+  };
   let normals: Vec3[];
   if (shading === 'flat') {
-    normals = faceNormals.flatMap(normal => { const n = unit(normal); return [n, n, n]; });
+    normals = triangles.flatMap(face => { const n = unit(faceNormal(face)); return [n, n, n]; });
   } else {
-    const sums: Vec3[] = vertices.map(() => [0, 0, 0]);
+    const sums: Vec3[] = geometry.normals ? [] : vertices.map(() => [0, 0, 0]);
+    const faceNormals = geometry.normals ? undefined : triangles.map(faceNormal);
     if (!geometry.normals) {
       for (let face = 0; face < triangles.length; face++) {
         for (const vertex of triangles[face]) {
-          for (let axis = 0; axis < 3; axis++) sums[vertex][axis] += faceNormals[face][axis];
+          for (let axis = 0; axis < 3; axis++) sums[vertex][axis] += faceNormals![face][axis];
         }
       }
     }
     // A canceled smooth normal (opposing faces), a zero normal in a direct
     // frame, or a degenerate face must never send NaNs into either shader.
     const smooth = (geometry.normals ?? sums).map(normal => unit(normal, [0, 0, 0]));
+    // Normalized finite vectors are usable exactly when any component is nonzero.
+    // Check each shared vertex once; authored normals need no geometric fallback
+    // unless a particular face references a missing or canceled normal.
+    const usable = smooth.map(normal => normal.some(value => value !== 0));
     normals = triangles.flatMap((face, index) => {
-      const fallback = unit(faceNormals[index]);
-      return face.map(vertex => smooth[vertex] && Math.hypot(...smooth[vertex]) > 0 ? smooth[vertex] : fallback);
+      let fallback: Vec3 | undefined;
+      return face.map(vertex => usable[vertex] ? smooth[vertex] :
+        (fallback ??= unit(faceNormals?.[index] ?? faceNormal(face))));
     });
   }
   return meshes.set(key, { points, normals }, (vertices.length + points.length + normals.length) * 64);
