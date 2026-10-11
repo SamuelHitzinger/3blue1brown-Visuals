@@ -28,6 +28,7 @@ jobs:
           shellcheck scripts/deploy-release.sh scripts/package-release.sh scripts/smoke-container.sh
           python3 scripts/test-container-config.py
           python3 scripts/test-release-stream.py
+          python3 scripts/test-cleanup-images.py
       - run: npm ci
       - run: npm ci --prefix frontend/app
       - run: npm run build

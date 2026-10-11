@@ -14,7 +14,7 @@ staging=$(mktemp -d)
 trap 'rm -rf -- "$staging"' EXIT
 cp compose.yaml "$staging/"
 mkdir "$staging/scripts"
-cp scripts/smoke-container.sh scripts/check-container-http.py scripts/container-config.py "$staging/scripts/"
+cp scripts/smoke-container.sh scripts/check-container-http.py scripts/container-config.py scripts/cleanup-images.py "$staging/scripts/"
 printf '%s\n' "$revision" > "$staging/REVISION"
 printf '%s\n' "$image" > "$staging/IMAGE_TAG"
 docker image save "$image" | gzip -1 > "$staging/image.tar.gz"

@@ -185,8 +185,43 @@ active Docker deployment. Never start both services on port 8080 or against the
 same data directories.
 
 The legacy `/srv/apps/3yellow3white-actions/current` pointer is retained. Docker
-release directories, previous-release links, and images are retained for recovery;
-remove unused ones only after checking current/rollback references. Do not use
+release directories and previous-release links are retained as recovery metadata.
+Image retention keeps the current release and its two immediate predecessors,
+plus images referenced by any container (including stopped containers). Older
+release metadata does **not** guarantee that its image is still present.
+
+Before loading a release and after successful activation, `cleanup-images.py`
+removes obsolete images from the `3yellow3white` repository. It shares the
+deployment lock, protects the incoming image before activation, skips untagged
+images and images tagged for other repositories, and never uses force deletion.
+Broken rollback references or missing retained images stop cleanup. `--check`
+only reports cleanup candidates; it never deletes images.
+
+Before image loading, deployment requires at least 8 GiB free, or four times the
+compressed upload size plus 2 GiB, whichever is larger. It checks the application
+filesystem, DockerRootDir, and `/var/lib/containerd` when present. This is a
+conservative headroom check, not a guarantee for arbitrarily compressible images.
+An insufficient-space failure occurs before production is stopped. Cleanup after
+successful activation reports errors without rolling back the healthy service.
+
+The VM also runs hourly retention independently of deployments. To install or
+update it from a reviewed checkout:
+
+```sh
+sudo install -d -m 755 /usr/local/lib/3yellow3white
+sudo install -m 644 scripts/cleanup-images.py /usr/local/lib/3yellow3white/cleanup-images.py
+sudo install -m 644 scripts/3yellow3white-image-retention.service scripts/3yellow3white-image-retention.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now 3yellow3white-image-retention.timer
+```
+
+The timer skips a run when deployment holds the lock. Inspect its results with
+`journalctl -u 3yellow3white-image-retention.service` and its schedule with
+`systemctl list-timers 3yellow3white-image-retention.timer`. Preview cleanup with
+`sudo -u deploy python3 /usr/local/lib/3yellow3white/cleanup-images.py`; add
+`--apply` to execute. This cleanup never deletes database, narration, agent data,
+volumes, containers, other projects, or release directories. Build cache and legacy
+release directories are small secondary consumers and are left alone. Do not use
 `docker system prune` as part of deployment.
 
 ## Verification performed

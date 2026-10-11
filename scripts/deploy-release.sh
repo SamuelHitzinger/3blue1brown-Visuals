@@ -94,6 +94,11 @@ tar --extract --gzip --file "$archive" --directory "$release" --no-same-owner \
 [[ $(cat "$release/REVISION") == "$revision" ]] || { echo 'Archive revision mismatch' >&2; exit 1; }
 image_tag=$(cat "$release/IMAGE_TAG")
 [[ "$image_tag" == "3yellow3white:$revision" ]] || { echo 'Invalid image tag' >&2; exit 1; }
+# The deployment lock covers retention, image loading, activation and rollback.
+# Check mode reports candidates but never removes images.
+retention_args=(--base "$base" --lock-fd 9 --protect-image "$image_tag" --archive "$archive")
+if [[ "$mode" == deploy ]]; then retention_args+=(--apply); fi
+python3 "$release/scripts/cleanup-images.py" "${retention_args[@]}"
 # Both spellings occur in release archives; pipefail rejects a missing or
 # truncated image before any candidate validation or production activation.
 tar --extract --gzip --file "$archive" --to-stdout --wildcards --no-anchored 'image.tar.gz' \
@@ -140,4 +145,8 @@ if [[ "$legacy_enabled" == true ]]; then sudo -n systemctl disable "$service"; f
 ln -sfn "$release" "$base/docker-current.next"
 mv -Tf "$base/docker-current.next" "$base/docker-current"
 complete=true
+# Cleanup failure must not roll back a healthy deployment. Retry next deployment
+# or through the VM's optional hourly retention timer.
+python3 "$release/scripts/cleanup-images.py" --base "$base" --lock-fd 9 --apply \
+  || echo 'WARNING: deployment succeeded, but image retention needs attention.' >&2
 printf 'Deployed and verified Docker revision %s\n' "$revision"
