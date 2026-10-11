@@ -1,8 +1,8 @@
 // The team's backend, unchanged, plus the scenegen rules and checks.
 // scenegen/prompts/planning.md is appended to the lesson-planning prompt and
 // scenegen/prompts/visualization.md to the scene prompt (after scene-craft.md); both are
-// re-read on use. The wrapper also adds validation (lesson plans must mark every scene
-// 3D or 2D and keep yellow for the highlight; scenes must pass the render checks in
+// re-read on use. The wrapper also adds validation (lesson plans keep yellow for
+// the highlight; scenes must honor their planned view and pass the render checks in
 // scene-checks.ts) and trims the previous scene's frame in the scene prompt.
 // Failures go back to the model like any other validation error and are logged to
 // out/scenegen-check-failures.log.
@@ -46,14 +46,17 @@ export class CheckedRunner implements AgentRunner {
     const systemPrompt = task.systemPrompt.replace(craft, () => craft + "\n\n" + visualization);
     // Formulas, view membership and layout only show up in the player; check them here so a broken scene cannot be published.
     const packet = scenePacket(task.prompt);
-    const planned3D = /^\s*3D\s*:/i.test(packet.json?.planning?.current?.visualDescription ?? "");
+    const current = packet.json?.planning?.current;
+    const planned3D = current?.view
+      ? current.view.mode === "3d"
+      : /^\s*3D\s*:/i.test(current?.visualDescription ?? "");
     return this.inner.run({ ...task, systemPrompt, prompt: slimPrompt(task.prompt, packet), validate: async output => {
       await task.validate!(output);
       const previous = packet.json?.previousFrame;
       const compiled = await compileSource(sceneSource(output), { previous });
       const problems = renderProblems(compiled);
       if (planned3D && !(compiled as { views?: unknown[] }).views?.length) {
-        problems.push('This scene is planned in 3D but has no 3D view. Put the model in s.view("model", { rect, orbit: true, camera }, v => { ... }).');
+        problems.push('This scene is planned in 3D but has no 3D view. Put the model in s.view("model", { rect, orbit: false, camera }, v => { ... }). Enable geometry-targeted orbit only when it helps and the viewing mode permits it.');
       }
       const dead = await deadControls(sceneSource(output), compiled, previous);
       if (dead.length) problems.push(`Controls without effect at the end: ${dead.join(", ")}.\n${DEAD_CONTROL_HINT}`);
@@ -72,23 +75,19 @@ async function report(context: string, problems: string[]) {
   throw new Error(message);
 }
 
-const VIEW_MARK = /^\s*(3D\s*:|2D\s*\(because\b)/i;
 const RESERVED_COLOURS = new Set(["YELLOW", "GOLD"]);
 
 /** Plan rules the backend's parser does not enforce. */
 export function planProblems(output: string): string[] {
-  let plan: { scenes?: { id: string; visualDescription?: string }[]; entities?: { id: string; color?: string }[] };
+  let plan: { entities?: { id: string; color?: string }[] };
   try { plan = JSON.parse(output).plan ?? {}; } catch { return []; }
   const problems: string[] = [];
-  // Every scene must state its view, so "3D by default" is a checked decision.
-  const unmarked = (plan.scenes ?? []).filter(scene => !VIEW_MARK.test(scene.visualDescription ?? "")).map(scene => scene.id);
-  if (unmarked.length) problems.push(`Start each scene's visualDescription with "3D:" or "2D (because <reason>):". Missing in: ${unmarked.join(", ")}. 3D is the default; 2D needs a real reason.`);
   const yellow = (plan.entities ?? []).filter(entity => RESERVED_COLOURS.has(String(entity.color).toUpperCase())).map(entity => entity.id);
   if (yellow.length) problems.push(`YELLOW and GOLD are reserved for the highlight frame; give these entities another colour: ${yellow.join(", ")}.`);
   return problems;
 }
 
-interface ScenePacket { start: number; json?: { previousFrame?: Frame; planning?: { current?: { visualDescription?: string } } } }
+interface ScenePacket { start: number; json?: { previousFrame?: Frame; planning?: { current?: { visualDescription?: string; view?: { mode: "2d" | "3d" } } } } }
 
 /** The scene task's prompt ends with one line of JSON: narration, plan and the previous scene's final frame. */
 function scenePacket(prompt: string): ScenePacket {

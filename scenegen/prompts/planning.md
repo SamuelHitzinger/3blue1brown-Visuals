@@ -7,26 +7,25 @@
 
 When writing the plan:
 
-- **3D is the default.** Start every scene's visualDescription with either `3D:` or
-  `2D (because <reason>):`. Use 3D unless a flat view is clearly much better for
-  understanding. Anything with a real spatial shape or arrangement must be 3D:
-  molecules, atoms and bonds, orbitals, crystals, proteins, cells, organs, physical
-  objects, forces and fields in space, surfaces, solids. Describe the true shape and
-  what physically happens, and say that the viewer can rotate the view.
-- 2D needs a real reason: the idea itself lives in a plane (vectors and matrices on a
-  2D grid, a graph, a number line, an energy diagram) or a flat diagram is clearly more
-  intuitive at that moment (a Lewis structure, a reaction scheme, a cross-section).
-  "Simpler to draw" is not a reason. For a subject that has a 3D shape, plan the flat
-  step as a visible transformation of the same 3D object, and plan the return to 3D.
-  A lesson about a spatial subject should be 3D in most of its scenes.
-- **Name the true 3D shape.** The scene can draw real shaded surfaces and solids, so
-  say which one each object is: a smooth surface for anything that depends on two
-  variables (an energy or potential landscape, a loss surface, a wave, z = f(x, y)),
+- **Choose dimensionality for understanding.** Follow the guidance above: record
+  the choice and its explanatory reason in each scene's `view.mode` and
+  `view.rationale`. Use 3D only when depth, arrangement, rotation, or projection
+  clarifies a relationship that 2D would obscure; topic complexity and spectacle
+  are not reasons. Prefer 2D when it communicates the relationship more clearly.
+  There is no 3D quota or required return to 3D, including for spatial subjects.
+- **Commit to the chosen 3D.** Apply the guidance's quality requirements and actively
+  seek further spatial insights that are difficult or impossible to communicate
+  faithfully in 2D. Specify the geometry and the reveals that make those insights
+  visible in `visualDescription`, within the lesson's scope and timing.
+- **When 3D helps, name the true shape.** The scene can draw real shaded surfaces
+  and solids, so say which one each object is: a smooth surface for a chosen 3D
+  representation of a two-variable quantity (an energy or potential landscape,
+  a loss surface, a wave, z = f(x, y)),
   a curved sheet or lobe (orbital, membrane, shell, petal), a tube along a path
   (backbone, strand, wire, vessel, orbit, field line), or a solid (box, cylinder,
   cone, ring), with spheres for atoms and particles. Prefer one such shape to many
-  small spheres. An idea usually drawn as a flat graph of two inputs (a function of
-  x and y, a cost landscape) is better as a rotatable surface: plan it in 3D.
+  small spheres. A two-variable quantity may use a flat plot or a 3D surface;
+  choose according to the relationship being explained.
   A slider may reshape a surface (an amplitude, a curvature, a parameter of the
   function); plan that as an ordinary slider.
 - **Surface patterns and materials, only with a reason.** A 3D body can carry a

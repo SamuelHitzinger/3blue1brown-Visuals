@@ -217,19 +217,48 @@ test("a lesson plan may not use yellow or gold as an entity colour", async () =>
   expect(results[1]).toBe("ok");
 });
 
-test("a lesson plan must mark every scene as 3D or 2D with a reason", async () => {
+test("lesson plans use the shared view contract without requiring description prefixes", async () => {
   const { PLANNING_CONTRACT } = await import("../../backend/src/agents/planning.js");
-  const plan = (description: string) => JSON.stringify({ plan: { scenes: [{ id: "beat-1", visualDescription: description }] } });
+  const scenes = [
+    { visualDescription: "Show the molecule's bond angles", view: { mode: "3d", rationale: "Depth reveals the bond arrangement" } },
+    { visualDescription: "Show the molecule's bonding diagram", view: { mode: "2d", rationale: "A flat diagram makes bond connectivity clear" } },
+    { visualDescription: "3D: show the molecule" },
+    { visualDescription: "2D (because it is a graph): plot energy" },
+  ];
   const results: string[] = [];
   const runner = new CheckedRunner({ run: async task => {
-    for (const output of [plan("Show the molecule"), plan("3D: show the molecule"), plan("2D (because it is a graph): plot energy")]) {
+    for (const scene of scenes) {
+      const output = JSON.stringify({ plan: { scenes: [{ id: "beat-1", ...scene }] } });
       results.push(await task.validate!(output).then(() => "ok", error => (error as Error).message));
     }
     return "";
   } });
   await runner.run({ systemPrompt: PLANNING_CONTRACT, prompt: "lesson", validate: async () => {} });
-  expect(results[0]).toContain("beat-1");
-  expect(results.slice(1)).toEqual(["ok", "ok"]);
+  expect(results).toEqual(["ok", "ok", "ok", "ok"]);
+});
+
+test("3D validation follows the explicit view before falling back to saved prefixes", async () => {
+  const craft = await loadPrompt("scene-craft");
+  const flatScene = 'export default scene({ mode: "2d", end: "hold" }, s => { s.circle("dot", { radius: 0.2 }); s.wait(1); });';
+  const cases = [
+    { visualDescription: "Show the bond arrangement", view: { mode: "3d" } },
+    { visualDescription: "3D: show the bond arrangement" },
+    { visualDescription: "Show bond connectivity", view: { mode: "2d" } },
+    { visualDescription: "3D: an older description", view: { mode: "2d" } },
+    { visualDescription: "2D (because it is flat): an older description", view: { mode: "3d" } },
+  ];
+  const results: string[] = [];
+  const runner = new CheckedRunner({ run: async task => {
+    results.push(await task.validate!(flatScene).then(() => "ok", error => (error as Error).message));
+    return "";
+  } });
+  for (const current of cases) {
+    await runner.run({ systemPrompt: craft, prompt: `Generate this scene:\n${JSON.stringify({ planning: { current } })}`, validate: async () => {} });
+  }
+  expect(results[0]).toContain("planned in 3D but has no 3D view");
+  expect(results[1]).toContain("planned in 3D but has no 3D view");
+  expect(results.slice(2, 4)).toEqual(["ok", "ok"]);
+  expect(results[4]).toContain("planned in 3D but has no 3D view");
 });
 
 test("tasks without validation, such as reviews, pass through untouched", async () => {

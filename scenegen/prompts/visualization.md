@@ -9,8 +9,9 @@
 
 Where a rule below is about time, the measured narration timing always wins: fit the
 motion inside the given audio cues and durationSec. Where a rule below differs from
-the scene-craft guidance above (explanatory text, the fixed layout, 3D by default,
-highlighting), the rule below wins.
+the scene-craft guidance above on explanatory text, the fixed layout, or
+highlighting, the rule below wins. The planned dimensionality and scene-craft
+interaction policy remain authoritative.
 
 Visual style: 3Blue1Brown-like explanatory animation.
 - Dark background, few bright colours. Each colour means ONE concept for the whole
@@ -193,26 +194,25 @@ LaTeX (strict; one unsupported command stops the whole lesson from playing):
   \mathrm{H_2O}), \cancel, \si, \bra / \ket, \degree, \require, \unicode.
 - When unsure whether a command exists, use a simpler one.
 
-3D is the default (strict):
-- Show the subject in real 3D unless a flat view is clearly much better for
-  understanding. Anything with a real spatial shape or arrangement MUST be 3D:
-  molecules, atoms and bonds, orbitals, crystals, proteins, cells, organs, physical
-  objects, forces and fields in space, surfaces, solids. Give them true shapes,
-  proportions and angles, and let the viewer rotate the view with the mouse.
-- 2D is the exception and needs a reason: the idea itself lives in a plane (vectors
-  and matrices acting on a 2D grid, a graph of a function, a number line, a flow
-  chart, an energy diagram) or a flat diagram is clearly more intuitive at that
-  moment (a Lewis structure, a reaction scheme, a cross-section).
-- When you do go flat for a subject that has a 3D shape, make it a visible
-  transformation of the same object: the 3D model turns to face the viewer and
-  flattens or simplifies into the diagram, and returns to 3D when that step is
-  done. Never leave the student with only the abstraction.
-- A "3D" scene that is really a flat drawing does not count: the depth must be real
-  (objects at different z, a perspective camera, rotation shows new sides).
+Dimensionality and spatial explanation:
+- Honor the planned `view.mode` and `view.rationale`. Use 3D only when depth,
+  arrangement, rotation, or projection clarifies a relationship that 2D would
+  obscure. Prefer 2D when it explains the relationship more clearly. Spatial
+  subjects may use flat diagrams, with no quota or required return to 3D.
+- Once 3D is chosen, fully commit to excellent geometry, convincing depth,
+  thoughtful framing, readable labels, and polished explanatory motion as required
+  by scene-craft. Actively reveal spatial insights that are difficult or impossible
+  to communicate faithfully in 2D; make the planned discoveries visible within
+  the approved narration and timing. A tilted flat drawing or token extrusion is
+  insufficient.
+- When a planned 3D-to-2D transition explains a correspondence, make the selected
+  parts' projection, unfolding, or section clear and preserve their identity and
+  colors. A flat explanation can also stand alone.
 
 Interactivity:
 - Keep interactive elements wherever they help: a planned slider, toggle or select
-  must be built and must drive the real geometry; 3D views are rotatable.
+  must be built and must drive the real geometry. Enable model orbit only when
+  inspecting the spatial relationship helps and the viewing mode permits it.
   Do not drop a planned interaction to simplify the scene.
 - Controls always sit in the TOP RIGHT corner, in every scene (strict, checked). The
   player stacks them there by itself, right-aligned from the top, in the order they
@@ -226,15 +226,18 @@ Interactivity:
   top third of the right-hand text area, whether or not this scene has a control.
 
 How to build 3D with animlib:
-- Follow the plan: if the scene's visualDescription starts with "3D:", the scene must
-  be 3D; if it starts with "2D (because ...):", keep it flat.
+- Follow the plan's `view.mode`; older saved plans may instead carry a "3D:" or
+  "2D (because ...):" prefix in `visualDescription`.
 - ALL 3D goes in ONE view region on the left: `s.view("model", { rect: [0.02, 0.1,
-  0.64, 0.8], orbit: true, camera: { ... } }, v => { ... })`, with every 3D object
+  0.64, 0.8], orbit: false, camera: { ... } }, v => { ... })`, with every 3D object
   created through `v`. Never rely on `mode: "3d"` for the main scene and never call
   `s.camera.to3D`: a scene inherits the previous scene's main camera, so from the
   second scene on the main scene is silently flat and cannot be rotated, and a
   tilted main camera also tilts every formula. The main scene stays flat and holds
   only formulas and controls; reuse the same view id and rect in every scene.
+  When viewer orbit helps in Interactive mode, enable `orbit: true,
+  orbitHitTest: "geometry"` on the model view. Keep orbit disabled in Classic mode
+  and keep the main scene non-orbiting in either mode.
 - Use `sphere`, `line3D`, `arrow3D`, shaded `mesh`, `surface`, `parametricSurface`,
   `box`, `cylinder`, `cone`, `torus`, or `tube` with real depth.
 - Frame the model with the view camera: `target` at the model's centre, `height`

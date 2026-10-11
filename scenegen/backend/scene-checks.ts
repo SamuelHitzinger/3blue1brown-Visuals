@@ -271,7 +271,7 @@ export function viewProblems(frames: ViewFrame[]): string[] {
   const problems: string[] = [];
   const tilted = frames.some(({ camera }) => Math.abs(camera.yaw) > 1e-3 || Math.abs(camera.pitch) > 1e-3 || camera.perspective > 1e-3);
   if (tilted) problems.push("The main scene's camera is tilted or in perspective, which tilts every formula and is lost in the next scene. " +
-    "Keep the main scene flat (no mode: \"3d\", no s.camera.to3D) and put all 3D objects in one s.view(\"model\", { rect, orbit: true, camera }, v => { ... }) on the left.");
+    "Keep the main scene flat (no mode: \"3d\", no s.camera.to3D) and put all 3D objects in one s.view(\"model\", { rect, orbit: false, camera }, v => { ... }) on the left. Enable geometry-targeted orbit only when it helps and the viewing mode permits it.");
   const text = new Set<string>();
   for (const frame of frames) for (const element of frame.elements) {
     if (!element.view || element.opacity <= 0.05 || !["text", "latex"].includes(element.geometry.kind)) continue;
