@@ -71,6 +71,9 @@ The [final visual coverage review](../../../docs/animlib-expansion/final-visual-
 accepts eleven representative scenes under the current direction. The
 [capability and reproduction audit](../../../docs/animlib-expansion/current-capability-audit.md)
 maps those operations to reusable APIs, package ownership and portable inputs.
+The [final independent library review](../../../docs/animlib-expansion/final-library-review.md)
+accepts the implementation and evidence set, with scientific and performance
+limits recorded explicitly.
 
 | Proof | Latest independent decision | Newer work / remaining gate |
 | --- | --- | --- |

@@ -381,3 +381,8 @@ reference coverage and artist fidelity remain open; no whole-library parity clai
   motion guide. Historical realistic assets remain optional and clearly labeled.
   Final checkpoint includes new source, inputs, preparation tools, fixtures and
   independent reports so these paths remain reproducible from repository files.
+
+- `d272ffd` saves that reviewed source, asset, input and evidence checkpoint:
+  716 files, still on `amilibsam`, with no push or merge. The independent final
+  library and visual reviewers accept the documented scope. Post-checkpoint
+  integration verifies tracked prerequisites and records final navigation status.
