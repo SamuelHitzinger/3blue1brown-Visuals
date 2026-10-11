@@ -1,0 +1,512 @@
+{
+  "id": "rna-r3-cellular-membrane",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original analytic membrane, pore and baked illumination recipe in prepare-rna-processing-revision3-assets.mjs",
+    "sourceHash": "e04434f19bf02053c1e0fbe636a3e666629ae54f7d0d73e29b14d69e357c07dc",
+    "creator": "animlib original biological assets",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original illustrative geometry",
+    "converter": {
+      "name": "prepare-rna-processing-revision3-assets",
+      "version": "1",
+      "options": {}
+    },
+    "modifications": [
+      "Original procedural color and soft contact shading; no source pixels or recovered geometry"
+    ],
+    "fidelity": "Illustrative baked contact/lumen illumination, not a physical shadow solver or deposited pore structure"
+  },
+  "parts": [
+    {
+      "id": "surface--14--14",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/1da9c47063d20b4a06d2fd69cf9c3d3dce226c80630f3f4da99e749ce3107eae.bin",
+        "hash": "1da9c47063d20b4a06d2fd69cf9c3d3dce226c80630f3f4da99e749ce3107eae",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/dc923d73c8cdd7db680827b4fe10351b0c2482ee0924ea910ec945bc30c10e13.bin",
+        "hash": "dc923d73c8cdd7db680827b4fe10351b0c2482ee0924ea910ec945bc30c10e13",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/e9df044d2bc78f26608cbd076ecc4748ea600583335eb2e213c8752c7d94ef20.bin",
+        "hash": "e9df044d2bc78f26608cbd076ecc4748ea600583335eb2e213c8752c7d94ef20",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen--14--14",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/437474f83a04aeef6ac28805839e7e95ee57ee3499b01eb66802bd92d699f271.bin",
+        "hash": "437474f83a04aeef6ac28805839e7e95ee57ee3499b01eb66802bd92d699f271",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface-0--14",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/51977ef71411e0d585c38bc2c15e6d49eb4476f32d4d9d1ed20d0269e24879f7.bin",
+        "hash": "51977ef71411e0d585c38bc2c15e6d49eb4476f32d4d9d1ed20d0269e24879f7",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/cd48bacd7894fc6bae8bd29a6d509c94f8d505be6b5a5e3cafb83437f7c2629d.bin",
+        "hash": "cd48bacd7894fc6bae8bd29a6d509c94f8d505be6b5a5e3cafb83437f7c2629d",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/e08377e19a902c3db8d1b2eec481ebaebba6506e571bf7d6de2fba71a8ff3398.bin",
+        "hash": "e08377e19a902c3db8d1b2eec481ebaebba6506e571bf7d6de2fba71a8ff3398",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen-0--14",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/bc2a39ab8ad07b37bac3f5d48e8731343ee58ec83c8a1f6e2be77d62f9e67098.bin",
+        "hash": "bc2a39ab8ad07b37bac3f5d48e8731343ee58ec83c8a1f6e2be77d62f9e67098",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface-14--14",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/c08b454076e67a96f22b8c5cc383f74148111fb2fb1bb370dd16e828cd67ae64.bin",
+        "hash": "c08b454076e67a96f22b8c5cc383f74148111fb2fb1bb370dd16e828cd67ae64",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/c9ba0daa23b9d73332ccf765fd8e0735c0ebaf1ebd6f007a25248c60c68390b6.bin",
+        "hash": "c9ba0daa23b9d73332ccf765fd8e0735c0ebaf1ebd6f007a25248c60c68390b6",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/f7052d05de116fc87079b8f6c95e29b908b214c81466a9c2f1efee763ef32d6d.bin",
+        "hash": "f7052d05de116fc87079b8f6c95e29b908b214c81466a9c2f1efee763ef32d6d",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen-14--14",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/8451ba4eb7e1b70fbea55a7f679f0c7bf5f9c152363643f23e4f4f732c5e5bdb.bin",
+        "hash": "8451ba4eb7e1b70fbea55a7f679f0c7bf5f9c152363643f23e4f4f732c5e5bdb",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface--14-0",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/ac51c0875b1a43e3388cda5f04a086f6f7e6e6303542af82f01cf43e8b58b7d6.bin",
+        "hash": "ac51c0875b1a43e3388cda5f04a086f6f7e6e6303542af82f01cf43e8b58b7d6",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/604c66c2bad7601a11964217a4aec737f69f748cf18661dbd425e7b095c63b4b.bin",
+        "hash": "604c66c2bad7601a11964217a4aec737f69f748cf18661dbd425e7b095c63b4b",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/1e0f1b822f7403bf7f3dd570f43bf3eb97f465cbfceb5c11602022019ee32ac2.bin",
+        "hash": "1e0f1b822f7403bf7f3dd570f43bf3eb97f465cbfceb5c11602022019ee32ac2",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen--14-0",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/c93f3d531ee3c9a813fd5f80d4e926fdc21205c19a09c333ebf78b2bf21122d8.bin",
+        "hash": "c93f3d531ee3c9a813fd5f80d4e926fdc21205c19a09c333ebf78b2bf21122d8",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface-0-0",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/14f3b3b16dd1520f0b274de7243532665f7dcea18a38227777a92686fe9a1943.bin",
+        "hash": "14f3b3b16dd1520f0b274de7243532665f7dcea18a38227777a92686fe9a1943",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/8ca1326c1217b19cf2f79954d49e5a23512e01e50db13fe015e7462fd05f11a9.bin",
+        "hash": "8ca1326c1217b19cf2f79954d49e5a23512e01e50db13fe015e7462fd05f11a9",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/8824c1dd34bc58dd1f7dde2d10a3207547f2aa40c84656fae3d2f8349dadd759.bin",
+        "hash": "8824c1dd34bc58dd1f7dde2d10a3207547f2aa40c84656fae3d2f8349dadd759",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen-0-0",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/8e6cb2696b7ccb9fe7bf4383c7b123d8394ea7d6b9e649bbd734f7443438c5ce.bin",
+        "hash": "8e6cb2696b7ccb9fe7bf4383c7b123d8394ea7d6b9e649bbd734f7443438c5ce",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface-14-0",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/5174ac11f1ddf8c4a86d0fa196090036afe2be17dd60dd1715b538ae7ff9b3b3.bin",
+        "hash": "5174ac11f1ddf8c4a86d0fa196090036afe2be17dd60dd1715b538ae7ff9b3b3",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/69747fd53c57ff43ae4d2f0f5d480bfd58614bae285e75aaf1cdabe93ace5c60.bin",
+        "hash": "69747fd53c57ff43ae4d2f0f5d480bfd58614bae285e75aaf1cdabe93ace5c60",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/995d061d74d2b4613a13fa01e6ce7853cf119bde509d2d3d4d02d599e3d83deb.bin",
+        "hash": "995d061d74d2b4613a13fa01e6ce7853cf119bde509d2d3d4d02d599e3d83deb",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen-14-0",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/b2a30359256f44bd48adc9893bfe4d0451c2598ee8d9e9379c578a0257afcae9.bin",
+        "hash": "b2a30359256f44bd48adc9893bfe4d0451c2598ee8d9e9379c578a0257afcae9",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface--14-14",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/6a20d14faa7207e5078d2db92e290fcf0c7995f3242c19959080e06740bbb57e.bin",
+        "hash": "6a20d14faa7207e5078d2db92e290fcf0c7995f3242c19959080e06740bbb57e",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/5ca50f57ecda35751f4483a8e932b1904ceff3e3e146e3faffb20c2dd9c5d3c2.bin",
+        "hash": "5ca50f57ecda35751f4483a8e932b1904ceff3e3e146e3faffb20c2dd9c5d3c2",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/919c65b122dbf1fd566841ab7391c51ee5a4f98e4daa5f24f3eb44110d3b5ace.bin",
+        "hash": "919c65b122dbf1fd566841ab7391c51ee5a4f98e4daa5f24f3eb44110d3b5ace",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen--14-14",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/28844adfcde2bf984a38b18fd166c4168f4ea96bf7d4ce20d3827cd079508b4e.bin",
+        "hash": "28844adfcde2bf984a38b18fd166c4168f4ea96bf7d4ce20d3827cd079508b4e",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface-0-14",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/d21664e63f9f4b158fea40ff0c01ade68d658585e0107cdbf7dced6fbe072948.bin",
+        "hash": "d21664e63f9f4b158fea40ff0c01ade68d658585e0107cdbf7dced6fbe072948",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/c6aa6d6b6daeb722a80e6aebb91791a7106db853bdd65b75ed664682f2bd9535.bin",
+        "hash": "c6aa6d6b6daeb722a80e6aebb91791a7106db853bdd65b75ed664682f2bd9535",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/9ebeb358838041ccc53b40b19cc519fd16ce66aea8ad534603d2436d71d39f02.bin",
+        "hash": "9ebeb358838041ccc53b40b19cc519fd16ce66aea8ad534603d2436d71d39f02",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen-0-14",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/8b0c52dbe2b26fc4346f65f4021386e16b0a312b76f59bc41e22444101221740.bin",
+        "hash": "8b0c52dbe2b26fc4346f65f4021386e16b0a312b76f59bc41e22444101221740",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    },
+    {
+      "id": "surface-14-14",
+      "vertexCount": 1664,
+      "triangleCount": 3072,
+      "positions": {
+        "path": "blobs/6516cc7428700910f3876e5d61ec76b268256bb0ef612489fd9c9adaf857b43c.bin",
+        "hash": "6516cc7428700910f3876e5d61ec76b268256bb0ef612489fd9c9adaf857b43c",
+        "byteLength": 19968
+      },
+      "indices": {
+        "path": "blobs/fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8.bin",
+        "hash": "fd848bf50252df07ebacf203cf6b4e88f9f50c364fcc4a938c09e1a2bf4365a8",
+        "byteLength": 36864
+      },
+      "normals": {
+        "path": "blobs/1a815579404e06a73e5f788248ddb1d4790ba87cb8b30e369fb571a6b6bb32dd.bin",
+        "hash": "1a815579404e06a73e5f788248ddb1d4790ba87cb8b30e369fb571a6b6bb32dd",
+        "byteLength": 19968
+      },
+      "uv0": {
+        "path": "blobs/bc6ac4b1035f8d7d83653f4c04aab7eb7e6f2cba25ceedb76b72068382a3f7e5.bin",
+        "hash": "bc6ac4b1035f8d7d83653f4c04aab7eb7e6f2cba25ceedb76b72068382a3f7e5",
+        "byteLength": 13312
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-membrane-illumination",
+          "hash": "0507c274731976826d4d27f0f77c9e8b3c6bd36855cad6061643f5cc3f2e1da4"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "lumen-14-14",
+      "vertexCount": 128,
+      "triangleCount": 128,
+      "positions": {
+        "path": "blobs/da970fa5152bb8b56379714fdf2c7f3a8b713382a761130e5adbc49301616094.bin",
+        "hash": "da970fa5152bb8b56379714fdf2c7f3a8b713382a761130e5adbc49301616094",
+        "byteLength": 1536
+      },
+      "indices": {
+        "path": "blobs/4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b.bin",
+        "hash": "4b80e1d16ed2eea0029017c55ab8485a0208d000d5e30296acb8b19fa1c78a3b",
+        "byteLength": 1536
+      },
+      "normals": {
+        "path": "blobs/cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288.bin",
+        "hash": "cbd919237e2043417cddda073b6bc46f7468ec768089263a4b26d1944e242288",
+        "byteLength": 1536
+      }
+    }
+  ],
+  "hash": "15360920917ad9fa9fae281a1f265362fa2fdbed18f61abd29277f87929928b5"
+}

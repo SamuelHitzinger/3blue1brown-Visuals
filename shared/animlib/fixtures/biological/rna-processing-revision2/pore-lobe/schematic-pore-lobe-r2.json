@@ -1,0 +1,46 @@
+{
+  "id": "schematic-pore-lobe-r2",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original elongated connected pore scaffold in prepare-rna-processing-revision2-assets.mjs",
+    "sourceHash": "3662e616733a80665447868484de7d6adef68834ccafe629f5199c5058dba017",
+    "creator": "Original animlib RNA processing revision 2",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original schematic geometry",
+    "converter": {
+      "name": "Original analytic and Gaussian geometry",
+      "version": "2",
+      "options": {}
+    },
+    "modifications": [
+      "Original surfaces and cavities; no source pixels or recovered geometry."
+    ],
+    "fidelity": "Illustrative cellular geometry; no deposited enzyme or exact biological dimensions claimed."
+  },
+  "parts": [
+    {
+      "id": "body",
+      "vertexCount": 1348,
+      "triangleCount": 2692,
+      "positions": {
+        "path": "blobs/e17d13e9299324daed84ca5992a2bf087cc1627191af8c0e3719a86536ba8b09.bin",
+        "hash": "e17d13e9299324daed84ca5992a2bf087cc1627191af8c0e3719a86536ba8b09",
+        "byteLength": 16176
+      },
+      "indices": {
+        "path": "blobs/7b26c41a7824159d0a250f19dd60b73f13a005a48f57db6a5dc81f33593b960d.bin",
+        "hash": "7b26c41a7824159d0a250f19dd60b73f13a005a48f57db6a5dc81f33593b960d",
+        "byteLength": 32304
+      },
+      "normals": {
+        "path": "blobs/56e457c158da199a9419ccca78c4eb2bfe57f4ff066f65485f4ebb570a070be2.bin",
+        "hash": "56e457c158da199a9419ccca78c4eb2bfe57f4ff066f65485f4ebb570a070be2",
+        "byteLength": 16176
+      }
+    }
+  ],
+  "hash": "6f5274e875eaa4423de8530c44ec600e21ebd4873be914b7814aa05f11da10e6"
+}

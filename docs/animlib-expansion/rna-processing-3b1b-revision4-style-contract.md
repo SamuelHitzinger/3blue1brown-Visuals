@@ -1,0 +1,11 @@
+# RNA processing: revised visual target
+
+The user's latest explicit instruction prioritizes 3Blue1Brown art and graphing language throughout. Biological source footage now supplies motion techniques, not its cellular art direction. This supersedes the earlier Nucleus visual-style acceptance criterion. All frozen earlier films, assets and reviews remain evidence; the unfinished textured revision3 pore stays available as optional asset capability, not the current delivery target.
+
+The author re-read the explanation skill baseline/review gate and viewed all three bundled baseline images. The approved references use a near-black world, restrained semantic accents, coherent geometry, local serif notation and visible operations with preserved identities. The rejected reference uses a detached equation/plot/footer template. No new titles, cards, recap row or meaningless coordinate axes will be added.
+
+Splice: the same teal strand and yellow interval bend into a loop, hold, cut at both boundaries, depart, and leave a joined strand. Sparse short base ticks identify sites. Blue boundary guides replace biological surface decoration. White cut-end markers expose the operation. The replacement edge appears only at closure; labels remain beside their geometry. Verified helper schedules and identity semantics remain unchanged.
+
+Pore: the same teal chain with one yellow selected site follows its curved approach through a genuine blue-rimmed geometric aperture and emerges in a rising arc. A subdued membrane surface provides real depth occlusion. The purposeful opposite-side cut remains at4.65s, with the same chain held4.4–4.9s. A clear local mRNA label and short leader track the selected site. All cellular clutter, organic lobes and textures are removed from this visual target.
+
+One visible operation plus its consequence owns each frame. Independent gates must separately judge reasoning, readability, source-motion correspondence, 3b1b visual language, and technical delivery. Bounded schematic kinematics remain explicit in documentation, and do not excuse a visual failure. Native representative frames in both aspects precede full film encoding; final full-duration ordered samples and native boundary checks remain required.

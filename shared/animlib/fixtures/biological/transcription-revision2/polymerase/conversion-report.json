@@ -1,0 +1,58 @@
+{
+  "recipe": {
+    "around": 96,
+    "tube": 24,
+    "centerRadii": [
+      3.3,
+      2.25
+    ],
+    "depth": -1.05
+  },
+  "packages": [
+    "transcription-r2-cavity-polymerase.json"
+  ],
+  "catalog": [
+    {
+      "id": "transcription-r2-cavity-polymerase",
+      "kind": "model",
+      "parts": [
+        {
+          "id": "body",
+          "vertexCount": 2304,
+          "triangleCount": 4608,
+          "bounds": {
+            "min": [
+              -3.7532543471706004,
+              -3.1044186417955473,
+              -2.8442500704162614
+            ],
+            "max": [
+              4.337615808708494,
+              2.7203257484414594,
+              -0.5931146574611125
+            ]
+          }
+        }
+      ],
+      "bounds": {
+        "min": [
+          -3.7532543471706004,
+          -3.1044186417955473,
+          -2.8442500704162614
+        ],
+        "max": [
+          4.337615808708494,
+          2.7203257484414594,
+          -0.5931146574611125
+        ]
+      },
+      "hash": "78a1b6f04c6245c8f3a026c9f835eb8e4fccf5826a032edf6a37ce7cef7b747c"
+    }
+  ],
+  "stats": {
+    "decodedBytes": 1179648,
+    "pinnedBytes": 0,
+    "leases": 0,
+    "models": 1
+  }
+}

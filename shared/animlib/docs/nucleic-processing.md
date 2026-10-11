@@ -83,9 +83,14 @@ least `1e-6`. Frame vectors shorter than `1e-6` and corner/frame cosine below
 rejected. Entire inputs/schedules are preflighted on every call, including at
 progress zero. There is no collision solver outside the declared aperture.
 
-See [proof generator](../demo/expansion/rna-processing-proof.mjs),
-[formation and cellular revision proof](../demo/expansion/rna-processing-revision2-proof.mjs),
-[types](../src/nucleic-processing-types.ts) and
-[regressions](../test/nucleic-processing.test.ts). The proof reuses original CC0
-rounded nucleotide/machinery assets and a separately reproducible original
-membrane annulus. No reference pixels are used as assets.
+The [current mathematical proof](../demo/expansion/rna-processing-3b1b-revision4-proof.mjs)
+shows formation/cut/join and aperture passage using sparse native geometry.
+[Independent review](../../../docs/animlib-expansion/rna-processing-3b1b-revision4-independent-review.md)
+accepts both operations on reasoning, readability, current art and media gates.
+Its versioned input JSONs reproduce the motion without old exports.
+See [types](../src/nucleic-processing-types.ts) and
+[regressions](../test/nucleic-processing.test.ts) for the complete contract.
+The [first proof](../demo/expansion/rna-processing-proof.mjs) and
+[cellular revision](../demo/expansion/rna-processing-revision2-proof.mjs) retain
+optional original CC0 nucleotide, machinery and membrane assets. No reference
+pixels are used as assets.

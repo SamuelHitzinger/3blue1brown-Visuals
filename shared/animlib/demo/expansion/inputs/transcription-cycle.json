@@ -1,0 +1,387 @@
+{
+  "template": [
+    {
+      "id": "template-0",
+      "base": "A"
+    },
+    {
+      "id": "template-1",
+      "base": "C"
+    },
+    {
+      "id": "template-2",
+      "base": "G"
+    },
+    {
+      "id": "template-3",
+      "base": "T"
+    },
+    {
+      "id": "template-4",
+      "base": "A"
+    },
+    {
+      "id": "template-5",
+      "base": "C"
+    },
+    {
+      "id": "template-6",
+      "base": "G"
+    },
+    {
+      "id": "template-7",
+      "base": "T"
+    },
+    {
+      "id": "template-8",
+      "base": "A"
+    },
+    {
+      "id": "template-9",
+      "base": "C"
+    },
+    {
+      "id": "template-10",
+      "base": "G"
+    },
+    {
+      "id": "template-11",
+      "base": "T"
+    },
+    {
+      "id": "template-12",
+      "base": "A"
+    },
+    {
+      "id": "template-13",
+      "base": "C"
+    },
+    {
+      "id": "template-14",
+      "base": "G"
+    },
+    {
+      "id": "template-15",
+      "base": "T"
+    },
+    {
+      "id": "template-16",
+      "base": "A"
+    },
+    {
+      "id": "template-17",
+      "base": "C"
+    },
+    {
+      "id": "template-18",
+      "base": "G"
+    },
+    {
+      "id": "template-19",
+      "base": "T"
+    },
+    {
+      "id": "template-20",
+      "base": "A"
+    },
+    {
+      "id": "template-21",
+      "base": "C"
+    },
+    {
+      "id": "template-22",
+      "base": "G"
+    },
+    {
+      "id": "template-23",
+      "base": "T"
+    }
+  ],
+  "coding": [
+    {
+      "id": "coding-0",
+      "base": "T"
+    },
+    {
+      "id": "coding-1",
+      "base": "G"
+    },
+    {
+      "id": "coding-2",
+      "base": "C"
+    },
+    {
+      "id": "coding-3",
+      "base": "A"
+    },
+    {
+      "id": "coding-4",
+      "base": "T"
+    },
+    {
+      "id": "coding-5",
+      "base": "G"
+    },
+    {
+      "id": "coding-6",
+      "base": "C"
+    },
+    {
+      "id": "coding-7",
+      "base": "A"
+    },
+    {
+      "id": "coding-8",
+      "base": "T"
+    },
+    {
+      "id": "coding-9",
+      "base": "G"
+    },
+    {
+      "id": "coding-10",
+      "base": "C"
+    },
+    {
+      "id": "coding-11",
+      "base": "A"
+    },
+    {
+      "id": "coding-12",
+      "base": "T"
+    },
+    {
+      "id": "coding-13",
+      "base": "G"
+    },
+    {
+      "id": "coding-14",
+      "base": "C"
+    },
+    {
+      "id": "coding-15",
+      "base": "A"
+    },
+    {
+      "id": "coding-16",
+      "base": "T"
+    },
+    {
+      "id": "coding-17",
+      "base": "G"
+    },
+    {
+      "id": "coding-18",
+      "base": "C"
+    },
+    {
+      "id": "coding-19",
+      "base": "A"
+    },
+    {
+      "id": "coding-20",
+      "base": "T"
+    },
+    {
+      "id": "coding-21",
+      "base": "G"
+    },
+    {
+      "id": "coding-22",
+      "base": "C"
+    },
+    {
+      "id": "coding-23",
+      "base": "A"
+    }
+  ],
+  "pairs": [
+    [
+      "template-0",
+      "coding-0"
+    ],
+    [
+      "template-1",
+      "coding-1"
+    ],
+    [
+      "template-2",
+      "coding-2"
+    ],
+    [
+      "template-3",
+      "coding-3"
+    ],
+    [
+      "template-4",
+      "coding-4"
+    ],
+    [
+      "template-5",
+      "coding-5"
+    ],
+    [
+      "template-6",
+      "coding-6"
+    ],
+    [
+      "template-7",
+      "coding-7"
+    ],
+    [
+      "template-8",
+      "coding-8"
+    ],
+    [
+      "template-9",
+      "coding-9"
+    ],
+    [
+      "template-10",
+      "coding-10"
+    ],
+    [
+      "template-11",
+      "coding-11"
+    ],
+    [
+      "template-12",
+      "coding-12"
+    ],
+    [
+      "template-13",
+      "coding-13"
+    ],
+    [
+      "template-14",
+      "coding-14"
+    ],
+    [
+      "template-15",
+      "coding-15"
+    ],
+    [
+      "template-16",
+      "coding-16"
+    ],
+    [
+      "template-17",
+      "coding-17"
+    ],
+    [
+      "template-18",
+      "coding-18"
+    ],
+    [
+      "template-19",
+      "coding-19"
+    ],
+    [
+      "template-20",
+      "coding-20"
+    ],
+    [
+      "template-21",
+      "coding-21"
+    ],
+    [
+      "template-22",
+      "coding-22"
+    ],
+    [
+      "template-23",
+      "coding-23"
+    ]
+  ],
+  "transcript": [
+    {
+      "id": "rna-0",
+      "base": "C",
+      "templateId": "template-6"
+    },
+    {
+      "id": "rna-1",
+      "base": "A",
+      "templateId": "template-7"
+    },
+    {
+      "id": "rna-2",
+      "base": "U",
+      "templateId": "template-8"
+    },
+    {
+      "id": "rna-3",
+      "base": "G",
+      "templateId": "template-9"
+    },
+    {
+      "id": "rna-4",
+      "base": "C",
+      "templateId": "template-10"
+    },
+    {
+      "id": "rna-5",
+      "base": "A",
+      "templateId": "template-11"
+    },
+    {
+      "id": "rna-6",
+      "base": "U",
+      "templateId": "template-12"
+    },
+    {
+      "id": "rna-7",
+      "base": "G",
+      "templateId": "template-13"
+    }
+  ],
+  "templateDirection": "3to5",
+  "codingDirection": "5to3",
+  "axis": {
+    "origin": [
+      0,
+      0,
+      0
+    ],
+    "direction": [
+      1,
+      0,
+      0
+    ],
+    "normal": [
+      0,
+      1,
+      0
+    ]
+  },
+  "radius": 0.75,
+  "pitch": 0.65,
+  "twistPerBase": 0.58,
+  "baseReach": 0.675,
+  "window": {
+    "halfWidth": 4,
+    "separation": 1.1,
+    "lockOrientation": true
+  },
+  "start": 0.9,
+  "cycleDuration": 0.65,
+  "dockFraction": 0.6,
+  "opening": {
+    "start": 0,
+    "duration": 0.8
+  },
+  "exitFrame": "axis",
+  "exitBend": 0.06,
+  "exitDirection": [
+    -1,
+    0,
+    0.45
+  ],
+  "rnaLinkLength": 0.7,
+  "incomingOffset": [
+    1.1,
+    1.7,
+    0.35
+  ],
+  "incomingAngle": 2.1
+}

@@ -1,0 +1,51 @@
+{
+  "vertices": 320,
+  "triangles": 312,
+  "packages": [
+    "translation-tunnel.json"
+  ],
+  "catalog": [
+    {
+      "id": "translation-tunnel",
+      "kind": "model",
+      "parts": [
+        {
+          "id": "surface",
+          "vertexCount": 320,
+          "triangleCount": 312,
+          "bounds": {
+            "min": [
+              -1.6600000000000001,
+              2.15,
+              -0.45938363861039294
+            ],
+            "max": [
+              -0.09999999999999998,
+              4.15,
+              0.3000000000000001
+            ]
+          }
+        }
+      ],
+      "bounds": {
+        "min": [
+          -1.6600000000000001,
+          2.15,
+          -0.45938363861039294
+        ],
+        "max": [
+          -0.09999999999999998,
+          4.15,
+          0.3000000000000001
+        ]
+      },
+      "hash": "67c1b97f3f03f580ea480cb086e72c38c06aa8dd4721c8a104b36ff7cad357f6"
+    }
+  ],
+  "stats": {
+    "decodedBytes": 121856,
+    "pinnedBytes": 0,
+    "leases": 0,
+    "models": 1
+  }
+}

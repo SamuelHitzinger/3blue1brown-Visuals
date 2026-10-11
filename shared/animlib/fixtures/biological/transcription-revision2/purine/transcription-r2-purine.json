@@ -1,0 +1,86 @@
+{
+  "id": "transcription-r2-purine",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic local units; nominal base reach .675",
+  "provenance": {
+    "source": "Original scaffold in prepare-transcription-revision2-assets.mjs",
+    "sourceHash": "e768a2186994c73fa08b67ab3dae3fb51391ba8097afdb0943eb93d17c16f8f2",
+    "creator": "Original animlib transcription revision 2",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Lobed analytic lobed anatomy / analytic cavity surface",
+      "version": "2",
+      "options": {}
+    },
+    "selection": "purine",
+    "modifications": [
+      "Distinct lobed silhouette and genuine open cavity; all geometry original."
+    ],
+    "fidelity": "Illustrative molecular anatomy, not atomic coordinates or a deposited enzyme; no source pixels."
+  },
+  "parts": [
+    {
+      "id": "sugar",
+      "vertexCount": 1000,
+      "triangleCount": 1920,
+      "positions": {
+        "path": "blobs/440e647d3a7b7d8a590b5e5ac342c445008ac68dd4d3d3dccacb4b762be6aa67.bin",
+        "hash": "440e647d3a7b7d8a590b5e5ac342c445008ac68dd4d3d3dccacb4b762be6aa67",
+        "byteLength": 12000
+      },
+      "indices": {
+        "path": "blobs/9acf9d0fe3e60077787120eae231b1efed21b0624daf42cb0d0460352ca22dd5.bin",
+        "hash": "9acf9d0fe3e60077787120eae231b1efed21b0624daf42cb0d0460352ca22dd5",
+        "byteLength": 23040
+      },
+      "normals": {
+        "path": "blobs/271a723406ddff6bf43f40556c16489d5a9726251bf4472aeaca80a516d4f992.bin",
+        "hash": "271a723406ddff6bf43f40556c16489d5a9726251bf4472aeaca80a516d4f992",
+        "byteLength": 12000
+      }
+    },
+    {
+      "id": "phosphate",
+      "vertexCount": 1000,
+      "triangleCount": 1920,
+      "positions": {
+        "path": "blobs/cbcf42c3b3ab4ab5788a4cc40a399e0c8594176aebf09fa7dac9ad1471dc9623.bin",
+        "hash": "cbcf42c3b3ab4ab5788a4cc40a399e0c8594176aebf09fa7dac9ad1471dc9623",
+        "byteLength": 12000
+      },
+      "indices": {
+        "path": "blobs/9acf9d0fe3e60077787120eae231b1efed21b0624daf42cb0d0460352ca22dd5.bin",
+        "hash": "9acf9d0fe3e60077787120eae231b1efed21b0624daf42cb0d0460352ca22dd5",
+        "byteLength": 23040
+      },
+      "normals": {
+        "path": "blobs/80318355c34c1583a565d16ddf8da3347de37382b05ab7cb66277c1c53925b73.bin",
+        "hash": "80318355c34c1583a565d16ddf8da3347de37382b05ab7cb66277c1c53925b73",
+        "byteLength": 12000
+      }
+    },
+    {
+      "id": "base",
+      "vertexCount": 1000,
+      "triangleCount": 1920,
+      "positions": {
+        "path": "blobs/6d5bf79ec194ede0b79e473f5dd755d131ca9a6e4d5ec89835e48fe83dfd990d.bin",
+        "hash": "6d5bf79ec194ede0b79e473f5dd755d131ca9a6e4d5ec89835e48fe83dfd990d",
+        "byteLength": 12000
+      },
+      "indices": {
+        "path": "blobs/9acf9d0fe3e60077787120eae231b1efed21b0624daf42cb0d0460352ca22dd5.bin",
+        "hash": "9acf9d0fe3e60077787120eae231b1efed21b0624daf42cb0d0460352ca22dd5",
+        "byteLength": 23040
+      },
+      "normals": {
+        "path": "blobs/76c33ff70652f98f2463f600f4fb186e0298eb88fb1bc31083669611eb4613b9.bin",
+        "hash": "76c33ff70652f98f2463f600f4fb186e0298eb88fb1bc31083669611eb4613b9",
+        "byteLength": 12000
+      }
+    }
+  ],
+  "hash": "ed9220f0f938bbca2e63269545e384863f4832a559ca307c285e3d0072b9aef0"
+}

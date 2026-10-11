@@ -1,0 +1,94 @@
+{
+  "id": "rna-r3-pore-lobes",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original analytic membrane, pore and baked illumination recipe in prepare-rna-processing-revision3-assets.mjs",
+    "sourceHash": "e04434f19bf02053c1e0fbe636a3e666629ae54f7d0d73e29b14d69e357c07dc",
+    "creator": "animlib original biological assets",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original illustrative geometry",
+    "converter": {
+      "name": "prepare-rna-processing-revision3-assets",
+      "version": "1",
+      "options": {}
+    },
+    "modifications": [
+      "Original procedural color and soft contact shading; no source pixels or recovered geometry"
+    ],
+    "fidelity": "Illustrative baked contact/lumen illumination, not a physical shadow solver or deposited pore structure"
+  },
+  "parts": [
+    {
+      "id": "body",
+      "vertexCount": 1025,
+      "triangleCount": 1840,
+      "positions": {
+        "path": "blobs/da595c6fb4981b631e9f4d02d46aa14654128b40af96f1710bc50544f51b9460.bin",
+        "hash": "da595c6fb4981b631e9f4d02d46aa14654128b40af96f1710bc50544f51b9460",
+        "byteLength": 12300
+      },
+      "indices": {
+        "path": "blobs/cee073527bee112672740a87b884260237cccb2a0bef6a95b2be4a3c95dea90e.bin",
+        "hash": "cee073527bee112672740a87b884260237cccb2a0bef6a95b2be4a3c95dea90e",
+        "byteLength": 22080
+      },
+      "normals": {
+        "path": "blobs/181bf6d0599798af648a869ce086c5a4e91362a7d286d0c565ef9525c88334a9.bin",
+        "hash": "181bf6d0599798af648a869ce086c5a4e91362a7d286d0c565ef9525c88334a9",
+        "byteLength": 12300
+      },
+      "uv0": {
+        "path": "blobs/e800a3895264a686e1dbf13fe926bb1bffe3f85ad24bb764254a13b2f53ce8f1.bin",
+        "hash": "e800a3895264a686e1dbf13fe926bb1bffe3f85ad24bb764254a13b2f53ce8f1",
+        "byteLength": 8200
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-pore-contact-colors",
+          "hash": "3b5dc6836476c38a921d7de66d3dd4518caf7252d3d74c4cb73194a39c93d41e"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "context",
+      "vertexCount": 273,
+      "triangleCount": 440,
+      "positions": {
+        "path": "blobs/2c48c8287596c1886b6f5c58d5fa330ca914582e8db2ab58152e4f1ba584ff8d.bin",
+        "hash": "2c48c8287596c1886b6f5c58d5fa330ca914582e8db2ab58152e4f1ba584ff8d",
+        "byteLength": 3276
+      },
+      "indices": {
+        "path": "blobs/26b4e8e910c647ed4a81f6479648161cb5dcc591d0355895a1cee3e7c16a4970.bin",
+        "hash": "26b4e8e910c647ed4a81f6479648161cb5dcc591d0355895a1cee3e7c16a4970",
+        "byteLength": 5280
+      },
+      "normals": {
+        "path": "blobs/2dd047c711f2517f1db9283e1ad706ad8e79be8ced55acc635ecf2fb31ec090e.bin",
+        "hash": "2dd047c711f2517f1db9283e1ad706ad8e79be8ced55acc635ecf2fb31ec090e",
+        "byteLength": 3276
+      },
+      "uv0": {
+        "path": "blobs/878c30f3b1a14d0ccd6b34236a600ad74850be2d0ad445a4ea828c2fcd97aea2.bin",
+        "hash": "878c30f3b1a14d0ccd6b34236a600ad74850be2d0ad445a4ea828c2fcd97aea2",
+        "byteLength": 2184
+      },
+      "imageTexture": {
+        "image": {
+          "id": "rna-r3-pore-contact-colors",
+          "hash": "3b5dc6836476c38a921d7de66d3dd4518caf7252d3d74c4cb73194a39c93d41e"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    }
+  ],
+  "hash": "ead4d4e5b7dd6947bc885ab09a9e9c54c2a63bd01c6bfa18bcb78e2a7195687e"
+}

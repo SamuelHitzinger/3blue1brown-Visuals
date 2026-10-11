@@ -1,0 +1,61 @@
+{
+  "id": "peptide-unit-bead",
+  "kind": "model",
+  "version": 1,
+  "units": "unit radius",
+  "provenance": {
+    "source": "Original idealized peptide endpoint derived from pinned wwPDB CCD components",
+    "sourceHash": "67e2381527f0457e413241f7352895cd98bfbe40d35c64249216a33d74d8a64d",
+    "creator": "animlib original explanatory assets",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "prepare-peptide-surface",
+      "version": "1",
+      "options": {
+        "sigma": 1.2,
+        "isoLevel": 1.05,
+        "resolution": 31,
+        "smoothingIterations": 6,
+        "loopSubdivisionSteps": 1,
+        "colors": [
+          "#557BFF",
+          "#46BCE9",
+          "#45D8C2",
+          "#78D365",
+          "#F1E957",
+          "#FFA44B",
+          "#F7756B"
+        ]
+      }
+    },
+    "selection": "One original subdivided octahedral unit sphere",
+    "modifications": [
+      "Three shared-edge spherical subdivisions"
+    ],
+    "fidelity": "Reusable display sphere, not an atomistic surface"
+  },
+  "parts": [
+    {
+      "id": "sphere",
+      "vertexCount": 258,
+      "triangleCount": 512,
+      "positions": {
+        "path": "blobs/60ff3cd3dee7faa3d666d49a67778768314052f07a896de44b6eb6723ba9fb2a.bin",
+        "hash": "60ff3cd3dee7faa3d666d49a67778768314052f07a896de44b6eb6723ba9fb2a",
+        "byteLength": 3096
+      },
+      "indices": {
+        "path": "blobs/c0e0e2e7804c89b4219969d79455d145c20fd45640c15a0227c3d11ac7d3e76d.bin",
+        "hash": "c0e0e2e7804c89b4219969d79455d145c20fd45640c15a0227c3d11ac7d3e76d",
+        "byteLength": 6144
+      },
+      "normals": {
+        "path": "blobs/60ff3cd3dee7faa3d666d49a67778768314052f07a896de44b6eb6723ba9fb2a.bin",
+        "hash": "60ff3cd3dee7faa3d666d49a67778768314052f07a896de44b6eb6723ba9fb2a",
+        "byteLength": 3096
+      }
+    }
+  ],
+  "hash": "8a1697d535e6d6f949d849fa7b9399c8271090d978755a0c14fb619e2188dc98"
+}

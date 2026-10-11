@@ -2,6 +2,9 @@
 
 For the purpose and core requirements, see the [README](../README.md).
 
+For domain coverage, current visual direction, reusable fixture provenance and
+current independent proof decisions, see the [expansion index](expansion-index.md).
+
 For deposited coordinate import and `s.molecule` batched display beads, see
 [Molecular coordinates](molecules.md). Parsing and smooth density-envelope
 generation are host-side; scene source uses compact coordinates or finished meshes.
@@ -1689,6 +1692,7 @@ These are public `SceneContext` methods, available in the sandbox without import
 | `s.graph(id,data,options)` | Authored positions, connected edges, labels/weights/cost handles and state actions; IDs remain stable |
 | `s.dijkstra(data,source)` | Immutable distances, predecessors and pop/relax/stale/frontier events; nonnegative weights, at most 256 nodes / 2,048 edges; no self-loops or parallel/opposite overlapping edges |
 | `s.collection(id,items,options)` | Identity-indexed items and slots; optional custom `handle` content and vertical layout; `swap` and complete `reorder` schedules preserve identity through separated lanes |
+| `s.compactQueue(id,items,options)` | Fixed record pool and visible ordered subsets; compact insertion, extraction and slot shifts preserve survivor order. Defaults vertical; 256 records/transitions; [API guide](compact-queue.md) |
 | `s.validateGroup(children,newIds?)` | Read-only builder preflight: dense distinct unparented handles from the current scene/view; optional planned element IDs check syntax, duplicates, existing IDs and total scene budget. Reserves nothing. Used by collections before wrapping any custom content. |
 | `s.sampledState({times,values,projection})` | Copied aligned samples; `at(time)` interpolates an explicit 3×N projection; fixed-topology `prefix` paths never bridge null gaps |
 | `s.molecularBackbone(id,props)` | Batched explicit segments/bonds in sticks, beads or backbone form; no bond inference |

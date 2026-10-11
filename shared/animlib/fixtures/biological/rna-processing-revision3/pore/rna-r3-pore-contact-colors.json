@@ -1,0 +1,35 @@
+{
+  "id": "rna-r3-pore-contact-colors",
+  "kind": "image",
+  "version": 1,
+  "width": 256,
+  "height": 1,
+  "storage": "rgba8",
+  "encoding": "srgb",
+  "origin": "top-left",
+  "alpha": "straight",
+  "colorPolicy": "source",
+  "provenance": {
+    "source": "Original analytic membrane, pore and baked illumination recipe in prepare-rna-processing-revision3-assets.mjs",
+    "sourceHash": "e04434f19bf02053c1e0fbe636a3e666629ae54f7d0d73e29b14d69e357c07dc",
+    "creator": "animlib original biological assets",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original illustrative geometry",
+    "converter": {
+      "name": "prepare-rna-processing-revision3-assets",
+      "version": "1",
+      "options": {}
+    },
+    "modifications": [
+      "Original procedural color and soft contact shading; no source pixels or recovered geometry"
+    ],
+    "fidelity": "Illustrative baked contact/lumen illumination, not a physical shadow solver or deposited pore structure"
+  },
+  "pixels": {
+    "path": "blobs/b5d2b2230780cc0d648f441eda47da40586cc3d35708dc83550204bf92a7b508.bin",
+    "hash": "b5d2b2230780cc0d648f441eda47da40586cc3d35708dc83550204bf92a7b508",
+    "byteLength": 1024
+  },
+  "hash": "9d7227fa4fe646751ed8b3bb5ebfcbe8d8ea31b2dd636abf8dff21e61f74c40c"
+}

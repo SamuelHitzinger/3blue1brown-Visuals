@@ -1,0 +1,246 @@
+{
+  "id": "peptide-polished-surface",
+  "kind": "model",
+  "version": 1,
+  "units": "angstrom",
+  "provenance": {
+    "source": "Original idealized peptide endpoint derived from pinned wwPDB CCD components",
+    "sourceHash": "67e2381527f0457e413241f7352895cd98bfbe40d35c64249216a33d74d8a64d",
+    "creator": "animlib original explanatory assets",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "prepare-peptide-surface",
+      "version": "1",
+      "options": {
+        "sigma": 1.2,
+        "isoLevel": 1.05,
+        "resolution": 31,
+        "smoothingIterations": 6,
+        "loopSubdivisionSteps": 1,
+        "colors": [
+          "#557BFF",
+          "#46BCE9",
+          "#45D8C2",
+          "#78D365",
+          "#F1E957",
+          "#FFA44B",
+          "#F7756B"
+        ]
+      }
+    },
+    "selection": "All 414 heavy atoms of unchanged original 72-residue compact endpoint",
+    "modifications": [
+      "Taubin-smoothed schematic Gaussian envelope, then one shared-edge Loop subdivision",
+      "Per-vertex nearest-residue sequence coordinate sampled through an original continuous color texture"
+    ],
+    "fidelity": "Display envelope of an illustrative idealized peptide; not a physical fold or solvent-excluded surface"
+  },
+  "parts": [
+    {
+      "id": "surface-0",
+      "vertexCount": 6230,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/fdba59ca0fc60b73eb54c53e282401fc86ceb939067324dee93b83849325ae59.bin",
+        "hash": "fdba59ca0fc60b73eb54c53e282401fc86ceb939067324dee93b83849325ae59",
+        "byteLength": 74760
+      },
+      "indices": {
+        "path": "blobs/b43ccf7903e8501ea26f71b5268d52088b3564fccd1ebec170ecae1d069dd2bc.bin",
+        "hash": "b43ccf7903e8501ea26f71b5268d52088b3564fccd1ebec170ecae1d069dd2bc",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/3340d60022af3244a9f9f965ddaf76ee3dea624766bd7a346dc60792786d8f42.bin",
+        "hash": "3340d60022af3244a9f9f965ddaf76ee3dea624766bd7a346dc60792786d8f42",
+        "byteLength": 74760
+      },
+      "uv0": {
+        "path": "blobs/4cae413fefb826b0dbc2e4934ee2d3057f34ba67e5c375d7427e178a48d93130.bin",
+        "hash": "4cae413fefb826b0dbc2e4934ee2d3057f34ba67e5c375d7427e178a48d93130",
+        "byteLength": 49840
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-sequence-colors",
+          "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-1",
+      "vertexCount": 6478,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/a1a9595c10889ac23d9793f3692daab551770dbc2ede15dd0422e3bf92b9436d.bin",
+        "hash": "a1a9595c10889ac23d9793f3692daab551770dbc2ede15dd0422e3bf92b9436d",
+        "byteLength": 77736
+      },
+      "indices": {
+        "path": "blobs/b4782da3e366ebbf39992e118059ee72d8d4ee20a46a791a121c19c8102446f6.bin",
+        "hash": "b4782da3e366ebbf39992e118059ee72d8d4ee20a46a791a121c19c8102446f6",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/a5d4030c1038497a9f5a233df4854812a4af00c74c495981b916cd57c73c6dbb.bin",
+        "hash": "a5d4030c1038497a9f5a233df4854812a4af00c74c495981b916cd57c73c6dbb",
+        "byteLength": 77736
+      },
+      "uv0": {
+        "path": "blobs/48485b42012c7a90510b3d8e56a79950df400554b3837eca5448e2a1905c1d47.bin",
+        "hash": "48485b42012c7a90510b3d8e56a79950df400554b3837eca5448e2a1905c1d47",
+        "byteLength": 51824
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-sequence-colors",
+          "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-2",
+      "vertexCount": 6442,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/9b43a81043d0cb68b4ed7ea4baa40d3e385edea55ed6e179a74fc55a3e0848e5.bin",
+        "hash": "9b43a81043d0cb68b4ed7ea4baa40d3e385edea55ed6e179a74fc55a3e0848e5",
+        "byteLength": 77304
+      },
+      "indices": {
+        "path": "blobs/1b0f0745ae81d9548255979e59dcd28077e19c7d8b1d4ba3487b64871394eb5c.bin",
+        "hash": "1b0f0745ae81d9548255979e59dcd28077e19c7d8b1d4ba3487b64871394eb5c",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/bdbc6aece8256190eb40255679c78853ff936d1f5cdc247e707dd60ef9f86b6e.bin",
+        "hash": "bdbc6aece8256190eb40255679c78853ff936d1f5cdc247e707dd60ef9f86b6e",
+        "byteLength": 77304
+      },
+      "uv0": {
+        "path": "blobs/4a43459c5b37893708c665a3648af5db728138967370e15f7fa7f738da511acf.bin",
+        "hash": "4a43459c5b37893708c665a3648af5db728138967370e15f7fa7f738da511acf",
+        "byteLength": 51536
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-sequence-colors",
+          "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-3",
+      "vertexCount": 6402,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/5c5e7200a93e0a64dcbcdbc761d58f200af52acbfbd9c3c90aeb9ab8016cbabf.bin",
+        "hash": "5c5e7200a93e0a64dcbcdbc761d58f200af52acbfbd9c3c90aeb9ab8016cbabf",
+        "byteLength": 76824
+      },
+      "indices": {
+        "path": "blobs/92a8611108c7859b573ef9864445e51d7747156fbd455437d1a1a2a274d67346.bin",
+        "hash": "92a8611108c7859b573ef9864445e51d7747156fbd455437d1a1a2a274d67346",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/1be44d292cde51e71d2f7adcef16d1dd5ec34820bbe2cc2b6b778afe0868ec8f.bin",
+        "hash": "1be44d292cde51e71d2f7adcef16d1dd5ec34820bbe2cc2b6b778afe0868ec8f",
+        "byteLength": 76824
+      },
+      "uv0": {
+        "path": "blobs/2e312335529273da6370dbc3ceea6a3b935e5163a6f7bc2873947a740d1989ee.bin",
+        "hash": "2e312335529273da6370dbc3ceea6a3b935e5163a6f7bc2873947a740d1989ee",
+        "byteLength": 51216
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-sequence-colors",
+          "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-4",
+      "vertexCount": 6315,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/04fc33b4470a36d09a4880592e1a3ad1224fae45d24eba77c553993a75e64eba.bin",
+        "hash": "04fc33b4470a36d09a4880592e1a3ad1224fae45d24eba77c553993a75e64eba",
+        "byteLength": 75780
+      },
+      "indices": {
+        "path": "blobs/e539095d4f4bfb7d3dd4d2000c186c5b3bc3f06f4d58257ae3ee8b5edc2cda47.bin",
+        "hash": "e539095d4f4bfb7d3dd4d2000c186c5b3bc3f06f4d58257ae3ee8b5edc2cda47",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/8597bebf2a047e588961c93a177f52505fe87b581f611113e5c7dba170acce88.bin",
+        "hash": "8597bebf2a047e588961c93a177f52505fe87b581f611113e5c7dba170acce88",
+        "byteLength": 75780
+      },
+      "uv0": {
+        "path": "blobs/f378ee63ac79a35d7a483db977a5de1ace6b9e509792c50f1540c10b347517d7.bin",
+        "hash": "f378ee63ac79a35d7a483db977a5de1ace6b9e509792c50f1540c10b347517d7",
+        "byteLength": 50520
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-sequence-colors",
+          "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-5",
+      "vertexCount": 2237,
+      "triangleCount": 4272,
+      "positions": {
+        "path": "blobs/5402d2357b6ba12521eab354e01e86a282f9368e0980ef1664d2d54575ce38cb.bin",
+        "hash": "5402d2357b6ba12521eab354e01e86a282f9368e0980ef1664d2d54575ce38cb",
+        "byteLength": 26844
+      },
+      "indices": {
+        "path": "blobs/08da11d22b2689741fab7f5956dd014c66b9a6228ec0b9345ee2a605299868a9.bin",
+        "hash": "08da11d22b2689741fab7f5956dd014c66b9a6228ec0b9345ee2a605299868a9",
+        "byteLength": 51264
+      },
+      "normals": {
+        "path": "blobs/0233908597cccbd44b2d5730e8577985a42ef406bc673e290783e426ce757c46.bin",
+        "hash": "0233908597cccbd44b2d5730e8577985a42ef406bc673e290783e426ce757c46",
+        "byteLength": 26844
+      },
+      "uv0": {
+        "path": "blobs/d95821a1be884ed30aef458d2d583a4db01c3c72dc062a558741e2b98db2d661.bin",
+        "hash": "d95821a1be884ed30aef458d2d583a4db01c3c72dc062a558741e2b98db2d661",
+        "byteLength": 17896
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-sequence-colors",
+          "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    }
+  ],
+  "hash": "890075f38be40ac659a1143dd5d26eb00fbbeb7ec57f97d18dc33d161ab061f9"
+}

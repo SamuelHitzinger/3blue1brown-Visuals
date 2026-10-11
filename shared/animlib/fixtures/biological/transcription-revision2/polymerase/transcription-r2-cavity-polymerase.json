@@ -1,0 +1,46 @@
+{
+  "id": "transcription-r2-cavity-polymerase",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original scaffold in prepare-transcription-revision2-assets.mjs",
+    "sourceHash": "c9226ffd76ea0deac8202a2f6f2c3b4e385a2a86e32980db6e88be691787e430",
+    "creator": "Original animlib transcription revision 2",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Lobed analytic lobed anatomy / analytic cavity surface",
+      "version": "2",
+      "options": {}
+    },
+    "selection": "Original connected lobed open shell",
+    "modifications": [
+      "Distinct lobed silhouette and genuine open cavity; all geometry original."
+    ],
+    "fidelity": "Illustrative molecular anatomy, not atomic coordinates or a deposited enzyme; no source pixels."
+  },
+  "parts": [
+    {
+      "id": "body",
+      "vertexCount": 2304,
+      "triangleCount": 4608,
+      "positions": {
+        "path": "blobs/f58e8b03b02a470f3a4ebe55b36d2fad59daf9a5e7a84f630f49acec1dca3aca.bin",
+        "hash": "f58e8b03b02a470f3a4ebe55b36d2fad59daf9a5e7a84f630f49acec1dca3aca",
+        "byteLength": 27648
+      },
+      "indices": {
+        "path": "blobs/0f04c538e302abb23301535cdfc67b840e5bd292ab72652edf505718def7ec6d.bin",
+        "hash": "0f04c538e302abb23301535cdfc67b840e5bd292ab72652edf505718def7ec6d",
+        "byteLength": 55296
+      },
+      "normals": {
+        "path": "blobs/78c5c58d4b523f7fd0908b8371895da7f1ab3d2160ad8a6fcfa5e7a8b7444553.bin",
+        "hash": "78c5c58d4b523f7fd0908b8371895da7f1ab3d2160ad8a6fcfa5e7a8b7444553",
+        "byteLength": 27648
+      }
+    }
+  ],
+  "hash": "a9cd8dc59894d76e890f354d28c57064edab89bb67619b68b8349d4c8192b51f"
+}

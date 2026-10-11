@@ -1,0 +1,526 @@
+{
+  "id": "schematic-cellular-membrane-r2",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original nine-tile broad membrane in prepare-rna-processing-revision2-assets.mjs",
+    "sourceHash": "908e0af4a2cf3d2479da64805362839ea8bfbb27586bcdf51abc824364522fb8",
+    "creator": "Original animlib RNA processing revision 2",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original schematic geometry",
+    "converter": {
+      "name": "Original analytic and Gaussian geometry",
+      "version": "2",
+      "options": {}
+    },
+    "modifications": [
+      "Original surfaces and cavities; no source pixels or recovered geometry."
+    ],
+    "fidelity": "Illustrative cellular geometry; no deposited enzyme or exact biological dimensions claimed."
+  },
+  "parts": [
+    {
+      "id": "tile--1--1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/16f2c229ca7ef8885d43667de83739010bda347d309004241244bb9380d84015.bin",
+        "hash": "16f2c229ca7ef8885d43667de83739010bda347d309004241244bb9380d84015",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/6d7b877eac29075171e34c0049c7e9112622c0860066498431c88938c619c480.bin",
+        "hash": "6d7b877eac29075171e34c0049c7e9112622c0860066498431c88938c619c480",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-0--1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/593477ca8c02ad8e587a53991f246377495150bc5b0ef8b3ca10b45a4dd2ef62.bin",
+        "hash": "593477ca8c02ad8e587a53991f246377495150bc5b0ef8b3ca10b45a4dd2ef62",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/a61b51c743713177bbe8c08feaa1cc73e82a6b02d2419886ebcaff8d88b5125b.bin",
+        "hash": "a61b51c743713177bbe8c08feaa1cc73e82a6b02d2419886ebcaff8d88b5125b",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-1--1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/d88612f66e568b2eab0a54f7a4b9b5f22b6b61b2f7f1f6884f88da22d57bb951.bin",
+        "hash": "d88612f66e568b2eab0a54f7a4b9b5f22b6b61b2f7f1f6884f88da22d57bb951",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/51d859cddd4873360d5de597d0046913282c629f4accd056269c6050b8e7b266.bin",
+        "hash": "51d859cddd4873360d5de597d0046913282c629f4accd056269c6050b8e7b266",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-2--1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/4f46d6eaa3d4fb2df2bf75ec5b4eb2605568b5662a25093cd9193ab1f3f3d059.bin",
+        "hash": "4f46d6eaa3d4fb2df2bf75ec5b4eb2605568b5662a25093cd9193ab1f3f3d059",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/9c080d916ff1035fa6847dda474240475b5240d1f0a6c688e346c649af642770.bin",
+        "hash": "9c080d916ff1035fa6847dda474240475b5240d1f0a6c688e346c649af642770",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-3--1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/44018d564bec32ff1ddf9389795b1838ea523094626a8ac48e122c1923ce2cf6.bin",
+        "hash": "44018d564bec32ff1ddf9389795b1838ea523094626a8ac48e122c1923ce2cf6",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/74494c7890359d28baba00a0fdb6092fc6be52af42b7bb726efa657b2d900ae1.bin",
+        "hash": "74494c7890359d28baba00a0fdb6092fc6be52af42b7bb726efa657b2d900ae1",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile--1-0",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/62d35d8cec2d35c81c3fc30260c35a983f54fc630e8363f32d17435d454dd0f1.bin",
+        "hash": "62d35d8cec2d35c81c3fc30260c35a983f54fc630e8363f32d17435d454dd0f1",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/581c41e534486ad5df7dc1e5b103e057c1e715bf9b345b4a461d9e09e9325229.bin",
+        "hash": "581c41e534486ad5df7dc1e5b103e057c1e715bf9b345b4a461d9e09e9325229",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-0-0",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/e109f9aa050957022e51a061207e26955a27754084237bcea2308b2cbc15ba3a.bin",
+        "hash": "e109f9aa050957022e51a061207e26955a27754084237bcea2308b2cbc15ba3a",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/55295ca2c8870dea3b885eceb2e6259d6a68109fbe3fecfd37cd3111a5ad2ee9.bin",
+        "hash": "55295ca2c8870dea3b885eceb2e6259d6a68109fbe3fecfd37cd3111a5ad2ee9",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-1-0",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/2e4f785158dc36be72ab07f07b9327e705af326cece2a723f48dd75381b75db5.bin",
+        "hash": "2e4f785158dc36be72ab07f07b9327e705af326cece2a723f48dd75381b75db5",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/98d6691629c2ca519fb0025db382d3cc103acedc770194c36888825575aa408a.bin",
+        "hash": "98d6691629c2ca519fb0025db382d3cc103acedc770194c36888825575aa408a",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-2-0",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/4877a9971e79e0a87436a7e8c8ca9618f24c2864bd53f7459208e44495bda0f1.bin",
+        "hash": "4877a9971e79e0a87436a7e8c8ca9618f24c2864bd53f7459208e44495bda0f1",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/d021f3ed7174518994e7007dd025ed7caf561b28b10fdea566c39522a668dc0d.bin",
+        "hash": "d021f3ed7174518994e7007dd025ed7caf561b28b10fdea566c39522a668dc0d",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-3-0",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/0c2fe66cf8bfbcbf1d7295225a702567103ca1581d8632fa2564e1b6a802de12.bin",
+        "hash": "0c2fe66cf8bfbcbf1d7295225a702567103ca1581d8632fa2564e1b6a802de12",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/e1e4ec568403e02845d32e7ca5bd1eb504c4b7dfc4e7eef3088e7445625021e5.bin",
+        "hash": "e1e4ec568403e02845d32e7ca5bd1eb504c4b7dfc4e7eef3088e7445625021e5",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile--1-1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/d34aa7c3f2eeb0f5add9a9d6f3a95d833e33fff7c315eb7ec5bee6147a796ae7.bin",
+        "hash": "d34aa7c3f2eeb0f5add9a9d6f3a95d833e33fff7c315eb7ec5bee6147a796ae7",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/19f42cea86a5f48556c9a99a7d9f26b93ba1012fd4567b2553536d01e1c546da.bin",
+        "hash": "19f42cea86a5f48556c9a99a7d9f26b93ba1012fd4567b2553536d01e1c546da",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-0-1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/402c3cdd45b81d707e013badbe37dfef07b3bf5fc66afbb9975f1a10488e872e.bin",
+        "hash": "402c3cdd45b81d707e013badbe37dfef07b3bf5fc66afbb9975f1a10488e872e",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/71f747c744e99075981d47895c0991ad68011af5894bc1ef84c44cc8e1dae2f6.bin",
+        "hash": "71f747c744e99075981d47895c0991ad68011af5894bc1ef84c44cc8e1dae2f6",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-1-1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/767541aebb17d0f8016a4fb98ccd6a61a9109800e81665dae1244683384e6e5e.bin",
+        "hash": "767541aebb17d0f8016a4fb98ccd6a61a9109800e81665dae1244683384e6e5e",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/df6cd1911c90ffbc147daaa3dfd0c1e032964ee741f7a6ab28fe167d67582a0e.bin",
+        "hash": "df6cd1911c90ffbc147daaa3dfd0c1e032964ee741f7a6ab28fe167d67582a0e",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-2-1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/001572ced2ae18505331d0192ec23a57be835844dd0f3fe4c1d449497cc2d158.bin",
+        "hash": "001572ced2ae18505331d0192ec23a57be835844dd0f3fe4c1d449497cc2d158",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/2f747104bc34a2b1436ca0b36800177cf1a9481a0a8e77b67912ab53060db5da.bin",
+        "hash": "2f747104bc34a2b1436ca0b36800177cf1a9481a0a8e77b67912ab53060db5da",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-3-1",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/d0cdd7ada5e861c87974a748aedc5f0e7d91463174949c1808137a5a220e0b16.bin",
+        "hash": "d0cdd7ada5e861c87974a748aedc5f0e7d91463174949c1808137a5a220e0b16",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/bee35f138966d879f998aa51636ab314816eddf6e2a89a421ab22bdf729b6c49.bin",
+        "hash": "bee35f138966d879f998aa51636ab314816eddf6e2a89a421ab22bdf729b6c49",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile--1-2",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/a719964ce46dd93f8372b5b1591614eb892c82d39aebd20eb6b6fec732f1f08b.bin",
+        "hash": "a719964ce46dd93f8372b5b1591614eb892c82d39aebd20eb6b6fec732f1f08b",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/e415afbb9f86cf6d53e6687494077f54102b07b67cfb1c06ae016aa8608dc134.bin",
+        "hash": "e415afbb9f86cf6d53e6687494077f54102b07b67cfb1c06ae016aa8608dc134",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-0-2",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/f28b28b8f8035d235c24c3de30cdea7298f528764aeeeae9b6c2f1179d2c54fe.bin",
+        "hash": "f28b28b8f8035d235c24c3de30cdea7298f528764aeeeae9b6c2f1179d2c54fe",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/ea10c9a167d6fc113ca550f06d59f387e3141314559ce2bf8b2039028a84a600.bin",
+        "hash": "ea10c9a167d6fc113ca550f06d59f387e3141314559ce2bf8b2039028a84a600",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-1-2",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/e07f8e081509d1e8be99b44e4de71397c4a22bba9dbe11403a4616c41a3a206c.bin",
+        "hash": "e07f8e081509d1e8be99b44e4de71397c4a22bba9dbe11403a4616c41a3a206c",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/fac8607be87587bebc29603c3f0d76bf2f81b4fda59c8a4a99d0b6c652098872.bin",
+        "hash": "fac8607be87587bebc29603c3f0d76bf2f81b4fda59c8a4a99d0b6c652098872",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-2-2",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/a7bde0592cf77cd20017c745730f029d1dacfda4a101869e84a8842324030656.bin",
+        "hash": "a7bde0592cf77cd20017c745730f029d1dacfda4a101869e84a8842324030656",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/0c6f888257d94c759a7d477e1a018859309e04c928e4af58746bf9e0ece71dc3.bin",
+        "hash": "0c6f888257d94c759a7d477e1a018859309e04c928e4af58746bf9e0ece71dc3",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-3-2",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/f648baee1da9cf5ef9ed2fab70b4db34d1c89f0a728560142d0f743654824a32.bin",
+        "hash": "f648baee1da9cf5ef9ed2fab70b4db34d1c89f0a728560142d0f743654824a32",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/7af615689833ee0b51a5ecfad0dce9d33a632764d4a480f048b2bc07c1f7a401.bin",
+        "hash": "7af615689833ee0b51a5ecfad0dce9d33a632764d4a480f048b2bc07c1f7a401",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile--1-3",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/fd9fc51f99cf1775d031a23391e2ba9c840d719853bb1158bd048ce81f262a47.bin",
+        "hash": "fd9fc51f99cf1775d031a23391e2ba9c840d719853bb1158bd048ce81f262a47",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/6896dcf2080b4b7f7b0e14c7647d481cb31473469959c5be0eadfbab1d039862.bin",
+        "hash": "6896dcf2080b4b7f7b0e14c7647d481cb31473469959c5be0eadfbab1d039862",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-0-3",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/454936d5a789a4bc31bf57db9a5dbd9b4ec46c8e88039f31c4978800308a9ec6.bin",
+        "hash": "454936d5a789a4bc31bf57db9a5dbd9b4ec46c8e88039f31c4978800308a9ec6",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/f3643590223091fc91c66abc15e34bdae37d08313cc9ae375046593aa65af869.bin",
+        "hash": "f3643590223091fc91c66abc15e34bdae37d08313cc9ae375046593aa65af869",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-1-3",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/99215677ded6053fac10cf9569c4f039033912427369003eec1e6d37cb6de68a.bin",
+        "hash": "99215677ded6053fac10cf9569c4f039033912427369003eec1e6d37cb6de68a",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/301dfffdc37d5dd3aa60b41ddaf33a7c5c3d68c90ba7cc53c3bfd3a62ab8af8f.bin",
+        "hash": "301dfffdc37d5dd3aa60b41ddaf33a7c5c3d68c90ba7cc53c3bfd3a62ab8af8f",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-2-3",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/e1935d264efb8015f7f89e0f6b8408e93863b6d318e55db63817d0ab2028a81e.bin",
+        "hash": "e1935d264efb8015f7f89e0f6b8408e93863b6d318e55db63817d0ab2028a81e",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/19349ac27d97acdb1f22650305f1c745803065b98c477166c6b6d25b7d5299d2.bin",
+        "hash": "19349ac27d97acdb1f22650305f1c745803065b98c477166c6b6d25b7d5299d2",
+        "byteLength": 15360
+      }
+    },
+    {
+      "id": "tile-3-3",
+      "vertexCount": 1280,
+      "triangleCount": 2176,
+      "positions": {
+        "path": "blobs/7a0fa79806c2d89ed50d173e8a334ca1a131508eb7997a448360bb445e0532a4.bin",
+        "hash": "7a0fa79806c2d89ed50d173e8a334ca1a131508eb7997a448360bb445e0532a4",
+        "byteLength": 15360
+      },
+      "indices": {
+        "path": "blobs/5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a.bin",
+        "hash": "5f299c0cbca5b2331684c48cd14c66fb40470dbb9d8aa2aed83637ffae29ef7a",
+        "byteLength": 26112
+      },
+      "normals": {
+        "path": "blobs/27de1f0e31c086051a0ebf2c5ccf5a42e171fb1047724689f68ec1e2b39e8586.bin",
+        "hash": "27de1f0e31c086051a0ebf2c5ccf5a42e171fb1047724689f68ec1e2b39e8586",
+        "byteLength": 15360
+      }
+    }
+  ],
+  "hash": "c6f092522baa6f61d392539c31ed13787a351894a00c6334992804c35f603c14"
+}

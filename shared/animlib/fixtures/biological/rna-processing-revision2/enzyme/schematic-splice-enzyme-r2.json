@@ -1,0 +1,46 @@
+{
+  "id": "schematic-splice-enzyme-r2",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original asymmetric horseshoe scaffold in prepare-rna-processing-revision2-assets.mjs",
+    "sourceHash": "745f2a2b38a1df7905e7c4e95eb03046789a2ab2a18acbfa57b4323c7990872a",
+    "creator": "Original animlib RNA processing revision 2",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original schematic geometry",
+    "converter": {
+      "name": "Original analytic and Gaussian geometry",
+      "version": "2",
+      "options": {}
+    },
+    "modifications": [
+      "Original surfaces and cavities; no source pixels or recovered geometry."
+    ],
+    "fidelity": "Illustrative cellular geometry; no deposited enzyme or exact biological dimensions claimed."
+  },
+  "parts": [
+    {
+      "id": "body",
+      "vertexCount": 6362,
+      "triangleCount": 12720,
+      "positions": {
+        "path": "blobs/2dde8e1d3625ad2b3c62d5205d1797d48a36bad28f73b5860a351ed445dd62e8.bin",
+        "hash": "2dde8e1d3625ad2b3c62d5205d1797d48a36bad28f73b5860a351ed445dd62e8",
+        "byteLength": 76344
+      },
+      "indices": {
+        "path": "blobs/e55eefd4c872d399aeba0f464c810222ad333c2c31929fcd0d5b6c091d352efb.bin",
+        "hash": "e55eefd4c872d399aeba0f464c810222ad333c2c31929fcd0d5b6c091d352efb",
+        "byteLength": 152640
+      },
+      "normals": {
+        "path": "blobs/1494f68cd4b99e70f693cd216ca533a835c32dfdcb422d64c5f61875fb4dc43d.bin",
+        "hash": "1494f68cd4b99e70f693cd216ca533a835c32dfdcb422d64c5f61875fb4dc43d",
+        "byteLength": 76344
+      }
+    }
+  ],
+  "hash": "bfad2b229e8cfda5b2c5021ae89bf14cacea67d2a2b7bd7da6f311fd8edb5bd0"
+}

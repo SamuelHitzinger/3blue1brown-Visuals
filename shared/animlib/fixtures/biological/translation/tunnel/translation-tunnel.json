@@ -1,0 +1,48 @@
+{
+  "id": "translation-tunnel",
+  "kind": "model",
+  "version": 1,
+  "units": "arbitrary schematic units",
+  "provenance": {
+    "source": "Original analytic annular conduit in prepare-translation-assets.mjs",
+    "sourceHash": "3ab9b2e5c79441e4eff715ad1c40b8021f3dc94dfe83e7a01d218f04a6ba660a",
+    "creator": "Original animlib translation demonstration",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Original annular mesh",
+      "version": "1",
+      "options": {
+        "segments": 40
+      }
+    },
+    "selection": "exit conduit",
+    "modifications": [
+      "Posterior half: inner and outer walls plus open half-annular rims; anterior half removed for cutaway."
+    ],
+    "fidelity": "Schematic conduit; no deposited ribosome geometry."
+  },
+  "parts": [
+    {
+      "id": "surface",
+      "vertexCount": 320,
+      "triangleCount": 312,
+      "positions": {
+        "path": "blobs/f01208e10120858c2e8513b59813548d74b24ac27813fc0e2cd11f73cd2685cd.bin",
+        "hash": "f01208e10120858c2e8513b59813548d74b24ac27813fc0e2cd11f73cd2685cd",
+        "byteLength": 3840
+      },
+      "indices": {
+        "path": "blobs/78b0cfead5652582580d2023c74b0c29c52892daae016794109b99fa0e906d82.bin",
+        "hash": "78b0cfead5652582580d2023c74b0c29c52892daae016794109b99fa0e906d82",
+        "byteLength": 3744
+      },
+      "normals": {
+        "path": "blobs/3e101e5889fcd8cebbfa5b9d2cf7971b2ca5b52e4f5b94bffb07e3c8e0858e4c.bin",
+        "hash": "3e101e5889fcd8cebbfa5b9d2cf7971b2ca5b52e4f5b94bffb07e3c8e0858e4c",
+        "byteLength": 3840
+      }
+    }
+  ],
+  "hash": "e4c75e31b972d4fa4e26d60a0a87233f40c97e7967cfb599f05646088733d2c9"
+}

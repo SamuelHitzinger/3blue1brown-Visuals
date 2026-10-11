@@ -1,0 +1,213 @@
+{
+  "id": "transcription-r3-purine-context",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic local units; nominal base reach .675",
+  "provenance": {
+    "source": "Original author-defined Gaussian sites; prepare-transcription-revision3-assets.mjs",
+    "sourceHash": "50a1022934b3222ae3c66af660aa17468331d89e6f3feff09de74e58e097360d",
+    "creator": "Original animlib transcription revision 3",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Native Gaussian envelope extraction and Taubin smoothing",
+      "version": "3",
+      "options": {
+        "shape": "purine",
+        "context": true,
+        "sugar": [
+          [
+            -0.13,
+            -0.13,
+            0
+          ],
+          [
+            -0.14,
+            0.12,
+            -0.015
+          ],
+          [
+            0.1,
+            0.16,
+            0.01
+          ],
+          [
+            0.14,
+            -0.085,
+            -0.045
+          ],
+          [
+            0,
+            0.015,
+            -0.035
+          ],
+          [
+            -0.015,
+            0.025,
+            0.18
+          ],
+          [
+            0.025,
+            0.11,
+            0.19
+          ],
+          [
+            -0.12,
+            -0.04,
+            -0.16
+          ]
+        ],
+        "phosphate": [
+          [
+            -0.015,
+            -0.29,
+            0
+          ],
+          [
+            0.075,
+            -0.31,
+            0.045
+          ],
+          [
+            -0.09,
+            -0.34,
+            -0.045
+          ]
+        ],
+        "base": [
+          [
+            0.31,
+            0.045,
+            -0.01
+          ],
+          [
+            0.43,
+            0.12,
+            -0.02
+          ],
+          [
+            0.54,
+            0.11,
+            0
+          ],
+          [
+            0.62,
+            0,
+            -0.015
+          ],
+          [
+            0.48,
+            -0.105,
+            -0.015
+          ],
+          [
+            0.37,
+            -0.07,
+            0.01
+          ],
+          [
+            0.47,
+            0.025,
+            0.15
+          ],
+          [
+            0.53,
+            -0.025,
+            0.17
+          ],
+          [
+            0.69,
+            0.09,
+            -0.015
+          ],
+          [
+            0.73,
+            -0.055,
+            0.01
+          ],
+          [
+            0.61,
+            -0.12,
+            -0.04
+          ]
+        ],
+        "resolution": 9,
+        "sigmas": [
+          0.09,
+          0.068,
+          0.079
+        ],
+        "isoLevel": 0.56,
+        "smoothingIterations": 4
+      }
+    },
+    "selection": "Original illustrative anatomy",
+    "modifications": [
+      "Author-defined fused irregular lobes; no source-derived pixels, meshes or atomic coordinates."
+    ],
+    "fidelity": "Schematic molecular form; not a deposited enzyme or chemically measured surface."
+  },
+  "parts": [
+    {
+      "id": "sugar",
+      "vertexCount": 218,
+      "triangleCount": 432,
+      "positions": {
+        "path": "blobs/60aefe9ce2182a63f8e6a5d91c9bcc546d8156e001e9e640c47a6d4d6675d430.bin",
+        "hash": "60aefe9ce2182a63f8e6a5d91c9bcc546d8156e001e9e640c47a6d4d6675d430",
+        "byteLength": 2616
+      },
+      "indices": {
+        "path": "blobs/14555d43d861403d41e0c45a55018c4627b3460744e2cc30b8940d9760260896.bin",
+        "hash": "14555d43d861403d41e0c45a55018c4627b3460744e2cc30b8940d9760260896",
+        "byteLength": 5184
+      },
+      "normals": {
+        "path": "blobs/324516b106fb640c9ac23665adbd250fab7296605c94902141ccba6649bd4f07.bin",
+        "hash": "324516b106fb640c9ac23665adbd250fab7296605c94902141ccba6649bd4f07",
+        "byteLength": 2616
+      }
+    },
+    {
+      "id": "phosphate",
+      "vertexCount": 136,
+      "triangleCount": 268,
+      "positions": {
+        "path": "blobs/0423c72b0fcb559887984cae671fd1cf0b5181decb643e1c9c4b7c4943d12ff1.bin",
+        "hash": "0423c72b0fcb559887984cae671fd1cf0b5181decb643e1c9c4b7c4943d12ff1",
+        "byteLength": 1632
+      },
+      "indices": {
+        "path": "blobs/5d303b1afea8ccacbcf88a2db66580108a9a0738e28f2bc7260eaae05db921ae.bin",
+        "hash": "5d303b1afea8ccacbcf88a2db66580108a9a0738e28f2bc7260eaae05db921ae",
+        "byteLength": 3216
+      },
+      "normals": {
+        "path": "blobs/b5bd75e667a0c918d5662fcb315e3df30446ff108c2e845087c6b31dd56cf79e.bin",
+        "hash": "b5bd75e667a0c918d5662fcb315e3df30446ff108c2e845087c6b31dd56cf79e",
+        "byteLength": 1632
+      }
+    },
+    {
+      "id": "base",
+      "vertexCount": 258,
+      "triangleCount": 512,
+      "positions": {
+        "path": "blobs/f2707e69065653cc6faf9b564ad23540222784c1c779ade1cd3bb1d625dc001f.bin",
+        "hash": "f2707e69065653cc6faf9b564ad23540222784c1c779ade1cd3bb1d625dc001f",
+        "byteLength": 3096
+      },
+      "indices": {
+        "path": "blobs/49be9764120a4e3f6cd81a7498fa7c68a687da629eb80bf723504140c2324bae.bin",
+        "hash": "49be9764120a4e3f6cd81a7498fa7c68a687da629eb80bf723504140c2324bae",
+        "byteLength": 6144
+      },
+      "normals": {
+        "path": "blobs/898a53fba9a6a6a21a50bd92de6607660b1b55533bb57ac8ee579a3b311a1600.bin",
+        "hash": "898a53fba9a6a6a21a50bd92de6607660b1b55533bb57ac8ee579a3b311a1600",
+        "byteLength": 3096
+      }
+    }
+  ],
+  "hash": "f5a2cbaa4ca9da0b44958bc55f884258d4f5bd06495fdb2f47bbb53e47ac0917"
+}

@@ -312,3 +312,72 @@ reference coverage and artist fidelity remain open; no whole-library parity clai
   staging checks outside the stable-foundation checkpoint. Independent focus
   review now accepts its bounded optical feature and diagnostic; biological
   mechanism/art-direction revisions remain separate open gates.
+
+## Current revision checkpoint
+
+- `ab5f34d` commits the tested scientific primitives, native assets, public API,
+  documentation and independent optical review on `amilibsam`. No push or merge.
+- All three worker slots remain filled with Astra/high: translation author,
+  RNA processing revision author, transcription visual revision author. Root
+  handles peptide, integration and review scheduling.
+- Peptide revision 3 is frozen for independent review: two 10s/300-frame films,
+  complete decodes, 160 ordered samples viewed, and both-aspect native inspection.
+  `peptide-revision3-report.md` records hashes, reproduction and limits. Its tests
+  preserve bonds, side-visible formation and the original compact endpoint.
+- Processing formation and fixed-frame transcription extrusion are active code
+  changes beyond the preceding 940-test snapshot. They need fresh focused and
+  integrated verification and independent source comparison before acceptance.
+
+## User-directed visual unification, 2026-10-11
+
+- The user now prioritizes **3Blue1Brown art and graphing style**, with the other
+  channels informing motion and animation techniques. This supersedes separate
+  source-art replication gates; historical media/reviews remain intact. See
+  `unified-3b1b-direction.md` for the current evaluation contract.
+- All active agents were redirected. Transcription and RNA processing now build
+  clean geometry-led proofs; realistic assets remain optional library capability.
+  Root is restyling the accepted compact queue choreography to the same language.
+- The latest complete CPU snapshot passed **962/962 tests with four workers**.
+  One preceding unrestricted run hit the unchanged 200ms VM wall-clock compile
+  budget under concurrent work; isolated and complete bounded-worker reruns pass.
+- Independent translation review found and reproduced exact-event rounding bugs.
+  Absolute event comparisons now drive flags and phases. All22 translation tests,
+  including independent adjacent-double host/VM, continuity and reverse checks,
+  pass; typecheck/build pass. Frozen pre-repair media stays historical.
+- Peptide revision4 adds bounded host-only multipart envelopes, continuous surface
+  coloring and a verified held-pose cache optimization; independent technical
+  review is finishing. Its prior source-art goal is no longer the default target.
+
+- 04:03 integrated checkpoint: **972/972 tests in 87 files**, four workers;
+  typecheck and build pass. Peptide revision-4 independent technical/motion review
+  is complete, including legacy equivalence, shared part attributes and cache
+  parity. New compact-frontier, transcription and RNA clean visual films are
+  frozen for independent comparison. Authors continue unified translation and
+  peptide proofs while the reviewer evaluates those three handoffs.
+
+## Unified visual closure and reproducibility
+
+- `63c9472` commits compact queues, bounded multipart preparation and the tested
+  processing/transcription/translation refinements on `amilibsam`. No push or merge.
+- Independent reviewers accept all current compact-frontier, three scientific
+  plots, peptide, transcription, two RNA processing and complete 43-second
+  translation proofs. Together with the prior mathematical shear and matrix
+  proofs, eleven representative scenes pass the current visual direction.
+  `final-visual-coverage.md` distinguishes directly inspected and inherited
+  independent evidence; all claims retain their explicit operation boundaries.
+- Peptide review found and repaired a small camera-height drift during the fixed
+  hold. Fresh films, native frames and all ordered sheets passed reinspection.
+  Translation passed full-film inspection, 1413 independently sampled times,
+  22 focused tests and both complete 1290-frame decodes.
+- Six current generators reproduced in an isolated empty generated-data workspace.
+  All 20 generated scene and manifest files were byte-identical to the frozen
+  candidates. RNA/transcription now use versioned inputs; old film-preservation
+  checks are explicit `--check-archives` options. No current generator needs an
+  old exported film. Detailed reproduction evidence is in the capability audit.
+- Metadata audit found 44 unique native biological packages and 803 valid binary
+  references, with declared sizes and fixture-root containment intact. This is
+  a metadata/path audit, not a new geometry decode or comprehensive hash audit.
+- Public navigation now leads to the unified mathematical examples and reusable
+  motion guide. Historical realistic assets remain optional and clearly labeled.
+  Final checkpoint includes new source, inputs, preparation tools, fixtures and
+  independent reports so these paths remain reproducible from repository files.

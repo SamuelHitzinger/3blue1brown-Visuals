@@ -1,0 +1,11 @@
+# Translation revision4 visual contract
+
+The user's current target is 3Blue1Brown visual language throughout, with Nucleus supplying motion technique rather than cellular artwork. This supersedes molecular surface matching in the historical translation reviews. Preserve every older film, asset and report. Use the repaired existing `nucleicTranslationCycle`; do not change the helper for presentation preferences.
+
+The author personally viewed all 31 source translation sheets (486 captures, 158.396–224.927s) and all 22 ordered sheets of the earlier complete 43-second 16:9 film (344 samples). These establish assembly, the initial codon reading hold, foreground adaptor isolation, paired transfer, one-register advance, empty departure, accumulating mapped product, stop recognition, product release and subunit separation. The approved 3Blue1Brown baseline images previously inspected for the RNA revision remain the visual target.
+
+Create the complete bounded cycle using AUG GGU GCU UUU GAA AAA CCG UAA, seven persistent carrier/residue identities and terminal stop without an added residue. Preserve the accepted 4.4-second helper cycles and 2.5-second Gly reading pause. The new art uses teal RNA, thin blue adaptor silhouettes, subdued open ribosome outlines, white peptide nodes with persistent selected Gly in yellow, and local serif codon/anticodon/site notation. No decorative traffic, textures, unrelated axes, title card, footer or molecular realism claims.
+
+First inspect a 6.5-second representative native preview, corresponding to full-film 7.8–14.3s: foreground hold, docking, old-chain transfer, advance and departure. Only after checking this passage at both native aspects should the full 43-second proof be encoded. Final delivery requires native 1280x720 and 960x720 silent 30 fps films, complete ordered motion sheets, selected native boundary frames, hashes, exact retained-identity and topology checks, mapped final-product bookkeeping, and reverse seeking.
+
+The independent reviewer must separately judge reasoning, readable staging, source-motion correspondence, current 3Blue1Brown visual language, and technical delivery. Sparse geometry does not waive biological accounting or legibility. These are prescribed schematic kinetics with an explicit product path, not atomistic structure, biochemical rate measurements or predicted folding.

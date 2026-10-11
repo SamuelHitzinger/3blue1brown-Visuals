@@ -1,0 +1,96 @@
+{
+  "minimumMainLobeRadius": 1.14,
+  "contextScale": 0.58,
+  "packages": [
+    "rna-r3-pore-contact-colors.json",
+    "rna-r3-pore-lobes.json"
+  ],
+  "catalog": [
+    {
+      "id": "rna-r3-pore-contact-colors",
+      "kind": "image",
+      "hash": "3b5dc6836476c38a921d7de66d3dd4518caf7252d3d74c4cb73194a39c93d41e",
+      "width": 256,
+      "height": 1
+    },
+    {
+      "id": "rna-r3-pore-lobes",
+      "kind": "model",
+      "parts": [
+        {
+          "id": "body",
+          "vertexCount": 1025,
+          "triangleCount": 1840,
+          "bounds": {
+            "min": [
+              -0.7826382563312176,
+              -1.0143,
+              -1.04
+            ],
+            "max": [
+              0.7826382563312178,
+              0.9457,
+              1.04
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "rna-r3-pore-contact-colors",
+              "hash": "3b5dc6836476c38a921d7de66d3dd4518caf7252d3d74c4cb73194a39c93d41e"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        },
+        {
+          "id": "context",
+          "vertexCount": 273,
+          "triangleCount": 440,
+          "bounds": {
+            "min": [
+              -0.78,
+              -1.0143,
+              -1.04
+            ],
+            "max": [
+              0.78,
+              0.9457,
+              1.04
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "rna-r3-pore-contact-colors",
+              "hash": "3b5dc6836476c38a921d7de66d3dd4518caf7252d3d74c4cb73194a39c93d41e"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        }
+      ],
+      "bounds": {
+        "min": [
+          -0.7826382563312176,
+          -1.0143,
+          -1.04
+        ],
+        "max": [
+          0.7826382563312178,
+          0.9457,
+          1.04
+        ]
+      },
+      "hash": "0e1efd3e38327b754d7d954dc20136cea07fb00718feb4d5d04d4ffd59dde858"
+    }
+  ],
+  "stats": {
+    "decodedBytes": 791296,
+    "pinnedBytes": 0,
+    "leases": 0,
+    "models": 1
+  }
+}

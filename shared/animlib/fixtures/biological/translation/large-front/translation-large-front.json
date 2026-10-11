@@ -1,0 +1,48 @@
+{
+  "id": "translation-large-front",
+  "kind": "model",
+  "version": 1,
+  "units": "arbitrary schematic units",
+  "provenance": {
+    "source": "Original curve scaffolds in prepare-translation-assets.mjs",
+    "sourceHash": "5709c34c4d3dc5c67ab2dc6c72c5e68a8d2f9e5abd5f85b011b1257054d378e7",
+    "creator": "Original animlib translation demonstration",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Gaussian scaffold envelope",
+      "version": "1",
+      "options": {
+        "resolution": 30
+      }
+    },
+    "selection": "large-front",
+    "modifications": [
+      "Smoothed original lobed scaffold with preserved open active-site slot."
+    ],
+    "fidelity": "Original schematic ribosome/adaptor geometry. No deposited structure or extracted source geometry/pixels."
+  },
+  "parts": [
+    {
+      "id": "surface",
+      "vertexCount": 3152,
+      "triangleCount": 6300,
+      "positions": {
+        "path": "blobs/8029f9b5ec9baa98e704f680e32008009dc4915ae1a2e773893f56aa8b273ed4.bin",
+        "hash": "8029f9b5ec9baa98e704f680e32008009dc4915ae1a2e773893f56aa8b273ed4",
+        "byteLength": 37824
+      },
+      "indices": {
+        "path": "blobs/68c2b505bb1b09806aa966de339bc1a30e5c1b715da558f32392cea8e19befde.bin",
+        "hash": "68c2b505bb1b09806aa966de339bc1a30e5c1b715da558f32392cea8e19befde",
+        "byteLength": 75600
+      },
+      "normals": {
+        "path": "blobs/d8a91dd252feecedb316bb52ce324a142e27ce30000461ed4234422b1187667c.bin",
+        "hash": "d8a91dd252feecedb316bb52ce324a142e27ce30000461ed4234422b1187667c",
+        "byteLength": 37824
+      }
+    }
+  ],
+  "hash": "3917dbc55ac00ca81fcb706f7dd59f283f24cf2c7da55554ff303758eea323c5"
+}

@@ -1,0 +1,207 @@
+{
+  "endpointHash": "67e2381527f0457e413241f7352895cd98bfbe40d35c64249216a33d74d8a64d",
+  "vertices": 32116,
+  "triangles": 64272,
+  "parts": 6,
+  "sequenceCoordinates": "nearest atom at each shared vertex, continuously interpolated across triangles",
+  "packages": [
+    "peptide-sequence-colors.json",
+    "peptide-polished-surface.json"
+  ],
+  "catalog": [
+    {
+      "id": "peptide-sequence-colors",
+      "kind": "image",
+      "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062",
+      "width": 512,
+      "height": 1
+    },
+    {
+      "id": "peptide-polished-surface",
+      "kind": "model",
+      "parts": [
+        {
+          "id": "surface-0",
+          "vertexCount": 6230,
+          "triangleCount": 12000,
+          "bounds": {
+            "min": [
+              -10.783605805191643,
+              -14.436987623971888,
+              -11.453482797759769
+            ],
+            "max": [
+              11.527803997550114,
+              11.589690484682535,
+              -4.330736541196746
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "peptide-sequence-colors",
+              "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        },
+        {
+          "id": "surface-1",
+          "vertexCount": 6478,
+          "triangleCount": 12000,
+          "bounds": {
+            "min": [
+              -10.942773857688774,
+              -14.605432082380402,
+              -6.145134736560351
+            ],
+            "max": [
+              11.017635605743504,
+              15.126956510301136,
+              -1.826018659474008
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "peptide-sequence-colors",
+              "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        },
+        {
+          "id": "surface-2",
+          "vertexCount": 6442,
+          "triangleCount": 12000,
+          "bounds": {
+            "min": [
+              -10.918808852043263,
+              -14.18144790585092,
+              -3.5973917478137736
+            ],
+            "max": [
+              10.487829330138336,
+              15.546958735551058,
+              1.7934365359831468
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "peptide-sequence-colors",
+              "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        },
+        {
+          "id": "surface-3",
+          "vertexCount": 6402,
+          "triangleCount": 12000,
+          "bounds": {
+            "min": [
+              -10.942283394444928,
+              -11.282077548488909,
+              0.09828494093598823
+            ],
+            "max": [
+              12.233725826931728,
+              13.246401788304167,
+              5.52106680434753
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "peptide-sequence-colors",
+              "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        },
+        {
+          "id": "surface-4",
+          "vertexCount": 6315,
+          "triangleCount": 12000,
+          "bounds": {
+            "min": [
+              -11.218508111010742,
+              -9.3715776349973,
+              3.707760770307324
+            ],
+            "max": [
+              11.701777020438614,
+              12.456002085296124,
+              10.512455467243532
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "peptide-sequence-colors",
+              "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        },
+        {
+          "id": "surface-5",
+          "vertexCount": 2237,
+          "triangleCount": 4272,
+          "bounds": {
+            "min": [
+              -8.54556392659574,
+              -6.0694037184995135,
+              8.610529127895612
+            ],
+            "max": [
+              5.638978074807069,
+              10.995260667314824,
+              13.388524780967042
+            ]
+          },
+          "hasUV0": true,
+          "imageTexture": {
+            "image": {
+              "id": "peptide-sequence-colors",
+              "hash": "f145e275697e2d9665583cefe02f0f7be127316302a0b702366414538d249062"
+            },
+            "alphaMode": "opaque",
+            "filter": "linear",
+            "wrap": "clamp"
+          }
+        }
+      ],
+      "bounds": {
+        "min": [
+          -11.218508111010742,
+          -14.605432082380402,
+          -11.453482797759769
+        ],
+        "max": [
+          12.233725826931728,
+          15.546958735551058,
+          13.388524780967042
+        ]
+      },
+      "hash": "efefb32e555bcb181eb6d47c29194e975aa9496dc0068f6cf05860ff598ae07d"
+    }
+  ],
+  "stats": {
+    "decodedBytes": 21324800,
+    "pinnedBytes": 0,
+    "leases": 0,
+    "models": 1
+  }
+}

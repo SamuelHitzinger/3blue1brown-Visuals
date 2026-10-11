@@ -20,17 +20,16 @@ After the last sense cycle, the terminal stop remains in A; the last peptide rem
 
 Every RNA, carrier and residue remains in the returned arrays for stable scene identities. Use `visible`, `incorporated`, `phase`, `loaded`, bonds and attachment/transfer fields to decide rendering. Product bonds appear only after the corresponding transfer completes. `loaded` means carrier cargo occupancy; it does not mean the original single amino acid remains chemically unmodified. RNA follows a prescribed shallow bend, so this helper does not promise fixed RNA bond lengths. It is not molecular dynamics, an atomic reaction simulation, a folding model, deposited ribosome geometry, or a reconstruction of Nucleus's surfaces.
 
-Reproduce the proof from the repository root:
+Reproduce the current mathematical visual proof from the repository root:
 
 ```
 npm run build --workspace animlib
-node shared/animlib/tools/prepare-translation-assets.mjs
-node shared/animlib/demo/expansion/translation-proof.mjs
-node shared/animlib/tools/render-frames.mjs data/animlib-expansion/translation-proof/frames.json
+node shared/animlib/demo/expansion/translation-3b1b-revision4-proof.mjs
+node shared/animlib/tools/render-frames.mjs data/animlib-expansion/translation-3b1b-revision4/translation-frames.json
 ```
 
 Optional `productCoil: {radius, twist}` places residues on an original helix. Adjacent chord length stays exactly `peptideSpacing`, including fractional transfer progress. Radius is 0.001–5, twist is 0.01–π radians, and `2*radius*sin(twist/2)` must be strictly smaller than the peptide spacing. Axial rise is the positive square root of the residual squared length. Omitting this option preserves the straight chain. This is prescribed geometry, not a folding prediction.
 
-The generated manifest is compatible with `tools/render-video.mjs` at 1280×720 or 960×720, 30 fps. The 43-second proof uses AUG GGU GCU UUU GAA AAA CCG UAA → Met–Gly–Ala–Phe–Glu–Lys–Pro, stop. Seven carrier/residue identities persist, with an explicit 2.5-second scene-clock pause during the foreground Gly reading hold. The absolute-time helper itself is unchanged by this presentation pause. Original asymmetric subunit, bent adaptor and posterior half-conduit assets are reusable and hashed. The conduit includes separate inner/outer walls and half-annular rims; its anterior half is intentionally removed for visibility.
+The generated `translation-manifest.json` is compatible with `tools/render-video.mjs` at 1280×720 or 960×720, 30 fps. The 43-second proof uses AUG GGU GCU UUU GAA AAA CCG UAA → Met–Gly–Ala–Phe–Glu–Lys–Pro, stop. Seven carrier/residue identities persist, with an explicit 2.5-second scene-clock pause during the foreground Gly reading hold. The absolute-time helper itself is unchanged by this presentation pause. The current proof uses native sparse geometry and no prepared render assets. [Independent review](../../../docs/animlib-expansion/translation-3b1b-revision4-independent-review.md) accepts motion, readability, current mathematical art and media for the complete bounded cycle.
 
-The product occupies the conduit at its P-site holds; transfer is a geometric schematic and does not constrain an atomistic chain to a physical ribosome tunnel. Current Nucleus fidelity remains subject to visual review: the reference has more detailed surface relief, softer luminous material, stronger desaturation of context during close-up, and a larger accumulated protein. No near-identical fidelity claim follows from helper tests or codec validation. See the expansion translation review for the exact inspected candidate and verdicts.
+The older `prepare-translation-assets.mjs` and `translation-proof.mjs` retain optional original asymmetric subunits, bent adaptors and a posterior half-conduit. Those hashed packages can consume the same helper poses. Their reference-specific surfaces are historical examples, not the current visual target. Transfer remains a geometric schematic and does not constrain an atomistic chain to a physical ribosome tunnel. Neither helper tests nor the current visual acceptance establish physical chemistry or channel-wide near-identity.

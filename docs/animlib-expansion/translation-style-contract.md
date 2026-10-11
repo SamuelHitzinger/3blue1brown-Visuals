@@ -1,0 +1,9 @@
+# Translation motion contract
+
+Source evidence viewed before design: Nucleus translation playback sheets 01–31, every one of 486 ordered browser captures (158.396–224.927 s), plus native 110/208/267/362/438/479. The 3Blue1Brown skill baseline and rejection images were inspected as process calibration; Nucleus is the actual visual reference here.
+
+The molecular world owns the frame: green curved segmented RNA, two irregular brown subunits, green L-shaped adaptors, blue/purple peptide. Preserve IDs through exterior assembly, cutaway, A/P-site transfer, one-codon translocation, spent-carrier exit, stop recognition, peptide departure, and disassembly. Labels sit at their referents; no title/footer layout. Camera approaches the assembled complex and foreground adaptor; real optical focus follows it, then returns to the active site. A/P geometry and same-chain transfer must remain readable through the translucent mantle.
+
+Use AUG GGU GCU UUU GAA AAA CCG UAA, 5′→3′; antiparallel anticodons UAC CCA CGA AAA CUU UUU GGC, 3′→5′. Standard code independently checked at https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi#SG1 (NCBI table 1). Only Met/Gly/Ala/Phe/Glu/Lys/Pro are residues; stop never has a tRNA cargo. Exact molecular geometry, wobble, catalytic chemistry and release-factor structure are outside this schematic's claim.
+
+Required technical proof: full absolute-time schedule bounded before evaluating motion, dense IDs/arrays, all codons and complements checked, exact formed peptide link lengths, continuous positions/frames at events, reverse seeks, host/QuickJS parity, native 1280×720 and 960×720 silent 30 fps films. Review full output at ordered 8 fps plus native boundary frames. Reusable helper and original hashed assets precede any fidelity claim. This contract does not declare Nucleus fidelity achieved.

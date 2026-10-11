@@ -1,0 +1,15 @@
+{
+  "colors": {
+    "PURE_BLUE": "#557BFF",
+    "BLUE": "#46BCE9",
+    "TEAL": "#45D8C2",
+    "GREEN": "#78D365",
+    "YELLOW": "#F1E957",
+    "ORANGE": "#FFA44B",
+    "RED": "#F7756B",
+    "BLACK": "#000000",
+    "WHITE": "#FFFFFF"
+  },
+  "background": "BLACK",
+  "foreground": "WHITE"
+}

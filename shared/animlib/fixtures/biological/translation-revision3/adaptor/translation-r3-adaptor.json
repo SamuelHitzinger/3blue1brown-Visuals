@@ -1,0 +1,50 @@
+{
+  "id": "translation-r3-adaptor",
+  "kind": "model",
+  "version": 1,
+  "units": "arbitrary schematic units",
+  "provenance": {
+    "source": "Original branched/lobed scaffolds in prepare-translation-revision3-assets.mjs",
+    "sourceHash": "09aa63d7143d28fe8bbb8169fcc806f1fd9546162ca79a4f225f9f2346965685",
+    "creator": "Original animlib translation revision",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Gaussian scaffold envelope",
+      "version": "3",
+      "options": {
+        "resolution": 40,
+        "sigma": 0.1,
+        "isoLevel": 0.8
+      }
+    },
+    "selection": "adaptor",
+    "modifications": [
+      "Connected asymmetric depth lobes; original rounded half-conduit."
+    ],
+    "fidelity": "Original explanatory sculpture, not a deposited structure or extracted reference geometry."
+  },
+  "parts": [
+    {
+      "id": "surface",
+      "vertexCount": 4106,
+      "triangleCount": 8208,
+      "positions": {
+        "path": "blobs/bae5b56567248dadd2e6c294d22e7be20362dd117a38d99fc0494953b14bea8b.bin",
+        "hash": "bae5b56567248dadd2e6c294d22e7be20362dd117a38d99fc0494953b14bea8b",
+        "byteLength": 49272
+      },
+      "indices": {
+        "path": "blobs/e24016b8951d62c371e9319eb7ff97e485572ac5f16b2e6c1d2a5f07333a542d.bin",
+        "hash": "e24016b8951d62c371e9319eb7ff97e485572ac5f16b2e6c1d2a5f07333a542d",
+        "byteLength": 98496
+      },
+      "normals": {
+        "path": "blobs/63e7b00619b2b04f9b2c8a761c01fef4ffa3eed4498c6e8e24105c72ffdeb1f0.bin",
+        "hash": "63e7b00619b2b04f9b2c8a761c01fef4ffa3eed4498c6e8e24105c72ffdeb1f0",
+        "byteLength": 49272
+      }
+    }
+  ],
+  "hash": "546d2207a0c9959531cce1d84c33e5c1c60364e96202b8c886efd49ffb1b1fee"
+}

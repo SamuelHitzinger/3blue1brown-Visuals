@@ -157,8 +157,11 @@ runnable examples, and efficient reuse. The [static importer guide](docs/assets-
 defines the accepted glTF/GLB and PNG subset; [molecular coordinates](docs/molecules.md)
 covers the original deposited-coordinate workflow. Source research and visual
 acceptance records live separately in `docs/animlib-expansion` at repository root.
-Creator palettes and choreography remain scene choices, not a single blended
-library style. Reference footage is research evidence, not licensed production assets.
+Public APIs remain style-neutral. Current explanatory examples use 3Blue1Brown
+art and graphing language, borrowing motion and timing from the other inspected
+channels. See [reusable explanatory motion](docs/explanatory-motion.md) and the
+[current coverage index](docs/expansion-index.md) for accepted operations.
+Reference footage is research evidence, not licensed production assets.
 
 Use Node.js 22.16 or newer. From the repository root:
 

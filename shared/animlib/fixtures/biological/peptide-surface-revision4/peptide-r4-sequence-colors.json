@@ -1,0 +1,54 @@
+{
+  "id": "peptide-r4-sequence-colors",
+  "kind": "image",
+  "version": 1,
+  "width": 512,
+  "height": 1,
+  "storage": "rgba8",
+  "encoding": "srgb",
+  "origin": "top-left",
+  "alpha": "straight",
+  "colorPolicy": "source",
+  "provenance": {
+    "source": "Original idealized peptide endpoint derived from pinned wwPDB CCD components",
+    "sourceHash": "67e2381527f0457e413241f7352895cd98bfbe40d35c64249216a33d74d8a64d",
+    "creator": "animlib original explanatory assets",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "prepare-peptide-surface-revision4",
+      "version": "1",
+      "options": {
+        "sigma": 1.2,
+        "isoLevel": 1.05,
+        "resolution": 56,
+        "smoothingIterations": 6,
+        "trianglesPerPart": 12000,
+        "maxTotalTriangles": 120000,
+        "fieldSigma": 0.8,
+        "colors": [
+          "#557BFF",
+          "#46BCE9",
+          "#45D8C2",
+          "#78D365",
+          "#F1E957",
+          "#FFA44B",
+          "#F7756B"
+        ]
+      }
+    },
+    "selection": "All 414 heavy atoms of unchanged original 72-residue compact endpoint",
+    "modifications": [
+      "Finer schematic Gaussian envelope with common normals before bounded partitioning",
+      "Analytic density-gradient display normals evaluated at the final smoothed vertices",
+      "Continuous Gaussian-weighted sequence coordinate; no nearest-atom ownership discontinuities"
+    ],
+    "fidelity": "Display envelope of an illustrative idealized peptide; not a physical fold or solvent-excluded surface"
+  },
+  "pixels": {
+    "path": "blobs/5ed30659c65347d66a63cf1895023be14c8cec879b2b81884a0003b4a089ba08.bin",
+    "hash": "5ed30659c65347d66a63cf1895023be14c8cec879b2b81884a0003b4a089ba08",
+    "byteLength": 2048
+  },
+  "hash": "f2c34e7a04770de59e6070b1417f41318e1e57c713d8c91aa2bb16125d3afc19"
+}

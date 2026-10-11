@@ -1,0 +1,11 @@
+# Peptide revision 5 — mathematical visual language
+
+Use the user's unified 3Blue1Brown art direction: near-black, thin semantic-color geometry, quiet local serif notation, and a single explanatory world. The approved components and derivative baseline images were personally inspected for the preceding transcription proof. Protein Folding supplies motion and object correspondence, not the surface rendering style.
+
+Source evidence personally inspected: all nine complete chronology sheets and the separate credits-gap sheet under `data/animlib-expansion/protein-chronology/`, all eight `folding-playback/` sheets, and native chronology frames 071/079. These are ordered sampled inspection of existing captures, not a claim of personally watching uninterrupted source playback. The transferable operation is an extended chain forming local coils, a readable hold, global packing, and preservation of identity through a restrained final camera move.
+
+Reuse `peptide-staged-pose.mjs`, the original illustrative 72-residue rig, and exactly the reviewed revision 3/4 torsion schedule and compact endpoint. A native CA trace and small residue nodes replace the heavy atom/surface representation. Four restrained colors consistently identify the four sequence regions. Local coil labels appear beside those actual regions during the side-visible hold. The same trace remains through global packing and the final orbit. Geometry must be evaluated from actual pose anchors, never substituted with a screen-space cartoon during the difficult folding phase.
+
+Camera orientation and scale stay fixed during local formation and the hold. It may reframe during packing and orbit after the pose settles. The full object and local labels must fit native 1280×720 and 960×720. No decorative particles, cellular texture, realism assets, or detached slide furniture. The existing realistic revision 4 remains separately preserved as optional multipart capability.
+
+Gate native representative views at 1.4, 3.1, 3.7, 4.2, 5.4, and 7.8 seconds in both aspects before rendering both full ten-second clips. Verify residue identity/color mapping, native anchor and link correspondence, unchanged endpoint, reverse seeks, complete decode, and frozen hashes. Then inspect complete ordered encoded samples and request independent reasoning/readability/style/technical review.

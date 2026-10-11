@@ -1,0 +1,46 @@
+{
+  "id": "schematic-splice-enzyme-context-r2",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original low-detail horseshoe for distant context in prepare-rna-processing-revision2-assets.mjs",
+    "sourceHash": "d86e7774bbaf3a70c0a1677ed755074c36ed578a2c5203427704527bfcbfe7df",
+    "creator": "Original animlib RNA processing revision 2",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original schematic geometry",
+    "converter": {
+      "name": "Original analytic and Gaussian geometry",
+      "version": "2",
+      "options": {}
+    },
+    "modifications": [
+      "Original surfaces and cavities; no source pixels or recovered geometry."
+    ],
+    "fidelity": "Illustrative cellular geometry; no deposited enzyme or exact biological dimensions claimed."
+  },
+  "parts": [
+    {
+      "id": "body",
+      "vertexCount": 760,
+      "triangleCount": 1520,
+      "positions": {
+        "path": "blobs/374b8326b816fcda1ee74a332001ad4c853ff7a2c85e2b4d550777a05e6bac20.bin",
+        "hash": "374b8326b816fcda1ee74a332001ad4c853ff7a2c85e2b4d550777a05e6bac20",
+        "byteLength": 9120
+      },
+      "indices": {
+        "path": "blobs/e187062d34ecfbec743e8df228a375d35f65fcf37a1a5fa56eb6b0d527ff4c45.bin",
+        "hash": "e187062d34ecfbec743e8df228a375d35f65fcf37a1a5fa56eb6b0d527ff4c45",
+        "byteLength": 18240
+      },
+      "normals": {
+        "path": "blobs/0d37b9b04414ba34dc3b55b2dce26ee8e86dbd71860bd73bb698bb5096dd03c4.bin",
+        "hash": "0d37b9b04414ba34dc3b55b2dce26ee8e86dbd71860bd73bb698bb5096dd03c4",
+        "byteLength": 9120
+      }
+    }
+  ],
+  "hash": "8c2872bed612361333d9561fa436d2599fb89338ee9f7f1f29a129588d708e7d"
+}

@@ -1,0 +1,14 @@
+# RNA processing revision 2
+
+The Nucleus source is the primary visual reference. The revision author viewed all twelve ordered splicing-playback sheets (179 real browser captures, 130.419031–157.994288 s), native source 034/095/113/147/153/158, all sixteen frozen candidate sheets (256 samples at 8 fps), selected native candidate frames in both aspects, and the three explanation-skill baseline images. Source images were displayed resized to 2048×1152. This is dense sampled motion evidence, not every encoded frame or real-time playback. Frozen revision 1 films and assets remain untouched.
+
+The source's diagonal green strand, colored bases, organic blue machinery, populated soft grey-violet cellular depth, orange lobed pore and broad purple membrane govern this revision. Persistent objects and visible operations transfer from the explanation baseline; mathematical grids and palette do not.
+
+Splicing: begin with an intact diagonal strand. Two original organic enzyme cavities approach its interval boundaries. Hold the highlighted interval. Bend that same interval into a nearly closed loop while retaining every site and original edge. Hold the formed loop before two visible cuts, then remove it with the machinery, close retained exon ends, add the replacement edge only when closed, and hold the joined strand. Fixed analytic arc offsets during bending are a schematic contract, not constant Euclidean bond lengths or lariat chemistry. Exon internals and all post-cut fragments remain rigid.
+
+Pore: establish a broad softly lit purple membrane with real openings, orange organic lobes and distant pores. A single green segmented chain, with one yellow identity marker, enters along a visibly curved approach and emerges into a rising arc. A purposeful opposite-side camera cut at 4.65 seconds preserves the highlighted pore and exact chain state, with quarter-second motion holds before and after. This replaces the inspected orbit candidate whose edge-on interval obscured the crossing. Depth occlusion and the true aperture must remain visible; use real optical focus to separate surrounding layers. The existing conservative swept-tube clearance contract stays intact.
+
+Local labels identify intron, joined RNA and pore. The cellular geometry owns the frame. Reject a rigid pre-curved start, fading away the intron, premature replacement bonds, floating finite disc staging, generic isolated ellipsoids as the full enzyme, uniform empty field, nearly straight projected pore motion, crowded 4:3 cuts or lost marker identity. Labels and schematic disclosures cannot waive these gates.
+
+Revision 2 uses new original CC0 geometry with separately hashed manifests. No source pixels or recovered source meshes enter any asset. Native silent 30 fps films at 16:9 and 4:3, full-duration 8 fps sheets, boundary native frames, measurements, hashes and independent review are required before a readiness claim.
+

@@ -1,0 +1,215 @@
+{
+  "id": "peptide-r4-surface",
+  "kind": "model",
+  "version": 1,
+  "units": "angstrom",
+  "provenance": {
+    "source": "Original idealized peptide endpoint derived from pinned wwPDB CCD components",
+    "sourceHash": "67e2381527f0457e413241f7352895cd98bfbe40d35c64249216a33d74d8a64d",
+    "creator": "animlib original explanatory assets",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "prepare-peptide-surface-revision4",
+      "version": "1",
+      "options": {
+        "sigma": 1.2,
+        "isoLevel": 1.05,
+        "resolution": 56,
+        "smoothingIterations": 6,
+        "trianglesPerPart": 12000,
+        "maxTotalTriangles": 120000,
+        "fieldSigma": 0.8,
+        "colors": [
+          "#557BFF",
+          "#46BCE9",
+          "#45D8C2",
+          "#78D365",
+          "#F1E957",
+          "#FFA44B",
+          "#F7756B"
+        ]
+      }
+    },
+    "selection": "All 414 heavy atoms of unchanged original 72-residue compact endpoint",
+    "modifications": [
+      "Finer schematic Gaussian envelope with common normals before bounded partitioning",
+      "Analytic density-gradient display normals evaluated at the final smoothed vertices",
+      "Continuous Gaussian-weighted sequence coordinate; no nearest-atom ownership discontinuities"
+    ],
+    "fidelity": "Display envelope of an illustrative idealized peptide; not a physical fold or solvent-excluded surface"
+  },
+  "parts": [
+    {
+      "id": "surface-0",
+      "vertexCount": 6194,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/ca27664d5825e0e49b3a12ae2f7360df22236b2acb1135f569f73e1d8f0d7769.bin",
+        "hash": "ca27664d5825e0e49b3a12ae2f7360df22236b2acb1135f569f73e1d8f0d7769",
+        "byteLength": 74328
+      },
+      "indices": {
+        "path": "blobs/3a1afd2308cbda0121ba69a4bcc2140d87af0bf462bd99f716900bbf30f37b76.bin",
+        "hash": "3a1afd2308cbda0121ba69a4bcc2140d87af0bf462bd99f716900bbf30f37b76",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/f275c48b7cebdb8a1e9f14d1b8a8e096f4934948f3c0ee0d2ac292eda326b758.bin",
+        "hash": "f275c48b7cebdb8a1e9f14d1b8a8e096f4934948f3c0ee0d2ac292eda326b758",
+        "byteLength": 74328
+      },
+      "uv0": {
+        "path": "blobs/13f1d74c1e291ea645c401af48226a66f4465e067fb14eb202e8151f2cb427e4.bin",
+        "hash": "13f1d74c1e291ea645c401af48226a66f4465e067fb14eb202e8151f2cb427e4",
+        "byteLength": 49552
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-r4-sequence-colors",
+          "hash": "3855195979470196fcfb8161bc06eb5c4c78428ac25520c67253398392c98edb"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-1",
+      "vertexCount": 6410,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/cae4418f78e67a93e7b4a2efa7784d547c37a2f09b3ef20952ddafda948bc7db.bin",
+        "hash": "cae4418f78e67a93e7b4a2efa7784d547c37a2f09b3ef20952ddafda948bc7db",
+        "byteLength": 76920
+      },
+      "indices": {
+        "path": "blobs/34aebd172bb6cdad58dcf0c900f0de0e2d75188367a39dd30009fd16f397bae8.bin",
+        "hash": "34aebd172bb6cdad58dcf0c900f0de0e2d75188367a39dd30009fd16f397bae8",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/c35e8f8b9c1e45aa5b27eed28a9ffe6a804507881963dd31e2f0c613400fb1a7.bin",
+        "hash": "c35e8f8b9c1e45aa5b27eed28a9ffe6a804507881963dd31e2f0c613400fb1a7",
+        "byteLength": 76920
+      },
+      "uv0": {
+        "path": "blobs/1a5f4825c208f230cd05c56927df9ccf50699b2c065b44f4ca8c85df91ec27af.bin",
+        "hash": "1a5f4825c208f230cd05c56927df9ccf50699b2c065b44f4ca8c85df91ec27af",
+        "byteLength": 51280
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-r4-sequence-colors",
+          "hash": "3855195979470196fcfb8161bc06eb5c4c78428ac25520c67253398392c98edb"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-2",
+      "vertexCount": 6411,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/6b5ab3759419ade9c9dfeaf1606fa79e69671c0e4e582b9ed657a93c31d46f33.bin",
+        "hash": "6b5ab3759419ade9c9dfeaf1606fa79e69671c0e4e582b9ed657a93c31d46f33",
+        "byteLength": 76932
+      },
+      "indices": {
+        "path": "blobs/4ebe269523610490499e15dbdd7b9528edca583d5aa503d477f7f2ae2b19e02b.bin",
+        "hash": "4ebe269523610490499e15dbdd7b9528edca583d5aa503d477f7f2ae2b19e02b",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/f02ae0067beec0d443399df3f20d309bf979ec66ecaaaef590fa8a4a5a5c128e.bin",
+        "hash": "f02ae0067beec0d443399df3f20d309bf979ec66ecaaaef590fa8a4a5a5c128e",
+        "byteLength": 76932
+      },
+      "uv0": {
+        "path": "blobs/f14cc2347eac66f77ad68de851638279102c4453b8cc85d9520d047529f3057c.bin",
+        "hash": "f14cc2347eac66f77ad68de851638279102c4453b8cc85d9520d047529f3057c",
+        "byteLength": 51288
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-r4-sequence-colors",
+          "hash": "3855195979470196fcfb8161bc06eb5c4c78428ac25520c67253398392c98edb"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-3",
+      "vertexCount": 6299,
+      "triangleCount": 12000,
+      "positions": {
+        "path": "blobs/ff3c8f0f04d9c7ce59792eefe95c3359501128691543cc60ef489e5171848b4d.bin",
+        "hash": "ff3c8f0f04d9c7ce59792eefe95c3359501128691543cc60ef489e5171848b4d",
+        "byteLength": 75588
+      },
+      "indices": {
+        "path": "blobs/636f0bd0fb195432ef42d284086e8d01b102a5826121609803b0e0d5e35c2841.bin",
+        "hash": "636f0bd0fb195432ef42d284086e8d01b102a5826121609803b0e0d5e35c2841",
+        "byteLength": 144000
+      },
+      "normals": {
+        "path": "blobs/53c351783079ecfd0680714c89aa382f29236f8405d6a912b9c6a3a274ec59b6.bin",
+        "hash": "53c351783079ecfd0680714c89aa382f29236f8405d6a912b9c6a3a274ec59b6",
+        "byteLength": 75588
+      },
+      "uv0": {
+        "path": "blobs/b15fb69170eaed29bd046fccb1094e5bec44ce7bc0dd8981d55fd949f053c5aa.bin",
+        "hash": "b15fb69170eaed29bd046fccb1094e5bec44ce7bc0dd8981d55fd949f053c5aa",
+        "byteLength": 50392
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-r4-sequence-colors",
+          "hash": "3855195979470196fcfb8161bc06eb5c4c78428ac25520c67253398392c98edb"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    },
+    {
+      "id": "surface-4",
+      "vertexCount": 3046,
+      "triangleCount": 5868,
+      "positions": {
+        "path": "blobs/2c0df17a724bbfa7537bfcc0613628406353dfd8ef330e377fb2ac28c7a09cb2.bin",
+        "hash": "2c0df17a724bbfa7537bfcc0613628406353dfd8ef330e377fb2ac28c7a09cb2",
+        "byteLength": 36552
+      },
+      "indices": {
+        "path": "blobs/2f6696392f66ec0100fb81bef816cf2113678939dc10eb031f72b48494d32bce.bin",
+        "hash": "2f6696392f66ec0100fb81bef816cf2113678939dc10eb031f72b48494d32bce",
+        "byteLength": 70416
+      },
+      "normals": {
+        "path": "blobs/9febdffcd6e266b2a929b88399df25289a8161003177980e171f9eca2a0dc9fb.bin",
+        "hash": "9febdffcd6e266b2a929b88399df25289a8161003177980e171f9eca2a0dc9fb",
+        "byteLength": 36552
+      },
+      "uv0": {
+        "path": "blobs/9976859b2716b5b2229f6dd36fb779aec9175b6b49a0b654208e36d47229ea65.bin",
+        "hash": "9976859b2716b5b2229f6dd36fb779aec9175b6b49a0b654208e36d47229ea65",
+        "byteLength": 24368
+      },
+      "imageTexture": {
+        "image": {
+          "id": "peptide-r4-sequence-colors",
+          "hash": "3855195979470196fcfb8161bc06eb5c4c78428ac25520c67253398392c98edb"
+        },
+        "alphaMode": "opaque",
+        "filter": "linear",
+        "wrap": "clamp"
+      }
+    }
+  ],
+  "hash": "223e20d328b0bdde01327ba9af315b192a2c4b528ca734bf2ed51a1070a4f22a"
+}

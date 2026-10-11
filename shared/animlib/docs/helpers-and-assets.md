@@ -4,16 +4,23 @@ Use scene helpers to express relationships; use host-prepared assets to reuse
 substantial immutable geometry or image pixels. Both reach the same compiler,
 absolute-time evaluator, and WebGPU/WebGL2 renderers. There is no second scene format.
 
+Use the [expansion coverage and evidence index](expansion-index.md) to navigate
+the current visual direction, public APIs, asset provenance and the latest
+independent proof decisions. [Reusable explanatory motion](explanatory-motion.md)
+shows how to borrow channel motion while keeping mathematical visual language.
+API availability and reference-style acceptance are distinct.
+
 | Work | Scene API | Host responsibility / limit |
 | --- | --- | --- |
 | Coordinate maps | `s.plane`, its paths/vectors/components/labels and `map` | Explicit sampled map, no symbolic algebra |
 | Graphs | `s.graph`, `s.dijkstra` | Authored positions; bounded nonnegative-weight search, no automatic layout |
 | Collections | `s.collection(...).swap` / `.reorder` | Stable IDs, custom content, vertical/horizontal lanes; no general algorithm simulator |
+| Compact queues | `s.compactQueue(...).insert` / `.remove` / `.transition` | Stable record pool, contiguous slot shifts and fading arrivals/extractions; [guide](compact-queue.md) |
 | Sampled trajectories | `s.sampledState` | Explicit aligned vectors and 3×N projection; gaps stay disconnected; no manifold inference |
 | Peptide poses | `s.peptidePose(spec,phi,psi)` | Explicit original templates and torsions; no deposited conformation or folding dynamics |
 | Ordered molecular geometry | `s.molecularBackbone`, `s.molecularBackboneGeometry`, `s.articulatedChainPose` | Explicit adjacency and schematic kinematics, no energy/collision solver |
 | Nucleic mechanism | `s.nucleicDuplex`, `s.nucleicTranscript` return geometry/data | Explicit paired DNA and ordered complementary RNA; schematic, not atomistic dynamics |
-| Advancing transcription | `s.nucleicTranscriptionCycle(props,time)` | Exact strand links, advancing opening, complementary arrivals and absolute event times; straight authored exit rail |
+| Advancing transcription | `s.nucleicTranscriptionCycle(props,time)` | Exact strand links, advancing opening, complementary arrivals, absolute events and straight/curved authored exit paths |
 | RNA processing | `s.nucleicSplice`, `s.nucleicThread` | Explicit cut/join graph and rigid fragments; polyline arc transport with conservative swept-radius aperture clearance |
 | Translation | `s.nucleicTranslationCycle(props,time)` | Standard-code mapping, persistent carriers/product, A/P-site transfer, advance, stop and release; schematic kinematics |
 | Optical focus | `s.camera.animate({focus:{distance,aperture,samples}})` | Bounded aperture accumulation; 8/16/32 samples, WebGL float-color extension required |
@@ -239,10 +246,12 @@ artifact identities live in the [proof index](../demo/expansion/README.md).
 
 ## Style and evidence
 
-Keep the approved mathematical explanation style, Reducible graph style,
-Artem event/rate style, Visually Explained residual emphasis, and biological
-reference palettes as separate authored contracts. Helpers establish data and
-identity, not creator fidelity. Typography uses bundled MathJax glyphs and TeX
+Use the approved mathematical art and graphing language for current explanatory
+scenes. Reducible, Artem, Visually Explained and the biological references supply
+motion, timing, staging and object-correspondence techniques. Their historical
+source-art contracts remain research; they do not override the current visual
+direction. Helpers establish data and identity without imposing a fixed layout.
+Typography uses bundled MathJax glyphs and TeX
 variants; there is currently no arbitrary font-loading API. A future bounded
 family preset should specify metrics, glyph coverage and backend parity before
 being advertised as a capability.

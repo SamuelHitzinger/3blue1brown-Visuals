@@ -1,0 +1,46 @@
+{
+  "id": "schematic-pore-lobe-context-r2",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic units",
+  "provenance": {
+    "source": "Original distant pore scaffold in prepare-rna-processing-revision2-assets.mjs",
+    "sourceHash": "83f8af093cccbb4a058fa61e3baa13d0e28395fa05077e55126e147bdb34b7ad",
+    "creator": "Original animlib RNA processing revision 2",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original schematic geometry",
+    "converter": {
+      "name": "Original analytic and Gaussian geometry",
+      "version": "2",
+      "options": {}
+    },
+    "modifications": [
+      "Original surfaces and cavities; no source pixels or recovered geometry."
+    ],
+    "fidelity": "Illustrative cellular geometry; no deposited enzyme or exact biological dimensions claimed."
+  },
+  "parts": [
+    {
+      "id": "body",
+      "vertexCount": 186,
+      "triangleCount": 368,
+      "positions": {
+        "path": "blobs/6514f6d026df58737ad76e04f800f0c69284c24e22e187850a7f00aa3461cdef.bin",
+        "hash": "6514f6d026df58737ad76e04f800f0c69284c24e22e187850a7f00aa3461cdef",
+        "byteLength": 2232
+      },
+      "indices": {
+        "path": "blobs/2645103d54ff743007003038a485eb1e91c345d18291260da518f25904cbfb3d.bin",
+        "hash": "2645103d54ff743007003038a485eb1e91c345d18291260da518f25904cbfb3d",
+        "byteLength": 4416
+      },
+      "normals": {
+        "path": "blobs/5f8909f22c94224631fb14d55ed2a6711bbd5494faf4214580767230c6946249.bin",
+        "hash": "5f8909f22c94224631fb14d55ed2a6711bbd5494faf4214580767230c6946249",
+        "byteLength": 2232
+      }
+    }
+  ],
+  "hash": "87fa317824da9c13493b09b42a99dd10bc5677a9ee026e8060f2583d4367ae69"
+}

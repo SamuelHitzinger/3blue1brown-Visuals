@@ -25,3 +25,11 @@ For signed bend `b`, link length `L`, and continuous register offset `q`, the ci
 Site `i` becomes visible at the absolute arrival time `start+i*cycleDuration` and incorporates at `start+(i+dockFraction)*cycleDuration`. These discrete states compare the supplied time directly with those event times; they never use an epsilon that could trigger an event early. Rotation and offset settle exactly at docking. Only then is its edge to the previous site returned. Completion means every site is incorporated. Progress clamps at the final mapped register, so post-completion samples do not drift. An optional initial `opening` finishes before the first arrival; otherwise the initial window is already open. Final closure is not currently shown or implied.
 
 The factory is side-effect free and self-contained after TypeScript erasure. Focused regressions cover all strand and formed-RNA links, pair radius/twist closure, identity persistence, incoming docking, exact event timestamps and their adjacent representable values, finite-difference frame/position continuity at every event, conservative rejection, input immutability and reverse seeks. Integration tests cover public host/QuickJS construction and retained callbacks through reverse seeks.
+
+The [current mathematical proof](../demo/expansion/transcription-cycle-revision3.mjs)
+uses a versioned eight-arrival schedule, sparse native geometry and curved RNA
+emergence. Run it from repository root after building animlib, then render its
+generated `cycle-manifest.json` or `cycle-frames.json` under
+`data/animlib-expansion/transcription-cycle-revision3/`.
+[Independent review](../../../docs/animlib-expansion/transcription-cycle-revision3-independent-review.md)
+accepts reasoning, readability, current art and media for that bounded operation.
