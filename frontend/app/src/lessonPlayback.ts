@@ -1,17 +1,24 @@
 import type { Player, PlayerState, SceneSource } from 'animlib'
+import type { SceneRequest } from '../../../shared/video/scene-requests'
+import { sceneRequestTimeline, sceneRequestBarriers } from './sceneRequests.ts'
+import type { TimelineScene } from './sceneRequests.ts'
 import type { VideoManifest } from '../../../shared/video/contract'
 
-type AnimationPlayer = Pick<Player, 'submit' | 'seek' | 'play' | 'pause' | 'subscribe' | 'dispose'> & Partial<Pick<Player, 'registerAssets' | 'unlockAudio'>>
+type AnimationPlayer = Pick<Player, 'submit' | 'seek' | 'play' | 'pause' | 'subscribe' | 'dispose'> & Partial<Pick<Player, 'registerAssets' | 'unlockAudio' | 'setSceneBarriers'>>
 export interface LessonPlaybackState {
   time: number
+  sceneId?: string
+  sceneTime?: number
   duration: number
   playing: boolean
   ended: boolean
   ready: boolean
   error: string
   buffering?: boolean
+  waitingForInsertion?: boolean
   generating?: boolean
   generationError?: string
+  insertionError?: string
   wantsPlay?: boolean
 }
 
@@ -50,6 +57,13 @@ export class LessonPlayback {
   private complete = true
   private manifestRevision = -1
   private extendingBoundary = Infinity
+  private baseSources: TimelineScene[] = []
+  private requests: SceneRequest[] = []
+  private changingTimeline = false
+  private currentPosition = { scene: '', time: 0 }
+  private barriers = new Set<string>()
+  private unavailable = new Set<string>()
+  private heldForInsertion?: string
 
   constructor(player: AnimationPlayer, autoplay = true) {
     this.player = player
@@ -57,21 +71,26 @@ export class LessonPlayback {
     this.unsubscribe = player.subscribe(state => {
       if (this.disposed) return
       this.scenes = state.scenes
+      this.currentPosition = { scene: state.scene ?? '', time: state.time }
       const duration = state.scenes.reduce((total, scene) => total + scene.duration, 0)
       const time = sequenceTime(state)
       const atEdge = duration > 0 && time >= duration
-      const ended = this.complete && atEdge
+      const waitingForInsertion = this.barriers.has(state.scene ?? '') && state.time >= state.duration
+      if (waitingForInsertion) this.heldForInsertion = state.scene ?? undefined
+      else if (this.heldForInsertion !== state.scene || state.time < state.duration) this.heldForInsertion = undefined
+      const ended = this.complete && atEdge && !waitingForInsertion
       const waitingAtAppend = time >= this.extendingBoundary
-      if (ended || state.status === 'ended' && !waitingAtAppend && (!atEdge || this.complete) || state.status === 'blocked') this.wantsPlay = false
+      if (!this.changingTimeline && !waitingForInsertion && (ended || state.status === 'ended' && !waitingAtAppend && (!atEdge || this.complete) || state.status === 'blocked')) this.wantsPlay = false
       this.update({
-        time, duration,
+        time, duration, sceneId: state.scene ?? undefined, sceneTime: state.time,
         playing: state.status === 'playing', ended, error: state.error ?? '',
-        buffering: !this.complete && (atEdge || !duration), wantsPlay: this.wantsPlay,
+        buffering: waitingForInsertion || !this.complete && (atEdge || !duration), waitingForInsertion, wantsPlay: this.wantsPlay,
       })
     })
   }
 
   getState = () => this.state
+  hasScene = (id: string) => this.scenes.some(scene => scene.id === id)
   subscribe = (listener: () => void) => {
     this.listeners.add(listener)
     return () => { this.listeners.delete(listener) }
@@ -85,9 +104,21 @@ export class LessonPlayback {
 
   private async syncPlayback() {
     if (this.disposed || !this.state.ready) return
-    if (this.state.buffering) { this.player.pause(); return }
-    if (this.wantsPlay && !this.suspended) await this.player.play()
-    else this.player.pause()
+    if (this.heldForInsertion && this.currentPosition.scene === this.heldForInsertion && !this.barriers.has(this.heldForInsertion)) {
+      const next = this.scenes[this.scenes.findIndex(scene => scene.id === this.heldForInsertion) + 1]
+      this.heldForInsertion = undefined
+      if (next) await this.player.seek({ scene: next.id, time: 0 })
+    }
+    const current = this.scenes.find(scene => scene.id === this.currentPosition.scene)
+    const waitingForInsertion = !!current && this.barriers.has(current.id) && this.currentPosition.time >= current.duration
+    if (waitingForInsertion) this.heldForInsertion = current!.id
+    const atEdge = this.state.duration > 0 && this.state.time >= this.state.duration
+    const ended = this.complete && atEdge && !waitingForInsertion
+    if (ended) this.wantsPlay = false
+    this.update({ waitingForInsertion, ended, buffering: waitingForInsertion || !this.complete && (atEdge || !this.state.ready), wantsPlay: this.wantsPlay })
+    if (this.state.buffering) { if (this.state.playing) this.player.pause(); return }
+    if (this.wantsPlay && !this.suspended) { if (!this.state.playing) await this.player.play() }
+    else if (this.state.playing) this.player.pause()
   }
 
   private run(operation: () => Promise<void>) {
@@ -104,7 +135,8 @@ export class LessonPlayback {
 
   load(sources: SceneSource[], initialTime = 0) {
     return this.run(async () => {
-      const result = await this.player.submit({ type: 'load', scenes: sources })
+      this.baseSources = sources.map((scene, index) => ({ ...scene, handoffFrom: index ? sources[index - 1].id : null }))
+      const result = await this.player.submit({ type: 'load', scenes: this.baseSources })
       if (this.disposed) return
       if (!result.ok) throw new Error(result.diagnostics.map(diagnostic => diagnostic.message).join('\n'))
       await this.player.seek(scenePosition(this.scenes, initialTime))
@@ -120,27 +152,90 @@ export class LessonPlayback {
       if (manifest.revision <= this.manifestRevision) return
       this.complete = false
       this.update({ generating: manifest.status === 'generating' || manifest.status === 'queued', generationError: manifest.error })
-      for (const scene of manifest.scenes) {
-        if (this.scenes.some(existing => existing.id === scene.id)) continue
-        if (scene.index !== this.scenes.length) throw new Error('Video scenes arrived out of order')
-        const boundary = this.state.duration
-        this.player.registerAssets?.({ [scene.audio.id]: { kind: 'audio', url: scene.audio.url } })
-        this.extendingBoundary = boundary || Infinity
-        let result
-        try { result = await this.player.submit({ type: 'insert', after: this.scenes.at(-1)?.id ?? null, scenes: [scene] }) }
-        finally { this.extendingBoundary = Infinity }
-        if (this.disposed) return
-        if (!result.ok) throw new Error(result.diagnostics.map(d => d.message).join('\n'))
-        // Playback can reach the old edge while the new audio is downloading.
-        if (boundary > 0 && this.state.time >= boundary) await this.player.seek(scenePosition(this.scenes, boundary))
-        this.update({ ready: true, buffering: false })
-        await this.syncPlayback()
-      }
+      if (manifest.scenes.some((scene, index) => scene.index !== index)) throw new Error('Video scenes arrived out of order')
+      this.baseSources = manifest.scenes.map((scene, index) => ({ ...scene, audioId: `base:${scene.audio.id}`, handoffFrom: index ? manifest.scenes[index - 1].id : null }))
+      await this.reconcileTimeline()
       this.complete = manifest.status === 'complete' || manifest.status === 'failed'
       this.manifestRevision = manifest.revision
       const atEdge = this.state.duration > 0 && this.state.time >= this.state.duration
-      if (this.complete && atEdge) this.wantsPlay = false
-      this.update({ ended: this.complete && atEdge, buffering: !this.complete && (atEdge || !this.state.ready), wantsPlay: this.wantsPlay })
+      if (this.complete && atEdge && !this.state.waitingForInsertion) this.wantsPlay = false
+      await this.syncPlayback()
+    })
+  }
+
+  private updateBarriers() {
+    this.barriers = sceneRequestBarriers(this.baseSources, this.requests, new Set(this.scenes.map(scene => scene.id)), this.unavailable)
+    this.player.setSceneBarriers?.([...this.barriers])
+    const current = this.scenes.find(scene => scene.id === this.currentPosition.scene)
+    if (current && this.barriers.has(current.id) && this.currentPosition.time >= current.duration) this.heldForInsertion = current.id
+  }
+
+  private async reconcileTimeline() {
+    const desired = sceneRequestTimeline(this.baseSources, this.requests)
+    let insertionError = ''
+    let after: string | null = null
+    const unavailable = this.unavailable = new Set<string>()
+    this.updateBarriers()
+    for (const scene of desired) {
+      if (this.scenes.some(existing => existing.id === scene.id)) { after = scene.id; continue }
+      const original = this.baseSources.some(base => base.id === scene.id)
+      const request = this.requests.find(r => r.video.scenes.some(s => `${r.id}:${s.id}` === scene.id))
+      if (request && (unavailable.has(request.afterSceneId) || scene.handoffFrom && unavailable.has(scene.handoffFrom))) {
+        unavailable.add(scene.id); continue
+      }
+      const append = after === (this.scenes.at(-1)?.id ?? null)
+      const boundary = this.state.duration
+      // Insertion can recompile later scenes. Freeze and restore the current moment,
+      // while preserving the user's play/pause intent and all current control values.
+      if (!append) this.player.pause()
+      const position = { ...this.currentPosition }
+      if (scene.audio) this.player.registerAssets?.({ ...scene.assets, [scene.audioId!]: { kind: 'audio', url: scene.audio.url } })
+      this.extendingBoundary = append ? boundary || Infinity : Infinity
+      this.changingTimeline = true
+      try {
+        const result = await this.player.submit({ type: 'insert', after, scenes: [scene] })
+        if (this.disposed) return
+        if (!result.ok) throw new Error(result.diagnostics.map(d => d.message).join('\n'))
+        if (!append && position.scene) await this.player.seek(position)
+        else if (!this.heldForInsertion && boundary > 0 && this.state.time >= boundary) await this.player.seek(scenePosition(this.scenes, boundary))
+      } catch (error) {
+        if (original) throw error
+        // Skip failed additions and their dependents, so later original scenes still arrive.
+        insertionError = error instanceof Error ? error.message : String(error)
+        unavailable.add(scene.id)
+        continue
+      } finally { this.extendingBoundary = Infinity; this.changingTimeline = false }
+      after = scene.id
+      this.updateBarriers()
+      this.update({ ready: true })
+      await this.syncPlayback()
+    }
+    this.updateBarriers()
+    this.update({ insertionError })
+    await this.syncPlayback()
+  }
+
+  acceptSceneRequests(requests: SceneRequest[]) {
+    return this.run(async () => {
+      this.requests = requests
+      try {
+        await this.reconcileTimeline()
+      } catch (error) {
+        // A failed addition must leave the existing lesson playable.
+        this.update({ insertionError: error instanceof Error ? error.message : String(error) })
+        await this.syncPlayback()
+      }
+    })
+  }
+
+  playScene(scene: string) {
+    void this.player.unlockAudio?.().catch(error => this.update({ insertionError: String(error) }))
+    return this.run(async () => {
+      if (!this.scenes.some(existing => existing.id === scene)) return
+      this.wantsPlay = true
+      await this.player.seek({ scene, time: 0 })
+      this.update({ wantsPlay: true })
+      await this.syncPlayback()
     })
   }
 
@@ -160,7 +255,7 @@ export class LessonPlayback {
     return this.run(async () => {
       await this.player.seek(scenePosition(this.scenes, time))
       if (this.disposed) return
-      if (time >= this.state.duration && this.complete) this.wantsPlay = false
+      if (time >= this.state.duration && this.complete && !this.state.waitingForInsertion) this.wantsPlay = false
       await this.syncPlayback()
     })
   }

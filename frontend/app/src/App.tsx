@@ -11,7 +11,7 @@ import { addCourse, coursesKey, courseForSubject, loadCourses, loadRecentPlaybac
 import { addSubjectTopic, appendSubjectMaterials, deleteSubjectLesson, deleteSubjectTopic, loadSubjectPlans, removeGeneratedCourseLessons, subjectPlansKey } from './subjectPlans'
 import type { CourseLessonRef, SubjectPlans, TopicParent, TopicVideoRequest } from './subjectPlans'
 import type { StudyPlan } from './plan'
-import { lessons, formatTime, artworkForTitle } from './data'
+import { formatTime, artworkForTitle } from './data'
 import type { Lesson } from './data'
 import { deleteVideo, listVideos, mergeVideoLessons } from './videos'
 
@@ -63,7 +63,7 @@ export default function App() {
   const [playHistory, setPlayHistory] = useState(() => loadRecentPlayback(localStorage))
   const [subjectPlans, setSubjectPlans] = useState(() => loadSubjectPlans(localStorage, courses))
   const [planStorageNote, setPlanStorageNote] = useState('')
-  const allLessons = useMemo(() => [...customLessons.map(lesson => ({ ...lesson, artwork: artworkForTitle(lesson.title, lesson.artwork) })), ...lessons], [customLessons])
+  const allLessons = useMemo(() => customLessons.map(lesson => ({ ...lesson, artwork: artworkForTitle(lesson.title, lesson.artwork) })), [customLessons])
   const pendingCourseLessons = customLessons.flatMap(lesson => lesson.courseLesson && (lesson.generationStatus === 'queued' || lesson.generationStatus === 'generating') ? [lesson.courseLesson] : [])
   const hasPendingCourseVideos = pendingCourseLessons.length > 0
   useEffect(() => {

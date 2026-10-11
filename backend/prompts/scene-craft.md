@@ -12,7 +12,7 @@ Before constructing a reusable object, read its shared entity meaning, later use
 
 Choose methods by the relationship represented. Use s.connect for a bond, graph edge, or link whose endpoints belong to two objects, even when both endpoints are currently still. Animate those source objects; the binding owns the segment geometry. Use standalone lines for independent geometry such as axes or fixed reference marks. Use s.attach for a label that follows an object's center with a world-space offset; use a group when parts should share local rotation and scale. These bindings also follow authored timeline motion; they are not limited to dragging.
 
-Keeping endpoints connected and keeping their distance constant are separate requirements. s.connect does the first only. For rigid motion, translate or rotate a group with fixed child positions. For an articulated chain with fixed segment lengths, build nested groups with origins at joints and fixed local offsets, then animate joint rotations with rotateTo. Independently interpolating residue positions or morphing line endpoints can stretch or collapse links between otherwise valid end poses. A spring returns an object toward its authored target; it is not a fixed-distance constraint. Do not invent a physics solver or arbitrary per-frame callback API. For continuous deformation, use the documented retained scene.time/deform APIs when appropriate. With surface connectors, keep endpoint radii and spacing suitable: overlapping surfaces intentionally hide the segment.
+Keeping endpoints connected and keeping their distance constant are separate requirements. s.connect does the first only. For rigid motion, translate or rotate a group with fixed child positions. For an articulated chain with fixed segment lengths, build nested groups with origins at joints and fixed local offsets, then animate joint rotations with rotateTo. Independently interpolating residue positions or morphing line endpoints can stretch or collapse links between otherwise valid end poses. A spring returns an object toward its authored target; it is not a fixed-distance constraint. Do not invent a physics solver or arbitrary per-frame callback API. For continuous deformation, use the documented retained s.time and s.deform APIs when appropriate. With surface connectors, keep endpoint radii and spacing suitable: overlapping surfaces intentionally hide the segment.
 
 Re-establish s.connect and s.attach in each receiving scene using the carried endpoint/label/segment IDs, before any motion. s.keep preserves elements and a group's descendants, but previousFrame contains evaluated geometry, not binding or behavior declarations; re-declare needed behaviors too. Retrieve existing groups instead of regrouping already-parented children. A carried static segment can be connected to its existing endpoints in the receiving scene; preserve its incoming pose when establishing that relationship. Do not fade out and replace a bond just to make it follow its atoms. Reserve disconnection/reconnection for an intentional change in the represented relationship.
 
@@ -353,7 +353,10 @@ For a necessary topology change, use an explicit, explained replacement/cut.
 An ordinary numeric slider recompiles geometry at current time: use it for
 surface parameters, dimensions, tube points, generated labels or topology.
 Retained `reactive:true` sliders and `s.bind` cover only the reference's supported
-properties; they cannot rebuild meshes or update arbitrary text. Do not give a
+properties, including fixed-topology vertices/normals via `s.bind` or `s.deform`
+and material/texture replacements. They cannot change mesh connectivity or update
+arbitrary text. `s.time` supplies absolute scene-local time to pure bindings.
+Do not give a
 binding and timeline ownership of the same property. Keep dependent geometry,
 readouts and duration consistent for all planned control values. Do not add
 controls in classic mode or require interaction to understand the default path.

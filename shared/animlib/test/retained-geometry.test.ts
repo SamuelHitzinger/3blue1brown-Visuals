@@ -1,3 +1,4 @@
+import { VERTEX_FLOATS } from '../src/texture-shader.js';
 import { retainedPrecisionCases } from './retained-cases.js';
 import { describe, expect, it } from 'vitest';
 import { buildDrawItems } from '../src/render-geometry.js';
@@ -22,7 +23,7 @@ describe('retained local geometry',()=>{
     const scene=await compileSource(source), cache=new RetainedGeometry();
     const first=draw(cache,evaluateScene(scene,0)), mesh=first[0].mesh!;
     expect(first).toHaveLength(70); expect(first.every(item=>item.mesh===mesh)).toBe(true);
-    expect(mesh.vertices.length/31).toBeLessThan(mesh.indices.length/3);
+    expect(mesh.vertices.length/VERTEX_FLOATS).toBeLessThan(mesh.indices.length/3);
     const commands=composeItems(first,0).commands;
     expect(commands).toHaveLength(Math.ceil(70/MAX_INSTANCES));
     expect(commands.map(c=>'first' in c?c.instances!.length:0)).toEqual([32,32,6]);

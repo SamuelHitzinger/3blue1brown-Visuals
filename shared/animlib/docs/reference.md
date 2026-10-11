@@ -250,12 +250,18 @@ await player.submit({
 });
 ```
 
+`setSceneBarriers(ids)` replaces the host's set of scene ends that must hold, even
+when authored with `end: "advance"`. At a barrier the final frame remains visible
+with status `ended`, and `play()` cannot restart it. Clearing a barrier does not
+resume automatically; the host can seek to the newly prepared scene and play when
+appropriate. Explicit seeks and navigation remain available while waiting.
+
 The host assigns stable scene IDs. Source code supplies the scene's options and
 builder, without duplicating its host-assigned ID. Element and control IDs are
 specified inside scene code. The host can read `player.canvas` after recovery and
 observe replacements through `onCanvasChange`. `player.backend` reports the active
-backend after initialization. `registerAssets` adds audio assets for progressive
-lessons; `unlockAudio` lets a host unlock audio during a user gesture.
+backend after initialization. `registerAssets` adds audio and model assets for
+progressive lessons; `unlockAudio` lets a host unlock audio during a user gesture.
 `setDisplayPalette` remaps the existing palette slots for rendering and controls
 without recompiling or changing authored scene state. It must retain all slot names from
 the original palette. `resetView` clears live navigation and behavior offsets.
@@ -273,6 +279,10 @@ type SceneId = string;
 type SceneSource = {
   id: SceneId;
   source: string;
+  // Default: adjacent predecessor. Null: independent start. ID: earlier scene's end.
+  handoffFrom?: SceneId | null;
+  // Optional host binding that overrides the source's audio asset ID.
+  audioId?: string;
 };
 
 type Submission =
@@ -311,6 +321,7 @@ interface Player {
   submit(change: Submission): Promise<SubmitResult>;
   play(): Promise<void>;
   pause(): void;
+  setSceneBarriers(ids: SceneId[]): void;
   seek(position: { scene: SceneId; time: number }): Promise<void>;
   next(): Promise<void>;
   previous(): Promise<void>;
@@ -330,6 +341,10 @@ interface Player {
   getPan(view?: string): Vec3;
   setPan(value: Vec3, view?: string): void;
   getInteractionSnapshot(view?: string): InteractionSnapshot | undefined;
+  project(point: Vec3, view?: string):
+    { x: number; y: number; depth: number; visible: boolean; scale: number } | undefined;
+  ray(x: number, y: number, view?: string): Ray | undefined;
+  getBounds(id: string, options?: PlayerBoundsOptions): Bounds2D | Bounds3D | undefined;
   /** Coalesced redraw on the next animation frame, also while paused. */
   invalidateFrame(): void;
   getState(): PlayerState;
@@ -375,7 +390,9 @@ export default scene(
 );
 ```
 
-The execution environment provides `scene` and approved `math` helpers.
+The execution environment provides `scene`, `Color`, `palette`, and `math`/`Math`.
+`math` is the frozen standard JavaScript `Math` object, with seeded randomness;
+it is not a symbolic algebra or vector/matrix package.
 Application helpers can be ordinary functions declared in the submitted source.
 Host-side helper registration is not yet exposed. Arbitrary imports are not part
 of the source contract.
@@ -407,16 +424,28 @@ Durations must be finite and nonnegative. Conflicting writes to the same propert
 in one `play` produce a diagnostic. Two animations may affect different properties
 of the same object in parallel.
 
-Object creation is recorded at the current cursor. A `fadeIn` begins from zero
-opacity at that cursor, so compiling the scene does not briefly expose its target
-state. Animation starting values come from the object's evaluated state at the
-start of the interval. Scene-builder calls never draw intermediate frames.
+Object creation is recorded at the current cursor. When a new element's first
+scheduled opacity animation is `fadeIn()`, it starts hidden from creation until
+that fade begins, even if other animations or waits come first. This also applies
+to groups: their children inherit the group's hidden state. No explicit
+`opacity: 0` is needed for these entrances. A zero-duration `fadeIn()` reveals the
+element instantly at its scheduled time.
+
+Elements without a fade-in entrance retain their authored opacity (default `1`).
+An earlier opacity animation, such as `fadeOut()`, preserves the preceding
+visibility; a later `fadeIn()` is a reappearance. Elements carried over from a
+previous scene also retain their initial visibility. Each `fadeIn()` animates
+from zero to one at its scheduled cursor. Other animation starting values come
+from the object's evaluated state at the start of the interval. Scene-builder
+calls never draw intermediate frames.
 
 ### Elements and coordinates
 
 Basic creation methods are `circle`, `sphere`, `rectangle`, `line`, `arrow`,
 `path`, `text`, `latex`, `mesh`, and `group`. For spatial geometry, use
-`surface`, `parametricSurface`, `box`, `cylinder`, `cone`, `torus`, and `tube`.
+`surface`, `parametricSurface`, `box`, `cylinder`, `cone`, `torus`, `tube`,
+`line3D`, and `arrow3D`. `molecule` batches supplied coordinates into display
+beads, and `model` instantiates a host-registered static GLB with named parts.
 All take stable IDs. Groups supply parent transforms and operate on their children
 together. Surface callbacks run during scene compilation and produce plain mesh data.
 
@@ -584,8 +613,9 @@ export default scene({ mode: '3d', orbit: true }, s => {
 `ProceduralTexture` is exported as a TypeScript type from both package entry points:
 
 - `pattern` (required): `'checker'`, `'stripes'`, `'noise'`, `'marble'`, or `'wood'`.
-  Checker alternates 3D cells; stripes run across local X; noise is smooth 3D
-  value noise; marble distorts X bands with noise; wood distorts rings around
+  Checker alternates 3D cells; stripes run across local X; noise combines three
+  independently filtered scales of 3D value noise with subtle color variation;
+  marble distorts X bands with noise; wood distorts rings around
   local Y. These are stylized color patterns, not simulated physical materials.
 - `color` (required): the secondary `ColorValue`. The element's `fill` supplies
   the primary color. Both accept palette tokens or `{ color, opacity }`.
@@ -600,8 +630,10 @@ export default scene({ mode: '3d', orbit: true }, s => {
   checker and stripes ignore it. Independent of the scene's random seed.
 - `bumpStrength`: signed height in local scene units, from `-1` to `1`, default
   `0`. Perturbs the lighting normal using the filtered pattern as a height field.
-  Positive values raise the secondary-color regions; negative values invert the
-  relief. Start around `0.02`–`0.15`. Use matching fill and texture colors for
+  For noise, height uses weaker, finer detail independently of the broad color
+  variation. Other patterns raise the secondary-color regions. Negative values
+  invert the relief. Start around `0.02`–`0.15`, reducing strength for finer scales.
+  Use matching fill and texture colors for
   relief without color variation. Requires sphere lighting or flat/smooth mesh
   shading; works with both simple lighting and configurable materials.
 
@@ -658,9 +690,9 @@ settings for a continuous finish, or crossfade separate objects deliberately.
 
 The material model uses the renderer's camera-relative directional light and a
 procedural studio reflection approximation. It does not reflect other scene
-objects. Scene lighting can override its ambient and directional contributions. No environment maps, video textures,
-image normal/bump maps, displacement, physically based material guarantees, or bloom
-are provided. Try the **Textures** study in `/spatial.html` for pattern, palette,
+objects. Scene lighting can override its ambient and directional contributions. Procedural materials do not provide environment maps, video textures,
+image normal/bump maps, displacement, physically based material guarantees, or bloom.
+Try the **Textures** study in `/spatial.html` for pattern, palette,
 frequency, seed, bump strength, metalness, roughness, highlight, and emission controls.
 
 ### Function and parametric surfaces
@@ -796,6 +828,43 @@ vertices and `2 * (n - 1) * r` triangles; two caps add `2 * (r + 1)` vertices
 and `2 * r` triangles. A closed tube uses `n * r` vertices and `2 * n * r`
 triangles. More radial segments round the cross-section; more centerline samples
 resolve bends. Keep both modest for interactive scenes.
+
+### Molecular display beads
+
+`s.molecule(id, props)` builds batched, smooth-shaded mesh beads around supplied
+coordinates and returns one ordinary group handle. It does not create one
+individually addressable element per site or infer chemical bonds.
+
+```js
+const protein = s.molecule('protein', {
+  positions: [0, 0, 0, 3.8, 0.2, 0], // Packed XYZ; illustrative coordinates.
+  radius: 1.5, origin: [0, 0, 0], detail: 1,
+  scale: 0.2, fill: Color.GOLD,
+  material: { roughness: 0.7, specular: 0.2 },
+});
+s.play(protein.rotateTo([0, 0.8, 0]), { duration: 2 });
+s.keep(protein);
+```
+
+Props: required nonempty packed `positions` (three finite numbers per site,
+at most 10,000 sites) and positive `radius`; optional `origin` (default `[0,0,0]`),
+`detail` (`0`: 8 faces/site, default; `1`: 32 faces/site), `material`, and ordinary
+style/transforms except billboard settings. Coordinates and generated vertices
+must stay within ±1,000,000. The origin is subtracted before the group transform;
+use one origin and scale across chains of a structure. Separate calls allow
+different colors, radii, or independently moving parts. Children reserve IDs
+`${id}/batch-N`; batches obey the 20,000-vertex/triangle per-mesh ceilings and
+the aggregate geometry/source/VM budgets. The 10,000-site input cap does not
+guarantee that a scene of that size will compile or render responsively.
+
+The host-only `importPDB` export prepares legacy PDB coordinates with chain
+selection, heavy-atom or CA/P residue selection, and provenance. It does not parse
+mmCIF, include HETATM records, infer bonds, or reconstruct biological assemblies.
+The host-only `createMolecularEnvelope` produces a bounded, Gaussian-smoothed
+native mesh from supplied positions; embed its finished arrays using `s.mesh`.
+Neither helper is available inside scene code. Radii, detail, subsampling, and
+envelopes are schematic display choices, not atomic surfaces or folding physics.
+See [molecular coordinates](molecules.md) for offline preparation and scientific limits.
 
 ### Curved paths and organic shapes
 
@@ -955,8 +1024,18 @@ are ignored. Screen elements use pixel coordinates within their view.
 `attach(target, source, { offset })` binds the target's position to the source's
 center, with an optional offset in world units (pixels for screen elements).
 `connect(line, from, to, { endpoints, offset })` maintains a line/arrow's endpoints.
+By default, text/LaTeX endpoints use their **visual bounding-box centers** and
+trim the connecting segment to the boxes with a small gap. This follows the
+actual glyphs, named anchors, numeric values, morphs, and transformed groups.
+Other source kinds use their element origins. `endpoints: 'bounds'` explicitly
+selects this behavior; `endpoints: 'center'` opts out and joins element origins.
+Label padding shrinks when space is tight. If even the unpadded gap cannot fit
+a readable line (or an arrowhead plus shaft), the connector hides until there is
+room again; move the labels farther apart to make it visible. It never reverses
+direction or falls back to drawing through the expressions. Unbound lines are
+unaffected.
 `endpoints: 'surface'` clips to sphere/circle radii, accounting for scale and radius
-morphs; the default is `'center'`. A signed strand `offset` creates parallel bonds
+morphs. A signed strand `offset` creates parallel bonds
 using a deterministic perpendicular. Overlapping endpoint surfaces hide the rod.
 The connector binding owns the line's geometry. Bindings work across transformed
 groups, require the same view/coordinate space, resolve in dependency order, and
@@ -1443,7 +1522,7 @@ with supported properties. Keep an ordinary numeric slider when a control change
 text, LaTeX numbers, path geometry, mesh topology, object counts, camera settings, animation
 targets, or timing. For example, a vector-length slider that also updates a formula
 should continue using the ordinary builder path so both remain consistent. Both
-styles may coexist in one scene; this prototype does not replace or restrict the
+styles may coexist in one scene; retained bindings do not replace or restrict the
 existing authoring API. Do not simplify a planned explanation to fit the fast path.
 Reactive callbacks must use their supplied values and immutable captured data;
 mutation of closure state or consuming random values breaks reproducibility.
@@ -2132,10 +2211,15 @@ This implementation targets modest explanatory scenes. It does not establish a
 large-scene performance guarantee. TeX layout is cached, and bounded caches reuse
 parsed paths, curve tessellations, contour triangulations, and morph correspondence
 across evaluated frames. Object transforms are prepared once per element, and
-vertex data is assembled directly
-in typed arrays. Vertex generation/upload and timeline evaluation still happen
-each frame. Selective reconstruction and GPU-side animation are possible
-improvements after measuring real scenes.
+vertex data is assembled directly in typed arrays. Stable opaque geometry retains
+indexed GPU buffers; camera/object transforms update uniforms and compatible draws
+can share geometry. Transparent geometry, morphs, adaptive curves, changing
+geometry, and other ineligible draws still use CPU preparation. Timeline evaluation
+continues each frame. Ordinary controls rebuild the sequence; retained controls
+reuse the changed builder and earlier scenes but reconstruct dependent later
+scenes. Appending sources reuses the existing prefix. See [performance](performance.md)
+for historical measurements and [retained geometry](#element-animation-and-coordinates)
+for current eligibility and invalidation rules.
 
 Opaque meshes have depth testing. Translucent world geometry is sorted back to front
 per triangle, including sphere surfaces and round strokes, using the current camera
@@ -2148,8 +2232,8 @@ and emission; procedural textures mix two palette colors. This is not a
 comprehensive physically based material system. Shape matching cannot infer semantic
 part correspondence or arbitrary mesh topology.
 
-Not yet included: arbitrary font loading and general text shaping, video textures,
-environment maps, image bump/normal maps, displacement, bloom, arbitrary mesh receivers or self-shadowing, general path/text hit shapes, LaTeX split/merge mappings, a full physics solver,
+Not yet included: custom fonts and general text shaping, video textures,
+environment maps, image bump/normal maps on procedural primitives, displacement, bloom, arbitrary mesh receivers or self-shadowing, general path/text hit shapes, LaTeX split/merge mappings, a full physics solver,
 infinite scenes, branching navigation, playback-rate controls,
 in-player video recording, or mobile-browser support guarantees. Native Node
 frame/video export is provided by `tools/render-frames.mjs` and
@@ -2319,3 +2403,148 @@ is no label collision avoidance or automatic placement.
 
 The [explanatory studies](../demo/explanatory.html) demonstrate annular caps,
 independent cutaway/top views, a scalar height field, and orbit-sensitive labels.
+
+## Imported static 3D models
+
+`model(id, props)` accepts both prepared descriptor assets and imported GLB assets.
+The host supplies prepared assets through `assetCatalog` / `modelAssets` and GLB
+assets through `models` / the player's `assets` inventory. Unique asset IDs resolve
+automatically. If both inventories contain the same ID, set `source: 'prepared'`
+or `source: 'glb'`; omitting it is an error. The exported `ModelProps` union contains
+`PreparedModelProps` and `GLBModelProps`.
+
+Both formats return a `ModelHandle` with ordinary element animations, `part()`
+and `tintTo()`. Prepared parts use descriptor IDs and retain child IDs such as
+`assembly.body`; their tint changes ordinary mesh fill. Prepared image colors
+remain controlled by their explicit image texture tint. GLB parts use node IDs
+or unambiguous names and retain child IDs such as `assembly/node-2`; their tint
+multiplies imported material colors. The formats keep their existing styling
+rules; see [prepared assets](helpers-and-assets.md) for descriptor preparation.
+
+For the GLB format specifically,
+`model(id, props)` instantiates a registered GLB asset, including its named parts,
+UV coordinates, vertex colors and embedded image materials. Geometry and image
+bytes stay in host-owned resources, outside QuickJS and serialized scene frames.
+The scene builder remains synchronous and has no network access.
+
+```js
+export default scene({ mode: '3d', orbit: true }, s => {
+  const assembly = s.model('assembly', {
+    asset: 'published-model-id', position: [0, 0, 0], scale: 2,
+  });
+  s.play(assembly.fadeIn(), { duration: 0.5 });
+  const panel = assembly.part('Panel');
+  s.play(panel.moveTo([1, 0, 0]), { duration: 1 });
+  s.play(panel.tintTo(Color.BLUE), { duration: 0.5 });
+  s.play(assembly.tintTo(Color.WHITE), { duration: 0.5 }); // Original materials.
+  s.keep(assembly);
+});
+```
+
+Props: `asset`, optional `source: 'glb'`, `position`, `rotation`, uniform `scale`, `opacity`, `castShadow`,
+and optional palette `tint`. Handles support ordinary element animations,
+`part(idOrName)`, and `tintTo(color)`. Part lookup requires a unique name or its
+stable `node-N` ID. Root IDs produce stable child IDs such as
+`assembly/node-2` and `assembly/primitive-0`; later scenes can retrieve kept
+parts with `s.previous.get('assembly/node-2')`. There is no arbitrary topology
+morph, deformation callback, skeletal animation, or animation-clip playback for
+imported models in this release.
+
+Imported node transforms, including nonuniform and negative scales, are baked
+into host geometry while node translations/pivots and the hierarchy remain
+addressable. Part rotations therefore use model axes around the imported pivot,
+not the original node's rotated local axes. `moveTo` sets a position relative to
+the part's parent; the published metadata includes each initial position.
+Units and overall model size are preserved. Use the published bounds to choose
+scale and camera framing.
+
+A compiled scene may reference at most 500,000 imported triangles across all
+instances; model roots, parts, and primitives consume the ordinary object-ID budget.
+Use much smaller assets for interactive/mobile scenes. Per-asset and resident
+budgets are described in the host registration section below.
+
+Materials retain imported colors independently of the host palette. Explicit
+tints multiply imported colors in linear space; `WHITE` clears the tint. The
+renderer supports base color, tangent-space normal, metallic/roughness,
+occlusion and emissive maps, unlit materials, vertex colors, OPAQUE/MASK/BLEND,
+and double-sided faces. Maps use TEXCOORD_0 or TEXCOORD_1, wrapping, nearest/linear
+filtering, and KHR_texture_transform. Normal-map tangent frames are reconstructed
+from UV derivatives. Lighting uses animlib's studio material approximation;
+it is not an exact glTF reference PBR renderer. Mipmap filtering currently uses
+its nearest/linear base-level equivalent. No environment maps or compressed
+textures are included yet. Alpha-masked surfaces do not cast planar shadows;
+blended surfaces retain the existing triangle-sorting limitations.
+
+### Registering and delivering models
+
+The host validates a self-contained GLB and registers the resulting metadata
+with its URL. `parseModelGLB` works in Bun, Node, and browsers. `createModelGLB`
+exports host-generated named triangle parts, UVs, colors/material factors and
+optional PNG/JPEG textures. Neither function is available inside scene code.
+
+```ts
+import { parseModelGLB, createPlayer } from 'animlib';
+const { metadata } = await parseModelGLB(bytes);
+const player = createPlayer({ canvas, assets: {
+  heart: { kind: 'model', url: '/api/models/<sha256>.glb', sha256, metadata },
+} });
+// Or player.registerAssets({ heart: { kind: 'model', url, sha256, metadata } });
+```
+
+URLs belong to the host manifest, not scene source. A supplied SHA-256 is checked
+before decoding. IDs are immutable; a renewed signed URL is accepted for the
+same hash and metadata. Identical hashes share downloads, decoded images, and
+GPU resources. Assets required by each candidate scene are fully prepared
+before submission commits. Failed loading leaves the last valid sequence in
+place. All sequence assets remain cached for backward seeking, within resident
+budgets, until the player is disposed. Disposal aborts pending downloads and
+releases textures/buffers. GPU recovery reuploads the cached decoded resources.
+
+For headless authoring, pass inventories to `compileSource(source, { models:
+{ heart: metadata } })` or `new SceneSequence({ models: { heart: metadata } })`.
+Frames carry only asset/primitive references and local bounds. Bounds and model
+picking use conservative primitive boxes when image/geometry bytes are absent;
+these are not exact painted-pixel bounds. This supports layout, attachment
+origins, and drag behaviors without importing full geometry into the compiler.
+
+The accepted profile is static, triangle-based glTF 2.0 in a GLB with all buffer
+and image data embedded. PNG/JPEG images, normalized attributes, sparse and
+interleaved accessors, and KHR_mesh_quantization are supported by the importer.
+Unsupported extensions, skins, morph targets, animation clips, external URIs,
+missing UVs, invalid attributes and corrupt image dimensions produce errors.
+Convert FBX/OBJ/Blender files to this profile before publication; bake Blender
+procedural materials to image maps. The importer does not run Blender itself.
+
+Per GLB limits: 32 MB file; 200,000 vertices and triangles; 256 nodes/primitives;
+64 images, each at most 4096×4096, totaling 16 megapixels. One compiled scene may
+reference at most 500,000 imported triangles across its instances. A player
+retains at most 1,000,000 imported vertices and 32 megapixels of decoded model
+images. These are rejection ceilings, not performance targets; use much smaller
+assets for mobile scenes.
+
+### Scene-agent publication
+
+The backend supplies the scene agent with `publish_model`. It accepts either a
+public HTTPS GLB URL or a `generated` JSON string describing named mesh parts.
+The tool validates and stores immutable bytes, records source/license/attribution,
+and returns the model ID and inventory for `s.model`. Existing assets are provided
+to later scene agents and restored when generation resumes. Each lesson supports
+up to 16 published models. Downloading does not grant reuse rights: supply the
+source's applicable license and attribution.
+
+The lesson's `VideoScene.assets` manifest reaches the client alongside its source
+and audio. The client registers these assets before submitting the scene.
+`POST /api/models` accepts a raw GLB body and returns `{ id, asset }` for external
+model-generation workflows. `GET`/`HEAD /api/models/<sha256>.glb` serve immutable
+binary assets with an ETag and cache headers. Storage defaults to `data/models`;
+set `MODEL_ASSET_DIR` to persistent storage in deployment. Model bytes are cached
+independently of video jobs; deleting a video does not garbage-collect shared
+models. Automatic cross-format conversion, mesh optimization, LODs and asset thumbnails
+are future additions. Agent inspection, browser previews, and native visual review
+receive the same published model assets; isolated renderers decode verified bytes
+without fetching external URLs.
+
+Open `/model-viewer.html` in the demo to import a local GLB, orbit, highlight named
+parts, and replay rotation. `/models.html` runs focused WebGL2/WebGPU browser
+checks; `npm --workspace animlib run test:gpu` includes native Vulkan model pixel
+checks when the browser has no WebGPU adapter.

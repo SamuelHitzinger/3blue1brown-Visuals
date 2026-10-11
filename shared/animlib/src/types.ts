@@ -11,8 +11,10 @@ import type { PeptideSpec, PeptidePose } from './peptide-types.js';
 export type * from './peptide-types.js';
 export type * from './nucleic-types.js';
 export type * from './molecular-structure-types.js';
+import type { ModelAsset, ModelMetadata, ModelProps, ModelHandle, ModelReference } from './model-types.js';
+export type * from './model-types.js';
 import type { ExplanatoryGeometry, ScalarColors } from "./explanatory-types.js";
-import type { AssetGeometryRef, AssetGeometryResolver, AssetRegistry, AssetDescriptor, ModelAssetDescriptor, ModelProps, ImageProps, ImageTexture } from './asset-types.js';
+import type { AssetGeometryRef, AssetGeometryResolver, AssetRegistry, AssetDescriptor, ModelAssetDescriptor, ImageProps, ImageTexture } from './asset-types.js';
 export type * from './asset-types.js';
 export type { ClipPlane, MeshOutline, ScalarRamp, ScalarColors, SurfaceScalar, ExplanatoryGeometry } from "./explanatory-types.js";
 import type { Color, PaletteColor } from "./palette.js";
@@ -84,7 +86,8 @@ export interface Geometry extends ExplanatoryGeometry {
   asset?: AssetGeometryRef;
   /** Text/LaTeX: default depth tests glyphs; other modes act on the whole label anchor. */
   labelOcclusion?: "depth" | "overlay" | "hide" | "fade";
-  kind: "circle" | "sphere" | "rectangle" | "path" | "line" | "arrow" | "text" | "latex" | "mesh" | "group";
+  kind: "circle" | "sphere" | "rectangle" | "path" | "line" | "arrow" | "text" | "latex" | "mesh" | "group" | "model";
+  model?: ModelReference;
   radius?: number;
   width?: number;
   height?: number;
@@ -354,7 +357,7 @@ export type BehaviorSpec =
 export interface BehaviorDeclaration { target: string; behavior: BehaviorSpec; }
 export type BindingDeclaration =
   | { type: "attach"; target: string; source: string; anchor?: 'origin' | 'midpoint'; offset?: Vec3 }
-  | { type: "connect"; target: string; from: string; to: string; endpoints?: "center" | "surface"; offset?: number };
+  | { type: "connect"; target: string; from: string; to: string; endpoints?: "center" | "surface" | "bounds"; offset?: number };
 export interface Ray { origin: Vec3; direction: Vec3; }
 export interface InteractionSnapshot {
   /** Detached copy of the displayed frame and effective view camera. */
@@ -469,6 +472,7 @@ export interface ElementHandle {
   moveTo(position: Position): AnimationAction;
   rotateTo(rotation: Position | number): AnimationAction;
   scaleTo(scale: number): AnimationAction;
+  /** New elements start hidden when this is their first scheduled opacity animation. */
   fadeIn(): AnimationAction;
   fadeOut(): AnimationAction;
   morphTo(geometry: Geometry, options?: { map?: Record<string, string> }): AnimationAction;
@@ -476,7 +480,6 @@ export interface ElementHandle {
 }
 
 export interface SceneContext {
-  model(id: string, props: ModelProps): ElementHandle;
   modelInfo(asset: string): ModelAssetDescriptor;
   image(id: string, props: ImageProps): ElementHandle;
   circle(id: string, props?: ElementProps): ElementHandle;
@@ -490,6 +493,8 @@ export interface SceneContext {
   text(id: string, props: ElementProps): ElementHandle;
   latex(id: string, props: ElementProps): ElementHandle;
   mesh(id: string, props: ElementProps): ElementHandle;
+  /** Resolve either model inventory; duplicate asset IDs require an explicit source. */
+  model(id: string, props: ModelProps): ModelHandle;
   /** Sample z = fn(x, y) into a shaded triangle mesh. */
   surface(id: string, props: SurfaceProps): ElementHandle;
   /** Sample a two-parameter map into a shaded triangle mesh. */
@@ -521,7 +526,7 @@ export interface SceneContext {
   group(id: string, children: ElementHandle[], options?: { isolated?: boolean; castShadow?: boolean }): ElementHandle;
   behavior(target: ElementHandle, behavior: BehaviorSpec): void;
   attach(target: ElementHandle, source: ElementHandle, options?: { anchor?: 'origin' | 'midpoint'; offset?: Position }): void;
-  connect(target: ElementHandle, from: ElementHandle, to: ElementHandle, options?: { endpoints?: "center" | "surface"; offset?: number }): void;
+  connect(target: ElementHandle, from: ElementHandle, to: ElementHandle, options?: { endpoints?: "center" | "surface" | "bounds"; offset?: number }): void;
   play(actions: AnimationAction | AnimationAction[], options: { duration: number; ease?: Ease }): void;
   wait(seconds: number): void;
   keep(element: ElementHandle): void;
@@ -545,7 +550,14 @@ export interface SceneContext {
 
 export type ViewContext = Omit<SceneContext, "view">;
 
-export interface SceneSource { id: string; source: string }
+export interface SceneSource {
+  id: string;
+  source: string;
+  /** Omitted: previous scene. Null: independent scene. ID: an earlier scene's end. */
+  handoffFrom?: string | null;
+  /** Host-owned audio asset binding, independent of IDs used by generated source. */
+  audioId?: string;
+}
 export type Submission =
   | { type: "load"; scenes: SceneSource[] }
   | { type: "replace"; scene: string; source: string }
@@ -580,6 +592,7 @@ export interface PlayerState {
 export interface CompileInput {
   /** Descriptor-only catalog; no bytes or resolver capabilities enter the VM. */
   assetCatalog?: AssetDescriptor[];
+  models?: Record<string, ModelMetadata>;
   /** Defaults to THREE_BLUE_ONE_BROWN_PALETTE. */
   palette?: ColorPalette;
   previous?: Frame;
@@ -587,7 +600,7 @@ export interface CompileInput {
   seed?: number;
 }
 
-export interface Asset { kind: "audio"; url: string }
+export type Asset = { kind: "audio"; url: string } | ModelAsset;
 export interface PlayerOptions {
   /** Host-owned static models; existing audio assets remain independent. */
   modelAssets?: AssetRegistry;

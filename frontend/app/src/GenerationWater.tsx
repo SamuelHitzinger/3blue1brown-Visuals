@@ -1,4 +1,4 @@
-import { useId } from 'react'
+import { useId, type CSSProperties } from 'react'
 import './generation-water.css'
 
 const glassMilliliters = 250
@@ -33,11 +33,15 @@ export default function GenerationWater({ milliliters }: { milliliters: number }
   const overflow = totalGlasses > maximumGlasses
   const description = `Illustrative water comparison: approximately ${volume.format(amount)} mL, with 250 mL per glass. Based on Le Chat's published 45 mL per 400 output tokens; not measured water use for this model.${overflow ? ` Showing ${maximumGlasses} glasses; + represents additional water.` : ''}`
 
-  return <div className="generation-water" role="img" aria-label={description} title={description} data-milliliters={amount}>
+  // One row up to six glasses, otherwise two balanced rows (7 → 4 + 3, 12 → 6 + 6), never a stray remainder.
+  const columns = shownGlasses <= 6 ? shownGlasses : Math.ceil(shownGlasses / 2)
+
+  return <div className="generation-water" role="img" aria-label={description} title={description} data-milliliters={amount}
+    style={{ '--generation-water-columns': columns } as CSSProperties}>
     <span className="generation-water-approximately" aria-hidden="true">≈</span>
     <span className="generation-water-glasses" aria-hidden="true">
       {Array.from({ length: shownGlasses }, (_, index) => <WaterGlass key={index} index={index} fill={Math.min(1, Math.max(0, amount / glassMilliliters - index))} />)}
-      {overflow && <span className="generation-water-overflow">+</span>}
     </span>
+    <span className="generation-water-overflow" aria-hidden="true">{overflow ? '+' : ''}</span>
   </div>
 }

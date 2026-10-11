@@ -26,9 +26,9 @@ export function buildSceneAgentInput(pkg: NarrationScenePackage, sceneId: string
     endMode: index === (pkg.totalScenes ?? pkg.scenes.length) - 1 ? "hold" as const : "advance" as const,
     scene: structuredClone(pkg.scenes[index]), previousFrame };
 }
-export async function validateSceneAgainstNarration(source: string, pkg: NarrationScenePackage, sceneId: string, previousFrame?: Frame) {
+export async function validateSceneAgainstNarration(source: string, pkg: NarrationScenePackage, sceneId: string, previousFrame?: Frame, models?: import("animlib/core").CompileInput["models"]) {
   const input = buildSceneAgentInput(pkg, sceneId, previousFrame);
-  const compiled = await compileSource(source, { previous: previousFrame }, { sampleTime: "end" });
+  const compiled = await compileSource(source, { previous: previousFrame, models }, { sampleTime: "end" });
   if (compiled.options.audio !== input.audioAssetId || compiled.options.end !== input.endMode) {
     throw new NarrationError("SCENE_AUDIO", "Scene must use its assigned narration asset and end mode.");
   }

@@ -10,7 +10,7 @@ import { interactionSource } from '../demo/interaction.js';
 import { compositionCases } from '../test/composition-cases.js';
 import { generalControlSources, reactiveCases } from '../test/reactive-cases.js';
 import { lessonScenes } from '../../../frontend/app/src/lessonScenes.js';
-import { lessons } from '../../../frontend/app/src/data.js';
+import { lessons } from '../../../frontend/app/tests/fixtures/lessons.js';
 import type { SceneSource } from '../src/types.js';
 
 if (!process.argv[2]) throw new Error('Pass the baseline dist/core.js path');

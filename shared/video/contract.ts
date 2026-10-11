@@ -3,6 +3,8 @@ export type VideoMode = 'classic' | 'interactive'
 /** Versioned delivery contract; source remains available for interactive recompilation. */
 export interface VideoRequest {
   title: string
+  /** Host-owned contextual follow-up: at most one scene. */
+  sceneRequest?: boolean
   topic: string
   documents: { name: string; text: string }[]
   /** Viewing preference supplied to the storyline planner; omitted means classic. */
@@ -13,6 +15,7 @@ export interface VideoRequest {
 }
 
 export interface VideoScene {
+  assets?: Record<string, import("../animlib/src/model-types").ModelAsset>
   id: string
   index: number
   source: string

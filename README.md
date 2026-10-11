@@ -58,6 +58,10 @@ The library supports shaded solids, swept tubes, sampled function/parametric
 surfaces, procedural textures, and configurable metalness, roughness, highlights,
 and emission. The [capability brief](shared/animlib/docs/capabilities.md) and
 [API reference](shared/animlib/docs/reference.md) describe current behavior and limits.
+Static GLB models can include embedded image textures, UV maps, material factors,
+and named parts. Scene agents can publish downloaded or generated models using
+`publish_model`; clients receive asset manifests and fetch immutable GLBs separately.
+Container model storage lives in `/data/videos/models` on the existing video volume.
 
 Browser code imports the player from `animlib`; the Bun backend and other Node
 consumers can import scene compilation and state evaluation from `animlib/core`

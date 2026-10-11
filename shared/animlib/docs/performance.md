@@ -7,9 +7,10 @@ The baseline experiments below only install temporary profiling hooks and restor
 them afterward. A subsequent [reactive slider prototype](reactive-controls.md)
 implements and measures a callback path; the baseline results here predate it.
 
-The measurements are historical, not current performance promises. Procedural
-texture/material support now packs 31 floats (124 bytes) per vertex instead of
-15 floats (60 bytes), including for plain geometry. The CPU benchmark should be
+The measurements are historical, not current performance promises. The current
+packed vertex format uses 35 floats (140 bytes), including for plain geometry;
+the original baseline used 15 floats (60 bytes), and the texture/material and
+retained measurements below used 31 floats (124 bytes). The CPU benchmark should be
 rerun for current workloads; textures and optional bump mapping add fragment work without extra triangles.
 
 ## Measurement conditions
@@ -225,7 +226,8 @@ local-space meshes and 80-byte object transform records. Compatible consecutive
 draws instance up to 32 objects, within WebGL2's minimum vertex-uniform limits.
 Untextured spheres share across radii; round two-point bonds/arrows share across
 translation/orientation when length, width and style match. Textured geometry
-keeps its authored local texture coordinates. Vertex format remains **31 floats**.
+keeps its authored local texture coordinates. These measurements used **31 floats**
+per vertex; the current format uses **35 floats** after imported-model support.
 
 Keys include effective geometry arrays/normals, texture/material values, style,
 opacity and the resolved palette, rather than scene or element identity alone.
@@ -268,9 +270,10 @@ Integration gates also preserve the CPU path for explanatory geometry fields
 a world text/LaTeX label with defined occlusion other than `depth` (including either
 morph endpoint), disables retention for the frame: these stages need **final
 world-space occluder/caster triangles**. Hide/fade visibility and shadow semantics
-belong to the accompanying feature changes and need joint integration tests.
+belong to the accompanying feature changes. The isolated retained measurements
+below do not establish their combined performance or integration coverage.
 
-Matched baseline: `aaf8249ebd15e4522968c1e1a49cc6d4b0115446`, using its current
+Matched baseline: `aaf8249ebd15e4522968c1e1a49cc6d4b0115446`, using its then-current
 31-float format. The interaction probe's obsolete `drawItems` hook was removed;
 both versions wait for the next animation frame after input. `refreshMs` below
 measures CPU work inside the refresh, excluding that scheduling wait. Same Chrome

@@ -292,6 +292,29 @@ describe('reactive player controls', () => {
 const wait = (seconds: number, end = "hold") => `export default scene({end:"${end}"},s=>s.wait(${seconds}));`;
 
 describe("player navigation and live source updates", () => {
+  it('holds a requested insertion boundary before advancing and cannot replay it while waiting', async () => {
+    const player = createPlayer({ canvas: {} as HTMLCanvasElement });
+    try {
+      await player.submit({ type: 'load', scenes: [{ id: 'a', source: wait(1, 'advance') }, { id: 'b', source: wait(2, 'advance') }] });
+      player.setSceneBarriers(['a']);
+      await player.play();
+      advance(1);
+      expect(player.getState()).toMatchObject({ scene: 'a', time: 1, status: 'ended' });
+      await player.play();
+      advance(1);
+      expect(player.getState()).toMatchObject({ scene: 'a', time: 1, status: 'ended' });
+      player.setSceneBarriers([]);
+      await player.seek({ scene: 'b', time: 0 });
+      await player.play();
+      advance(0.5);
+      expect(player.getState()).toMatchObject({ scene: 'b', time: 0.5, status: 'playing' });
+      await player.seek({ scene: 'a', time: 0 });
+      await player.play();
+      advance(1);
+      expect(player.getState()).toMatchObject({ scene: 'b', time: 0, status: 'playing' });
+    } finally { player.dispose(); }
+  });
+
   it('schedules stateful behaviors while paused and stops when they settle', async () => {
     let ticks=0;
     const disposed=vi.fn();

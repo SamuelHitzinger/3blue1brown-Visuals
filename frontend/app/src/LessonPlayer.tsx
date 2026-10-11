@@ -6,6 +6,8 @@ import { formatTime } from './data'
 import { LessonPlayback } from './lessonPlayback'
 import type { LessonPlaybackState } from './lessonPlayback'
 import { lessonScenes } from './lessonScenes'
+import { useSceneRequests } from './useSceneRequests'
+import { insertedSceneId } from '../../../shared/video/scene-requests'
 import { watchVideo } from './videos'
 import type { Player } from 'animlib'
 import CanvasQuestion, { useCanvasQuestion } from './CanvasQuestion'
@@ -42,10 +44,22 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
     getScene: () => {
       const player = renderer.current
       if (!player) return undefined
+      player.pause()
       const current = player.getState()
-      return { id: current.scene, time: current.time, frame: player.getInteractionSnapshot()?.frame }
+      const snapshot = player.getInteractionSnapshot()
+      return { id: current.scene, time: current.time, frame: snapshot?.frame, camera: snapshot?.camera, controls: current.controls }
     },
   })
+  const { requests, connection: requestConnection, submit: submitRequest } = useSceneRequests(lesson.videoId ?? lesson.id, playback, state.ready)
+  const latestRequest = requests.at(-1)
+  const pendingRequests = requests.filter(request => request.video.status === 'queued' || request.video.status === 'generating').length
+  const submitQuestion = async () => {
+    if (!draft) return
+    const local = !lesson.videoId ? lessonScenes(lesson, { background: 'BLACK', ink: 'WHITE', accent: 'BLUE' }).find(scene => scene.id === draft.context.scene?.id) : undefined
+    await submitRequest({ question: draft.question, context: { ...draft.context, lessonId: lesson.videoId ?? lesson.id },
+      ...(local ? { localScene: { ...local, duration: lesson.duration } } : {}) })
+    closeQuestion(draft.id)
+  }
   const recorded = useRef(false)
   useEffect(() => {
     if (!recorded.current && state.ready && state.playing && state.time > 0 && !startupError && !state.error) {
@@ -62,7 +76,7 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
   const enabled = state.ready && !error && !menuOpen && !overlayOpen && !questionOpen
   // Scene/audio handoffs briefly pause the renderer without pausing the lesson.
   const playbackRequested = Boolean(state.wantsPlay) && !state.ended && !error
-  const autoHideControls = enabled && playbackRequested
+  const autoHideControls = enabled && playbackRequested && !state.buffering
   const revealCursor = useCallback(() => {
     clearTimeout(cursorTimer.current)
     setCursorHidden(false)
@@ -154,7 +168,9 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
     void action?.catch(() => {})
   }
 
-  const caption = captionsEnabled ? captionAt(manifest?.scenes ?? [], state.time) : ''
+  const captionScene = manifest?.scenes.find(scene => scene.id === state.sceneId)
+    ?? requests.flatMap(request => request.video.scenes.map(scene => ({ ...scene, id: insertedSceneId(request.id, scene.id) }))).find(scene => scene.id === state.sceneId)
+  const caption = captionsEnabled && captionScene ? captionAt([captionScene], state.sceneTime ?? 0) : ''
   return <div className={`player-page ${captionsEnabled ? 'has-captions' : ''} ${state.playing ? 'is-playing' : ''} ${cursorHidden && autoHideControls ? 'is-player-idle' : ''}`} ref={screen} tabIndex={-1} onContextMenu={openQuestion} onPointerMove={revealCursor} onPointerDown={revealCursor} onKeyDown={revealCursor} onFocusCapture={revealCursor}>
     <div className="player-menu-anchor"><button className={`icon-button player-menu-toggle ${menuOpen ? 'is-open' : ''}`} aria-label="Open video menu" aria-expanded={menuOpen} aria-controls="navigation-drawer" onClick={onMenu}><MenuGlyph/></button>{menuContent}</div>
     {(connection || (state.ready && state.generationError)) && <p className="player-notice" role="status">{state.generationError || connection}</p>}
@@ -163,10 +179,16 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
       {captionsEnabled && <div className="lesson-subtitles" aria-label="Subtitles">{caption}</div>}
       {generating && !state.ready && !error && <GenerationProgress usage={manifest.tokenUsage} queued={manifest.status === 'queued'}/>}
       {!generating && !state.ready && !error && <p className="player-status" role="status">{manifest?.error || state.generationError || 'Loading your lesson…'}</p>}
-      {!generating && state.ready && state.buffering && <p className="player-status" role="status">Preparing the next scene…</p>}
+      {state.ready && state.buffering && <p className="player-status" role="status">{state.waitingForInsertion ? 'Waiting for your requested scenes…' : 'Preparing the next scene…'}</p>}
       {error && <div className="player-status player-error" role="alert"><strong>This lesson couldn’t play.</strong><p>{error}</p><button className="secondary-button" onClick={() => setAttempt(old => old + 1)}>Try again</button></div>}
     </div>
-    {draft && <CanvasQuestion draft={draft} screen={screen} onChange={changeQuestion} onClose={closeQuestion}/>}
+    {draft && <CanvasQuestion key={draft.id} draft={draft} screen={screen} onChange={changeQuestion} onClose={closeQuestion} onSubmit={submitQuestion}/>}
+    {(latestRequest || requestConnection || state.insertionError) && <div className="scene-request-status" role="status">
+      <span>{state.insertionError ? 'The added scenes could not play. Your lesson is still available.' : requestConnection || (pendingRequests ? `Creating your follow-up scenes${pendingRequests > 1 ? ` (${pendingRequests} requests)` : ''}… Playback will wait at the insertion point.`
+        : latestRequest?.video.status === 'failed' ? 'Could not finish the added scenes. Right-click to try a new request.'
+        : `${latestRequest?.video.scenes.length ?? 0} scene${latestRequest?.video.scenes.length === 1 ? '' : 's'} added after your selected scene.`)}</span>
+      {!!latestRequest?.video.scenes.length && !state.insertionError && <button disabled={!state.ready || !playback?.hasScene(insertedSceneId(latestRequest.id, latestRequest.video.scenes[0].id))} onClick={() => { closeQuestion(); void playback?.playScene(insertedSceneId(latestRequest.id, latestRequest.video.scenes[0].id)) }}>Play added scenes <ArrowRight size={14}/></button>}
+    </div>}
     <div className="player-controls">
       <div className="player-control-row">
         <button className="icon-button" disabled={!enabled} aria-label={state.ended ? 'Replay lesson' : playbackRequested ? 'Pause lesson' : 'Play lesson'} onClick={() => { void playback?.toggle() }}>{state.ended ? <RotateCcw size={19}/> : playbackRequested ? <Pause size={19} fill="currentColor"/> : <Play size={19} fill="currentColor"/>}</button>

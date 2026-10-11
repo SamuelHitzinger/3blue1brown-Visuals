@@ -1,5 +1,5 @@
 import { afterEach, expect, test } from 'bun:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { agentConfig } from '../src/agents/config.js';
@@ -81,3 +81,28 @@ for (const outputMode of [undefined, 'text', 'validated-reference'] as const) {
     expect(tasks[2].prompt).toContain('saved-narration.beat-1');
   });
 }
+
+test('scene agent publishes generated models, validates references and persists its asset manifest', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'aha-model-generation-')); roots.push(root);
+  const prior = process.env.MODEL_ASSET_DIR; process.env.MODEL_ASSET_DIR = join(root, 'assets');
+  const videoId=crypto.randomUUID(), signal=new AbortController().signal;
+  let publishedId='';
+  const stop=new Error('Published and validated');
+  const narration={available:true,async submit(){return {id:packet.id,status:'complete'};},async scenePackage(){return packet;}} as unknown as NarrationService;
+  const runner={async run(task:AgentTask){
+    if(task.prompt.startsWith('Write'))return JSON.stringify(lesson);
+    if(task.prompt.startsWith('Review'))return JSON.stringify({schemaVersion:1,verdict:'pass',summary:'Correct',issues:[],checks:['One object']});
+    expect(task.publishModel).toBeFunction();
+    const published=await task.publishModel!({generated:JSON.stringify({parts:[{name:'Panel',vertices:[[0,0,0],[1,0,0],[0,1,0]],triangles:[[0,1,2]],baseColor:[1,0,0,1]}]})},signal) as {id:string};
+    publishedId=published.id;
+    const input=JSON.parse(task.prompt.slice(task.prompt.indexOf('\n')+1));
+    await task.validate!(`export default scene({audio:${JSON.stringify(input.audioAssetId)},end:${JSON.stringify(input.endMode)}},s=>{s.model('panel',{asset:${JSON.stringify(published.id)}});s.wait(${input.scene.durationSec});});`);
+    throw stop;
+  }};
+  try {
+    await expect(createPiGenerator(runner,narration,root)({title:'Counting',topic:'One dot',documents:[]},0,{videoId,owner:'test',signal})).rejects.toBe(stop);
+    const saved=JSON.parse(await readFile(join(root,videoId,'model-assets.json'),'utf8'));
+    expect(saved[publishedId].kind).toBe('model');expect(saved[publishedId].metadata.parts[0].name).toBe('Panel');
+    expect((await readFile(join(root,'assets',`${saved[publishedId].sha256}.glb`))).byteLength).toBeGreaterThan(100);
+  }finally{if(prior===undefined)delete process.env.MODEL_ASSET_DIR;else process.env.MODEL_ASSET_DIR=prior;}
+});

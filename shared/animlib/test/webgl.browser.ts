@@ -12,7 +12,7 @@ import { waveSource } from './dynamic-surface-cases.js';
 import { reactiveCases } from './reactive-cases.js';
 import { lightingCases } from './lighting-cases.js';
 import { materialCases, materialSource, bumpSource } from './material-cases.js';
-import { textureCases, texturePixelIssues } from './texture-cases.js';
+import { textureCases, texturePixelIssues, noiseFilteringSources, noiseFilteringIssues } from './texture-cases.js';
 import { retainedPrecisionCases,retainedCases, occlusionGateSource, occlusionGateFrames } from './retained-cases.js';
 import { RetainedGeometry } from '../src/retained-geometry.js';
 import { transparencyCases } from './transparency-cases.js';
@@ -21,7 +21,7 @@ import { initialSources } from '../demo/scenes.js';
 import { interactionSource } from '../demo/interaction.js';
 import { plantSource } from '../demo/plant.js';
 import { lessonScenes } from '../../../frontend/app/src/lessonScenes.js';
-import { lessons } from '../../../frontend/app/src/data.js';
+import { lessons } from '../../../frontend/app/tests/fixtures/lessons.js';
 import type { ColorValue, SceneSource } from '../src/types.js';
 
 // Deliberately runs in a real browser, independently of the mocked Vitest suite.
@@ -232,6 +232,12 @@ export async function runWebGLTests() {
       await load(materialSource('{emissive:"PURE_BLUE",emissiveIntensity:0.5}','mesh'));
       const rgb=at(draw(),canvas,320,240);
       assert(rgb[0]===0&&rgb[1]===0&&Math.abs(rgb[2]-128)<=1,'Wrong emission color/intensity');
+    });
+    await test('noise filters fine relief before broad color and converges to its mean',async()=>{
+      const images:Uint8Array[]=[];
+      for(const source of noiseFilteringSources){await load(source);images.push(draw());}
+      const issues=noiseFilteringIssues(images.map(image=>(x,y)=>at(image,canvas,x,y)));
+      assert(issues.length===0,issues.join('; '));
     });
     for(const {pattern,source} of textureCases) await test(`procedural ${pattern} fragments and translation`,async()=>{
       await load(source);const original=draw();

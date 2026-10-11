@@ -208,7 +208,7 @@ test("ElevenLabs uses normalized speech, masks provider messages, and only retri
   const output = await provider.synthesize({ text: "64", previousText: "Before", nextText: "After" });
   expect(sent).toHaveLength(2); expect(sleeps).toEqual([1000]);
   expect(sent[0].body).toMatchObject({ text: "64", previous_text: "Before", next_text: "After", model_id: "eleven_multilingual_v2",
-    voice_settings: { stability: 0.35, similarity_boost: 0.75, style: 0.35, use_speaker_boost: true, speed: 1.06 } });
+    voice_settings: { stability: 0.15, similarity_boost: 0.75, style: 0.9, use_speaker_boost: true, speed: 1.12 } });
   expect(alignWords(output.normalizedAlignment, "u", 0).words.map(w => w.text)).toEqual(["sixty", "four"]);
   const auth = createElevenLabs(settings, "secret", (async () => Response.json({ detail: "secret echo" }, { status: 401 })) as unknown as typeof fetch);
   await expect(auth.synthesize({ text: "Hi", previousText: "", nextText: "" })).rejects.toMatchObject({ code: "PROVIDER_AUTH" });

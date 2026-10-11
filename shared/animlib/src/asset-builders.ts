@@ -1,4 +1,4 @@
-import type { AssetDescriptor, ImageProps, ModelAssetDescriptor, ModelProps } from './asset-types.js';
+import type { AssetDescriptor, ImageProps, ModelAssetDescriptor, PreparedModelProps } from './asset-types.js';
 import type { Geometry } from './types.js';
 
 /** Self-contained descriptor-only factory installed verbatim in QuickJS. */
@@ -9,7 +9,7 @@ export function createAssetBuilders(catalog: AssetDescriptor[] = []) {
       if(!asset||asset.kind!=='model') throw new Error(`Missing model asset: ${id}`);
       return JSON.parse(JSON.stringify(asset));
     },
-    model(props: ModelProps): {id:string; geometry:Geometry}[] {
+    model(props: PreparedModelProps): {id:string; geometry:Geometry}[] {
       const asset=catalog.find(asset=>asset.id===props?.asset);
       if(!asset||asset.kind!=='model') throw new Error(`Missing model asset: ${props?.asset}`);
       return asset.parts.map(part=>({id:part.id,geometry:{kind:'mesh',asset:{id:asset.id,hash:asset.hash,part:part.id},shading:props.shading??'smooth',...(part.imageTexture?{imageTexture:JSON.parse(JSON.stringify(part.imageTexture))}:{})}}));

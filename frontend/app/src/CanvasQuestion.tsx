@@ -1,24 +1,13 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import type { MouseEvent, RefObject } from 'react'
+import type { SceneRequestContext } from '../../../shared/video/scene-requests'
 import { ArrowUpRight } from './Icons'
 import './canvas-question.css'
 
 type Point = { x: number; y: number }
 const questionColors = ['butter', 'sage', 'lavender', 'blue', 'peach'] as const
 
-export interface CanvasQuestionContext {
-  lessonId: string
-  lessonTitle: string
-  subject: string
-  time: number
-  label: string
-  elementId?: string
-  // Coordinates refer to the drawing surface, independent of the popup position.
-  point: Point
-  normalizedPoint: Point
-  surface: { width: number; height: number }
-  scene?: { id: string | null; time: number; frame?: unknown }
-}
+export type CanvasQuestionContext = SceneRequestContext
 
 export interface CanvasQuestionDraft {
   id: number
@@ -37,8 +26,8 @@ export function useCanvasQuestion({ lesson, time, disabled = false, getScene }: 
 }) {
   const [draft, setDraft] = useState<CanvasQuestionDraft | null>(null)
   const nextColor = useRef(0)
-  const closeQuestion = useCallback(() => {
-    setDraft(current => current && !current.closing ? { ...current, closing: true } : current)
+  const closeQuestion = useCallback((id?: number) => {
+    setDraft(current => current && (id === undefined || current.id === id) && !current.closing ? { ...current, closing: true } : current)
   }, [])
   const changeQuestion = useCallback((question: string) => {
     setDraft(current => current ? { ...current, question } : null)
@@ -59,7 +48,7 @@ export function useCanvasQuestion({ lesson, time, disabled = false, getScene }: 
 
   const openQuestion = (event: MouseEvent<HTMLDivElement>) => {
     if (disabled || !(event.target instanceof Element)) return
-    if (event.target.closest('button,input,textarea,select,[contenteditable],.canvas-question,.player-controls,.player-menu-anchor,.player-status,.player-notice,.lesson-complete')) return
+    if (event.target.closest('button,input,textarea,select,[contenteditable],.canvas-question,.player-controls,.player-menu-anchor,.player-status,.player-notice,.scene-request-status,.lesson-complete')) return
     event.preventDefault()
     const screen = event.currentTarget.getBoundingClientRect()
     const surface = (event.currentTarget.querySelector('canvas') ?? event.currentTarget).getBoundingClientRect()
@@ -67,7 +56,7 @@ export function useCanvasQuestion({ lesson, time, disabled = false, getScene }: 
     const x = Math.max(0, Math.min(surface.width, event.clientX - surface.left))
     const y = Math.max(0, Math.min(surface.height, event.clientY - surface.top))
     const subject = event.target.closest('[data-question-subject]')
-    // This local draft is the future request payload. No network or answer generation.
+    // Capture the displayed scene before placing the request box.
     setDraft({
       id: nextColor.current,
       closing: false,
@@ -88,12 +77,16 @@ export function useCanvasQuestion({ lesson, time, disabled = false, getScene }: 
   return { draft, openQuestion, closeQuestion, changeQuestion }
 }
 
-export default function CanvasQuestion({ draft, screen, onChange, onClose }: {
+export default function CanvasQuestion({ draft, screen, onChange, onClose, onSubmit }: {
   draft: CanvasQuestionDraft
   screen: RefObject<HTMLDivElement | null>
   onChange: (question: string) => void
   onClose: () => void
+  onSubmit: () => Promise<void>
 }) {
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+  const submitting = useRef(false)
   const panel = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLInputElement>(null)
   const [position, setPosition] = useState({ left: 0, top: 0, x: 0, y: 0 })
@@ -145,10 +138,18 @@ export default function CanvasQuestion({ draft, screen, onChange, onClose }: {
   return <>
     <span key={`pin-${draft.id}`} className={`canvas-question-pin ${draft.closing ? 'is-closing' : ''}`} style={{ left: position.x, top: position.y }} aria-hidden="true"/>
     <div key={draft.id} ref={panel} className={`canvas-question ${draft.color} ${draft.closing ? 'is-closing' : ''}`} style={{ left: position.left, top: position.top, transformOrigin: `${position.x - position.left}px ${position.y - position.top}px` }} role="dialog" aria-label="Ask about this moment" aria-hidden={draft.closing || undefined} inert={draft.closing}>
-      <form className="canvas-question-field" onSubmit={event => event.preventDefault()}>
-        <input ref={input} aria-label="Question about the selected region" placeholder="Ask about this…" value={draft.question} onChange={event => onChange(event.target.value)} maxLength={2000} autoComplete="off"/>
-        <button type="submit" disabled aria-label="Ask question (coming soon)" title="Answers are coming soon"><ArrowUpRight size={16}/></button>
+      <form className="canvas-question-field" onSubmit={event => {
+        event.preventDefault()
+        if (!draft.question.trim() || submitting.current) return
+        submitting.current = true; setPending(true); setError('')
+        void onSubmit().catch(error => setError(error instanceof Error ? error.message : 'Could not add scenes. Try again.'))
+          .finally(() => { submitting.current = false; setPending(false) })
+      }}>
+        <input ref={input} aria-label="Question about the selected region" placeholder="Explain this, or make a toy…" disabled={pending} value={draft.question} onChange={event => onChange(event.target.value)} maxLength={2000} autoComplete="off"/>
+        <button type="submit" disabled={pending || !draft.question.trim()} aria-label="Add scenes" title="Add scenes after this scene"><ArrowUpRight size={16}/></button>
       </form>
+      <p className="canvas-question-hint" role="status">{pending ? 'Sending your request…' : 'New scenes will follow this scene.'}</p>
+      {error && <p className="canvas-question-error" role="alert">{error}</p>}
     </div>
   </>
 }

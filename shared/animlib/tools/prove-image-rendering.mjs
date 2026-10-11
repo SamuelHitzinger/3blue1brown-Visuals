@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {loadAssetRegistry} from './load-assets.mjs';
 import {withOfflineScene} from '../dist/core.js';
 import {CanvasRenderer} from '../dist/renderer.js';
+import {VERTEX_FLOATS} from '../dist/render-geometry.js';
 const base=fileURLToPath(new URL('../fixtures/suzanne/textured/',import.meta.url));
 const output=resolve(process.argv[2]??'../../data/animlib-expansion/image-proof');
 const registry=await loadAssetRegistry([join(base,'suzanne-textured-image-0.json'),join(base,'suzanne-textured.json')],{colorPolicy:'source'});
@@ -29,5 +30,5 @@ try{await withOfflineScene(source,{},async sampler=>{
   for(const time of [0,1,2]){current={time,textureUploads:0,textureBytes:0,bufferBytes:0,draws:0,instances:0};const start=performance.now();renderer.render(sampler.sample(time),sampler.scene.options);await device.queue.onSubmittedWorkDone();current.cpuAndQueueWallMs=performance.now()-start;samples.push(current);}
 },{modelAssets:registry});if(errors.length)throw new Error(errors.join('\n'));}
 finally{renderer.dispose();target.destroy();device.destroy();}
-const result={backend:'native-webgpu',instances:8,logicalVertices:94464,packedFloatsPerVertex:34,payload,samples,afterDisposal:registry.stats(),timingNote:'CPU evaluation/submission plus queue-completion wall time, not GPU timestamp-query timing.'};
+const result={backend:'native-webgpu',instances:8,logicalVertices:94464,packedFloatsPerVertex:VERTEX_FLOATS,payload,samples,afterDisposal:registry.stats(),timingNote:'CPU evaluation/submission plus queue-completion wall time, not GPU timestamp-query timing.'};
 await mkdir(output,{recursive:true});await writeFile(join(output,'native-upload-measurements.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result,null,2));

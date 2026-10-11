@@ -1,3 +1,5 @@
+import { ModelStore } from '../../../shared/animlib/dist/model-store.js';
+import type { RenderModelAssets } from '../model-assets.js';
 // Trusted browser entry: receives only QuickJS-evaluated data, never generated JavaScript.
 import { CanvasRenderer } from '../../../shared/animlib/dist/renderer.js';
 import type { CompiledScene } from 'animlib/core';
@@ -8,12 +10,19 @@ const canvas = document.createElement('canvas');
 canvas.width = 960; canvas.height = 540;
 canvas.style.width = '960px'; canvas.style.height = '540px';
 document.body.append(canvas);
-const renderer = new CanvasRenderer(canvas);
+let files:Record<string,string>={};
+const models=new ModelStore({}, {read:async asset=>Uint8Array.from(atob(files[asset.url]??''),c=>c.charCodeAt(0))});
+const renderer = new CanvasRenderer(canvas,undefined,models);
 let options: CompiledScene['options'];
 let renderError: Error | undefined;
 renderer.onError = error => { renderError = error; };
 const api = {
-  async prepare(compiled: CompiledScene) {
+  async prepare(compiled: CompiledScene, payload?: RenderModelAssets) {
+    files=payload?.files??{};
+    // The server verified the published hashes before crossing this isolated boundary.
+    // about:blank has no SubtleCrypto; decode the trusted bytes without a second digest.
+    models.register(Object.fromEntries(Object.entries(payload?.assets??{}).map(([id,a])=>[id,{...a,sha256:undefined}])));
+    await models.prepare([compiled]);
     options = compiled.options;
     await renderer.prepare([compiled]);
     if (renderer.backend !== 'webgl2') throw new Error('Preview requires the production WebGL2 renderer.');

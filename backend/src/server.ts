@@ -1,3 +1,4 @@
+import { ModelAssets } from './model-assets.js';
 import { realpath, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +19,7 @@ function inside(root: string, path: string) {
   return suffix !== ".." && !suffix.startsWith(`..${sep}`) && !isAbsolute(suffix);
 }
 
-export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService) {
+export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets()) {
   const root = resolve(frontendDir);
   let videos = videoService;
   const narration = narrationRoutes(narrationService);
@@ -43,6 +44,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     try { path = decodeURIComponent(new URL(request.url).pathname); }
     catch { return Response.json({ detail: "Invalid URL" }, { status: 400 }); }
     if (path.includes("\0")) return Response.json({ detail: "Invalid URL" }, { status: 400 });
+    if (path === '/api/models' || path.startsWith('/api/models/')) return models.handle(request);
     if (path === '/api/study-plans' || path.startsWith('/api/study-plans/')) return studyPlans(request);
     if (path === '/api/videos' || path.startsWith('/api/videos/')) {
       videos ??= new VideoService(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite');

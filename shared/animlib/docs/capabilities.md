@@ -51,6 +51,12 @@ Keep these instructions in nonspoken planning; they are not narration.
   unlit or stylized shading, and planar image cards. The static glTF/GLB converter
   accepts a documented subset; it does not reproduce full PBR, animation or skins.
   Plan an import/preparation step if the needed licensed asset is absent.
+- **Imported static models:** registered GLB assets can include named parts,
+  UV-mapped image materials, vertex colors, and image normal maps on both GPU
+  backends. The scene agent publishes/downloads assets through `publish_model`,
+  then references their IDs with `s.model`. Parts can move, rotate, fade, and
+  receive palette tints; assets persist through scene handoffs. No skinning,
+  animation clips, imported topology morphs, or deformation of imported models.
 - **Surface appearance:** spheres and meshes support checker, stripe, noise,
   marble, and wood patterns using two palette colors. Patterns stay attached under
   object transforms. Adjustable procedural bump perturbs lighting normals for
@@ -228,10 +234,21 @@ Scene code can calculate modest examples with JavaScript and provided math
 helpers; it cannot import packages, fetch data, access the surrounding page, or
 run asynchronous builders.
 
+Hosts can inspect object/group bounds in local, world, camera, or screen space,
+and detect projected glyph overlaps between distinct text/LaTeX elements.
+Inspection is opt-in and does not reposition labels or enforce clearance from
+shapes. Animation inspection samples settled text by default and can miss
+collisions between samples; it is not automatic layout or proof of visual quality.
+
 ## Current boundaries
 
-- No video textures, general glTF/PBR fidelity, photorealistic materials,
-  image bump/normal maps, displacement, environment maps, self-shadowing, arbitrary mesh shadow receivers, bloom, point/spot lights,
+- Imported models require self-contained static triangle GLBs with embedded
+  PNG/JPEG images. FBX/OBJ/Blender files need conversion outside animlib. Each GLB
+  is limited to 200,000 vertices/triangles; scenes allow 500,000 imported triangles
+  across instances. Imported materials retain their own colors; palette tints
+  highlight them. These ceilings are not recommended scene sizes.
+- No video textures, photorealistic materials,
+  image bump/normal maps on procedural primitives, displacement, environment maps, self-shadowing, arbitrary mesh shadow receivers, bloom, point/spot lights,
   full physics solver, or automatic extrusion. Prefer schematic geometry.
 - SVG support accepts path geometry, not complete SVG files or their styling.
   Filled contours must be closed, simple, and nonintersecting; nested contours
@@ -264,21 +281,24 @@ run asynchronous builders.
   Section caps require closed nonbranching contours and do not repair
   self-intersections/nonmanifold meshes. Fine outlines follow finite tessellation.
   Anchor label modes ignore translucent occluders and do not place labels
-  automatically. Scalar ramps require sufficient surface sampling for detail. Compiler
-  ceilings include 2,000 object IDs per builder and 32 view regions; these are
-  hard limits, not recommended scene sizes.
+  automatically. Scalar ramps require sufficient surface sampling for detail.
+  Compiler ceilings include 256,000 JavaScript source characters, 2,000 object IDs
+  per builder, 100,000 added geometry points, and 32 view regions, with a default
+  200 ms execution budget and 32 MiB VM memory budget. Molecular batching still
+  consumes mesh/aggregate/source budgets. These are hard limits, not recommended
+  scene sizes.
 
 The VM memory ceiling remains 32 MiB, source length 256,000 string units,
 compiled JSON 8 MiB and each reactive update 1 MiB. Aggregate scene geometry is
 limited to 100,000 points; repeated asset vertices still count. Prepared reuse
 reduces payload and upload duplication, not these limits or the need to measure.
 
-Choose a separate visual contract for each requested reference: mathematical
-construction, graph/frontier explanation, neural event/rate/state, logistic
-residual emphasis, and biological mechanism have different palettes, typography
-and attention sequences. Helpers alone do not establish reference-style fidelity.
-Research footage and screenshots do not grant a license to reuse film assets.
+Use the current mathematical visual direction for new explanatory scenes:
+stable object identity, restrained semantic colors, local notation and readable
+construction. Other reference channels inform motion and staging; their palettes
+and typography do not replace that default. Helpers alone do not establish
+reference-style fidelity. Research footage and screenshots do not grant a license to reuse film assets.
 
-For implementation details, the scene author receives the full
+For implementation details, the scene author receives the authoring sections of the
 [API reference](reference.md). Maintain this summary alongside changes to that
 reference and the public [scene types](../src/types.ts).

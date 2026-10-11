@@ -132,6 +132,47 @@ The separate `npm --workspace animlib run test:gpu` suite checks real native Web
 WebGL antialiasing depends on the browser/context; edge pixels can differ between
 backends. This does not change authored colors or scene/timeline semantics.
 
+## Contextual scene requests
+
+Right-click a lesson's drawing surface to pause at that moment and request an
+explanation or an interactive exploration. Submit with Enter or the arrow button.
+The request captures the scene ID, scene-local time, click position relative to the
+canvas, displayed frame, effective camera, and control values. Generation receives
+that context together with the selected scene's authoritative source/narration and
+original lesson material. For browser-local samples, the browser supplies the sample
+scene source. Empty or ambiguous regions are interpreted using the surrounding
+concept, rather than assuming an exact object hit.
+
+`POST /api/videos/:lessonId/scene-requests` accepts `{question, context, localScene?}`
+with an `Idempotency-Key`, returning HTTP 202 and `{id, afterSceneId, question, video}`.
+Requests are limited to 2,000 characters and the complete JSON body to 1 MB. GET on
+the same URL restores the ordered requests and current job snapshots. Each child
+job uses the existing durable generation queue, narration, audio endpoints, and
+manifest SSE stream. Each request produces at most one scene and does not create
+another library card or thumbnail. Insertion-specific authoring guidance sets no
+duration or word-count target. The original video manifest remains unchanged; playback composes
+its timeline with the saved additions. Deleting a server video deletes its additions
+and their assets too. Like the existing library, additions are shared across visitors.
+Already-open viewers restore other visitors' additions when reopening the lesson.
+
+Scenes are inserted after the selected scene, including when the selected scene is
+itself an addition. Playback holds the selected scene's final frame if the next
+requested scene is still generating or preparing, before the original continuation
+or its audio starts. Multiple requests keep their insertion order; playback waits
+at each pending insertion point as needed. Playback resumes automatically when ready,
+unless the user has paused or opened an overlay. Seeking away cancels that automatic
+jump. Users can also choose **Play added scenes**. Current position and playback
+intent are preserved when scenes are inserted elsewhere in the timeline.
+A source's optional `handoffFrom` names an earlier scene (or null for an independent
+start), preserving the original continuation's object state when another sequence
+is inserted between scenes. `audioId` binds each generated scene to its own asset
+namespace. Interactive control changes still propagate within their original group.
+Generation or preparation failures leave the original lesson available.
+
+The Pi pipeline interprets the request and authors the actual explanation/toy.
+`VIDEO_GENERATOR=simulated` exercises the complete flow with the existing diagnostic
+slider scenes and test tone; it does not interpret the request or generate speech.
+
 ## Generation token usage
 
 `VideoManifest.tokenUsage` is optional for compatibility with existing and simulated

@@ -1,3 +1,4 @@
+import type { RenderModelAssets } from '../model-assets.js';
 import { mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { compileSource } from 'animlib/core';
@@ -36,6 +37,7 @@ export interface VisualGateInput {
   directory: string; index: number; videoId: string; signal: AbortSignal;
   validate: (source: string) => Promise<unknown>;
   renderFrames?: FrameRenderer;
+  models?: RenderModelAssets;
 }
 
 /** Mandatory pre-publication gate: every repair is validated, rendered and independently reviewed. */
@@ -73,8 +75,8 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
     const attemptDirectory=join(directory,`scene-${index}.visual`,String(attempt));
     await mkdir(attemptDirectory,{recursive:true});
     await atomicWrite(join(attemptDirectory,'candidate.js'),source);
-    const compiled=await compileSource(source,{previous:input.previousFrame});
-    const evidence=await (options.renderFrames??renderSceneFrames)({source,previousFrame:input.previousFrame,times:sampleReviewTimes(compiled),directory:attemptDirectory,signal});
+    const compiled=await compileSource(source,{previous:input.previousFrame,models:Object.fromEntries(Object.entries(options.models?.assets??{}).map(([id,a])=>[id,a.metadata]))});
+    const evidence=await (options.renderFrames??renderSceneFrames)({source,previousFrame:input.previousFrame,models:options.models,times:sampleReviewTimes(compiled),directory:attemptDirectory,signal});
     signal.throwIfAborted();
     const images=await Promise.all(evidence.sheets.map(async sheet=>({type:'image' as const,mimeType:'image/png',data:(await readFile(sheet.path)).toString('base64')})));
     images.push({type:'image',mimeType:'image/jpeg',data:style.toString('base64')});

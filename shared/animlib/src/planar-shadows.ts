@@ -21,8 +21,8 @@ function clip(points: Vec3[], axis: number, edge: number, sign: number): Vec3[] 
 }
 function triangles(points: Vec3[], output: number[], color: number[], lit: number): void {
   for (let i = 1; i + 1 < points.length; i++) for (const p of [points[0], points[i], points[i + 1]]) {
-    const vertex=new Array<number>(VERTEX_FLOATS).fill(0);
-    vertex.splice(0,7,...p,...color);vertex[9]=1;vertex[11]=lit;
+    const vertex = new Array<number>(VERTEX_FLOATS).fill(0);
+    vertex.splice(0, 3, ...p); vertex.splice(3, 4, ...color); vertex[9] = 1; vertex[11] = lit;
     output.push(...vertex);
   }
 }
@@ -60,7 +60,7 @@ export function addPlanarShadows(items: GeometryDrawItem[], value: Frame['lighti
     [0, 0, 0, 1], 0);
   const result: DrawItem[] = [...items, { depth, vertices: new Float32Array(receiver), transparent: false, screen: false, cameraDependentGeometry: true, groups: [receiverGroup] }];
   if (!shadow || direction[1] <= 0.001 || direct * (shadow.opacity ?? 0.35) <= 0) return result;
-  const casters = items.filter(item => item.castShadow && !item.screen && !item.transparent && !item.groups?.some(g => g.opacity < 0.999999));
+  const casters = items.filter(item => item.castShadow && item.modelMaterial?.alpha !== 'MASK' && !item.screen && !item.transparent && !item.groups?.some(g => g.opacity < 0.999999));
   // Orthonormal disk around L, so softness is independent of source orientation.
   const axis: Vec3 = Math.abs(direction[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0];
   const cross = (a: Vec3, b: Vec3): Vec3 => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];

@@ -1,3 +1,6 @@
+import { ModelAssets } from '../model-assets.js';
+import { createModelGLB } from 'animlib/core';
+import type { ModelAsset, GeneratedModel } from 'animlib/core';
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { createHash } from "node:crypto";
@@ -51,6 +54,36 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     if (!subtitles && !narration.available) throw new AgentError("NARRATION", "Configure ElevenLabs before generating a narrated video.");
     const directory = join(root, videoId);
     await mkdir(directory, { recursive: true, mode: 0o700 });
+    const modelStore = new ModelAssets();
+    const assetsPath = join(directory, 'model-assets.json');
+    const assets: Record<string,ModelAsset> = JSON.parse(await saved(assetsPath) ?? '{}');
+    const modelMetadata = () => Object.fromEntries(Object.entries(assets).map(([id,a]) => [id,a.metadata]));
+    let publication: Promise<unknown> = Promise.resolve();
+    const publishModel: NonNullable<AgentTask['publishModel']> = (input, toolSignal) => {
+      const work = publication.then(async () => {
+      toolSignal.throwIfAborted();
+      if (Boolean(input.url) === Boolean(input.generated)) throw new Error('Provide exactly one of url or generated');
+      if (Object.keys(assets).length >= 16) throw new Error('Lesson model limit reached (16)');
+      let published;
+      const provenance = { license: input.license, attribution: input.attribution };
+      if (input.url) published = await modelStore.importURL(input.url, provenance, toolSignal);
+      else {
+        const generated = JSON.parse(input.generated!) as GeneratedModel;
+        for (const part of generated.parts ?? []) if (part.texture) {
+          const texture = part.texture as unknown as {base64:string;mime:'image/png'|'image/jpeg'};
+          if (typeof texture.base64 !== 'string') throw new Error('Generated texture requires base64');
+          part.texture = {bytes:new Uint8Array(Buffer.from(texture.base64,'base64')),mime:texture.mime};
+        }
+        published = await modelStore.publish(await createModelGLB(generated), { ...provenance, source:'agent-generated' });
+      }
+      toolSignal.throwIfAborted();
+      assets[published.id] = published.asset;
+      await atomicWrite(assetsPath, JSON.stringify(assets));
+      return {id:published.id, ...published.asset.metadata};
+      });
+      publication = work.catch(() => undefined);
+      return work;
+    };
     const fingerprint = createHash("sha256").update(JSON.stringify({ owner, request })).digest("hex");
     const prior = await saved(join(directory, "request.sha256"));
     if (prior && prior !== fingerprint) throw new AgentError("CONTEXT", "Saved generation belongs to a different request.");
@@ -130,13 +163,13 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       const cached = verifiedSources.get(key);
       if (cached) return cached;
       try {
-        const { compiled, finalFrame } = await validateSceneAgainstNarration(normalizedSource, pkg, scene.id, previousFrame);
+        const { compiled, finalFrame } = await validateSceneAgainstNarration(normalizedSource, pkg, scene.id, previousFrame, modelMetadata());
         if (Math.abs(compiled.duration - scene.durationSec) > 1e-6) throw new Error(`The scene must last ${scene.durationSec} seconds; it currently lasts ${compiled.duration}. Add the remaining time with a final s.wait().`);
         if (!legacyPlan) validateViewingMode(compiled, packet.videoMode);
         if (plan) validateScenePlan(compiled, finalFrame, plan.scenes[index]);
         if (checkQuality) validateSceneQuality(compiled, { legacyOrbit: instructionVersion === undefined || instructionVersion < 2 });
         if (verifiedSources.size >= 4) verifiedSources.delete(verifiedSources.keys().next().value!);
-        const verified = { candidate: { source: normalizedSource, compiled, previous: previousFrame }, finalFrame };
+        const verified = { candidate: { source: normalizedSource, compiled, previous: previousFrame, models: modelMetadata() }, finalFrame };
         verifiedSources.set(key, verified);
         return verified;
       } catch (error) {
@@ -177,7 +210,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
         ...(options.preview ? { preview: (async (output, preview, toolSignal) => {
           const start = performance.now(), candidate = (await validateCandidate(assemble(output))).candidate;
           const samples = await sampleInWorker(candidate, preview, toolSignal);
-          const frames = await options.preview!.render(candidate.compiled, samples, toolSignal);
+          const frames = await options.preview!.render(candidate.compiled, samples, toolSignal, await modelStore.forRendering(assets));
           const elapsedMs = performance.now() - start;
           const prefix = await record('preview', candidate, { times: frames.map(f => f.time), focusObjectId: preview.focusObjectId, elapsedMs });
           for (let i = 0; i < frames.length; i++) {
@@ -188,20 +221,21 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
         }) satisfies NonNullable<AgentTask['sceneTools']>['preview'] } : {}),
       };
       const task = {
+        publishModel,
         outputMode: options.outputMode ?? 'text',
-        systemPrompt: `${instructions.replace("Return animlib SceneSource { id, source }.", "Return only JavaScript with one default-exported scene, without a JSON wrapper.")}\nFor video delivery, end your timeline at exactly durationSec using a final s.wait() as needed. Validate your complete output using inspect_scene or validate_output before finishing. The host output/timing contract and viewing-mode policy take priority over illustrative API examples; implement the approved plan within those constraints.
+        systemPrompt: `Use publish_model when imported or custom mesh assets help the explanation. Existing model assets are listed in the input. Geometry/image bytes belong in assets, never scene code.\n${instructions.replace("Return animlib SceneSource { id, source }.", "Return only JavaScript with one default-exported scene, without a JSON wrapper.")}\nFor video delivery, end your timeline at exactly durationSec using a final s.wait() as needed. Validate your complete output using inspect_scene or validate_output before finishing. The host output/timing contract and viewing-mode policy take priority over illustrative API examples; implement the approved plan within those constraints.
 Before final submission, call inspect_scene on your complete candidate. Reuse the returned candidateId for later tool calls; send source again only when revising it. Inspect relevant reveal/settled timestamps and specific object bounds as needed. Reports are advisory: distinguish intentional entrances, exits and overlaps from defects. Four inspections are available.
 ${options.preview ? 'Then call preview_scene to see up to six actual rendered frames. Choose important reveals, settled layouts and at least one transition midpoint using local narration times. Two preview batches are available: review once, repair concrete defects if needed, and use the second to verify. Optional focusObjectId crops one object. Avoid cosmetic iteration. If rendering is unavailable, use analytical feedback and finish; never claim you saw unavailable frames.' : 'Visual preview is unavailable for this run; use analytical feedback.'}
 Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned controls during repairs. Inspection and preview never submit the scene.\n\n${viewingMode}\n\n${craft}\n\n${quality}\n\n${reference}`,
-        prompt: `Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify(packet)}`, validate, signal,
+        prompt: `Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify({ ...packet, modelAssets: modelMetadata() })}`, validate, signal,
         logContext: { videoId, sceneIndex: index, stage: 'scene' as const }, sceneTools,
       };
       await atomicWrite(join(directory, `scene-${index}.instructions.json`), JSON.stringify(instructionSnapshot(task.systemPrompt)));
       await atomicWrite(join(directory, `scene-${index}.prompt.md`), `${task.systemPrompt}\n\n${task.prompt}`);
-      await atomicWrite(join(directory, `scene-${index}.input.json`), JSON.stringify(packet));
+      await atomicWrite(join(directory, `scene-${index}.input.json`), JSON.stringify({ ...packet, modelAssets: modelMetadata() }));
       source = assemble(await logStage({ videoId, sceneIndex: index, stage: 'scene' }, () => runner.run(task)));
       source = await (options.visualGate ?? reviewGeneratedScene)({ runner, source, input: packet, task,
-        directory, index, videoId, signal, validate: validateSource });
+        directory, index, videoId, signal, validate: validateSource, models: await modelStore.forRendering(assets) });
       const finalFrame = await validateSource(source);
       signal.throwIfAborted();
       await atomicWrite(path, source);
@@ -213,7 +247,7 @@ Still samples do not establish continuous motion, occlusion-free visibility, int
       logEvent('scene.reused', { videoId, sceneIndex: index, cached: true });
     }
     const audio = subtitles ? wav(silence(scene.durationSec)) : new Uint8Array(await readFile(await narration.audio(owner, pkg.id, scene.audio.id)));
-    return { audio, scene: { id: scene.id, index, source, duration: scene.durationSec,
+    return { audio, scene: { id: scene.id, index, source, assets: structuredClone(assets), duration: scene.durationSec,
       audio: { id: scene.audio.id },
       narration: scene.utterances.map(utterance => utterance.text).join(' '), visualDescription: scene.context,
       words: scene.utterances.flatMap(utterance => utterance.words.map(word => ({ id: word.id, text: word.text, start: word.startSec, end: word.endSec }))),

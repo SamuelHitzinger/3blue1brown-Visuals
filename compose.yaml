@@ -20,6 +20,7 @@ services:
       PORT: "8080"
       APP_REVISION: ${AHA_REVISION:?Set AHA_REVISION}
       VIDEO_DB_PATH: /data/videos/${AHA_VIDEO_DB_NAME:-videos.sqlite}
+      MODEL_ASSET_DIR: /data/videos/models
       NARRATION_DATA_DIR: /data/narration
       NARRATION_ALLOW_LOCAL: "0"
       PI_CODING_AGENT_DIR: /data/agents/pi

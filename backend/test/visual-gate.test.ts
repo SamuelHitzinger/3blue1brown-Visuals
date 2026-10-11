@@ -6,6 +6,7 @@ import { compileSource } from 'animlib/core';
 import { reviewGeneratedScene, sampleReviewTimes } from '../src/agents/visual-gate.js';
 import type { AgentTask } from '../src/agents/runtime.js';
 import { sourceHash } from '../src/agents/visual-edits.js';
+import { createModelGLB, parseModelGLB } from 'animlib/core';
 const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(root=>rm(root,{recursive:true,force:true})));});
 const source=`export default scene({audio:'voice',end:'hold'},s=>{s.text('label',{text:'DNA',position:[5,0]});s.wait(4);});`;
@@ -16,6 +17,20 @@ async function fixture(){const directory=await mkdtemp(join(tmpdir(),'visual-gat
   input:{audioAssetId:'voice',endMode:'hold' as const,scene:{id:'beat-1',durationSec:4},planning:{}},
   validate:async(value:string)=>{await compileSource(value);},
 };}
+test('visual verification compiles model references and forwards assets to its renderer',async()=>{
+  const input=await fixture();
+  const bytes=await createModelGLB({parts:[{name:'Panel',vertices:[[0,0,0],[1,0,0],[0,1,0]],triangles:[[0,1,2]]}]});
+  const {metadata}=await parseModelGLB(bytes);
+  const models={assets:{panel:{kind:'model' as const,url:'/fixture.glb',metadata}},files:{'/fixture.glb':Buffer.from(bytes).toString('base64')}};
+  const source=`export default scene({},s=>{s.model('panel',{asset:'panel'});s.wait(4);});`;
+  let rendered=false;
+  const result=await reviewGeneratedScene({...input,source,models,
+    validate:async source=>{await compileSource(source,{models:{panel:metadata}});},
+    runner:{async run(){return JSON.stringify({approved:true,findings:[]});}},
+    renderFrames:async args=>{expect(args.models).toEqual(models);rendered=true;const path=join(input.directory,'fixture.png');await writeFile(path,'PNG proof fixture');return {backend:'test',frames:[{path,time:1,width:960,height:540}],sheets:[{path,width:960,height:540,times:[1],columns:1}]};},
+  });
+  expect(result).toBe(source);expect(rendered).toBe(true);
+});
 test('image rejection produces an automatically repaired candidate that must be rendered and approved again',async()=>{
   const input=await fixture(),rendered:string[]=[],tasks:AgentTask[]=[];
   const renderFrames=async({source,directory}: {source:string;directory:string})=>{

@@ -16,3 +16,6 @@ coverage/
 data/
 .aha/
 **/auth.json
+
+# scenegen wrapper output (scene candidates)
+out/

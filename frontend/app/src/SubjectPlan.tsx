@@ -10,9 +10,11 @@ export default function SubjectPlan({ subject, materials, onAdd, onAddLesson, on
   const [adding, setAdding] = useState(false)
   useEffect(() => { if (uploadRequest) setAdding(true) }, [uploadRequest])
   const chapters = materials.flatMap(material => material.plan.chapters.map(chapter => ({ ...chapter, material })))
+  const hasLessons = chapters.some(chapter => chapter.segments.length > 0)
+  const showUpload = !hasLessons || adding
   return <section id="subject-plan" className={`subject-plan subject-${subject.color}`} aria-labelledby="subject-plan-title">
-    <div className="subject-plan-heading"><h2 id="subject-plan-title">{subject.title}</h2>{materials.length > 0 && !adding && <button className="subject-add-material" onClick={() => setAdding(true)}><Plus size={16}/> Add material</button>}</div>
-    {(!materials.length || adding) && <MaterialUpload subject={subject} nextNote={materials.length + 1} onCancel={materials.length ? () => setAdding(false) : undefined} onAdd={plans => { onAdd(plans); setAdding(false) }}/>}
+    <div className="subject-plan-heading"><h2 id="subject-plan-title">{subject.title}</h2>{!showUpload && <button className="subject-add-material" onClick={() => setAdding(true)}><Plus size={16}/> Add material</button>}</div>
+    {showUpload && <MaterialUpload subject={subject} nextNote={materials.length + 1} onCancel={hasLessons ? () => setAdding(false) : undefined} onAdd={plans => { onAdd(plans); setAdding(false) }}/>}
     {chapters.length > 0 && <div className="subject-chapters">{chapters.map((chapter, index) => <section className="subject-chapter" key={`${chapter.material.id}-${chapter.id}`} aria-labelledby={`chapter-${chapter.material.id}-${chapter.id}`}>
       <div className="subject-chapter-heading"><span className="chapter-number">{String(index + 1).padStart(2, '0')}</span><div><span className="subject-plan-kicker">Topic {index + 1}</span><h3 tabIndex={-1} id={`chapter-${chapter.material.id}-${chapter.id}`}>{chapter.title}</h3></div></div>
       <LessonGrid subject={subject} material={chapter.material} chapter={chapter} chapterIndex={index} pendingLessons={pendingLessons} onAdd={title => onAddLesson({ materialId: chapter.material.id, chapterId: chapter.id }, title)} onDelete={onDeleteLesson} onMakeVideo={onMakeVideo}/>

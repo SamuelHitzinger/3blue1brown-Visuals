@@ -47,6 +47,8 @@ export interface AgentRunMetrics {
   validations: AgentValidationMetrics[];
 }
 export interface AgentTask {
+  /** Host-owned asset publication, scoped to this generation job. */
+  publishModel?: (input: { url?: string; generated?: string; license?: string; attribution?: string }, signal: AbortSignal) => Promise<unknown>;
   systemPrompt: string;
   prompt: string;
   validate?: (output: string) => Promise<void>;
@@ -187,8 +189,17 @@ export class PiAgentRunner implements AgentRunner {
           } catch (error) { return { content: [{ type: 'text', text: validationMessage(error) }], details: {}, isError: true }; }
         },
       });
+      const modelTools = task.publishModel ? [defineTool({
+        name: 'publish_model', label: 'Publish 3D model',
+        description: 'Publish a self-contained static GLB from a public HTTPS URL, or generate a GLB from JSON geometry. Provide exactly one of url or generated. Generated JSON: {parts:[{name,vertices:[[x,y,z]],triangles:[[a,b,c]],uv?:[[u,v]],position?:[x,y,z],baseColor?:[r,g,b,a],metalness?:number,roughness?:number,unlit?:boolean,texture?:{base64:string,mime:"image/png"|"image/jpeg"}}]}. Returns a stable asset ID, bounds, named part IDs and material inventory. Use that ID with s.model; never put binary data in scene source. Preserve source attribution/license for downloaded assets.',
+        parameters: Type.Object({ url: Type.Optional(Type.String({maxLength:4096})), generated: Type.Optional(Type.String({maxLength:1000000})), license: Type.Optional(Type.String({maxLength:2000})), attribution: Type.Optional(Type.String({maxLength:2000})) }),
+        async execute(_id, input) {
+          try {const result=await task.publishModel!(input,signal);return {content:[{type:'text' as const,text:JSON.stringify(result)}],details:{}};}
+          catch(error){return {content:[{type:'text' as const,text:validationMessage(error)}],details:{},isError:true};}
+        },
+      })] : [];
       const customTools: ToolDefinition[] =
-        task.validate ? [...(mode === 'submit-only' ? [] : [validationTool]), ...(isSubmission ? [submissionTool] : [])] : [];
+        [...modelTools, ...(task.validate ? [...(mode === 'submit-only' ? [] : [validationTool]), ...(isSubmission ? [submissionTool] : [])] : [])];
       if (task.sceneTools) {
         if (!task.validate) throw new AgentError('CONFIG', 'Scene inspection requires a host validator.');
         const select = async ({ output, candidateId }: { output?: string; candidateId?: string }) => {

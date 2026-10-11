@@ -20,7 +20,10 @@ local databases are excluded from the Docker build context.
 
 Newly generated scenes pass a mandatory image review before publication. The
 runtime also ships Node, native `webgpu`, and Mesa Vulkan drivers for headless
-rendering. The image build runs `node shared/animlib/tools/smoke-frames.mjs` as the
+rendering. Vulkan drivers come from Debian's signed `bookworm-backports` repository
+([package](https://packages.debian.org/bookworm-backports/mesa-vulkan-drivers));
+Bookworm's original Mesa 22 driver lacks dynamic indexing required by native WebGPU.
+The image build runs `node shared/animlib/tools/smoke-frames.mjs` as the
 application user: both 16:9 and 4:3 must contain real rendered pixels. A missing
 adapter or incompatible native dependency fails the build rather than deploying
 a server that cannot review scenes. Local development needs Node and a compatible
@@ -110,6 +113,9 @@ host ownership and persist across replacement:
 - SQLite: `/srv/apps/3yellow3white-actions/data/videos.sqlite` by default, mounted
   with its whole directory (including WAL/SHM files). An existing absolute
   `VIDEO_DB_PATH` in the runtime files is honored by mounting its parent.
+- Model GLBs: `/data/videos/models` inside the container, using the same video
+  bind mount. `MODEL_ASSET_DIR` is set by Compose; no additional host directory
+  or mount is needed. Model files remain shared when individual videos are deleted.
 - Narration: `/var/lib/3yellow3white/narration` by default, or the existing absolute
   `NARRATION_DATA_DIR`. Mounted at `/data/narration` inside the container.
 - Pi: `/srv/apps/3yellow3white-actions/agents` by default, or absolute

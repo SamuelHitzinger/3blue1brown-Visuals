@@ -15,7 +15,8 @@ test('retains every authoring section verbatim while excluding host and developm
     between('## 3. Writing a scene', '## 7. Live source submissions'),
     between('### Execution environment', '## 8. One audio track per scene'),
     between('## 8. One audio track per scene', '## 9. Engine structure and verification'),
-    between('## 10. Current boundaries and next steps'),
+    between('## 10. Current boundaries and next steps', '### Registering and delivering models'),
+    between('### Scene-agent publication'),
   ].join('\n\n') + '\n');
   for (const heading of ['### Player API', '### TypeScript surface', '## 7. Live source submissions', '## 9. Engine structure and verification']) {
     expect(output).not.toContain(heading);
@@ -32,7 +33,7 @@ test('retains every authoring section verbatim while excluding host and developm
 test('retains the complete texture/material contract including reactive controls and limits', () => {
   const output = buildAuthoringReference(reference);
   for (const term of ['bumpStrength', 'metalness', 'roughness', 'emissiveIntensity',
-    'localPosition * scale + offset', 'whole-object', 'No environment maps, image/video textures']) {
+    'localPosition * scale + offset', 'whole-object', 'Procedural materials do not provide environment maps, video textures']) {
     expect(output).toContain(term);
   }
 });
@@ -97,9 +98,36 @@ test('retains deformation topology, sandbox, and snapshot authoring rules verbat
 });
 test('retains explanatory geometry APIs, topology limits, palette ramps and label semantics', () => {
   const output = buildAuthoringReference(reference);
-  expect(output).toContain(between('## Sections, feature edges, scalar fields, and label depth'));
+  expect(output).toContain(between('## Sections, feature edges, scalar fields, and label depth', '## Imported static 3D models'));
   for (const text of ['dot(normal, localPosition) <= offset', 'nested holes', 'creaseAngle',
     'scalarColors', 'uniformly spaced palette', "'hide'", "'fade'", 'same view']) {
+    expect(output).toContain(text);
+  }
+});
+
+test('retains model authoring and agent publication while excluding host loading APIs', () => {
+  const output = buildAuthoringReference(reference);
+  expect(output).toContain(between('## Imported static 3D models', '### Registering and delivering models'));
+  expect(output).toContain(between('### Scene-agent publication'));
+  expect(output).not.toContain('### Registering and delivering models');
+  expect(output).toContain("assembly.part('Panel')");
+  expect(output).toContain('publish_model');
+});
+
+test('includes callable molecular authoring guidance without relying on a linked document', () => {
+  const output = buildAuthoringReference(reference);
+  expect(output).toContain(between('### Molecular display beads', '### Curved paths and organic shapes'));
+  for (const text of ["s.molecule('protein'", 'positions:', 'radius:', 'origin:',
+    'detail:', '10,000 sites', '${id}/batch-N', 'Neither helper is available inside scene code.']) {
+    expect(output).toContain(text);
+  }
+});
+
+test('retains domain helpers, prepared asset authoring and host ownership limits', () => {
+  const output = buildAuthoringReference(reference);
+  expect(output).toContain(between('### Domain helpers and prepared assets', '## 7. Live source submissions'));
+  for (const text of ['s.sampledState', 's.molecularBackbone', 's.peptidePose', 's.nucleicDuplex',
+    's.modelInfo', 's.image', 'descriptor-only', "colorPolicy:'source'", 'sampler.sample(time)']) {
     expect(output).toContain(text);
   }
 });

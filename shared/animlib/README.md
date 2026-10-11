@@ -66,7 +66,10 @@ and RNA docking/emergence provide explicit schematic motion. See
 [proof index](demo/expansion/README.md) for examples, limits and reviewed scope.
 The [capability showcase](docs/showcase.md) presents the reviewed operations as
 one chaptered film, with separate rendering supplements and reuse links.
-Internal dependencies are allowed; the public API requires no
+`s.molecule` also batches supplied coordinates into display beads; host-only
+`importPDB` and `createMolecularEnvelope` prepare deposited coordinates and
+schematic smooth envelopes. See [molecular coordinates](docs/molecules.md) for
+provenance and scientific limits. Internal dependencies are allowed; the public API requires no
 framework.
 
 Spatial builders include `surface` for `z = f(x, y)`, `parametricSurface` for
@@ -75,7 +78,9 @@ and `tube` for a constant-radius sweep through 3D points. They produce ordinary
 mesh handles with smooth shading by default (flat for boxes) and no stroke.
 Raw `mesh` remains unlit unless given `shading: 'flat'` or `'smooth'`; both GPU
 backends support the same simple directional lighting. Geometry-changing controls
-use ordinary numeric sliders to rebuild meshes, not retained `s.bind` callbacks.
+can use retained `s.deform` or `s.bind` callbacks to update existing vertices
+without changing topology. Use ordinary numeric sliders to rebuild sample counts,
+holes, connectivity, and dependent text or formulas.
 See [shaded meshes and sampled surfaces](docs/reference.md#shaded-meshes) for
 examples, periodic seams, invalid-sample holes, segment defaults, and geometry
 budgets. Start with modest sampling; the 20,000-vertex/20,000-triangle per-mesh
@@ -86,10 +91,12 @@ marble, and wood patterns, plus `material` for metalness, roughness, specular
 highlights, and emissive color/intensity. Patterns use local XYZ and two palette
 colors on both GPU backends; `texture.bumpStrength` adds raised or recessed relief
 to the lighting normals. Metal reflections approximate a studio environment.
-Ordinary controls can rebuild their parameters. Host-prepared RGBA8 images and UV0
-base-color textures also work on both backends, with explicit host source-color
-permission. Image normal maps, displacement, scene reflections, and bloom remain
-unsupported. See
+Ordinary controls can rebuild their parameters; retained bindings can replace
+`material` and `texture` settings without rebuilding geometry. Host-prepared RGBA8
+images and UV0 base-color textures work on both backends with explicit host
+source-color permission. Imported GLB models additionally support two UV sets
+and image normal maps through `s.model`; see below. Displacement, scene reflections
+and bloom are not included. See
 [textures and materials](docs/reference.md#procedural-textures-and-materials).
 
 Open `http://localhost:5173/spatial.html` for interactive function, flower, and
@@ -116,7 +123,8 @@ evolving; the API and current limits are described in the
 The [storyboard capability summary](docs/capabilities.md) describes feasible
 visuals, interaction, scene continuity, and current boundaries for a planning AI.
 The backend includes it in storyline authoring and editorial-review prompts;
-scene authors receive the full reference.
+scene authors receive the authoring sections extracted from the reference,
+including API limits and model-publication guidance.
 
 The [demo scenes](demo/scenes.ts) exercise the three subject areas. The demo uses a
 fullscreen black canvas, mostly white drawing with selective color accents, and a
@@ -196,16 +204,18 @@ import { compileSource, evaluateScene } from 'animlib/core';
 
 // source is the scene's JavaScript; previous is the preceding final Frame
 // (undefined for the first scene). Pass current controls and a stable seed.
-const compiled = await compileSource(source, { previous, controls, seed: 1 });
+const compiled = await compileSource(source, { previous, controls, seed: 1 }, { sampleTime: 'end' });
 const endState = evaluateScene(compiled, compiled.duration);
 const contextJson = JSON.stringify(endState);
 ```
 
 The final frame includes inherited persistent elements, outgoing elements, and
 the authored camera. To reconstruct a complete sequence, use `SceneSequence`
-and read `sequence.frame(index, sequence.compiled[index].duration)` after a
-successful submission. Upstream source or control changes require recomputing
-the handoff. A frame contains visual state; an LLM still needs the next scene's
+and read `await sequence.evaluate(index, sequence.compiled[index].duration)` after
+a successful submission. These examples sample retained `s.time` callbacks at the
+end; synchronous `evaluateScene` and `sequence.frame` use the callback values
+already stored in their snapshots. Upstream source or control changes require
+recomputing the handoff. A frame contains visual state; an LLM still needs the next scene's
 objective and any semantic context.
 
 The repository's Bun backend depends on this workspace and can import this API
@@ -297,3 +307,23 @@ and interactive [lighting study](demo/lighting.html) (`/lighting.html` in the de
 Explanatory 3D studies: run `npm run dev` and open `/explanatory.html` for clipping
 planes with hole-preserving section caps, scalar fields, feature outlines, and
 depth-aware labels. See [authoring details](docs/reference.md#sections-feature-edges-scalar-fields-and-label-depth).
+
+### Imported models
+
+`s.model('assembly', { asset: 'registered-id' })` creates an ordinary seekable
+model instance with addressable parts and imported image materials on both GPU
+backends. The host registers `{ kind: 'model', url, sha256, metadata }`; binary
+GLBs stay outside the scene compiler and frame JSON. Use `part('name')` for
+transforms and `tintTo(Color.BLUE)` for highlighting.
+
+The backend scene agent can call `publish_model` with a public HTTPS GLB URL or
+generated named mesh geometry. Model manifests travel with generated scenes;
+the player preloads them before committing a submission. Storage uses
+`MODEL_ASSET_DIR` (default `data/models`). External generators can POST a raw GLB
+to `/api/models`.
+
+Open `/model-viewer.html` for a local-file viewer and a generated textured example.
+See [imported static models](docs/reference.md#imported-static-3d-models) for the
+API, static glTF compatibility profile, budgets, and current limitations. Run
+`/models.html` for focused browser pixel checks; native `test:gpu` covers the
+same UV/material behavior on Vulkan WebGPU.

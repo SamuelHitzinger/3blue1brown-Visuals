@@ -5,6 +5,7 @@ import { createNucleicTranscriptionCycleBuilders } from './nucleic-transcription
 import { createNucleicTranslationBuilders } from './nucleic-translation.js';
 import { createPeptideBuilders } from './peptide-motion.js';
 import { validateImageGeometry } from "./image-validation.js";
+import { validateModelMetadata } from './model-metadata.js';
 import { validateSurfaceAppearance } from "./appearance-validation.js";
 import { parse } from "acorn";
 import { getQuickJS } from "quickjs-emscripten";
@@ -32,7 +33,7 @@ export class SceneCompileError extends Error {
   constructor(public diagnostic: Diagnostic) { super(diagnostic.message); this.name = "SceneCompileError"; }
 }
 
-const kinds = new Set(["circle", "sphere", "rectangle", "path", "line", "arrow", "text", "latex", "mesh", "group"]);
+const kinds = new Set(["circle", "sphere", "rectangle", "path", "line", "arrow", "text", "latex", "mesh", "group", "model"]);
 function check(condition: unknown, message: string): asserts condition {
   if (!condition) throw new Error(message);
 }
@@ -47,6 +48,13 @@ function geometry(g: Geometry, catalog: AssetDescriptor[] = []) {
   const part=g.asset?catalogPart(g.asset,catalog):undefined;
   validateImageGeometry(g,part?.vertexCount,part?.hasUV0??Boolean(g.uv0));
   if(g.imageTexture)catalogImage(g.imageTexture.image,catalog);
+  check(!Object.keys(g).some(k => k.startsWith('_')), 'Internal geometry fields are host-owned');
+  if (g.kind === 'model') {
+    const r = g.model;
+    check(r && typeof r.asset === 'string' && r.asset.length > 0 && r.asset.length <= 256 && Number.isInteger(r.primitive) && r.primitive >= 0 && r.primitive < 256, 'Invalid model reference');
+    vec(r.bounds?.min, 'model bounds'); vec(r.bounds?.max, 'model bounds');
+    check(r.bounds.min.every((v,i) => v <= r.bounds.max[i]), 'Invalid model bounds');
+  } else check(g.model === undefined, 'Model references require model geometry');
   for (const key of ["radius", "width", "height", "fontSize"] as const) if (g[key] !== undefined) { number(g[key], key); check(g[key]! >= 0, `${key} must be nonnegative`); }
   for (const key of ["points", "vertices"] as const) if (g[key]) {
     check(Array.isArray(g[key]) && g[key]!.length <= 20000, `Invalid or oversized ${key}`);
@@ -230,7 +238,7 @@ export function validateCompiledScene(scene: CompiledScene, catalog: AssetDescri
     }
     else {
       check(["line", "arrow"].includes(target.geometry.kind), "Connect requires a line or arrow");
-      check(b.endpoints === undefined || ["center", "surface"].includes(b.endpoints), "Invalid connector endpoints");
+      check(b.endpoints === undefined || ["center", "surface", "bounds"].includes(b.endpoints), "Invalid connector endpoints");
       if (b.offset !== undefined) number(b.offset, "connector offset");
       if (b.endpoints === "surface") for (const id of sources) check(["sphere", "circle"].includes(all.get(id)!.geometry.kind), "Surface connectors require spheres or circles");
     }
@@ -286,6 +294,7 @@ export function validateCompiledScene(scene: CompiledScene, catalog: AssetDescri
         check(from.id === id, "Mismatched animation starting ID");
         if (a.type === "morph") {
           check(!from.geometry.asset&&!a.geometry?.asset,'Referenced model assets cannot morph');
+          check(from.geometry.kind !== 'model' && a.geometry?.kind !== 'model', 'Model geometry cannot be morphed');
           geometry(a.geometry!,catalog);
           validatePathStroke(from, a.geometry!.kind);
           if (a.map) check(typeof a.map === "object" && Object.entries(a.map).every(([x, y]) => typeof x === "string" && typeof y === "string"), "Invalid morph map");
@@ -326,9 +335,10 @@ export async function createSceneProgram(source: string, input: CompileInput = {
   let vm: ReturnType<Awaited<ReturnType<typeof getQuickJS>>["newContext"]> | undefined;
   let retained = false;
   try {
+    for (const m of Object.values(input.models ?? {})) validateModelMetadata(m);
     const resolver = paletteResolver(input.palette);
     validateAssetCatalog(input.assetCatalog);
-    input = { ...input, assetCatalog: structuredClone(input.assetCatalog ?? []), palette: resolver.palette };
+    input = { ...input, assetCatalog: structuredClone(input.assetCatalog ?? []), models: structuredClone(input.models ?? {}), palette: resolver.palette };
     check(typeof source === "string" && source.length <= 256000, "Scene source limit exceeded (256 KB)");
     const ast = parse(source, { ecmaVersion: "latest", sourceType: "module", locations: true });
     const exports = ast.body.filter(node => node.type === "ExportDefaultDeclaration");
@@ -375,6 +385,19 @@ export async function createSceneProgram(source: string, input: CompileInput = {
     check(json && json.length <= 8 * 1024 * 1024, "Invalid or oversized compiled scene");
     const compiled = JSON.parse(json) as CompiledScene;
     validateCompiledScene(compiled,input.assetCatalog);
+    const verifyModel = (g: Geometry) => {
+      if (g.kind !== 'model') return;
+      const reference = g.model!, metadata = input.models?.[reference.asset];
+      check(metadata && JSON.stringify(metadata.primitives[reference.primitive]?.bounds) === JSON.stringify(reference.bounds), 'Model reference is missing or does not match its registered metadata');
+    };
+    for (const e of [...compiled.initial, ...compiled.lifecycle.flatMap(e => e.elements ?? []), ...compiled.tracks.flatMap(t => Object.values(t.from))]) verifyModel(e.geometry);
+    let importedTriangles=0;
+    for(const e of [...compiled.initial,...compiled.lifecycle.flatMap(e=>e.elements??[])]) {
+      const ref=e.geometry.model;
+      if(ref)importedTriangles+=input.models![ref.asset].primitives[ref.primitive].triangles;
+    }
+    check(importedTriangles<=500000,'Scene imported model budget exceeded (500,000 triangles across instances)');
+    for (const t of compiled.tracks) if (t.action.geometry) { check(t.action.geometry.kind !== 'model', 'Model geometry cannot be morphed'); verifyModel(t.action.geometry); }
     enforceScenePalette(compiled, resolver);
     retained = true;
     return {

@@ -1,3 +1,4 @@
+import type { RenderModelAssets } from '../model-assets.js';
 import { spawn } from 'node:child_process';
 import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -10,7 +11,7 @@ export interface FrameEvidence {
   frames: { time: number; width: number; height: number; path: string }[];
   sheets: { path: string; width: number; height: number; times: number[]; columns: number }[];
 }
-export interface FrameRenderInput { source: string; previousFrame?: Frame; times: number[]; directory: string; signal: AbortSignal }
+export interface FrameRenderInput { source: string; models?: RenderModelAssets; previousFrame?: Frame; times: number[]; directory: string; signal: AbortSignal }
 export type FrameRenderer = (input: FrameRenderInput) => Promise<FrameEvidence>;
 
 /** Keep native GPU globals outside the Bun server and enforce a bounded render deadline. */
@@ -18,7 +19,7 @@ export const renderSceneFrames: FrameRenderer = async input => {
   input.signal.throwIfAborted();
   await mkdir(input.directory,{recursive:true});
   const request=join(input.directory,'render-input.json');
-  await atomicWrite(request,JSON.stringify({source:input.source,previousFrame:input.previousFrame,times:input.times,directory:input.directory}));
+  await atomicWrite(request,JSON.stringify({source:input.source,models:input.models,previousFrame:input.previousFrame,times:input.times,directory:input.directory}));
   const worker=fileURLToPath(new URL('../../../shared/animlib/tools/render-frames.mjs',import.meta.url));
   const signal=AbortSignal.any([input.signal,AbortSignal.timeout(120_000)]);
   return await new Promise<FrameEvidence>((resolve,reject)=>{

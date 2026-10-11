@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
-export type PromptName = 'guidance' | 'animation-quality' | 'scene-verify' | 'scene-repair' | 'viewing-mode' | 'scene-craft' | 'story-review' | 'scene-review' | 'topics-system' | 'topics-format' | 'thumbnail';
+export type PromptName = 'guidance' | 'scene-request-guidance' | 'animation-quality' | 'scene-verify' | 'scene-repair' | 'viewing-mode' | 'scene-craft' | 'story-review' | 'scene-review' | 'topics-system' | 'topics-format' | 'thumbnail';
 
 /** Version of the host-enforced lesson policy; saved jobs retain their original contract. */
 export const INSTRUCTION_VERSION = 2;

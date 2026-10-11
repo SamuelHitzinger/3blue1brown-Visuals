@@ -156,6 +156,16 @@ test('3d plans inspect compiled cameras, including subviews, transitions, and in
   expect(() => validateScenePlan(spatial, evaluateScene(spatial, 1), { ...plan, view: { mode: '2d', rationale: 'Return to a flat diagram.' } })).not.toThrow();
 });
 
+test('insertions accept one scene and reject multi-scene plans without limiting ordinary lessons', () => {
+  const planned = lesson();
+  const followup = { ...request, sceneRequest: true };
+  expect(parsePlannedLesson(JSON.stringify(planned), followup)).toEqual(planned);
+  planned.markdown += '\n\n## Beat 2 — Continue\n\nContent needed: Two more dots.\n\nNarration: Count the next pair.';
+  planned.plan.scenes.push({ ...planned.plan.scenes[0], id: 'beat-2' });
+  expect(() => parsePlannedLesson(JSON.stringify(planned), followup)).toThrow('at most one scene');
+  expect(parsePlannedLesson(JSON.stringify(planned), request)).toEqual(planned);
+});
+
 test('original scenegen description markers drive view validation without the rewritten view schema', async () => {
   for (const [description, mode] of [['3D: a rotatable molecule', '3d'], ['2D (because it is a graph): energy', '2d']] as const) {
     const draft = lesson(); draft.plan.scenes[0].visualDescription = description;

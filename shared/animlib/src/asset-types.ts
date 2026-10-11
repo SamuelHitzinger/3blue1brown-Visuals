@@ -60,7 +60,9 @@ export interface ModelPartDescriptor {
 export interface ModelAssetDescriptor {
   id: string; kind: 'model'; hash: string; bounds: Bounds3D; parts: ModelPartDescriptor[];
 }
-export interface ModelProps extends ElementStyle {
+/** Descriptor-backed mesh model, styled with the ordinary scene mesh controls. */
+export interface PreparedModelProps extends ElementStyle {
+  source?: 'prepared';
   asset: string;
   shading?: Geometry['shading'];
   material?: Geometry['material'];

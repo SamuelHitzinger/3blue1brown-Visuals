@@ -9,6 +9,7 @@ import type { ColorPalette, CompiledScene, ControlValue, Frame, SceneSource, Sub
 
 export interface SequenceOptions {
   modelAssets?: AssetRegistry;
+  models?: import("./types.js").CompileInput["models"];
   palette?: ColorPalette;
   seed?: number;
   executionLimitMs?: number;
@@ -82,7 +83,16 @@ export class SceneSequence {
     let previous: Frame | undefined = sources.length > prefix.length ? outgoing ?? (compiled.length ? evaluateScene(await this.sampleScene(compiled.at(-1)!, compiled.at(-1)!.duration), compiled.at(-1)!.duration) : undefined) : undefined;
     for (const source of sources.slice(prefix.length)) {
       try {
-        const scene = await this.compiler.compile(source.source, { previous, controls: values.get(source.id), seed: this.options.seed ?? 1, palette: this.options.palette, assetCatalog: this.options.modelAssets?.catalog }, this.options);
+        if (source.handoffFrom !== undefined) {
+          const index = source.handoffFrom === null ? -1 : sources.findIndex(s => s.id === source.handoffFrom);
+          if (source.handoffFrom !== null && (index < 0 || index >= compiled.length)) throw new Error(`Invalid handoff scene: ${source.handoffFrom}`);
+          // Reactive control updates supply the changed prefix's sampled frame;
+          // its temporary compiled copy does not own a callback runtime.
+          previous = index < 0 ? undefined : outgoing && index === prefix.length - 1 ? outgoing
+            : evaluateScene(await this.sampleScene(compiled[index], compiled[index].duration), compiled[index].duration);
+        }
+        const scene = await this.compiler.compile(source.source, { models: this.options.models, assetCatalog: this.options.modelAssets?.catalog, previous, controls: values.get(source.id), seed: this.options.seed ?? 1, palette: this.options.palette }, this.options);
+        if (source.audioId !== undefined) scene.options.audio = source.audioId;
         this.assetGeometry.prepare(scene);
         await this.options.prepare?.([scene]);
         if (this.disposed) throw new Error("Scene sequence is disposed");

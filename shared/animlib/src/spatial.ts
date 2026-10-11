@@ -106,6 +106,13 @@ export function pick(frame: Frame, ray: Ray, targets: Set<string>, camera: Camer
         const inside = g.kind === 'circle' ? p[0]**2+p[1]**2 <= dimension('radius', 1)**2 : Math.abs(p[0]) <= dimension('width', 2)/2 && Math.abs(p[1]) <= dimension('height', 1)/2;
         if (inside) t = distance;
       }
+    } else if (g.kind === 'model') {
+      const bounds=g.model!.bounds;let near=0,far=Infinity;
+      for(let axis=0;axis<3;axis++) {
+        if(Math.abs(d[axis])<1e-12) { if(o[axis]<bounds.min[axis]||o[axis]>bounds.max[axis]){near=Infinity;break;} }
+        else {const a=(bounds.min[axis]-o[axis])/d[axis],b=(bounds.max[axis]-o[axis])/d[axis];near=Math.max(near,Math.min(a,b));far=Math.min(far,Math.max(a,b));}
+      }
+      if(near<=far)t=near;
     } else if (g.kind === 'mesh') {
       for (const indices of g.triangles ?? []) {
         const [a,b,c] = indices.map(i => { const p = g.vertices![i]; return [p[0],p[1],p[2] ?? 0] as Vec3; });

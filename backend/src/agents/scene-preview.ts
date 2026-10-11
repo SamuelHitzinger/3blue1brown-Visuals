@@ -1,3 +1,4 @@
+import type { RenderModelAssets } from '../model-assets.js';
 import { mkdir, mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,7 +10,7 @@ import type { FrameSample } from './scene-inspection.js';
 
 export interface PreviewFrame { time: number; image: ImageContent }
 export interface ScenePreviewRenderer {
-  render(compiled: CompiledScene, samples: FrameSample[], signal?: AbortSignal): Promise<PreviewFrame[]>;
+  render(compiled: CompiledScene, samples: FrameSample[], signal?: AbortSignal, models?: RenderModelAssets): Promise<PreviewFrame[]>;
 }
 
 /** A single warm Chromium process; isolated context per batch, bounded serial rendering. */
@@ -23,13 +24,13 @@ export class ChromiumScenePreview implements ScenePreviewRenderer {
   constructor(private executablePath = process.env.SCENE_PREVIEW_CHROMIUM ?? '/usr/bin/chromium',
     private noSandbox = process.env.SCENE_PREVIEW_NO_SANDBOX === '1') {}
 
-  async render(compiled: CompiledScene, samples: FrameSample[], signal?: AbortSignal): Promise<PreviewFrame[]> {
+  async render(compiled: CompiledScene, samples: FrameSample[], signal?: AbortSignal, models?: RenderModelAssets): Promise<PreviewFrame[]> {
     signal?.throwIfAborted();
     if (this.closed) throw new Error('Scene preview renderer is closed.');
     if (!samples.length || samples.length > 6) throw new Error('Preview requires 1–6 frames.');
     if (this.pending >= 4) throw new Error('Scene preview worker is busy. Use analytical inspection or try again later.');
     this.pending++;
-    const work = this.queue.then(() => this.renderBatch(compiled, samples, signal));
+    const work = this.queue.then(() => this.renderBatch(compiled, samples, signal, models));
     this.queue = work.catch(() => undefined).finally(() => { this.pending--; });
     let abort: (() => void) | undefined;
     const cancelled = new Promise<never>((_, reject) => {
@@ -87,7 +88,7 @@ export class ChromiumScenePreview implements ScenePreviewRenderer {
     void browser.disconnect().catch(() => {});
   }
 
-  private async renderBatch(compiled: CompiledScene, samples: FrameSample[], signal?: AbortSignal): Promise<PreviewFrame[]> {
+  private async renderBatch(compiled: CompiledScene, samples: FrameSample[], signal?: AbortSignal, models?: RenderModelAssets): Promise<PreviewFrame[]> {
     signal?.throwIfAborted();
     if (this.closed) throw new Error('Scene preview renderer is closed.');
     let context: BrowserContext | undefined;
@@ -119,8 +120,8 @@ export class ChromiumScenePreview implements ScenePreviewRenderer {
       this.bundle ??= readFile(new URL('../../dist/scene-preview.js', import.meta.url), 'utf8').catch(error => { this.bundle = undefined; throw error; });
       await page.addScriptTag({ content: await this.bundle });
       await page.evaluate(async data => {
-        await (globalThis as unknown as { scenePreview: { prepare(data: CompiledScene): Promise<void> } }).scenePreview.prepare(data);
-      }, compiled);
+        await (globalThis as unknown as { scenePreview: { prepare(data: CompiledScene, models?: RenderModelAssets): Promise<void> } }).scenePreview.prepare(data.compiled, data.models);
+      }, {compiled,models});
       const result: PreviewFrame[] = [];
       for (const sample of samples) {
         signal?.throwIfAborted();

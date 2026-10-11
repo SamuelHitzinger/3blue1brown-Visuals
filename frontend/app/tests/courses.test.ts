@@ -2,7 +2,7 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import { addCourse, coursesKey, courseForSubject, loadCourses, loadRecentPlayback, deleteCourse, overviewLessons, recentLessons, recentPlaybackKey, recordPlayback } from '../src/courses.ts'
 import { exampleCurriculum } from '../src/curriculum.ts'
-import { lessons } from '../src/data.ts'
+import { lessons } from './fixtures/lessons.ts'
 import { appendSubjectMaterials, loadSubjectPlans, subjectPlansKey } from '../src/subjectPlans.ts'
 import { createStudyPlan, exampleDocument } from '../src/plan.ts'
 
@@ -84,11 +84,11 @@ test('deleting a course does not restore its material or remove its videos', () 
   assert.equal(recent[0].subject, 'Linear algebra')
 })
 
-test('overview fills three distinct video slots with examples after recent playback', () => {
-  assert.deepEqual(overviewLessons([], lessons, exampleCurriculum).map(lesson => lesson.id), ['vectors', 'carbon', 'orbitals'])
+test('overview shows only played videos and leaves unused slots empty', () => {
+  assert.deepEqual(overviewLessons([], lessons, exampleCurriculum), [])
   const history = ['deleted-video', 'carbon', 'carbon', 'matrices']
-  assert.deepEqual(overviewLessons(history, lessons, exampleCurriculum).map(lesson => lesson.id), ['carbon', 'matrices', 'vectors'])
+  assert.deepEqual(overviewLessons(history, lessons, exampleCurriculum).map(lesson => lesson.id), ['carbon', 'matrices'])
   assert.deepEqual(history, ['deleted-video', 'carbon', 'carbon', 'matrices'])
   const courses = addCourse(exampleCurriculum, 'Organic chemistry', 'peach')
-  assert.deepEqual(overviewLessons([], lessons, courses).map(lesson => lesson.color), ['blue', 'peach', 'peach'])
+  assert.deepEqual(overviewLessons(history, lessons, courses).map(lesson => lesson.color), ['peach', 'blue'])
 })

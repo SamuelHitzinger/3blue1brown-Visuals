@@ -272,13 +272,63 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     modelInfo: id => assets.modelInfo(id),
     model: (id, props) => {
       idCheck(id);
-      const children=assets.model(props).map(part=>generatedMesh(`${id}.${part.id}`,part.geometry,{
-        fill:props.fill,stroke:props.stroke,strokeWidth:props.strokeWidth,strokeProfile:props.strokeProfile,material:props.material,
-        texture:props.texture,clipPlanes:props.clipPlanes,outline:props.outline,space:props.space,
-      }));
-      for(const child of children) groups.add(child.id);
-      return add('group',id,{children:children.map(child=>child.id),position:props.position,rotation:props.rotation,scale:props.scale,
-        opacity:props.opacity,space:props.space,castShadow:props.castShadow,viewportOffset:props.viewportOffset,billboard:props.billboard,billboardOffset:props.billboardOffset});
+      if (!props || typeof props.asset !== 'string') throw new Error('Model requires an asset ID');
+      if (props.source !== undefined && props.source !== 'prepared' && props.source !== 'glb') throw new Error('Invalid model source');
+      const prepared = input.assetCatalog?.some(asset => asset.kind === 'model' && asset.id === props.asset);
+      const metadata = Object.hasOwn(input.models ?? {}, props.asset) ? input.models![props.asset] : undefined;
+      if (props.source === undefined && prepared && metadata) throw new Error(`Ambiguous model asset: ${props.asset}. Specify source: 'prepared' or 'glb'.`);
+      const modelHandle = (element: ElementHandle) => Object.assign(element, {
+        tintTo: (color: import('./types.js').ColorValue): AnimationAction => ({ type: 'animate', ids: descendants(element.id).filter(id => ['mesh', 'model'].includes(states.get(id)!.geometry.kind)), properties: { fill: color } }),
+      });
+      if (props.source === 'prepared' || props.source === undefined && prepared) {
+        if ('tint' in props) throw new Error('Prepared models use fill instead of tint');
+        const style = props as import('./asset-types.js').PreparedModelProps;
+        const parts = assets.model(style);
+        validateIds([id, ...parts.map(part => `${id}.${part.id}`)]);
+        const children = parts.map(part => generatedMesh(`${id}.${part.id}`, part.geometry, {
+          fill:style.fill,stroke:style.stroke,strokeWidth:style.strokeWidth,strokeProfile:style.strokeProfile,material:style.material,
+          texture:style.texture,clipPlanes:style.clipPlanes,outline:style.outline,space:style.space,
+        }));
+        for (const child of children) groups.add(child.id);
+        const root = add('group',id,{children:children.map(child=>child.id),position:style.position,rotation:style.rotation,scale:style.scale,
+          opacity:style.opacity,space:style.space,castShadow:style.castShadow,viewportOffset:style.viewportOffset,billboard:style.billboard,billboardOffset:style.billboardOffset});
+        return Object.assign(modelHandle(root), { part: (key: string) => {
+          const index = parts.findIndex(part => part.id === key);
+          if (index < 0) throw new Error(`Unknown model part: ${key}`);
+          return modelHandle(children[index]);
+        } });
+      }
+      if (!metadata) throw new Error(`Unknown model asset: ${props.asset}`);
+      const { asset, tint, source: _source, ...style } = props as import('./model-types.js').GLBModelProps;
+      if (Object.keys(style).some(k => !['position','rotation','scale','opacity','castShadow'].includes(k))) throw new Error('Unsupported model property');
+      const handles = new Map<string, ElementHandle>();
+      const partId = (part: string) => `${id}/${part}`;
+      for (const part of [...metadata.parts].reverse()) {
+        const children = part.primitives.map(index => add('model', `${id}/primitive-${index}`, {
+          model: { asset, primitive: index, bounds: clone(metadata.primitives[index].bounds) },
+          fill: tint ?? 'WHITE', stroke: 'none',
+        }));
+        children.push(...metadata.parts.filter(p => p.parent === part.id).map(p => handles.get(p.id)!));
+        const group = context.group(partId(part.id), children);
+        // Group origins preserve imported node pivots. Imported static rotations/scales are baked in host geometry.
+        const position = vector(part.position);
+        states.get(group.id)!.position = position;
+        lifecycle.at(-1)!.elements![0].position = clone(position);
+        handles.set(part.id, group);
+      }
+      const root = context.group(id, metadata.parts.filter(p => !p.parent).map(p => handles.get(p.id)!));
+      const state = states.get(id)!;
+      if (style.position) state.position = vector(style.position);
+      if (style.rotation !== undefined) state.rotation = rotation(style.rotation);
+      if (style.scale !== undefined) state.scale = style.scale;
+      if (style.opacity !== undefined) state.opacity = style.opacity;
+      if (style.castShadow !== undefined) state.castShadow = style.castShadow;
+      lifecycle.at(-1)!.elements![0] = clone(state);
+      return Object.assign(modelHandle(root), { part: (key: string) => {
+        const matches = metadata.parts.filter(p => p.id === key || p.name === key);
+        if (matches.length !== 1) throw new Error(`Unknown or ambiguous model part: ${key}. Use its node ID.`);
+        return modelHandle(handles.get(matches[0].id)!);
+      } });
     },
     surface: (id, props) => generatedMesh(id, meshBuilders!.surface(props), props),
     parametricSurface: (id, props) => generatedMesh(id, meshBuilders!.parametricSurface(props), props),
@@ -478,6 +528,22 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
   const returned: unknown = builder(context);
   if (returned && typeof (returned as { then?: unknown }).then === "function") throw new Error("Scene builders must be synchronous");
   building = false;
+  // A new object's first opacity animation declares its entrance. Hide it at
+  // creation, not just when fadeIn starts, including during earlier waits or
+  // movement tracks. Later reappearances must preserve the preceding visibility.
+  const births = new Map(lifecycle.flatMap(event => event.type === "add"
+    ? (event.elements ?? []).filter(e => !e.transient).map(e => [e.id, e] as const) : []));
+  const opacityAnimated = new Set<string>();
+  for (const track of tracks) {
+    if (track.action.type !== "animate" || !Object.hasOwn(track.action.properties ?? {}, "opacity")) continue;
+    for (const id of track.action.ids) {
+      if (opacityAnimated.has(id)) continue;
+      opacityAnimated.add(id);
+      const birth = births.get(id);
+      // Leave invalid authored opacity intact for boundary validation.
+      if (birth && track.action.fromOpacity === 0 && birth.opacity >= 0 && birth.opacity <= 1) birth.opacity = 0;
+    }
+  }
   const update = (values: Record<string, ControlValue>, changed: string[], time?: number): ReactiveUpdate[] => callbacks.filter(binding => time !== undefined && binding.time || binding.controls.some(id => changed.includes(id))).map(binding => {
     const output = binding.callback(...binding.dependencies.map(dep => dep === timeHandle ? time ?? 0 : values[(dep as SliderHandle).id] as number));
     if (!output || typeof output !== 'object' || Array.isArray(output)) throw new Error('Reactive bindings must return property objects');

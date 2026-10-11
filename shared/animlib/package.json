@@ -28,6 +28,8 @@
     "test:gpu": "vitest run --config vitest.gpu.config.ts"
   },
   "dependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
     "acorn": "^8.15.0",
     "color-string": "^2.1.4",
     "earcut": "^3.2.4",

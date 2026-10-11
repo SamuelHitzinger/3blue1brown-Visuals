@@ -1,4 +1,7 @@
 import { GPUImages } from './image-resources.js';
+import { modelWGSL } from './model-shader.js';
+import { GPUModelTextures } from './model-textures.js';
+import type { ModelStore } from './model-store.js';
 /// <reference types="@webgpu/types" />
 import { VertexBufferLimitError, vertexBufferCapacity } from './vertex-buffer.js';
 import { lightingUniform } from './lighting.js';
@@ -29,8 +32,8 @@ struct Camera { focus: vec4f, angles: vec4f, viewport: vec4f, light: vec4f, ambi
 @group(0) @binding(0) var<uniform> camera: Camera;
 struct ObjectState { transform: mat4x4f, info: vec4f };
 @group(1) @binding(0) var<uniform> objects: array<ObjectState,32>;
-struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @location(1) normal: vec3f, @location(2) lit: f32, @location(3) texPosition: vec3f, @location(4) texKind: f32, @location(5) texColor: vec4f, @location(6) texSeed: f32, @location(7) viewDirection: vec3f, @location(8) material: vec3f, @location(9) emission: vec3f, @location(10) viewPosition: vec3f, @location(11) bumpStrength: f32, @location(12) imageUV: vec3f };
-@vertex fn vertex(@builtin(instance_index) instanceIndex:u32, @location(0) localWorld: vec3f, @location(1) color: vec4f, @location(2) screen: f32, @location(3) localNormal: vec3f, @location(4) lit: f32, @location(5) localLayer: f32, @location(6) localViewportOffset: vec2f, @location(7) texPosition: vec3f, @location(8) texKind: f32, @location(9) texColor: vec4f, @location(10) texSeed: f32, @location(11) material: vec3f, @location(12) emission: vec3f, @location(13) bumpStrength: f32, @location(14) imageUV: vec3f) -> Output {
+struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @location(1) normal: vec3f, @location(2) lit: f32, @location(3) texPosition: vec3f, @location(4) texKind: f32, @location(5) texColor: vec4f, @location(6) texSeed: f32, @location(7) viewDirection: vec3f, @location(8) material: vec3f, @location(9) emission: vec3f, @location(10) viewPosition: vec3f, @location(11) bumpStrength: f32, @location(12) uv:vec4f, @location(13) imageAlphaMode:f32 };
+@vertex fn vertex(@builtin(instance_index) instanceIndex:u32, @location(0) localWorld: vec3f, @location(1) color: vec4f, @location(2) screen: f32, @location(3) localNormal: vec3f, @location(4) lit: f32, @location(5) localLayer: f32, @location(6) localViewportOffset: vec2f, @location(7) texPosition: vec3f, @location(8) texKind: f32, @location(9) texColor: vec4f, @location(10) texSeed: f32, @location(11) material: vec3f, @location(12) emission: vec3f, @location(13) bumpStrength: f32, @location(14) uv:vec4f, @location(15) imageAlphaMode:f32) -> Output {
   let object=objects[instanceIndex];
   let world=(object.transform*vec4f(localWorld,1.)).xyz;
   let normal=(object.transform*vec4f(localNormal,0.)).xyz/object.info.y;
@@ -54,7 +57,7 @@ struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @
   var n=normal;
   n=vec3f(n.x*cy+n.z*sy,n.y,-n.x*sy+n.z*cy);
   n=vec3f(n.x,n.y*cp-n.z*sp,n.y*sp+n.z*cp);
-  output.normal=n;output.lit=lit;output.color=color;output.imageUV=imageUV;
+  output.uv=uv;output.imageAlphaMode=imageAlphaMode;output.normal=n;output.lit=lit;output.color=color;
   output.texPosition=texPosition;output.texKind=texKind;output.texColor=texColor;output.texSeed=texSeed;
   output.material=material;output.emission=emission;output.viewPosition=p;output.bumpStrength=bumpStrength*object.info.y;
   output.viewDirection=mix(vec3f(0.,0.,1.),vec3f(-p.x,-p.y,depth),camera.angles.w);
@@ -66,7 +69,10 @@ ${materialWGSL}
 @fragment fn fragment(input:Output,@builtin(front_facing) frontFacing:bool) -> @location(0) vec4f { var color=input.color;
   let footprint=fwidth(input.texPosition);
   var height=0.;
-  if(input.texKind>0.5){height=textureMix(input.texPosition,input.texKind,input.texSeed,footprint);color=mix(color,input.texColor,height);}
+  if(input.texKind>0.5){
+    let surface=proceduralSample(input.texPosition,input.texKind,input.texSeed,footprint);
+    color=mix(color,input.texColor,surface.x);height=surface.y;
+  }
   // Derivatives must be evaluated before divergent lighting/discard branches.
   let dx=dpdx(input.viewPosition);let dy=dpdy(input.viewPosition);
   let dh=vec2f(dpdx(height),dpdy(height));
@@ -81,12 +87,14 @@ ${materialWGSL}
   }
   return vec4f(color.rgb+input.emission,color.a); }
 `;
-const imageShader=shader.replace('struct Camera', '@group(2) @binding(0) var imageColor: texture_2d<f32>;\n@group(2) @binding(1) var imageSampler: sampler;\nstruct Camera').replace('var color=input.color;', 'var color=input.color; let sample=textureSample(imageColor,imageSampler,input.imageUV.xy); color*=vec4f(sample.rgb,select(sample.a,1.,input.imageUV.z<1.5));');
+const modelShader=shader.replace('@fragment', `${modelWGSL}\n@fragment`).replace('var color=input.color;', 'var color=input.color; let imported=importedColor(color,input.uv,input.texSeed,input.normal,input.viewPosition,input.viewDirection,frontFacing,camera.light,camera.ambient.x); if(model.flags.w>0.5){return imported;}');
+const imageShader=shader.replace('struct Camera', '@group(2) @binding(0) var imageColor: texture_2d<f32>;\n@group(2) @binding(1) var imageSampler: sampler;\nstruct Camera').replace('var color=input.color;', 'var color=input.color; let sample=textureSample(imageColor,imageSampler,input.uv.xy); color*=vec4f(sample.rgb,select(sample.a,1.,input.imageAlphaMode<1.5));');
 export class CanvasRenderer {
   onCanvasChange:((canvas:HTMLCanvasElement)=>void)|undefined;
   onRecovered:(()=>void)|undefined;
   private gl:WebGLBackend|undefined;
   private retained=new RetainedGeometry();
+  private modelTextures:GPUModelTextures|undefined;
   private gpuRetained:GPURetained|undefined;
   private gpuImages:GPUImages|undefined;
   private imagePipeline:GPURenderPipeline|undefined;
@@ -136,7 +144,12 @@ export class CanvasRenderer {
   private format:GPUTextureFormat|undefined;
   private initializing:Promise<void>|undefined;
   private disposed=false;
-  constructor(private canvas:HTMLCanvasElement, private hostPalette?:ColorPalette, private assetGeometry?:AssetGeometryResolver) {
+  private assetGeometry?:AssetGeometryResolver;
+  private models?:ModelStore;
+  constructor(private canvas:HTMLCanvasElement, private hostPalette?:ColorPalette, assetsOrModels?:AssetGeometryResolver|ModelStore, models?:ModelStore) {
+    // Preserve both pre-merge constructor forms; combined hosts pass models fourth.
+    if(assetsOrModels && 'images' in assetsOrModels)this.models=assetsOrModels;
+    else {this.assetGeometry=assetsOrModels;this.models=models;}
     this.originalCanvas=canvas;
     if(hostPalette)this.hostPalette=paletteResolver(hostPalette).palette;
     this.observer=new ResizeObserver(()=>{this.resize();if(this.onInvalidate)this.onInvalidate();else if(this.lastFrame&&this.lastOptions)this.render(this.lastFrame,this.lastOptions);});
@@ -160,6 +173,7 @@ export class CanvasRenderer {
   }
   private releaseGPU():void {
     this.depthFocus?.dispose();this.depthFocus=undefined;for(const buffer of this.focusCameras)buffer.destroy();this.focusCameras=[];
+    this.modelTextures?.dispose();this.modelTextures=undefined;
     this.gpuRetained?.dispose();this.gpuRetained=undefined;
     this.gpuImages?.dispose();this.gpuImages=undefined;this.imagePipeline=undefined;this.imageTransparentPipeline=undefined;this.imageDepthPipeline=undefined;this.imageDescriptor=undefined;this.imageCameras.clear();
     this.compositor?.dispose();this.compositor=undefined;
@@ -178,7 +192,7 @@ export class CanvasRenderer {
     // The caller may reuse a canvas locked by an earlier renderer/context type.
     if(!gl&&this.canvas===this.originalCanvas&&typeof this.canvas.cloneNode==='function'){this.replaceCanvas();gl=acquire();}
     if(!gl)throw new Error('No WebGL2 context is available.');
-    this.gl=new WebGLBackend(gl);
+    this.gl=new WebGLBackend(gl,this.models?.images);
     this.canvas.addEventListener('webglcontextlost',this.glLost);
     this.canvas.addEventListener('webglcontextrestored',this.glRestored);
     this.contextLost=false;this.ready=true;this.resize();
@@ -195,7 +209,7 @@ export class CanvasRenderer {
     this.errorKind='backend';
     try {
       // Restored contexts have already invalidated every old GL handle.
-      const gl=this.gl.gl;this.gl=new WebGLBackend(gl);this.contextLost=false;this.ready=true;this.resize();
+      const gl=this.gl.gl;this.gl=new WebGLBackend(gl,this.models?.images);this.contextLost=false;this.ready=true;this.resize();
       if(this.lastFrame&&this.lastOptions)this.render(this.lastFrame,this.lastOptions);
       this.backendRecovered(generation);
     } catch(error){this.reportError(error instanceof Error?error:new Error(String(error)));}
@@ -334,14 +348,14 @@ export class CanvasRenderer {
       try {this.fallback(new Error(lost));if(this.lastFrame&&this.lastOptions)this.render(this.lastFrame,this.lastOptions);this.backendRecovered(generation);}
       catch(error){this.reportError(error instanceof Error?error:new Error(String(error)));}
     });
-    const module=device.createShaderModule({code:shader});
+    const module=device.createShaderModule({code:modelShader});
     const compilation=await module.getCompilationInfo();
     // Navigation/retry can dispose this renderer during any GPU initialization
     // await. Never let a stale renderer reconfigure a replacement's canvas.
     if(this.disposed)throw new Error('Renderer is disposed.');
     const errors=compilation.messages.filter(m=>m.type==='error');if(errors.length)throw new Error(errors.map(m=>m.message).join('\n'));
     this.format=navigator.gpu.getPreferredCanvasFormat();
-    const descriptor:GPURenderPipelineDescriptor={layout:'auto',vertex:{module,entryPoint:'vertex',buffers:[{arrayStride:VERTEX_FLOATS*4,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32x4'},{shaderLocation:2,offset:28,format:'float32'},{shaderLocation:3,offset:32,format:'float32x3'},{shaderLocation:4,offset:44,format:'float32'},{shaderLocation:5,offset:48,format:'float32'},{shaderLocation:6,offset:52,format:'float32x2'},{shaderLocation:7,offset:60,format:'float32x3'},{shaderLocation:8,offset:72,format:'float32'},{shaderLocation:9,offset:76,format:'float32x4'},{shaderLocation:10,offset:92,format:'float32'},{shaderLocation:11,offset:96,format:'float32x3'},{shaderLocation:12,offset:108,format:'float32x3'},{shaderLocation:13,offset:120,format:'float32'},{shaderLocation:14,offset:124,format:'float32x3'}]}]},fragment:{module,entryPoint:'fragment',targets:[{format:navigator.gpu.getPreferredCanvasFormat(),blend:{color:{srcFactor:'src-alpha',dstFactor:'one-minus-src-alpha',operation:'add'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'}}}]},primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less-equal'},multisample:{count:4}};
+    const descriptor:GPURenderPipelineDescriptor={layout:'auto',vertex:{module,entryPoint:'vertex',buffers:[{arrayStride:VERTEX_FLOATS*4,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32x4'},{shaderLocation:2,offset:28,format:'float32'},{shaderLocation:3,offset:32,format:'float32x3'},{shaderLocation:4,offset:44,format:'float32'},{shaderLocation:5,offset:48,format:'float32'},{shaderLocation:6,offset:52,format:'float32x2'},{shaderLocation:7,offset:60,format:'float32x3'},{shaderLocation:8,offset:72,format:'float32'},{shaderLocation:9,offset:76,format:'float32x4'},{shaderLocation:10,offset:92,format:'float32'},{shaderLocation:11,offset:96,format:'float32x3'},{shaderLocation:12,offset:108,format:'float32x3'},{shaderLocation:13,offset:120,format:'float32'},{shaderLocation:14,offset:124,format:'float32x4'},{shaderLocation:15,offset:140,format:'float32'}]}]},fragment:{module,entryPoint:'fragment',targets:[{format:navigator.gpu.getPreferredCanvasFormat(),blend:{color:{srcFactor:'src-alpha',dstFactor:'one-minus-src-alpha',operation:'add'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'}}}]},primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less-equal'},multisample:{count:4}};
     this.pipelineDescriptor=descriptor;
     const pipeline=await device.createRenderPipelineAsync(descriptor);
     if(this.disposed)throw new Error('Renderer is disposed.');
@@ -389,6 +403,7 @@ export class CanvasRenderer {
       pass.setPipeline(pipeline);pass.setBindGroup(0,group);
       this.gpuImages??=new GPUImages(this.device!);this.gpuImages.bind(pass,pipeline,command.imageBinding);
     }
+    else this.modelTextures!.bind(pass,pipeline,command.modelMaterial);
     this.gpuRetained!.draw(pass,pipeline,command,this.vertices);
   }
   private reportError(error:Error):void {
@@ -416,6 +431,7 @@ export class CanvasRenderer {
   render(frame:Frame,options:CompiledScene['options']):void {
     if(!this.ready||this.contextLost||this.disposed)return;
     this.lastFrame=frame;this.lastOptions=options;this.regions=frame.views??[];
+    frame=this.models?.resolve(frame)??frame;
     const {width,height}=this.size;
     const camera=this.effectiveCamera(frame.camera,options.orbit);
     const palette=paletteResolver(this.hostPalette??options.palette);
@@ -469,6 +485,7 @@ export class CanvasRenderer {
     const clear=parseColor(palette.resolve(options.background));
     if(this.gl){this.gl.render(data,ordered,clear,this.canvas.width,this.canvas.height);this.frameRendered();return;}
     const device=this.device!;
+    this.modelTextures??=new GPUModelTextures(device,this.models?.images??new Map());
     this.gpuRetained??=new GPURetained(device);
     this.gpuRetained.beginFrame();this.gpuImages?.beginFrame();
     const viewIds=new Set(this.regions.map(v=>v.id));

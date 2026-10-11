@@ -40,7 +40,7 @@ function setup(failure = '') {
     createShaderModule: () => ({ getCompilationInfo: async () => ({ messages: failure === 'shader' ? [{ type: 'error', message: 'bad shader' }] : [] }) }),
     createRenderPipelineAsync: vi.fn(async () => { if (failure === 'pipeline') throw new Error('bad pipeline'); return { getBindGroupLayout: () => ({}) }; }),
     createBuffer: vi.fn(buffer), createBindGroup: vi.fn(() => ({})),
-    createTexture: vi.fn(({ size }: { size: number[] }) => ({ ...buffer(), width: size[0], height: size[1] })),
+    createTexture: vi.fn(({ size }: { size: number[] }) => ({ ...buffer(), width: size[0], height: size[1], createView: () => ({}) })),
   };
   const gpu = {
     requestAdapter: vi.fn(async () => {
@@ -178,7 +178,7 @@ it('does not recover a budget rejection when the retry instead fails both backen
 
 function allowGPUFrames({device,context}:ReturnType<typeof setup>) {
   const pass={setPipeline(){},setBindGroup(){},setVertexBuffer(){},setIndexBuffer(){},drawIndexed(){},draw(){},end(){}};
-  Object.assign(device,{queue:{writeBuffer(){},submit:vi.fn()},createCommandEncoder:()=>({beginRenderPass:()=>pass,finish:()=>({})})});
+  Object.assign(device,{createSampler:()=>({}),queue:{writeTexture(){},writeBuffer(){},submit:vi.fn()},createCommandEncoder:()=>({beginRenderPass:()=>pass,finish:()=>({})})});
   Object.assign(context,{getCurrentTexture:()=>({createView:()=>({})})});
   for(const result of device.createTexture.mock.results)Object.assign(result.value,{createView:()=>({})});
 }

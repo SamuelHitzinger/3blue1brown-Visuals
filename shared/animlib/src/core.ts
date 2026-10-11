@@ -29,3 +29,8 @@ export { createNucleicTranslationBuilders } from './nucleic-translation.js';
 export { createPeptideBuilders } from './peptide-motion.js';
 export { importPDBStructure, structureBackboneProps } from './molecular-structure-data.js';
 export { createSampledState } from './diagrams/sampled-state.js';
+
+export { parseModelGLB, MODEL_LIMITS } from "./models.js";
+export { validateModelMetadata } from "./model-metadata.js";
+export { createModelGLB } from './model-export.js';
+export type { GeneratedModel } from './model-export.js';

@@ -6,6 +6,9 @@ import { SceneSequence } from 'animlib/core'
 import type { Frame } from 'animlib/core'
 import type { VideoManifest, VideoRequest, VideoScene } from '../../shared/video/contract'
 import { AgentError } from './agents/config.js'
+import { contextualVideoRequest, validateSceneRequest } from './scene-requests.js'
+import { insertedSceneId } from '../../shared/video/scene-requests'
+import type { SceneRequest, SceneRequestInput } from '../../shared/video/scene-requests'
 import { videoFailureMessage } from './video-errors.js'
 import type { ImageContent } from '@earendil-works/pi-ai'
 import { extractUpload, uploadMetadata, uploadType } from './uploads.js'
@@ -66,7 +69,8 @@ export class VideoService {
     this.db.exec(`PRAGMA journal_mode=WAL;
       CREATE TABLE IF NOT EXISTS videos (id TEXT PRIMARY KEY, owner TEXT NOT NULL, key TEXT NOT NULL, request TEXT NOT NULL, manifest TEXT NOT NULL, UNIQUE(owner,key));
       CREATE TABLE IF NOT EXISTS video_audio (video TEXT NOT NULL, scene TEXT NOT NULL, bytes BLOB NOT NULL, PRIMARY KEY(video,scene));
-      CREATE TABLE IF NOT EXISTS video_uploads (video TEXT NOT NULL, position INTEGER NOT NULL, name TEXT NOT NULL, mime TEXT NOT NULL, bytes BLOB NOT NULL, text TEXT, PRIMARY KEY(video,position));`)
+      CREATE TABLE IF NOT EXISTS video_uploads (video TEXT NOT NULL, position INTEGER NOT NULL, name TEXT NOT NULL, mime TEXT NOT NULL, bytes BLOB NOT NULL, text TEXT, PRIMARY KEY(video,position));
+      CREATE TABLE IF NOT EXISTS scene_requests (video TEXT PRIMARY KEY, lesson TEXT NOT NULL, key TEXT NOT NULL, input TEXT NOT NULL, after_scene TEXT NOT NULL, UNIQUE(lesson,key));`)
     this.kick()
   }
 
@@ -76,7 +80,7 @@ export class VideoService {
     return row?.owner === owner ? publicManifest(JSON.parse(row.manifest)) : undefined
   }
   list(owner?: string): VideoManifest[] {
-    const rows = owner === undefined ? this.db.query('SELECT manifest FROM videos ORDER BY rowid DESC').all() : this.db.query('SELECT manifest FROM videos WHERE owner = ? ORDER BY rowid DESC').all(owner)
+    const rows = owner === undefined ? this.db.query('SELECT manifest FROM videos WHERE id NOT IN (SELECT video FROM scene_requests) ORDER BY rowid DESC').all() : this.db.query('SELECT manifest FROM videos WHERE owner = ? AND id NOT IN (SELECT video FROM scene_requests) ORDER BY rowid DESC').all(owner)
     return (rows as { manifest: string }[]).map(row => publicManifest(JSON.parse(row.manifest)))
   }
   create(owner: string, key: string, request: VideoRequest, uploads: Upload[] = []): VideoManifest {
@@ -94,13 +98,55 @@ export class VideoService {
     this.kick()
     return manifest
   }
+  sceneRequests(lesson: string): SceneRequest[] {
+    const rows = this.db.query('SELECT r.video, r.after_scene, r.input, v.manifest FROM scene_requests r JOIN videos v ON v.id = r.video WHERE r.lesson = ? ORDER BY r.rowid').all(lesson) as { video: string; after_scene: string; input: string; manifest: string }[]
+    return rows.map(row => ({ id: row.video, afterSceneId: row.after_scene, question: (JSON.parse(row.input) as SceneRequestInput).question, video: publicManifest(JSON.parse(row.manifest)) }))
+  }
+  private createSceneRequest(lesson: string, key: string, input: SceneRequestInput): SceneRequest {
+    const prior = this.db.query('SELECT * FROM scene_requests WHERE lesson = ? AND key = ?').get(lesson, key) as { input: string; video: string } | null
+    if (prior) {
+      if (prior.input !== JSON.stringify(input)) throw new Error('Idempotency key already used for a different request')
+      return this.sceneRequests(lesson).find(request => request.id === prior.video)!
+    }
+    const row = this.row(lesson)
+    const parent: VideoManifest | undefined = row ? JSON.parse(row.manifest) : undefined
+    const existing = this.sceneRequests(lesson)
+    if (existing.length >= 20 || (parent?.scenes.length ?? 1) + existing.reduce((sum, r) => sum + Math.max(1, r.video.scenes.length), 0) + 1 > 100) throw new Error('This lesson has reached its added-scene limit.')
+    const after = input.context.scene!.id!
+    let selected = parent?.scenes.find(scene => scene.id === after)
+    let next = parent?.scenes[(parent?.scenes.findIndex(scene => scene.id === after) ?? -1) + 1]
+    for (const request of existing) {
+      const index = request.video.scenes.findIndex(scene => insertedSceneId(request.id, scene.id) === after)
+      if (index >= 0) { selected = request.video.scenes[index]; next = request.video.scenes[index + 1]; break }
+    }
+    if (!selected && !parent) {
+      const local = input.localScene
+      if (local?.id === after && typeof local.source === 'string' && local.source.length <= 100_000 && Number.isFinite(local.duration) && local.duration > 0) {
+        selected = { ...local, index: 0, audio: { id: '', url: '' }, captions: [] }
+      }
+    }
+    if (!selected || input.context.scene!.time > selected.duration + 0.1) throw new Error('The selected scene is unavailable. Reload the lesson and try again.')
+    const original: VideoRequest | undefined = row ? JSON.parse(row.request) : undefined
+    const request = contextualVideoRequest(input, selected, original, next)
+    if (Buffer.byteLength(JSON.stringify(request)) > 1_000_000) throw new Error('This scene contains too much context. Try a simpler moment.')
+    const video = this.db.transaction(() => {
+      const video = this.create(SHARED_OWNER, `scene-request:${crypto.randomUUID()}`, request)
+      this.db.query('INSERT INTO scene_requests VALUES (?, ?, ?, ?, ?)').run(video.id, lesson, key, JSON.stringify(input), after)
+      // Preserve original document/photo inputs for the generation worker.
+      if (row) this.db.query('INSERT INTO video_uploads SELECT ?, position, name, mime, bytes, text FROM video_uploads WHERE video = ?').run(video.id, lesson)
+      return video
+    })()
+    return { id: video.id, afterSceneId: after, question: input.question, video }
+  }
   delete(id: string): boolean {
     if (!this.row(id)) return false
+    for (const child of this.sceneRequests(id)) this.delete(child.id)
     this.active.get(id)?.abort.abort()
     this.db.transaction(() => {
       this.db.query('DELETE FROM video_audio WHERE video = ?').run(id)
       this.db.query('DELETE FROM video_uploads WHERE video = ?').run(id)
       this.db.query('DELETE FROM videos WHERE id = ?').run(id)
+      this.db.query('DELETE FROM scene_requests WHERE video = ? OR lesson = ?').run(id, id)
     })()
     for (const listener of this.listeners.get(id) ?? []) listener(null)
     logEvent('video.deleted', { videoId: id })
@@ -130,7 +176,7 @@ export class VideoService {
     for (const listener of this.listeners.get(manifest.id) ?? []) listener(manifest)
   }
   private async thumbnail(manifest: VideoManifest, request: VideoRequest, context: { signal: AbortSignal; images: ImageContent[] }) {
-    if (!this.generateThumbnail || manifest.provider !== 'pi' || manifest.thumbnail || manifest.thumbnailStatus === 'failed') return
+    if (request.sceneRequest || !this.generateThumbnail || manifest.provider !== 'pi' || manifest.thumbnail || manifest.thumbnailStatus === 'failed') return
     manifest.thumbnailStatus = 'generating'; this.save(manifest); this.notify(manifest)
     try {
       const artwork = await logStage({ videoId: manifest.id, stage: 'thumbnail' }, () => this.generateThumbnail!(request, context))
@@ -159,7 +205,9 @@ export class VideoService {
   }
   private async run(row: Row, abort: AbortController) {
     const manifest: VideoManifest = JSON.parse(row.manifest)
-    const sequence = new SceneSequence()
+    const models: import('animlib/core').CompileInput['models'] = Object.create(null)
+    for (const scene of manifest.scenes) for (const [id, asset] of Object.entries(scene.assets ?? {})) models![id] = asset.metadata
+    const sequence = new SceneSequence({ models })
     const signal = AbortSignal.any([this.abort.signal, abort.signal])
     const usage = new TokenUsageTracker(tokenUsage => {
       if (!this.row(row.id)) return
@@ -173,13 +221,22 @@ export class VideoService {
       const generate = manifest.provider === 'simulated' && this.provider === 'pi' ? simulatedGenerator : this.generate
       manifest.status = 'generating'; this.save(manifest); this.notify(manifest)
       const { request: input, images } = await logStage({ videoId: manifest.id, stage: 'sources' }, () => this.sources(row, signal))
+      if (input.sceneRequest) {
+        const link = this.db.query('SELECT lesson FROM scene_requests WHERE video = ?').get(manifest.id) as { lesson: string } | null
+        if (link) {
+          const parent = this.row(link.lesson)
+          const baseCount = parent ? (JSON.parse(parent.manifest) as VideoManifest).scenes.length : 1
+          const otherCount = this.sceneRequests(link.lesson).filter(r => r.id !== manifest.id).reduce((sum, r) => sum + Math.max(1, r.video.scenes.length), 0)
+          if (baseCount + otherCount + 1 > 100) throw new AgentError('LIMIT', 'This lesson has reached its added-scene limit.')
+        }
+      }
       thumbnailWork = withTokenUsage(usage, () => this.thumbnail(manifest, input, { signal, images }))
       const initial = await sequence.submit({ type: 'load', scenes: manifest.scenes })
       if (!initial.ok) throw new Error('Stored scenes could not be restored')
       while (!this.stopped) {
         const priorIndex = manifest.scenes.length - 1
         const previousFrame = priorIndex >= 0 ? await sequence.evaluate(priorIndex, manifest.scenes[priorIndex].duration) : undefined
-        const next = await withTokenUsage(usage, () => generate(input, manifest.scenes.length, { videoId: manifest.id, owner: row.owner,
+        const next = input.sceneRequest && manifest.scenes.length >= 1 ? null : await withTokenUsage(usage, () => generate(input, manifest.scenes.length, { videoId: manifest.id, owner: row.owner,
           previousFrame, signal, images }))
         if (this.stopped || !this.row(row.id)) break
         if (!next) {
@@ -191,6 +248,7 @@ export class VideoService {
         }
         const scene: VideoScene = { ...next.scene, audio: { id: next.scene.audio?.id ?? `audio-${next.scene.index}`, url: `/api/videos/${manifest.id}/audio/${next.scene.id}` } }
         if (scene.index !== manifest.scenes.length || !Number.isFinite(scene.duration) || scene.duration <= 0) throw new Error('Invalid generated scene order or duration')
+        for (const [id, asset] of Object.entries(scene.assets ?? {})) models![id] = asset.metadata
         const result = await sequence.submit({ type: 'insert', after: manifest.scenes.at(-1)?.id ?? null, scenes: [scene] })
         if (!result.ok) throw new Error(result.diagnostics.map(d => d.message).join('; '))
         if (Math.abs(sequence.compiled.at(-1)!.duration - scene.duration) > 1e-6) throw new Error('Scene timing does not match its declared duration')
@@ -271,6 +329,28 @@ export class VideoService {
         ...(body.videoMode !== undefined ? { videoMode: body.videoMode } : {}),
         ...(uploads.length ? { uploads: uploads.map(uploadMetadata) } : {}) }
       try { return json(this.create(owner, key, normalized, uploads), 202) } catch (error) { return json({ detail: (error as Error).message }, 409) }
+    }
+    if (parts.length === 5 && parts[4] === 'scene-requests') {
+      let lesson: string
+      try { lesson = decodeURIComponent(parts[3]) } catch { return json({ detail: 'Invalid lesson ID' }, 400) }
+      if (!lesson || lesson.length > 256) return json({ detail: 'Invalid lesson ID' }, 400)
+      if (request.method === 'GET') return json(this.sceneRequests(lesson))
+      if (request.method !== 'POST') return json({ detail: 'Method Not Allowed' }, 405)
+      const key = request.headers.get('Idempotency-Key')
+      if (!key || key.length > 128) return json({ detail: 'An Idempotency-Key is required' }, 400)
+      const reader = request.body?.getReader(), chunks: Uint8Array[] = []
+      let size = 0
+      if (reader) while (true) {
+        const { value, done } = await reader.read(); if (done) break
+        size += value.length
+        if (size > 1_000_000) { await reader.cancel(); return json({ detail: 'Scene context must be under 1 MB' }, 413) }
+        chunks.push(value)
+      }
+      let input: SceneRequestInput
+      try { input = validateSceneRequest(JSON.parse(await new Blob(chunks.map(chunk => new Uint8Array(chunk))).text()), lesson) }
+      catch (error) { return json({ detail: error instanceof SyntaxError ? 'Invalid request body' : (error as Error).message }, 400) }
+      try { return json(this.createSceneRequest(lesson, key, input), 202) }
+      catch (error) { return json({ detail: (error as Error).message }, 409) }
     }
     // All visitors share the library, including jobs saved under earlier session identities.
     const row = this.row(parts[3])

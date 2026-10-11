@@ -29,7 +29,7 @@ export class GLDepthFocus {
  prepare(width:number,height:number){this.ensure(width,height);this.gl.bindFramebuffer(this.gl.FRAMEBUFFER,null);}
  render(rect:number[]|undefined,width:number,height:number,count:number,draw:(target:WebGLFramebuffer,index:number)=>void){
   const gl=this.gl,s=this.ensure(width,height),[x,top,w,h]=rect??[0,0,width,height],y=height-top-h;
-  const quad=(texture:WebGLTexture,weight:number)=>{gl.useProgram(this.program);gl.bindVertexArray(this.vao);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,texture);gl.uniform1f(this.weight,weight);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.viewport(0,0,width,height);gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,w,h);gl.drawArrays(gl.TRIANGLES,0,3);};
+  const quad=(texture:WebGLTexture,weight:number)=>{gl.useProgram(this.program);gl.bindVertexArray(this.vao);gl.activeTexture(gl.TEXTURE0);gl.bindSampler(0,null);gl.bindTexture(gl.TEXTURE_2D,texture);gl.uniform1f(this.weight,weight);gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.viewport(0,0,width,height);gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,w,h);gl.drawArrays(gl.TRIANGLES,0,3);};
   for(let i=0;i<count;i++){
    gl.bindFramebuffer(gl.FRAMEBUFFER,s.sample);gl.disable(gl.SCISSOR_TEST);gl.depthMask(true);gl.enable(gl.DEPTH_TEST);gl.clearColor(0,0,0,0);gl.clearDepth(1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.viewport(x,y,w,h);gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,w,h);draw(s.sample,i);
    gl.disable(gl.SCISSOR_TEST);gl.bindFramebuffer(gl.READ_FRAMEBUFFER,s.sample);gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER,s.resolved);gl.blitFramebuffer(0,0,width,height,0,0,width,height,gl.COLOR_BUFFER_BIT,gl.NEAREST);

@@ -6,6 +6,7 @@ import { deflateSync } from 'node:zlib';
 import { CanvasRenderer } from '../dist/renderer.js';
 import { withOfflineScene } from '../dist/core.js';
 import { loadAssetRegistry } from './load-assets.mjs';
+import { createOfflineModelStore } from './load-models.mjs';
 import { dirname, resolve } from 'node:path';
 
 function png(width, height, rgba) {
@@ -32,8 +33,11 @@ async function main() {
   const input=JSON.parse(await readFile(process.argv[2],'utf8'));
   if(!Array.isArray(input.times)||!input.times.length||input.times.length>16)throw new Error('Expected 1–16 sample times.');
   const modelAssets=input.modelAssets?await loadAssetRegistry(input.modelAssets.map(path=>resolve(dirname(process.argv[2]),path)),{colorPolicy:input.colorPolicy}):undefined;
-  await withOfflineScene(input.source,{previous:input.previousFrame,palette:input.palette},async sampler=>{
+  const models=createOfflineModelStore(input.models);
+  try {
+  await withOfflineScene(input.source,{previous:input.previousFrame,palette:input.palette,models:models.metadata},async sampler=>{
     const compiled=sampler.scene;
+    await models.prepare([compiled]);
     if(!input.times.every(t=>Number.isFinite(t)&&t>=0&&t<=compiled.duration))throw new Error('Invalid sample time.');
     Object.assign(globalThis,globals);
     globalThis.ResizeObserver=class {observe(){}disconnect(){}};
@@ -50,7 +54,7 @@ async function main() {
       Object.defineProperty(globalThis,'navigator',{configurable:true,value:{gpu:{requestAdapter:async()=>({requestDevice:async()=>device}),getPreferredCanvasFormat:()=>format}}});
       const context={configure(){},unconfigure(){},getCurrentTexture:()=>texture};
       const canvas={width,height,style:{},getBoundingClientRect:()=>({width,height}),getContext:kind=>kind==='webgpu'?context:null,addEventListener(){},removeEventListener(){}};
-      const renderer=new CanvasRenderer(canvas);renderer.onError=e=>errors.push(e.message);
+      const renderer=new CanvasRenderer(canvas,undefined,sampler.assetGeometry,models);renderer.onError=e=>errors.push(e.message);
       try {
         await renderer.prepare([compiled],sampler.assetGeometry);
         const cellW=640,cellH=Math.round(height*cellW/width),sheetW=cellW*2;
@@ -78,5 +82,6 @@ async function main() {
     await writeFile(join(input.directory,'frames.json'),JSON.stringify(manifest,null,2));
     process.stdout.write(JSON.stringify(manifest));
   },{modelAssets});
+  } finally { models.dispose(); }
 }
 main().then(()=>process.exit(0),error=>{console.error(error instanceof Error?error.message:String(error));process.exit(1);});

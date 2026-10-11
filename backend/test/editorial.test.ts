@@ -173,3 +173,19 @@ test('malformed review cannot unlock speech even if a runner skips the validatio
   await expect(authorReviewedLesson({ async run() { return calls++ === 0 ? JSON.stringify(lesson()) : JSON.stringify({ ...review(), checks: [] }); } }, request, root, new AbortController().signal)).rejects.toThrow('specific checks');
   expect(await readdir(root)).not.toContain('lesson.json');
 });
+
+test('inserted scene authoring, review and repair receive no lesson duration or word-count targets', async () => {
+  const root = await directory(), tasks: AgentTask[] = [];
+  const outputs = [lesson('five'), review('revise'), lesson(), review()];
+  await authorReviewedLesson({ async run(task) {
+    tasks.push(task); const output = JSON.stringify(outputs.shift()); await task.validate!(output); return output;
+  } }, { ...request, sceneRequest: true }, root, new AbortController().signal);
+  expect(tasks).toHaveLength(4);
+  for (const task of tasks) {
+    expect(task.systemPrompt).toContain('# Inserted scene guidance');
+    expect(task.systemPrompt).not.toContain('# Storyline agent guidance');
+    expect(task.systemPrompt).not.toMatch(/2–6 minutes|20-30 spoken words|30-60 words|within 30 seconds|125–150 words/);
+    expect(task.prompt).not.toContain('concise visual lesson');
+  }
+  expect(tasks[0].prompt).toContain('Write one inserted scene');
+});

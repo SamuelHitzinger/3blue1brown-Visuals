@@ -92,6 +92,7 @@ export function parsePlannedLesson(output: string, request: VideoRequest, option
   catch { throw new Error('Return the complete lesson as valid JSON with schemaVersion, markdown, and plan.'); }
   if (raw.schemaVersion !== 1 || typeof raw.markdown !== 'string') throw new Error('Lesson needs schemaVersion 1 and a Markdown string.');
   const story = parseStoryline(raw.markdown); validateStory(story);
+  if (request.sceneRequest && story.beats.length > 1) throw new Error('A contextual follow-up must contain at most one scene.');
   const p = object(raw.plan, 'plan');
   const entities = list(p.entities, 'plan.entities', 200).map((value, i): PlannedEntity => {
     const e = object(value, `entities[${i}]`);

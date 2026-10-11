@@ -63,7 +63,7 @@ async function captureRenderer() {
       stride = descriptor.vertex.buffers[0].arrayStride / 4;
       return { getBindGroupLayout: () => ({}) };
     },
-    createBuffer: capture.createBuffer, createBindGroup: capture.createBindGroup,
+    createSampler: () => ({}), createBuffer: capture.createBuffer, createBindGroup: capture.createBindGroup,
     createTexture: ({ size }: { size: number[] }) => ({ width: size[0], height: size[1], createView: () => ({}), destroy() {} }),
     queue: capture.queue,
     createCommandEncoder: () => ({ beginRenderPass: () => capture.pass, finish: () => ({}) }),

@@ -2,6 +2,19 @@ import { expect, test } from 'bun:test';
 import { compileSource, evaluateScene } from 'animlib/core';
 import { inspectScene, sampleScene, sceneSampleTimes } from '../src/agents/scene-inspection.js';
 import { inspectInWorker, sampleInWorker } from '../src/agents/scene-inspection-client.js';
+import { createModelGLB, parseModelGLB } from 'animlib/core';
+
+test('worker inspection retains model inventories when resampling time callbacks',async()=>{
+  const {metadata}=await parseModelGLB(await createModelGLB({parts:[{name:'Panel',vertices:[[0,0,0],[1,0,0],[0,1,0]],triangles:[[0,1,2]]}]}));
+  const models={panel:metadata};
+  const source=`export default scene({},s=>{s.model('panel',{asset:'panel'});const m=s.mesh('live',{vertices:[[0,0,0],[1,0,0],[0,1,0]],triangles:[[0,1,2]]});s.deform(m,[s.time],([x,y,z],i,t)=>[x+t,y,z]);s.wait(2);});`;
+  const compiled=await compileSource(source,{models});
+  const samples=await sampleInWorker({source,compiled,models},{times:[0,1]});
+  expect(samples).toHaveLength(2);
+  expect(samples[1].frame.elements.some(e=>e.geometry.model?.asset==='panel')).toBe(true);
+  const report=await inspectInWorker({source,compiled,models},{times:[1],objectIds:['panel']});
+  expect(report.bounds[0].bounds).not.toBeNull();
+});
 
 async function candidate(body: string) {
   const source = `export default scene({}, s => { ${body} });`;

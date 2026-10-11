@@ -4,7 +4,7 @@ import { loadPrompt } from '../src/agents/prompts.js';
 
 test('the procedural finish example compiles with the installed scene API', async () => {
   const guidance = await loadPrompt('scene-craft');
-  const examples = [...guidance.matchAll(/```js\n([\s\S]*?)\n```/g)];
+  const examples = [...guidance.matchAll(/```js\r?\n([\s\S]*?)\r?\n```/g)];
   expect(examples).toHaveLength(1);
   const compiled = await compileSource(`export default scene({mode:'3d',orbit:false},s=>{
     const v = s;

@@ -79,7 +79,7 @@ export default function CoursesPage({ curriculum, selectedId, onSelect, plans, o
         </div>
       </section>
     </div>
-    {selectedSubject && (!!plans.subjects[selectedSubject.id]?.length || uploadRequest?.subjectId === selectedSubject.id) && <SubjectPlan key={`material-${selectedSubject.id}`} uploadRequest={uploadRequest?.subjectId === selectedSubject.id ? uploadRequest.sequence : 0} subject={selectedSubject} materials={plans.subjects[selectedSubject.id] || []} onAdd={material => onAddMaterial(selectedSubject.id, material)} onAddLesson={(parent, title) => onAddLesson(selectedSubject.id, parent, title)} onDeleteLesson={onDeleteLesson} pendingLessons={pendingLessons} onMakeVideo={onMakeVideo}/>}
+    {selectedSubject && <SubjectPlan key={`material-${selectedSubject.id}`} uploadRequest={uploadRequest?.subjectId === selectedSubject.id ? uploadRequest.sequence : 0} subject={selectedSubject} materials={plans.subjects[selectedSubject.id] || []} onAdd={material => onAddMaterial(selectedSubject.id, material)} onAddLesson={(parent, title) => onAddLesson(selectedSubject.id, parent, title)} onDeleteLesson={onDeleteLesson} pendingLessons={pendingLessons} onMakeVideo={onMakeVideo}/>}
     {storageNote && <p className="subject-plan-error" role="status">{storageNote}</p>}
     {selectedSubject && <DeleteCourse key={`delete-${selectedSubject.id}`} title={selectedSubject.title} onDelete={() => onDeleteCourse(selectedSubject.id)}/>}
   </main>

@@ -23,7 +23,7 @@ async function captureRenderer(palette?:ColorPalette) {
   const device={limits:{maxTextureDimension2D:8192},lost:new Promise(()=>{}),addEventListener:()=>{},destroy:()=>{},
     createShaderModule:()=>({getCompilationInfo:async()=>({messages:[]})}),
     createRenderPipelineAsync:async(descriptor:{vertex:{buffers:{arrayStride:number}[]}})=>{stride=descriptor.vertex.buffers[0].arrayStride/4;return {getBindGroupLayout:()=>({})};},
-    createBuffer:capture.createBuffer,createBindGroup:capture.createBindGroup,
+    createSampler:()=>({}),createBuffer:capture.createBuffer,createBindGroup:capture.createBindGroup,
     createTexture:({size}:{size:number[]})=>({width:size[0],height:size[1],createView:()=>({}),destroy:()=>{}}),
     queue:capture.queue,
     createCommandEncoder:()=>({beginRenderPass:(descriptor:{colorAttachments:{clearValue:Record<string,number>}[]})=>{clear=descriptor.colorAttachments[0].clearValue;return capture.pass;},finish:()=>({})}),

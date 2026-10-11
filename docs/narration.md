@@ -61,7 +61,7 @@ From the repository root, install dependencies with `npm ci`, copy `backend/.env
 
 Never use `VITE_` for credentials. `.env` files and generated audio are ignored by Git. The checked-in example contains no API key.
 
-Narration keeps Alexander and uses stability `0.35`, style exaggeration `0.35`, and speed `1.06` for a more energetic, expressive delivery, with similarity `0.75` and speaker boost enabled. ElevenLabs documents that [lower stability broadens emotional range, style exaggeration amplifies the speaker's delivery, and higher speed increases the pace](https://elevenlabs.io/docs/api-reference/voices/settings/update). The production workflow pins the same Alexander voice. Restart or redeploy the backend after changing these settings; newly generated narration uses them, while existing video audio keeps its original delivery.
+Narration keeps Alexander and uses stability `0.15`, style exaggeration `0.9`, and speed `1.12` for a highly animated, enthusiastic delivery, with similarity `0.75` and speaker boost enabled. The storyline guidance also asks for warm, upbeat wording, lively questions, varied sentence lengths, and occasional exclamation marks at meaningful discoveries, while preserving clear explanations and respecting explicit tone requests. Delivery directions and emotion tags remain excluded from spoken text. ElevenLabs documents that [lower stability broadens emotional range, style exaggeration amplifies the speaker's delivery, and higher speed increases the pace](https://elevenlabs.io/docs/api-reference/voices/settings/update); its [speech guidance](https://elevenlabs.io/docs/overview/capabilities/text-to-speech/best-practices) also recommends phrasing and context to guide emotion. The production workflow pins the same Alexander voice. Restart or redeploy the backend after changing these settings; newly generated narration uses them, while existing video audio keeps its original delivery.
 
 Generate the smoke sample before starting the backend worker:
 
@@ -114,7 +114,7 @@ All utterance, sentence, word, and pause timestamps are **local to their scene**
 
 The provider's normalized text supplies spoken word boundaries, including expanded numbers. Original character alignment is retained separately; original and normalized words are not assumed to map one-to-one. Provider timestamps can round up to one millisecond beyond the PCM boundary; canonical word times are bounded to the audio length while raw alignment is preserved. Larger mismatches fail. Timing precision is not a promise of perfect acoustic alignment.
 
-Audio uses signed 16-bit mono PCM at 24 kHz wrapped in WAV. Default voice settings are stability 0.35, similarity 0.75, style 0.35, speaker boost enabled, and speed 1.06. Adjacent text is supplied for vocal continuity. An animation selects its assigned audio asset at local time zero; visuals may finish early and hold, but cannot run past the narration duration. Animlib owns playback, seeking, pause/resume, and mute synchronization.
+Audio uses signed 16-bit mono PCM at 24 kHz wrapped in WAV. Default voice settings are stability 0.15, similarity 0.75, style 0.9, speaker boost enabled, and speed 1.12. Adjacent text is supplied for vocal continuity. An animation selects its assigned audio asset at local time zero; visuals may finish early and hold, but cannot run past the narration duration. Animlib owns playback, seeking, pause/resume, and mute synchronization.
 
 ## Persistence, failures, and deployment
 

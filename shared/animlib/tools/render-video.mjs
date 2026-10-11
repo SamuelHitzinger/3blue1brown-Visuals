@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { CanvasRenderer } from '../dist/renderer.js';
 import { withOfflineScene } from '../dist/core.js';
 import { loadAssetRegistry } from './load-assets.mjs';
+import { createOfflineModelStore } from './load-models.mjs';
 
 function argumentsFor(argv) {
   const options = { width: 1280, height: 720, fps: 24, crf: 18, preset: 'medium', ffmpeg: 'ffmpeg' };
@@ -65,11 +66,13 @@ async function main() {
   const { width, height, fps } = options;
   const frameCount = Math.ceil(duration * fps - 1e-8);
   let device, texture, readback, renderer, encoder, encoderDone, encoderError;
+  let models;
   let stderr = '', aborted = false;
   const stop = () => { aborted = true; encoder?.kill(); };
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
   try {
+    models = createOfflineModelStore(manifest.models);
     Object.assign(globalThis, globals);
     globalThis.ResizeObserver = class { observe() {} disconnect() {} };
     globalThis.devicePixelRatio = 1;
@@ -86,7 +89,7 @@ async function main() {
     Object.defineProperty(globalThis, 'navigator', { configurable: true, value: { gpu: { requestAdapter: async () => ({ requestDevice: async () => device }), getPreferredCanvasFormat: () => format } } });
     const context = { configure() {}, unconfigure() {}, getCurrentTexture: () => texture };
     const canvas = { width, height, style: {}, getBoundingClientRect: () => ({ width, height }), getContext: kind => kind === 'webgpu' ? context : null, addEventListener() {}, removeEventListener() {} };
-    renderer = new CanvasRenderer(canvas);
+    renderer = new CanvasRenderer(canvas, undefined, undefined, models);
     let renderError;
     renderer.onError = error => { renderError = error; };
     device.addEventListener('uncapturederror', event => { renderError = event.error; });
@@ -105,8 +108,9 @@ async function main() {
     for (const entry of manifest.scenes) {
       if (aborted) throw new Error('Export interrupted.');
       const source = await readFile(join(dirname(manifestPath), entry.file), 'utf8');
-      previous = await withOfflineScene(source, { previous, palette: manifest.palette }, async sampler => {
+      previous = await withOfflineScene(source, { previous, palette: manifest.palette, models: models.metadata }, async sampler => {
         const compiled = sampler.scene;
+        await models.prepare([compiled]);
         if (Math.abs(compiled.duration - entry.duration) > 0.001) throw new Error(`Scene ${entry.id}: compiled duration ${compiled.duration} differs from manifest ${entry.duration}.`);
         if (compiled.options.audio) throw new Error(`Scene ${entry.id} declares audio; silent export requires silent source scenes.`);
         await renderer.prepare([compiled],sampler.assetGeometry);
@@ -167,7 +171,7 @@ async function main() {
   } finally {
     if (encoder && encoder.exitCode === null) { encoder.stdin?.destroy(); encoder.kill(); }
     if (encoderDone) await encoderDone;
-    readback?.destroy(); texture?.destroy(); renderer?.dispose(); device?.destroy();
+    readback?.destroy(); texture?.destroy(); renderer?.dispose(); models?.dispose(); device?.destroy();
     delete globalThis.__animlibExportGpu;
     await rm(partial, { force: true });
     await rm(captioned, { force: true });

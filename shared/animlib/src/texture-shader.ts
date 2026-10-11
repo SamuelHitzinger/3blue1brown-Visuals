@@ -1,5 +1,6 @@
 /** Packed vertex layout shared by tessellation, composition, inspection and both GPUs. */
-export const VERTEX_FLOATS = 34;
+// UV0.xy and UV1.xy occupy floats 31-34 (location 14); prepared-image alpha mode is float 35 (location 15).
+export const VERTEX_FLOATS = 36;
 export const texturePatterns = ['checker', 'stripes', 'noise', 'marble', 'wood'] as const;
 
 // Equivalent bounded value-noise and filtered pattern functions for the two backends.
@@ -29,6 +30,21 @@ fn textureBand(x:f32,width:f32)->f32 {
   let edge=max(0.0001,min(width,1.)*3.14159265);
   return mix(smoothstep(-edge,edge,sin(x*3.14159265)),0.5,clamp(width-0.5,0.,1.));
 }
+// Center each octave before filtering, so unresolved detail contributes only its
+// mean. Different offsets keep the three lattices from lining up.
+fn textureNoiseLayer(p:vec3f,seed:f32,width:f32)->f32 {
+  let visibility=1.-smoothstep(0.25,1.,width);
+  if(visibility<=0.){return 0.;}
+  return (textureNoise(p,seed)-0.5)*visibility;
+}
+// x is color mix; y is height. Relief uses only the finer layers, with small
+// amplitudes to avoid turning broad color variation into inflated lumps.
+fn textureNoiseSample(p:vec3f,seed:f32,width:f32)->vec2f {
+  let broad=textureNoiseLayer(p,seed,width);
+  let medium=textureNoiseLayer(p*2.03+vec3f(19.1,7.7,3.4),seed,width*2.03);
+  let fine=textureNoiseLayer(p*4.11+vec3f(5.3,23.8,11.6),seed,width*4.11);
+  return vec2f(0.5+0.55*(0.6*broad+0.28*medium+0.12*fine),0.035*medium+0.065*fine);
+}
 fn textureMix(p:vec3f,kind:f32,seed:f32,footprint:vec3f)->f32 {
   let width=max(footprint.x,max(footprint.y,footprint.z));
   if(kind<1.5){
@@ -37,9 +53,13 @@ fn textureMix(p:vec3f,kind:f32,seed:f32,footprint:vec3f)->f32 {
   }
   if(kind<2.5){return 1.-textureBand(p.x,footprint.x);}
   let noise=textureNoise(p,seed);
-  if(kind<3.5){return mix(noise,0.5,clamp(width,0.,1.));}
   if(kind<4.5){return textureBand(p.x+4.*noise,width*5.);}
   return textureBand(length(p.xz)*2.+2.*noise,width*4.);
+}
+fn proceduralSample(p:vec3f,kind:f32,seed:f32,footprint:vec3f)->vec2f {
+  if(kind>2.5&&kind<3.5){return textureNoiseSample(p,seed,max(footprint.x,max(footprint.y,footprint.z)));}
+  let value=textureMix(p,kind,seed,footprint);
+  return vec2f(value,value);
 }
 `;
 
@@ -67,6 +87,17 @@ float textureBand(float x,float width) {
   float edge=max(0.0001,min(width,1.)*3.14159265);
   return mix(smoothstep(-edge,edge,sin(x*3.14159265)),0.5,clamp(width-0.5,0.,1.));
 }
+float textureNoiseLayer(vec3 p,float seed,float width) {
+  float visibility=1.-smoothstep(0.25,1.,width);
+  if(visibility<=0.){return 0.;}
+  return (textureNoise(p,seed)-0.5)*visibility;
+}
+vec2 textureNoiseSample(vec3 p,float seed,float width) {
+  float broad=textureNoiseLayer(p,seed,width);
+  float medium=textureNoiseLayer(p*2.03+vec3(19.1,7.7,3.4),seed,width*2.03);
+  float fine=textureNoiseLayer(p*4.11+vec3(5.3,23.8,11.6),seed,width*4.11);
+  return vec2(0.5+0.55*(0.6*broad+0.28*medium+0.12*fine),0.035*medium+0.065*fine);
+}
 float textureMix(vec3 p,float kind,float seed,vec3 footprint) {
   float width=max(footprint.x,max(footprint.y,footprint.z));
   if(kind<1.5){
@@ -75,8 +106,12 @@ float textureMix(vec3 p,float kind,float seed,vec3 footprint) {
   }
   if(kind<2.5){return 1.-textureBand(p.x,footprint.x);}
   float noise=textureNoise(p,seed);
-  if(kind<3.5){return mix(noise,0.5,clamp(width,0.,1.));}
   if(kind<4.5){return textureBand(p.x+4.*noise,width*5.);}
   return textureBand(length(p.xz)*2.+2.*noise,width*4.);
+}
+vec2 proceduralSample(vec3 p,float kind,float seed,vec3 footprint) {
+  if(kind>2.5&&kind<3.5){return textureNoiseSample(p,seed,max(footprint.x,max(footprint.y,footprint.z)));}
+  float value=textureMix(p,kind,seed,footprint);
+  return vec2(value,value);
 }
 `;

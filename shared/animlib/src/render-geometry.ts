@@ -1,3 +1,5 @@
+import { modelBoundsGeometry } from './models.js';
+import type { ResolvedModelGeometry } from './model-store.js';
 /** CPU tessellation shared by rendering and overlap inspection; no browser or GPU required. */
 import { RetainedGeometry, retainableElement, canonicalPrimitive, retainedPrecisionSafe, normalFloat32 } from './retained-geometry.js';
 import { VERTEX_FLOATS, texturePatterns } from './texture-shader.js';
@@ -82,6 +84,7 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
     const chain:ElementState[]=[element];let parent=parents.get(element.id);const seen=new Set([element.id]);
     while(parent&&!seen.has(parent.id)){chain.push(parent);seen.add(parent.id);parent=parents.get(parent.id);}
     const viewportOffset=[0,1].map(axis=>chain.reduce((sum,e)=>sum+(e.viewportOffset?.[axis]??0),0));
+    const imported=(element.geometry as ResolvedModelGeometry)._model;
     const castShadow=chain.every(e=>e.castShadow!==false)&&!element.billboard&&viewportOffset.every(v=>v===0)
       &&["mesh","sphere"].includes(element.geometry.kind);
     const groups:{id:string;opacity:number}[]=[];
@@ -129,7 +132,7 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
       const primitive=canonicalPrimitive(element);
       const local:ElementState={...element,geometry:primitive.geometry,id:'',view:undefined,position:[0,0,0],rotation:[0,0,0],scale:1,
         opacity,billboard:false,billboardOffset:undefined,viewportOffset:undefined};
-      const key=paletteKey+JSON.stringify([local.geometry,local.fill,local.stroke,local.strokeWidth,local.strokeProfile,local.space,opacity,local.strokeStart,local.strokeEnd,local.dashArray,local.dashOffset]);
+      const key=paletteKey+JSON.stringify([(local.geometry as ResolvedModelGeometry)._modelKey ?? local.geometry,local.fill,local.stroke,local.strokeWidth,local.strokeProfile,local.space,opacity,local.strokeStart,local.strokeEnd,local.dashArray,local.dashOffset]);
       const meshes=retained.get(key,()=>buildDrawItems({...frame,elements:[local]},camera,width,height,palette,undefined,false,undefined,undefined,assetGeometry),element.geometry.kind==='arrow',JSON.stringify([view,element.id]));
       const instanceBasis=primitive.axes.map(p=>p.map((_,axis)=>p.reduce((sum,v,i)=>sum+v*basis[i][axis],0)) as Vec3);
       const instanceOrigin=origin.map((v,axis)=>v+primitive.origin.reduce((sum,p,i)=>sum+p*basis[i][axis],0)) as Vec3;
@@ -138,12 +141,12 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
         for(const mesh of meshes) {
           const depth=Math.min(...mesh.centers.map(center=>depthAt(...center.map((_,axis)=>instanceOrigin[axis]+center.reduce((sum,v,i)=>sum+v*instanceBasis[i][axis],0)) as Vec3)));
           items.push({depth:element.space==='screen'?-1e9:depth,vertices:new Float32Array(0),
-            transparent:false,screen:element.space==='screen',groups,elementId:element.id,component:mesh.component,mesh,instance,...(mesh.imageBinding?{imageBinding:mesh.imageBinding}:{})});
+            transparent:false,screen:element.space==='screen',groups,elementId:element.id,component:mesh.component,modelMaterial:mesh.modelMaterial,imageBinding:mesh.imageBinding,mesh,instance});
         }
         continue;
       }
     }
-    const addTriangles=(points:Vec3[],color:ColorValue,alpha=1,normals?:Vec3[],component:DrawComponent='fill',twoSided=false,texture?:ProceduralTexture,material?:Material,colors?:RGBA[],uv0?:Vec2[],imageBinding?:ImageBinding):void=> {
+    const addTriangles=(points:Vec3[],color:ColorValue,alpha=1,normals?:Vec3[],component:DrawComponent='fill',twoSided=false,texture?:ProceduralTexture,material?:Material,colors?:RGBA[],uvs?:number[][],imageBinding?:ImageBinding):void=> {
       const rgba=imageBinding?(imageBinding.texture.tint?parseColor(palette.resolve(imageBinding.texture.tint)):[1,1,1,1]):parseColor(palette.resolve(color));
       const secondary=texture?parseColor(palette.resolve(texture.color)):rgba;
       if(!points.length||Math.max(rgba[3],secondary[3])*opacity*alpha<=0)return;
@@ -155,6 +158,7 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
       let sumX=0,sumY=0,sumZ=0,retentionUnsafe=false;
       for(let i=0;i<points.length;i++) {
         const p=points[i],j=i*VERTEX_FLOATS;
+        if(uvs)vertices.set(uvs[i],j+31);
         const x=origin[0]+p[0]*basis[0][0]+p[1]*basis[1][0]+p[2]*basis[2][0];
         const y=origin[1]+p[0]*basis[0][1]+p[1]*basis[1][1]+p[2]*basis[2][1];
         const z=origin[2]+p[0]*basis[0][2]+p[1]*basis[1][2]+p[2]*basis[2][2];
@@ -162,7 +166,9 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
         sumX+=x;sumY+=y;sumZ+=z;
         vertices[j]=x;vertices[j+1]=y;vertices[j+2]=z;
         const vertexColor=colors?.[i]??rgba;
-        vertices[j+3]=vertexColor[0];vertices[j+4]=vertexColor[1];vertices[j+5]=vertexColor[2];vertices[j+6]=vertexColor[3]*opacity*alpha*(colors?rgba[3]:1);vertices[j+7]=screen?1:0;
+        const tint=imported && element.fill!=='WHITE' ? rgba.slice(0,3).map(v=>v<=0.04045?v/12.92:((v+0.055)/1.055)**2.4) : [1,1,1];
+        vertices[j+3]=vertexColor[0]*tint[0];vertices[j+4]=vertexColor[1]*tint[1];vertices[j+5]=vertexColor[2]*tint[2];vertices[j+6]=vertexColor[3]*opacity*alpha*(colors?rgba[3]:1);vertices[j+7]=screen?1:0;
+        if(imported){vertices[j+6]=rgba[3]*opacity*alpha;vertices[j+23]=vertexColor[3];}
         if(normals) {
           const n=normals[i];
           for(let axis=0;axis<3;axis++) {
@@ -178,13 +184,14 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
           const bump=(texture.bumpStrength??0)*scale;retentionUnsafe ||= !normalFloat32(bump);
           vertices[j+23]=texture.seed??0;vertices[j+30]=bump;
         }
-        if(imageBinding){vertices[j+31]=uv0![i][0];vertices[j+32]=uv0![i][1];vertices[j+33]=imageBinding.texture.alphaMode==='opaque'?1:2;}
+        // UV0/UV1 occupy floats 31–34; image alpha has its own final lane.
+        if(imageBinding)vertices[j+35]=imageBinding.texture.alphaMode==='opaque'?1:2;
         if(material) {
           vertices[j+24]=material.metalness??0;vertices[j+25]=material.roughness??0.45;vertices[j+26]=material.specular??0.5;
           for(let axis=0;axis<3;axis++)vertices[j+27+axis]=emission[axis]*emissionStrength;
         }
       }
-      const transparent=imageBinding?.texture.alphaMode==='blend' || Math.min(a,secondary[3]*opacity*alpha)<0.999999 || Boolean(colors?.some(c=>c[3]*opacity*alpha<0.999999));
+      const transparent=imageBinding?.texture.alphaMode==='blend' || imported?.material.alpha==='BLEND' || Math.min(a,secondary[3]*opacity*alpha)<0.999999 || Boolean(!imported && colors?.some(c=>c[3]*opacity*alpha<0.999999));
       if(transparent&&!screen) {
         // Whole-object sorting lets rear sphere/tube faces blend over front
         // faces, and cannot place another surface between them. Sort complete
@@ -192,11 +199,11 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
         for(let j=0;j<vertices.length;j+=3*VERTEX_FLOATS) {
           const depth=depthAt((vertices[j]+vertices[j+VERTEX_FLOATS]+vertices[j+2*VERTEX_FLOATS])/3,
             (vertices[j+1]+vertices[j+VERTEX_FLOATS+1]+vertices[j+2*VERTEX_FLOATS+1])/3,(vertices[j+2]+vertices[j+VERTEX_FLOATS+2]+vertices[j+2*VERTEX_FLOATS+2])/3);
-          items.push({depth,vertices:vertices.subarray(j,j+3*VERTEX_FLOATS),transparent,screen,groups,...(imageBinding?{imageBinding}:{}),castShadow:castShadow&&component==='fill',elementId:element.id,component,retentionUnsafe,...(cameraDependentGeometry?{cameraDependentGeometry:true}:{})});
+          items.push({depth,vertices:vertices.subarray(j,j+3*VERTEX_FLOATS),transparent,screen,groups,imageBinding,modelMaterial:imported?.material,castShadow:castShadow&&component==='fill',elementId:element.id,component,retentionUnsafe,...(cameraDependentGeometry?{cameraDependentGeometry:true}:{})});
         }
       } else {
         const depth=screen?-1e9:project([sumX/points.length,sumY/points.length,sumZ/points.length],camera,width,height).depth;
-        items.push({depth,vertices,transparent,screen,groups,...(imageBinding?{imageBinding}:{}),castShadow:castShadow&&component==='fill',elementId:element.id,component,retentionUnsafe,...(cameraDependentGeometry?{cameraDependentGeometry:true}:{})});
+        items.push({depth,vertices,transparent,screen,groups,imageBinding,modelMaterial:imported?.material,castShadow:castShadow&&component==='fill',elementId:element.id,component,retentionUnsafe,...(cameraDependentGeometry?{cameraDependentGeometry:true}:{})});
       }
     };
     const contours=(paths:Vec3[][],alpha=1,color=element.fill,component:DrawComponent='fill'):void=>{if(color!=='none')addTriangles(triangulateContours(paths),color,alpha,undefined,component);};
@@ -263,12 +270,13 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
         }
         return;
       }
-      if(element.fill!=='none')addTriangles(mesh.points,element.fill,alpha,normals,'fill',true,geometry.texture,geometry.material,undefined,uv0,imageBinding);
+      if(element.fill!=='none')addTriangles(mesh.points,element.fill,alpha,normals,'fill',true,geometry.texture,geometry.material,imported ? geometry.triangles!.flatMap(face=>face.map(i=>imported.colors?.[i]??[1,1,1,1] as RGBA)) : undefined,imported ? geometry.triangles!.flatMap(face=>face.map(i=>[...(imported.uv0[i]??[0,0]),...(imported.uv1[i]??[0,0])])) : uv0,imageBinding);
     };
     const drawGeometry=(geometry:Geometry,alpha=1):void=> {
       geometry=resolveAssetGeometry(geometry,assetGeometry);
       if(textOnly&&!isText(geometry))return;
       if(geometry.kind==='text'||geometry.kind==='latex'){latexPaths((geometry.kind==='text'?layoutLatex(textTex(geometry.text??'')):layoutLatexGeometry(geometry)).paths,geometry.fontSize??(element.space==='screen'?(geometry.kind==='text'?16:24):(geometry.kind==='text'?0.4:0.6)),alpha);return;}
+      if(geometry.kind==='model'){addMesh(modelBoundsGeometry(geometry.model!.bounds),alpha);return;}
       if(geometry.kind==='mesh'){addMesh(geometry,alpha);return;}
       if(geometry.kind==='sphere'){
         if(geometry.clipPlanes?.length||geometry.outline){

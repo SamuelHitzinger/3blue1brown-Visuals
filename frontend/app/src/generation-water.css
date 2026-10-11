@@ -1,11 +1,13 @@
-.generation-water { display: flex; align-items: center; justify-content: center; gap: 8px; max-width: min(100%, 360px); margin-top: 12px; }
-.generation-water-approximately { flex: none; color: #93979b; font-size: 14px; line-height: 1; }
-.generation-water-glasses { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; min-width: 0; }
+/* The glasses sit on the same centre line as the token count; "≈" and "+" hang on either side of them. */
+.generation-water { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; column-gap: 8px; width: 100%; max-width: 360px; margin-top: 12px; }
+.generation-water-approximately { justify-self: end; color: #93979b; font-size: 14px; line-height: 1; }
+/* Exactly --generation-water-columns glasses per row, so a second row is balanced and centred. */
+.generation-water-glasses { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; width: calc(var(--generation-water-columns, 6) * 28px + (var(--generation-water-columns, 6) - 1) * 6px); }
 .generation-water-glass { display: block; flex: none; width: 28px; height: 36px; overflow: visible; }
 .generation-water-outline { fill: none; stroke: #92979b; stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; animation: generation-water-draw 650ms ease-out both; }
 .generation-water-fill { transition: transform 500ms cubic-bezier(.4, 0, .2, 1); }
 .generation-water-wave { fill: #6ba8d0; opacity: .7; animation: generation-water-wave 3s linear infinite; }
-.generation-water-overflow { color: #93979b; font-size: 14px; line-height: 1; }
+.generation-water-overflow { justify-self: start; color: #93979b; font-size: 14px; line-height: 1; }
 @keyframes generation-water-draw {
   from { stroke-dashoffset: 1; }
   to { stroke-dashoffset: 0; }

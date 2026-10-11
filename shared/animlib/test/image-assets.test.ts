@@ -35,8 +35,8 @@ describe('host-owned source image assets',()=>{
     expect(g.vertices).toEqual([[-2,2,0],[-2,-2,0],[2,-2,0],[2,2,0]]);
     const items=buildDrawItems(frame,frame.camera,400,400,paletteResolver(),undefined,false,undefined,undefined,host);
     expect([...items[0].vertices.slice(3,7)]).toEqual([1,1,1,1]);
-    expect([...items[0].vertices.slice(31,34)]).toEqual([0,0,2]);
-    expect(VERTEX_FLOATS).toBe(34);host.dispose();expect(registry.stats().pinnedBytes).toBe(0);
+    expect([...items[0].vertices.slice(31,36)]).toEqual([0,0,0,0,2]);
+    expect(VERTEX_FLOATS).toBe(36);host.dispose();expect(registry.stats().pinnedBytes).toBe(0);
   });
   it('rejects oversized, byte-mismatched images and unsupported descriptors before hashing',async()=>{
     for(const change of [{width:4097},{pixels:new Uint8Array(15)},{encoding:'linear'},{storage:'rgba16'}])

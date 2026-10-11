@@ -1,7 +1,7 @@
 .canvas-question {
   position: absolute;
   z-index: 30;
-  width: 264px;
+  width: 310px;
   max-width: calc(100% - 24px);
   border: 1px solid var(--tile-line);
   border-radius: 17px;
@@ -28,7 +28,7 @@
 .canvas-question .canvas-question-field input:focus-visible { outline: none; }
 .canvas-question:focus-within { border-color: color-mix(in srgb, var(--card-ink) 15%, transparent); }
 .canvas-question-field input::placeholder { color: color-mix(in srgb, var(--card-ink) 60%, transparent); }
-.canvas-question .canvas-question-field button { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: #000; color: #fff; opacity: 1; cursor: not-allowed; }
+.canvas-question .canvas-question-field button { display: grid; place-items: center; width: 32px; height: 32px; flex-shrink: 0; border-radius: 50%; background: #000; color: #fff; opacity: 1; cursor: pointer; }
 .player-page:focus { outline: none; }
 @media (pointer: coarse) { .canvas-question-field input { font-size: 16px; } }
 
@@ -56,3 +56,12 @@
 @media (prefers-reduced-motion: reduce) {
   .canvas-question, .canvas-question.is-closing, .canvas-question-pin, .canvas-question-pin.is-closing { animation: none; }
 }
+
+.canvas-question-field button:disabled { opacity: .4; cursor: default; }
+.canvas-question-hint, .canvas-question-error { margin: 0; padding: 0 16px 12px; font-size: 11px; line-height: 1.5; }
+.canvas-question-hint { opacity: .7; }
+.canvas-question-error { font-size: 12px; }
+.scene-request-status { position: absolute; z-index: 20; bottom: 110px; right: 24px; max-width: min(360px, calc(100% - 100px)); padding: 12px 16px; border: 1px solid #ffffff30; border-radius: 14px; color: #fff; background: #161616ed; font-size: 12px; line-height: 1.5; }
+.scene-request-status button { display: flex; align-items: center; gap: 8px; padding: 6px 0 0; color: #d6e8ba; font: inherit; }
+
+.scene-request-status button:disabled { opacity: .5; cursor: wait; }

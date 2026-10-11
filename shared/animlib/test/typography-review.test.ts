@@ -210,7 +210,7 @@ it('keeps mapped glyphs visually identical throughout a self-morph and the resto
     createRenderPipelineAsync: async (descriptor: {vertex: {buffers: {arrayStride: number}[]}}) => {
       stride = descriptor.vertex.buffers[0].arrayStride / 4; return {getBindGroupLayout: () => ({})};
     },
-    createBuffer: capture.createBuffer, createBindGroup: capture.createBindGroup,
+    createSampler: () => ({}), createBuffer: capture.createBuffer, createBindGroup: capture.createBindGroup,
     createTexture: ({size}: {size: number[]}) => ({width: size[0], height: size[1], createView: () => ({}), destroy() {}}),
     queue: capture.queue,
     createCommandEncoder: () => ({beginRenderPass: () => capture.pass, finish: () => ({})}),

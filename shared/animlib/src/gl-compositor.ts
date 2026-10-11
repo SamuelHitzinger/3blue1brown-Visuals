@@ -89,8 +89,8 @@ export class GLCompositor {
       gl.viewport(0,0,width,height);gl.enable(gl.SCISSOR_TEST);gl.scissor(x,y,w,h);
       gl.useProgram(this.program);gl.bindVertexArray(this.vao);gl.depthMask(command.opaque);
       gl.blendFuncSeparate(gl.ONE,command.additive?gl.ONE:gl.ONE_MINUS_SRC_ALPHA,gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,layer.color);
-      gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,layer.depth);
+      gl.activeTexture(gl.TEXTURE0);gl.bindSampler(0,null);gl.bindTexture(gl.TEXTURE_2D,layer.color);
+      gl.activeTexture(gl.TEXTURE1);gl.bindSampler(1,null);gl.bindTexture(gl.TEXTURE_2D,layer.depth);
       gl.uniform1f(this.opacity,command.opacity);gl.uniform1f(this.receiverLight,command.receiverLight ?? 1);gl.uniform1f(this.receiverShadow,command.receiverShadow ?? 0);
       gl.uniform4f(this.receiverColor,...(command.receiverColor ?? [1,1,1] as const),command.receiverColor?1:0);
       gl.drawArrays(gl.TRIANGLES,0,3);

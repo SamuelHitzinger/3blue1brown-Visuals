@@ -18,13 +18,13 @@ import colorString from 'color-string';
 import {Color,paletteResolver} from '../src/palette.js';
 import type {PaletteColor} from '../src/types.js';
 import {lessonScenes} from '../../../frontend/app/src/lessonScenes';
-import {lessons} from '../../../frontend/app/src/data';
+import {lessons} from '../../../frontend/app/tests/fixtures/lessons';
 import {compositionCases} from './composition-cases.js';
 import {waveSource} from './dynamic-surface-cases.js';
 import {reactiveCases} from './reactive-cases.js';
 import {lightingCases} from './lighting-cases.js';
 import {materialCases,materialSource,bumpSource} from './material-cases.js';
-import {textureCases,texturePixelIssues} from './texture-cases.js';
+import {textureCases,texturePixelIssues,noiseFilteringSources,noiseFilteringIssues} from './texture-cases.js';
 import {retainedPrecisionCases,retainedCases,occlusionGateSource,occlusionGateFrames} from './retained-cases.js';
 import {RetainedGeometry} from '../src/retained-geometry.js';
 import {transparencyCases} from './transparency-cases.js';
@@ -319,6 +319,18 @@ describe('native WebGPU rendering',()=> {
     renderer.render(sequence.frame(0,0),sequence.compiled[0].options);const image=await pixels();
     const rgb=Array.from(image.slice((240*width+320)*4,(240*width+320)*4+3));
     expect(rgb.slice(0,2)).toEqual([0,0]);expect(Math.abs(rgb[2]-128)).toBeLessThanOrEqual(1);
+    expect(errors).toEqual([]);
+    expect((await sequence.submit({type:'load',scenes:initialSources})).ok).toBe(true);
+  });
+  it('noise filters fine relief before broad color and converges to its mean',async()=>{
+    renderer.resetInteraction();
+    const images:Uint8Array[]=[];
+    for(const source of noiseFilteringSources){
+      const result=await sequence.submit({type:'load',scenes:[{id:'noise-filter',source}]});
+      expect(result.ok,JSON.stringify(result)).toBe(true);
+      renderer.render(sequence.frame(0,0),sequence.compiled[0].options);images.push(await pixels());
+    }
+    expect(noiseFilteringIssues(images.map(image=>(x,y)=>Array.from(image.slice((y*width+x)*4,(y*width+x)*4+3))))).toEqual([]);
     expect(errors).toEqual([]);
     expect((await sequence.submit({type:'load',scenes:initialSources})).ok).toBe(true);
   });

@@ -14,7 +14,7 @@ export function captureDraws(output: Float32Array[], draws: number[] = []) {
   return {
     createBuffer: (): Buffer => ({ data: new Float32Array(0), destroy() {} }),
     createBindGroup: (group: Group) => group,
-    queue: { writeBuffer: (buffer: Buffer, _offset: number, data: Float32Array | Uint32Array) => { buffer.data = data.slice(); }, submit() {} },
+    queue: { writeTexture() {}, writeBuffer: (buffer: Buffer, _offset: number, data: Float32Array | Uint32Array) => { buffer.data = data.slice(); }, submit() {} },
     pass: {
       setPipeline() {}, setViewport() {}, setScissorRect() {}, end() {},
       setBindGroup(index: number, group: Group) { if (index === 1) objects = group.entries[0].resource.buffer; },

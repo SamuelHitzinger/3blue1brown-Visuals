@@ -1,10 +1,10 @@
 import { compileSource, detectSceneOverlaps, evaluateScene, getScreenBounds } from 'animlib/core';
-import type { Bounds2D, CompiledScene, Frame } from 'animlib/core';
+import type { Bounds2D, CompiledScene, Frame, CompileInput } from 'animlib/core';
 
 export const SCENE_VIEWPORT = { width: 960, height: 540 };
 export interface InspectionOptions { times?: number[]; objectIds?: string[]; includeAnimating?: boolean }
 export interface PreviewOptions { times?: number[]; focusObjectId?: string }
-export interface SceneCandidate { source: string; compiled: CompiledScene; previous?: Frame }
+export interface SceneCandidate { source: string; compiled: CompiledScene; previous?: Frame; models?: CompileInput['models'] }
 export interface FrameSample { time: number; frame: Frame; focus?: Bounds2D }
 export interface InspectionReport {
   viewport: typeof SCENE_VIEWPORT;
@@ -35,7 +35,7 @@ export function sceneSampleTimes(scene: CompiledScene, requested: number[] | und
 async function sampled(candidate: SceneCandidate, time: number): Promise<CompiledScene> {
   // Time callbacks must be evaluated at each requested time, not frozen at validation's end frame.
   return candidate.compiled.reactiveBindings?.some(b => b.time)
-    ? compileSource(candidate.source, { previous: candidate.previous }, { sampleTime: time }) : candidate.compiled;
+    ? compileSource(candidate.source, { previous: candidate.previous, models: candidate.models }, { sampleTime: time }) : candidate.compiled;
 }
 
 export async function sampleScene(candidate: SceneCandidate, options: PreviewOptions = {}): Promise<FrameSample[]> {

@@ -63,7 +63,7 @@ export function recentLessons(history: string[], lessons: Lesson[], courses: Cur
   }).slice(0, 3)
 }
 
-// Examples fill unused slots without being recorded as watched.
+// Only videos with actual playback appear in the course overview.
 export function overviewLessons(history: string[], lessons: Lesson[], courses: Curriculum): Lesson[] {
-  return recentLessons([...history, 'vectors', 'carbon', 'orbitals'], lessons, courses)
+  return recentLessons(history, lessons, courses)
 }

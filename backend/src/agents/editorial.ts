@@ -46,7 +46,7 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
   signal.throwIfAborted();
   const runId = randomUUID(), runDirectory = join(directory, 'editorial', runId);
   await mkdir(runDirectory, { recursive: true, mode: 0o700 });
-  const messages = await buildStorylineMessages(JSON.stringify(request));
+  const messages = await buildStorylineMessages(JSON.stringify(request), request.sceneRequest);
   const [guidance, quality] = await Promise.all([
     loadPrompt('story-review'), animationQualityPolicy(),
   ]);
@@ -57,7 +57,7 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
       systemPrompt: `${messages[0].content}\n\n${PLANNING_CONTRACT}\n\n${quality}`,
       prompt: repair
         ? `Revise the complete lesson and plan to correct the material editorial errors below. Preserve sound content, requested scope, stable entity IDs/meanings, and scene IDs where possible. Update narration and nonspoken planning together. Return the full planning envelope.\n${JSON.stringify({ request, draft: repair.lesson, issues: repair.issues })}`
-        : `Write a concise visual lesson and its plan from this request:\n${messages[1].content}`,
+        : `Write ${request.sceneRequest ? "one inserted scene" : "a concise visual lesson"} and its plan from this request:\n${messages[1].content}`,
       signal, images, validate: async output => { parsePlannedLesson(output, request); },
       logContext: { videoId, stage: 'draft' },
     };

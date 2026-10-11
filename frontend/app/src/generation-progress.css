@@ -1,7 +1,9 @@
 .generation-progress { color: var(--player-ink); }
 .player-stage .generation-progress.player-status { gap: 0; padding: 88px 24px 124px; }
 .generation-usage { display: flex; flex-direction: column; align-items: center; gap: 12px; }
-.generation-count { display: inline-flex; align-items: center; font-family: DynaPuff, sans-serif; font-size: clamp(48px, 8vw, 72px); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.035em; line-height: 1.15; }
+/* The "~" hangs to the left, so the digits stay centred over "tokens" and the glasses. */
+.generation-estimate { position: absolute; right: 100%; }
+.generation-count { position: relative; display: inline-flex; align-items: center; font-family: DynaPuff, sans-serif; font-size: clamp(48px, 8vw, 72px); font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: -.035em; line-height: 1.15; }
 .generation-digit { display: inline-block; width: 1ch; height: 1.15em; overflow: hidden; letter-spacing: 0; }
 .generation-digit-row { display: flex; align-items: center; justify-content: center; height: 1.15em; }
 .generation-digit-track { display: flex; flex-direction: column; }
