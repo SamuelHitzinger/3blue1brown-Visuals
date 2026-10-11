@@ -11,6 +11,8 @@ import { createPiGenerator } from '../src/agents/generator.js';
 import { NarrationService } from '../src/narration/service.js';
 import { loadPrompt, instructionSnapshot, INSTRUCTION_VERSION } from '../src/agents/prompts.js';
 import { settingsFromEnv } from '../src/narration/elevenlabs.js';
+import { compileSource, evaluateScene } from 'animlib/core';
+import { validateScenePlan } from '../src/agents/scene-plan.js';
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
@@ -92,6 +94,45 @@ test('warnings do not trigger a rewrite', async () => {
   const warning = review(); warning.issues.push({ severity: 'warning', sceneId: 'beat-1', detail: 'Optional alternative phrasing.' });
   const approved = await authorReviewedLesson({ async run() { return JSON.stringify(calls++ === 0 ? lesson() : warning); } }, request, root, new AbortController().signal);
   expect(approved).toMatchObject(lesson()); expect(calls).toBe(2);
+});
+
+test.each([false, true])('requested controls survive editorial repair and become required scene controls (inserted: %s)', async sceneRequest => {
+  const root = await directory(), tasks: AgentTask[] = [];
+  const interactiveRequest = { ...request, videoMode: 'interactive' as const, sceneRequest,
+    topic: 'Make an interactive toy with a slider controlling the number of halvings from zero to four.' };
+  const repaired = lesson();
+  repaired.plan.scenes[0].interactions = [{ id: 'halvings', type: 'slider', label: 'Halvings',
+    drives: 'Integer halvings from 0 to 4, default 2; remaining quantity and readout are 16 / 2^halvings.',
+    discover: 'Each additional halving divides the remaining quantity by two.' }];
+  const missingControls: EditorialReview = { schemaVersion: 1, verdict: 'revise',
+    summary: 'The requested slider is missing.',
+    issues: [{ severity: 'error', sceneId: 'beat-1', detail: 'Add the requested halvings slider to interactions and drive the remaining quantity and readout from it.' }],
+    checks: ['The user requested a slider, but beat-1 has interactions: [].'] };
+  const outputs = [lesson(), missingControls, repaired, review()];
+  const approved = await authorReviewedLesson({ async run(task) {
+    tasks.push(task);
+    const output = JSON.stringify(outputs.shift()); await task.validate!(output); return output;
+  } }, interactiveRequest, root, new AbortController().signal);
+  expect(tasks).toHaveLength(4);
+  for (const task of tasks) {
+    expect(task.systemPrompt).toContain('An explicit request for interactivity');
+    expect(task.systemPrompt).toContain('cannot add controls missing from the plan');
+    expect(task.systemPrompt).not.toContain('no control is required');
+    expect(task.systemPrompt).not.toContain('Controls are optional when they do not help');
+  }
+  expect(tasks[1].systemPrompt).toContain('Missing requested controls');
+  expect(tasks[1].systemPrompt).toContain('material errors requiring revision');
+  expect(tasks[2].prompt).toContain(missingControls.issues[0].detail);
+  expect(tasks[2].prompt).toContain(interactiveRequest.topic);
+  expect(approved.plan.scenes[0].interactions).toEqual(repaired.plan.scenes[0].interactions);
+  const scene = approved.plan.scenes[0];
+  const withoutControls = await compileSource('export default scene({},s=>{s.wait(1);});');
+  expect(() => validateScenePlan(withoutControls, evaluateScene(withoutControls, 1), scene)).toThrow('halvings:slider');
+  const withControls = await compileSource(`export default scene({},s=>{
+    const halvings=s.slider('halvings',{label:'Halvings',min:0,max:4,step:1,default:2});
+    s.circle('remaining',{radius:16/2**halvings});s.wait(1);
+  });`);
+  expect(() => validateScenePlan(withControls, evaluateScene(withControls, 1), scene)).not.toThrow();
 });
 
 test('restarts isolate partial audit pairs and link approval to the exact saved draft', async () => {

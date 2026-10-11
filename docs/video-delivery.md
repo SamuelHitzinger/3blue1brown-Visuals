@@ -89,6 +89,14 @@ fallback when the API, adapter, device or initialization is unavailable. Both
 backends use the same evaluated frames and prepared geometry. Published source itself never changes.
 Providers should keep duration and narration meaningful across allowed controls.
 
+Explicit requests for interactive toys, explorations, or controls must be represented
+in the relevant scene plans as supported sliders, toggles, or selects driving the
+actual model and dependent geometry/readouts. Editorial review treats missing
+requested interaction as a material error before speech synthesis. Scene validation
+then requires exactly the approved control IDs and types. Scenes without requested
+or useful interaction may remain control-free; playback, orbit, and automatic
+animation do not substitute for requested model manipulation.
+
 At the available edge, the adapter preserves play/pause intent and shows buffering.
 New content resumes at the next scene boundary; a user pause or open overlay prevents
 resumption. Only a terminal manifest turns the available edge into the lesson end.
