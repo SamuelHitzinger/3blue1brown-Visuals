@@ -4,7 +4,7 @@ import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 import { SceneSequence } from 'animlib/core'
 import type { Frame } from 'animlib/core'
-import type { VideoManifest, VideoRequest, VideoScene } from '../../shared/video/contract'
+import type { VideoManifest, VideoProgress, VideoRequest, VideoScene } from '../../shared/video/contract'
 import { AgentError } from './agents/config.js'
 import { contextualVideoRequest, validateSceneRequest } from './scene-requests.js'
 import { insertedSceneId } from '../../shared/video/scene-requests'
@@ -24,13 +24,20 @@ type Row = { id: string; owner: string; request: string; manifest: string }
 function publicManifest(manifest: VideoManifest): VideoManifest {
   return manifest.status === 'failed' ? { ...manifest, error: videoFailureMessage(manifest.errorCode, manifest.scenes.length > 0) } : manifest
 }
-export interface GenerationContext { videoId: string; owner: string; previousFrame?: Frame; signal: AbortSignal; images?: ImageContent[] }
+export interface GenerationProgressUpdate {
+  stage: Exclude<VideoProgress['stage'], 'queued' | 'complete' | 'failed'>
+  sceneIndex?: number
+  totalScenes?: number
+}
+export interface GenerationContext { videoId: string; owner: string; previousFrame?: Frame; signal: AbortSignal; images?: ImageContent[]; onProgress?: (update: GenerationProgressUpdate) => void }
 export type Generator = (request: VideoRequest, index: number, context?: GenerationContext) => Promise<{ scene: Omit<VideoScene, 'audio'> & { audio?: { id: string } }; audio: Uint8Array } | null>
 export type ThumbnailGenerator = (request: VideoRequest, context: { signal: AbortSignal; images?: ImageContent[] }) => Promise<ThumbnailArtwork>
 
 // A deterministic fixture exercises audio delivery without claiming to generate narration.
-export const simulatedGenerator: Generator = async (_request, index) => {
-  if (index >= 3) return null
+export const simulatedGenerator: Generator = async (request, index, context) => {
+  const totalScenes = request.sceneRequest ? 1 : 3
+  if (index >= totalScenes) return null
+  context?.onProgress?.({ stage: 'scene', sceneIndex: index, totalScenes })
   await new Promise(resolve => setTimeout(resolve, index === 0 ? 300 : 2500))
   const duration = 6, rate = 8000, samples = duration * rate
   const audio = new Uint8Array(44 + samples * 2), view = new DataView(audio.buffer)
@@ -43,6 +50,7 @@ export const simulatedGenerator: Generator = async (_request, index) => {
     const envelope = Math.max(0, 1 - i / (rate * 0.3))
     view.setInt16(44 + i * 2, Math.round(Math.sin(i / rate * Math.PI * 2 * (330 + index * 110)) * 2500 * envelope), true)
   }
+  context?.onProgress?.({ stage: 'validating', sceneIndex: index, totalScenes })
   return { audio, scene: {
     id: `scene-${index}`, index, duration,
     captions: [{ start: 0, end: duration, text: 'Sample animation: move the slider to explore. Narration is not connected yet.' }],
@@ -53,6 +61,20 @@ export const simulatedGenerator: Generator = async (_request, index) => {
       s.play(dot.moveTo([-distance, 0]), { duration: 3 });
     });`,
   } }
+}
+
+function progressAt(manifest: VideoManifest, update: { stage: VideoProgress['stage']; totalScenes?: number; sceneIndex?: number }): VideoProgress {
+  const completedScenes = manifest.scenes.length
+  const totalScenes = update.totalScenes ?? manifest.progress?.totalScenes
+  const sceneIndex = update.sceneIndex
+  const fraction = update.stage === 'validating' ? 0.8 : update.stage === 'scene' ? 0.2 : 0
+  // Planning owns the first fifth; each known scene shares the next three quarters.
+  // A published scene counts once, without also counting its previous in-flight stage.
+  const scenesPercent = totalScenes ? 20 + 75 * (completedScenes + ((sceneIndex ?? completedScenes) >= completedScenes ? fraction : 0)) / totalScenes : 20 + fraction * 20
+  const estimate = update.stage === 'queued' ? 0 : update.stage === 'sources' ? 3 : update.stage === 'script' ? 8
+    : update.stage === 'finalizing' ? 98 : update.stage === 'failed' ? 0 : scenesPercent
+  const percent = update.stage === 'complete' ? 100 : Math.min(99, Math.max(manifest.progress?.percent ?? 0, Math.floor(estimate)))
+  return { stage: update.stage, percent, completedScenes, ...(totalScenes !== undefined ? { totalScenes } : {}), ...(sceneIndex !== undefined ? { sceneIndex } : {}) }
 }
 
 /** Durable concurrent jobs in one Bun process. A replacement process resumes unfinished jobs. */
@@ -95,6 +117,7 @@ export class VideoService {
       return publicManifest(JSON.parse(prior.manifest))
     }
     const manifest: VideoManifest = { schemaVersion: 1, id: crypto.randomUUID(), title: request.title, revision: 0, status: 'queued', provider: this.provider, ...(request.narrationMode ? { narrationMode: request.narrationMode } : {}), createdAt: new Date().toISOString(), scenes: [], ...(this.provider !== 'simulated' ? { tokenUsage: emptyTokenUsage() } : {}) }
+    manifest.progress = progressAt(manifest, { stage: 'queued', ...(request.sceneRequest ? { totalScenes: 1 } : {}) })
     this.db.transaction(() => {
       this.db.query('INSERT INTO videos VALUES (?, ?, ?, ?, ?)').run(manifest.id, owner, key, JSON.stringify(request), JSON.stringify(manifest))
       uploads.forEach((upload, index) => this.db.query('INSERT INTO video_uploads VALUES (?, ?, ?, ?, ?, NULL)').run(manifest.id, index, upload.name, upload.mimeType, upload.bytes))
@@ -214,6 +237,10 @@ export class VideoService {
     for (const scene of manifest.scenes) for (const [id, asset] of Object.entries(scene.assets ?? {})) models![id] = asset.metadata
     const sequence = new SceneSequence({ models })
     const signal = AbortSignal.any([this.abort.signal, abort.signal])
+    const onProgress = (update: GenerationProgressUpdate) => {
+      if (this.stopped || signal.aborted || manifest.status !== 'generating' || !this.row(row.id)) return
+      manifest.progress = progressAt(manifest, update); this.save(manifest); this.notify(manifest)
+    }
     const usage = new TokenUsageTracker(tokenUsage => {
       if (!this.row(row.id)) return
       manifest.tokenUsage = tokenUsage; this.save(manifest); this.notify(manifest)
@@ -225,6 +252,7 @@ export class VideoService {
       if (manifest.provider === 'pi' && this.provider !== 'pi') throw new AgentError('CONFIG', 'This video requires VIDEO_GENERATOR=pi.')
       const generate = manifest.provider === 'simulated' && this.provider === 'pi' ? simulatedGenerator : this.generate
       manifest.status = 'generating'; this.save(manifest); this.notify(manifest)
+      onProgress({ stage: 'sources' })
       const { request: input, images } = await logStage({ videoId: manifest.id, stage: 'sources' }, () => this.sources(row, signal))
       if (input.sceneRequest) {
         const link = this.db.query('SELECT lesson FROM scene_requests WHERE video = ?').get(manifest.id) as { lesson: string } | null
@@ -242,12 +270,13 @@ export class VideoService {
         const priorIndex = manifest.scenes.length - 1
         const previousFrame = priorIndex >= 0 ? await sequence.evaluate(priorIndex, manifest.scenes[priorIndex].duration) : undefined
         const next = input.sceneRequest && manifest.scenes.length >= 1 ? null : await withTokenUsage(usage, () => generate(input, manifest.scenes.length, { videoId: manifest.id, owner: row.owner,
-          previousFrame, signal, images }))
+          previousFrame, signal, images, onProgress }))
         if (this.stopped || !this.row(row.id)) break
         if (!next) {
+          onProgress({ stage: 'finalizing' })
           await thumbnailWork
           if (this.stopped || !this.row(row.id)) break
-          usage.flush(); manifest.status = 'complete'; this.save(manifest); this.notify(manifest)
+          usage.flush(); manifest.status = 'complete'; manifest.progress = progressAt(manifest, { stage: 'complete', totalScenes: manifest.scenes.length }); this.save(manifest); this.notify(manifest)
           logEvent('video.completed', { videoId: manifest.id, sceneCount: manifest.scenes.length, elapsedMs: Math.round(performance.now() - started) })
           break
         }
@@ -261,7 +290,7 @@ export class VideoService {
         // Publish the scene and its asset atomically before sending an event.
         this.db.transaction(() => {
           this.db.query('INSERT INTO video_audio VALUES (?, ?, ?)').run(manifest.id, scene.id, next.audio)
-          manifest.scenes.push(scene); this.save(manifest)
+          manifest.scenes.push(scene); manifest.progress = progressAt(manifest, { stage: 'validating', sceneIndex: scene.index }); this.save(manifest)
         })()
         this.notify(manifest)
         logEvent('video.scene_published', { videoId: manifest.id, sceneIndex: scene.index, sceneCount: manifest.scenes.length, elapsedMs: Math.round(performance.now() - started) })
@@ -270,6 +299,7 @@ export class VideoService {
       await thumbnailWork
       if (this.stopped || !this.row(row.id)) return
       usage.flush(); manifest.status = 'failed'; manifest.errorCode = error instanceof AgentError ? error.code : 'GENERATION'
+      manifest.progress = progressAt(manifest, { stage: 'failed' })
       manifest.error = videoFailureMessage(manifest.errorCode, manifest.scenes.length > 0)
       logEvent('video.failed', { videoId: manifest.id, sceneCount: manifest.scenes.length, code: error instanceof AgentError ? error.code : 'GENERATION', elapsedMs: Math.round(performance.now() - started) }, 'error')
       this.save(manifest); this.notify(manifest)

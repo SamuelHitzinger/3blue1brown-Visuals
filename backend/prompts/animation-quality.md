@@ -34,8 +34,10 @@ current inference. Stage the explanation: context, active operation, consequence
 reading hold. These are reasoning phases, not a mandatory four-screen template.
 Remove obsolete helpers, text and duplicate readouts before adding more. Keep a
 reference copy only when comparison needs it. Make the relation supporting the
-claim visible. Follow the script's order; a definition or known result may come
-first and then be unpacked. A changing counter plus a conclusion is insufficient.
+claim visible. Follow the approved script's reveal order; new plans establish
+visual intuition before formalization. A changing counter plus a conclusion is insufficient.
+
+When an auxiliary view finishes, give its space back to the active construction. Restore a carried subject's framing and emphasis when it becomes the focus, using a coherent transition from its actual incoming state.
 
 Sparse composition does not mean low-detail geometry. When the request needs
 many atoms, connected components, facets or surface samples, retain the necessary
@@ -44,13 +46,30 @@ attention. Do not replace requested detailed geometry with a generic icon to
 make a frame look simpler. Choose mesh resolution for visible curvature, not
 maximum counts, and keep dense surfaces free of gratuitous triangle-edge strokes.
 
-For a visualization showcase, start with the model and its operation, with zero
-optional equations. Add only notation needed to identify an object, distinguish
-a quantity or understand the active operation. Usually one short local relation
-is enough. When the request explicitly needs a derivation or factor comparison,
-stage its necessary expressions with the corresponding geometry. Exact values
-can remain in the numerical model without printing every coefficient. Remove
-duplicate symbolic/numeric statements, formula footers and decorative braces.
+## Notation follows the active inference
+
+Start visual explanation with the model and its operation, with no optional
+equations. Zero equations is a successful default; normally retain only the one
+essential relation tied to the current visualization. An annotation earns space
+by helping identify, compare or reason about what the viewer is examining now.
+Importance elsewhere in the lesson is not a reason to keep it visible here.
+
+For a worked example, numerical experiment or derivation, use as many equations
+and values as the reasoning needs over time. Show together only the expressions
+being actively compared or combined. Reveal them after the relevant intuition,
+keep stable terms anchored during meaningful transformations, and clear each
+completed step before the next unrelated operation. Give enough reading time
+within measured narration, then remove notation when its explanatory role ends;
+neither a universal formula cap nor rapid flashing serves this purpose. Carry a
+result only when the next scene immediately uses it. Reintroduce it later if needed.
+
+Use the shortest readable label or expression tied to its object; avoiding
+symbols is not a reason to display a sentence-length equation. Prefer direct
+object-to-symbol correspondence to a legend of definitions. Add a temporary definition only for an unfamiliar symbol
+whose meaning is otherwise unclear; remove it once the mapping is established.
+Exact values can remain in the model without printing every coefficient. Remove
+duplicate symbolic/numeric statements, prose captions, formula footers and
+decorative braces. Necessary accessibility captions remain the player's concern.
 For matrices, use plain factor labels before nested underbrace constructions;
 inspect rendered delimiters for detached hooks, duplicate strokes and unreadable
 subscripts. Correct TeX source is not proof of a clean rendered formula.
@@ -90,28 +109,61 @@ Check label paths against moving geometry, including strands passing in front
 of billboard text. Complete an introductory label's exit before geometry crosses
 its occupied region, or keep that label anchored outside the entire swept path.
 
-## Selective spatial views and targeted rotation
+## Prefer spatial models where they teach
 
-Prefer a genuine 3D model for spatial setup, introductions and relevant closing
-context when it clarifies the subject. A camera tilt alone does not make a flat
-diagram a useful 3D model. Use 2D for the explanatory step when relationships read
-better flat. There is no quota requiring most scenes to be 3D or every ending to
-return to 3D. Record dimensionality and its reason in the scene view contract,
-and describe any later flattening explicitly in visualDescription. Preserve
-existing visualDescription prefixes when resuming saved plans.
+Prefer genuine 3D for spatial subjects: molecules, proteins, DNA, cells, solids,
+spatial graphs, fields and surfaces. Invest construction and review effort in
+their defining silhouette, depth, internal arrangement, contacts and meaningful
+deformation. Use the library's domain helpers, surfaces, meshes, tubes, prepared
+models and supported camera/clipping tools as appropriate; a few generic dots
+and lines or a tilted flat drawing do not substitute for a recognizable body.
+A protein should retain its characteristic domains or contour even in a 2D
+mechanism view, rather than become an undifferentiated circle. Atom-resolved
+views can use one element-colored point or sphere per available atom; beads for
+residues/bases must remain identified as that coarser representation.
+
+Molecular structure takes priority over visual convenience. Use verified atom
+identities, connectivity, bond orders, stereochemistry and reference or chemically
+justified coordinates at the claimed resolution. Match the named molecule,
+sequence, conformation and assembly; a convenient different protein is not a
+substitute. Plan from available structural data/assets before promising atomic
+detail. Missing essential data is a preparation gap, not permission to invent
+geometry. A coarse view must faithfully simplify that structure and identify its
+resolution; calling an arbitrary shape schematic does not establish accuracy.
+
+Keep conventional element colors in atomistic views: C grey, H white, N blue,
+O red, S yellow and P orange. Use the selected element palette consistently for
+other elements. Molecular identity may use a mild tint, outline or nearby cue,
+but must not erase element identity; never color every atom by its molecule's
+role. Preserve these colors through representation changes and chemical steps.
+Keep provenance, preparation methods and detailed omissions in planning metadata.
+State only limits needed to interpret the current visual, in speech or a short
+label using the audience's established vocabulary. Explain what the simplification
+changes; do not introduce specialist terms merely to disclaim them.
+
+Choose 2D when the relationship is inherently planar or a particular explanatory
+step is clearer flat. Record that reason in the scene view contract and map
+meaningful parts through any 3D-to-2D change. There is no scene quota or compulsory
+return to 3D. Rich geometry should make the mechanism clearer, not compete with
+it. Preserve existing visualDescription prefixes when resuming saved plans.
 
 Rotation targets visual models only. Do not put text, formulas, or the entire
 annotated canvas inside a rotating group. Prefer a geometry-only s.group and
 rotateTo for authored object turns, with upright labels attached separately.
-For viewer orbit, put the model in its own s.view and keep explanatory text in
-the main non-orbiting scene. Use orbit:true, orbitHitTest:"geometry" on that view
-so only pickable model surfaces start orbit (spheres, circles, rectangles, meshes).
-Standalone text and empty space do not start rotation. Labels belonging to model parts may use billboard
-text with stable anchors, but text is never a rotation handle. Set whole-scene
+In interactive lessons, every 3D model uses its own navigable s.view with
+orbit:true, orbitHitTest:"geometry" and a camera with perspective greater than
+zero; the current player cannot orbit a zero-perspective view. The player supplies
+rotation, panning and reset. Keep explanation text, formulas and standalone numbers in the main scene
+with space:"screen" so camera navigation cannot move them. Screen-space positions
+and font sizes use CSS pixels; attached world labels use scene units. Point coordinates
+and part labels instead belong to the model view: attach them to their referents
+and use billboard:true with a readable offset so they follow positions while
+staying upright. Do not fake this with a projection computed only at the initial
+camera pose. Text and empty space do not start rotation. Set whole-scene
 orbit:false explicitly (mode:'3d' otherwise defaults to whole-scene orbit).
 Use targeted views for all viewer rotation in new version 2 lessons; preserve
-the approved orbit contract of saved unversioned/version 1 lessons. Only offer manipulation
-that supports the lesson and the requested interaction mode.
+the approved orbit contract of saved unversioned/version 1 lessons. Classic
+compatibility scenes remain non-orbiting under the viewing-mode policy.
 
 When transitioning 3D to 2D, retain the selected meaningful parts, show how they
 open, unfold or project into the flat representation, and keep their color/identity.

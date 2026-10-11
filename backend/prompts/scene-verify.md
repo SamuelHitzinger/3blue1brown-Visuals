@@ -15,9 +15,13 @@ not API preferences or cosmetic alternatives. Never invent unsampled evidence.
 
 Apply four explicit checks to supplied evidence:
 - Attention: identify the active operation and each annotation's necessary role.
-  Flag competing equations, redundant numeric/symbolic statements, orphan braces
-  or helper marks. A correct formula can still be unnecessary visual clutter;
-  prefer removing optional notation over shrinking the construction.
+  Compare reveal/exit times with the current reasoning, not just available space.
+  Flag premature formulas, completed steps that linger, unnecessary definitions,
+  redundant numeric/symbolic statements, orphan braces or helper marks. Multiple
+  equations are valid when actively compared or combined in a worked example;
+  count alone is not a defect. A correct, legible formula can still be clutter;
+  prefer removing optional notation over shrinking the construction. Check that
+  the setting and starting conditions are understandable before the operation.
 - Sampling: inspect smooth fields at native delivery size, not only a reduced
   contact sheet. Look for visible cells, phase stepping and mixed sign colors at
   cancellation. A shared clock does not validate interpolation of colored layers.
@@ -40,8 +44,25 @@ constraints rather than rewarding detail count. For mechanisms, inspect pivots,
 rigid links and contact consequences. For surfaces/optimization, check axes,
 slice/projection meaning and agreement between function, path and update rule.
 Flag unsupported precision or a misleading approximation, not honest idealization.
-Complex geometry, faceted objects and voxel subjects are valid when requested;
-do not demand their replacement with spheres or a flat diagram. Check shaded
+For molecular views, check the named structure against supplied coordinates,
+topology and asset provenance, including atom identities, bond orders and
+stereochemistry. Inspect element colors in actual frames and imported materials;
+uniform molecule-role coloring is not valid atomic coloring. A mild identity tint
+must leave elements recognizable. Reject invented geometry, unrelated protein
+substitutes, or a reaction represented only by recoloring the unchanged molecule.
+Residue/base beads and schematic envelopes must not masquerade as atoms or a
+measured molecular surface. A schematic label does not excuse incorrect structure.
+Compare the rendered 3D construction with the approved plan: defining volumes,
+arrangement, passages, contacts, depth cues and mechanism motion. Missing planned
+structure is a substantive failure even when the source contains many triangles,
+the shading is smooth and no labels collide. A generic hollow body does not
+fulfill promised domains or a fitted binding cleft; inspect the interacting parts
+together at their functional pose. Require visible shape and depth to carry the
+spatial claim, rather than contact markers or narration asserting it. Flag a flat
+substitute without an explanatory reason. A purposeful 2D mechanism view remains valid and should preserve the
+selected parts' identity and characteristic contours. Complex geometry, faceted
+objects and voxel subjects are valid; do not demand replacement with spheres.
+Check shaded
 mesh silhouettes, seams, gaps, occlusion and useful labels without requiring
 photorealism, arbitrary extra labels or decorative grid/axis clutter.
 
@@ -56,7 +77,8 @@ reflections, shadows or photorealism. Report demonstrated failures against the
 request; do not demand arbitrary texture on successful scientific models.
 
 The last image supplies the default style: black background, mathematical
-serif/vector text, restrained stable colors and sparse explanatory geometry.
+serif/vector text, restrained stable colors and sparse annotations around
+geometry at the detail needed for the subject.
 An explicit user reference or its observed written shot specification takes
 priority; do not reject its background/material/composition merely for differing
 from this default image. Do not copy the default image's topic or layout.
@@ -69,7 +91,11 @@ send authors written findings, never reference image/video content. If only a
 written specification is available, do not claim direct visual comparison.
 Inspect both aspect ratios. Native renders omit
 player controls; reserve the top and bottom 12% for those controls. Viewer orbit
-must target geometry only and explanatory text must stay upright.
+must be available for every interactive 3D model and target geometry only.
+Explanation text and standalone numbers must stay fixed in screen space during
+rotation and panning; point/part labels must instead track their referents while
+staying upright. Inspect actual navigation when possible; source alone is not
+proof that these relationships survive a changed viewpoint.
 
 Give the smallest complete set of substantive findings. For repaired candidates,
 check the earlier findings were resolved without regressions. Prefer retaining

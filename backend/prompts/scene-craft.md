@@ -1,10 +1,8 @@
 # Scene craft
 
-Make the scene's purpose visible. Follow the script's explanatory order: a definition or known rule may orient the viewer before its demonstration. Make the relevant evidence inspectable through a correspondence, comparison, or meaningful change; a conclusion label alone is insufficient. Use the running example and exact values established in the script. Do not choose new values that contradict the speech.
+Make the approved scene's purpose visible. For a new concept, establish its setting and starting state, guide attention through the operation, and hold the consequence before its formalization. A worked-example scene can begin with the equation it uses when the underlying intuition is already established. Follow the approved reveal cues; a conclusion label alone is insufficient. Use the script's running example and exact values; narration is already fixed, so preserve its order without assuming more speech will be added.
 
-This is an educational video. Use the pictures to help the viewer follow the approved learning sequence: simple intuition, visible foundations, connected new ideas, deeper understanding, and a recap. Each significant visual change must help establish a meaning, reveal a relationship, or explain why the next step follows. Preserve that sequence across scenes; a closing scene should bring established concepts together visually, while an opening scene should establish the accessible example before advanced machinery appears.
-
-`guidance.md` owns explanation rules; this file owns their visual implementation. Implement the storyboard's visual argument alongside the supplied narration. Preserve its progression from an accessible question or example to more advanced ideas, including any motivated result preview. Establish the planned evidence before the conclusion relies on it. At first consequential use, connect each nontrivial symbol to its spoken quantity meaning and visible object or value; show how a formula's terms correspond to the established construction. Previously explained or audience-trivial notation may be reused without repeating its explanation. Do not add unexplained machinery or substitute decorative motion for a planned inferential step. The narration is already fixed; implement its visual evidence without assuming additional speech will be added later.
+`guidance.md` owns teaching progression; `animation-quality.md` owns annotation lifetime and spatial preference. Implement them through visible object correspondence, meaningful change and readable holds. Connect a needed unfamiliar symbol to its spoken quantity and visible referent when introduced. This does not require a separate definition line for every symbol or a recap panel at the end.
 
 Use the lesson outline to avoid repeating earlier explanations or revealing later answers. Set up the next scene's needs. The planned end picture is an intention; the evaluated previousFrame is the authoritative starting state. Retrieve carried objects with s.previous.get(id), animate the same object, and keep the declared carry IDs. Do not recreate a lookalike under a different ID. If the previous frame differs from the plan, build from the actual state without teleporting it.
 
@@ -18,7 +16,7 @@ Re-establish s.connect and s.attach in each receiving scene using the carried en
 
 Keep the objects needed to explain the idea at the requested fidelity. A complex model may require many parts; minimize competing annotations and irrelevant detail, not scientifically or mechanically necessary structure. Use a selected region, cutaway or close-up when detail needs room. Temporary copies, highlights, construction lines, and intermediate equations should leave once their purpose is served. Keep planned concept colors stable across the lesson using Color tokens. Neutral labels may use WHITE. Color alone should not be the only way to distinguish concepts.
 
-Use geometry to explain instead of filling the canvas with the narration. Add short labels, a local relation or meaningful numbers only when the active operation needs them; a showcase does not need a formula panel. Keep exact numerical parameters in the model without automatically displaying all of them. Choose a layout suited to the subject, with readable labels and clear margins. Labels should move with the thing they name. Apply the quality policy's attention, field-sampling, motion-purpose and solid-contact checks during initial construction. Check the middle of motions as well as endpoints for overlap and clipping.
+Implement annotation reveal and exit cues from the plan against measured narration. Remove obsolete equations, definitions and labels completely, including dimmed copies; a spatially tidy formula can still be irrelevant. During a calculation, keep just the steps currently compared or transformed. Choose local placement suited to the subject rather than reserving a formula column. Labels should move with the thing they name. Apply the quality policy's attention, field-sampling, motion-purpose and solid-contact checks during initial construction. Check motion interiors as well as endpoints for overlap and clipping.
 
 The player overlays a title/menu near the top-left and playback controls near the bottom. Keep essential labels and the main inference clear of those areas. Do not assume an empty fullscreen canvas when choosing framing.
 
@@ -44,12 +42,23 @@ objects to insert into every scene.
 
 ## Represent the actual subject
 
-Build geometry needed to explain the mechanism, including complex 3D forms when
-the subject calls for them. Do not replace a spatial object with a flat icon,
-a few arbitrary balls, or a tilted diagram merely because that is easier.
-Match silhouette, proportions, internal organization and meaningful motion.
+Fulfill the approved spatial construction before polishing annotations:
+primary volumes, distinctive parts, connected structure, then the operation.
+Spend construction and inspection effort on the planned shape and relationships,
+not merely the number of meshes. Check the silhouette and internal arrangement
+from a useful oblique view at the scale where the mechanism will be explained.
+A single shaded blob or depression does not fulfill a plan for connected domains
+and an occupied cleft; a flat icon or tilted diagram does not fulfill a spatial
+model. Match proportions, depth and meaningful motion at the claimed fidelity.
+For shape-dependent interactions, construct compatible interacting surfaces in
+one coordinate frame. Contact dots cannot substitute for visible fit, enclosure
+or partial occlusion when those relationships are the explanation.
 Use supplied reference data and the running example; do not invent precise
 measurements or claim a procedural approximation is an observed structure.
+When simplifying into 2D, retain recognizable contours and functional parts:
+a protein's lobes or binding cleft can identify it without a circular token and
+a long label. Use generic dots for actual points/atoms or a deliberately taught
+abstraction, not as the default representation of every subject.
 
 Choose detail deliberately: overview, component, subcomponent, or atomic detail.
 A detailed model can contain many necessary parts while remaining visually clear.
@@ -294,30 +303,39 @@ and behaviors in the receiving scene.
 Create related parts through the same view builder. Its methods retain view
 ownership if called later during the synchronous scene builder. Outer `s`
 creates main-scene objects; do not mix coordinate spaces accidentally. Whole
-scene `orbit:false`; model view `orbit:true, orbitHitTest:'geometry'` only in
-interactive mode when rotation supports the plan. Classic mode keeps every view
-non-orbiting. Keep explanatory formulas outside the orbiting view;
-part labels may be billboards attached to referents. Place labels clear of the
-entire swept geometry, not just the initial pose.
+scene `orbit:false`; every interactive 3D model view uses
+`orbit:true, orbitHitTest:'geometry'`. Classic mode keeps every view non-orbiting.
+Keep explanation text, formulas and standalone numbers outside model views with
+`space:'screen'`. Attach point coordinates and part labels within their model view
+as upright billboards; they must follow their referents through animation and
+viewer navigation. Place labels clear of the entire swept geometry, not just the
+initial pose. Camera navigation is provided by the player, not a scene slider.
 
 ### Molecular display style
 
-Use touching, space-filling atoms without bond lines for molecular context and
-overviews where bonding is not the teaching focus. Use ball-and-stick with bond
-lines when explaining connectivity, bond order or molecular structure explicitly;
-preserve atom positions and element colors when switching representations.
+Choose a coordinate-derived representation for the inference and available data:
+an envelope for outer shape, residue beads for chain organization, or atomic
+sticks for connectivity. At atom resolution, prefer space-filling views for
+occupied volume and ball-and-stick when individual atoms and bonds need inspection.
+Preserve atom positions and element colors across these views. Sticks that do not
+encode bond order cannot establish bond order; residue beads are not atoms and a
+smoothed envelope is not an exact atomic surface.
 
 ## Accuracy at different scales
 
-For molecular/atomic detail, use available atom coordinates and explicit bond
-topology, element identities, stereochemistry and consistent units. Preserve
-chemical connectivity, bond order and selected sequence/conformation through
-motion. Derive repeating units from those data. Ball-and-stick radii may serve
-visibility, but are not physical atomic boundaries. A double helix with one bead
-per base is a coarse schematic, not atom-resolved. When coordinates/topology are
-unavailable, build a clearly described idealized model at the justified level;
-never invent atom-accurate provenance. Scene code cannot fetch external
-structures. Use data already in the authoring context.
+Build molecular geometry from the verified structure and explicit topology in
+the authoring context or a suitable published asset. Preserve atom identity,
+sequence and consistent units through motion. Changes to bonding, stereochemistry
+or conformation must implement the planned, scientifically justified operation;
+derive repeating units from those data. Keep the quality policy's element colors,
+including on imported models: a uniform fill/tint must not hide atom colors.
+A represented reaction must change the appropriate bonds or atom mapping;
+renaming or recoloring unchanged geometry is not a chemical transformation.
+Ball-and-stick radii aid visibility and are not physical atomic boundaries.
+Residue/base beads and envelopes are distinct, honestly identified resolutions
+of the source structure. Do not fabricate an atomic model or substitute another
+protein when required data is missing. Scene code cannot fetch structures;
+report the missing preparation instead of inventing coordinates or provenance.
 
 For machinery and articulated/block characters, identify rigid bodies, joints,
 driver, constraints and contact sequence before scheduling animation. Sectioned
