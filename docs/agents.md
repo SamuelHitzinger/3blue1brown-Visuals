@@ -154,23 +154,17 @@ nonspoken metadata. Unreadable or missing source details must not be invented;
 the explanation need not force every topic into a puzzle or mathematical derivation.
 
 Material errors trigger a fresh authoring conversation that repairs the script
-and plan together; cosmetic warnings do not trigger a rewrite. At most three
-draft/review pairs are allowed. Failure stops before speech submission. Reviews
+and plan together; cosmetic warnings do not trigger a rewrite. Up to 50
+draft/review pairs are allowed. Exhaustion stops before speech submission and keeps saved progress. Reviews
 record concrete checks but do not constitute independent fact verification.
 This adds one model call before TTS for a passing first draft, plus calls for
 necessary repairs. It does not gate individual scene streaming once speech starts.
 
-Each invocation gets a unique private `editorial/RUN_UUID/` directory containing
-`lesson-draft-N.json`, `lesson-draft-N.prompt.md`, `lesson-review-N.json`, and
-`lesson-review-N.prompt.md` (N starts at zero). Restarts preserve earlier runs,
-including partial pairs, without overwriting or mixing their evidence. Only a
-passing lesson is committed as `lesson.json`; its host-owned `editorialReview`
-records the approved run UUID, pair number, and SHA-256 of the saved draft.
-`storyline.prompt.md` is a convenient export of that approved authoring prompt.
-Restarts reuse the committed envelope; a crash before its commit can repeat
-authoring/review calls in a new run directory. Existing
-saved lesson envelopes and legacy Markdown resume without editorial rewriting,
-preserving their speech and scene identities.
+An editorial checkpoint resumes the latest draft and repair findings in its private
+`editorial/RUN_UUID/` directory. The last three draft/review pairs are retained.
+Only an approved lesson is committed as `lesson.json`; its `editorialReview`
+links the run UUID, pair number and SHA-256 of the exact saved draft. Existing
+lesson envelopes and legacy Markdown resume without rewriting speech identities.
 
 An evaluated previous frame at default controls is authoritative for generation;
 planned end descriptions do not replace it. Compiled output must keep declared
@@ -251,8 +245,11 @@ test measures rendering correctness and overhead only.
 ### Rendered verification and repair
 
 New scenes use `scene-verify.md` to inspect rendered evidence before publication.
-A failed verification can invoke one bounded `scene-repair.md` patch, followed by
-validation, rendering and another verification. Both tasks inherit the scene
+A failed verification invokes `scene-repair.md`, followed by validation, rendering
+and another verification, for up to 50 rounds. Three invalid patch attempts fall
+back to a complete scene replacement; it must still render and pass review.
+Compiler failures trigger simplification within the existing resource limits.
+Checkpoints retain the current candidate; rendered evidence keeps the last three rounds. Both tasks inherit the scene
 author's assembled prompt. They do not append a separate animation-quality policy.
 The optional `agents:review` command and its `scene-review.md` prompt are retired;
 historical review artifacts remain readable files.
@@ -325,8 +322,10 @@ failures, interrupted streams, temporary throttling, and transient provider erro
 up to twice, with exponential backoff and jitter (about one and two seconds).
 Each retry uses a fresh conversation with the same request and image attachments;
 partial failed output is discarded. Cancellation interrupts requests and backoff.
-Authentication, configuration, exhausted quota, output limits, invalid output,
-and unclassified failures are not retried. Pi's own provider retries and automatic
+At the video-job level, provider, authentication, quota and infrastructure failures
+remain recoverable with cancellable exponential backoff (5 seconds to 5 minutes;
+authentication/quota starts at 60 seconds). Invalid or truncated model output is
+retried in fresh conversations with validation feedback, up to 50 attempts. Pi's own provider retries and automatic
 compaction remain disabled so retry budgets do not multiply.
 
 Structured `agent.retrying`, `agent.recovered`, and `agent.failed` logs correlate
@@ -398,10 +397,13 @@ names, credentials, provider response bodies, and raw exception messages.
 Logging changes take effect when the backend restarts; they cannot add progress
 events to an already-running process.
 
-Authentication failures, limits, timeouts, and invalid output fail the video job
-with a safe message; completed scenes remain playable. Shutdown cancels the
-active agent and leaves unfinished videos resumable. Video restart recovery resumes interrupted narration using cached chunks; the last
-unsaved speech request may be billed again. Failed narration still needs explicit retry. Failed video jobs do not automatically retry.
+Video jobs preserve completed scenes and retry service failures automatically.
+Narration stays required for speech-mode videos: failed/interrupted narration is
+retried using cached successful chunks, never replaced with subtitles. The last
+unsaved speech request may be billed again. Deletion cancels retries; shutdown
+preserves checkpoints and retry scheduling. Reaching a 50-round review/output
+cap stops the job with a clear message and saved progress. Historical failed
+jobs are not automatically resubmitted. The player displays recovery status.
 
 Backend tests exercise real Pi sessions with an injected model stream and fake
 speech. They cover auth isolation, revocation failure, tool restrictions,

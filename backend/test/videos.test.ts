@@ -559,3 +559,44 @@ test('uploaded photos are passed to the script agent as images', async () => {
   await waitFor(() => Boolean(image))
   expect(image).toBe(Buffer.from([137, 80, 78, 71]).toString('base64'))
 })
+
+test('real generation retries without duplicating published scenes or exposing provider errors', async () => {
+  const indices: number[] = []; let failures = 0;
+  const service = new VideoService(':memory:', async (request, index) => {
+    indices.push(index);
+    if (index === 1 && failures++ < 4) throw new AgentError('QUOTA', 'private provider detail');
+    return fixture(request, index);
+  }, 'pi', undefined, { delay: () => 1 }); services.push(service);
+  const video = service.create(SHARED_OWNER, 'recover', input);
+  await waitFor(() => service.get(video.id, SHARED_OWNER)?.status === 'complete');
+  const result = service.get(video.id, SHARED_OWNER)!;
+  expect(indices).toEqual([0, 1, 1, 1, 1, 1, 2]);
+  expect(result.scenes.map(scene => scene.index)).toEqual([0, 1]);
+  expect(result.recovery).toBeUndefined(); expect(result.error).toBeUndefined();
+});
+
+test('deletion cancels backoff and shutdown preserves the retry for restart', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aha-retry-resume-'));
+  let calls = 0;
+  const service = new VideoService(join(dir, 'db'), async () => { calls++; throw new AgentError('QUOTA', 'private detail'); }, 'pi');
+  services.push(service);
+  try {
+    const deleted = service.create(SHARED_OWNER, 'deleted', input);
+    await waitFor(() => !!service.get(deleted.id, SHARED_OWNER)?.recovery);
+    expect(service.get(deleted.id, SHARED_OWNER)?.recovery?.message).toContain('narration');
+    service.delete(deleted.id);
+    const resumed = service.create(SHARED_OWNER, 'resumed', input);
+    await waitFor(() => !!service.get(resumed.id, SHARED_OWNER)?.recovery);
+    await service.close(); services.splice(services.indexOf(service), 1);
+    expect(calls).toBe(2);
+    let waited = 0;
+    const reopened = new VideoService(join(dir, 'db'), fixture, 'pi', undefined, { wait: async ms => { waited = ms; } });
+    services.push(reopened);
+    await waitFor(() => reopened.get(resumed.id, SHARED_OWNER)?.status === 'complete');
+    expect(waited).toBeGreaterThan(0); expect(calls).toBe(2);
+    expect(reopened.get(deleted.id, SHARED_OWNER)).toBeUndefined();
+  } finally {
+    await Promise.all(services.splice(0).map(service => service.close()));
+    await rm(dir, { recursive: true, force: true });
+  }
+});

@@ -137,60 +137,45 @@ test.each([false, true])('requested controls survive editorial repair and become
   expect(() => validateScenePlan(withControls, evaluateScene(withControls, 1), scene)).not.toThrow();
 });
 
-test('restarts isolate partial audit pairs and link approval to the exact saved draft', async () => {
-  const root = await directory();
-  let calls = 0;
+test('restart resumes the saved draft and links approval to those exact bytes', async () => {
+  const root = await directory(); let calls = 0;
   await expect(authorReviewedLesson({ async run() {
     const outputs = [lesson('five'), review('revise'), lesson()];
     if (calls === outputs.length) throw new Error('Interrupted before repair review');
     return JSON.stringify(outputs[calls++]);
   } }, request, root, new AbortController().signal)).rejects.toThrow('Interrupted before repair review');
   const firstRun = (await readdir(join(root, 'editorial')))[0];
-  const firstDirectory = join(root, 'editorial', firstRun);
-  const evidence = await Promise.all((await readdir(firstDirectory)).map(async name => ({ name, bytes: await readFile(join(firstDirectory, name), 'utf8') })));
-  expect(JSON.parse(await readFile(join(firstDirectory, 'lesson-review-0.json'), 'utf8')).verdict).toBe('revise');
-  expect(await readdir(firstDirectory)).toContain('lesson-draft-1.json');
-  expect(await readdir(firstDirectory)).not.toContain('lesson-review-1.json');
-
-  // A replacement process writes a different draft, then stops before its verdict.
   calls = 0;
-  await expect(authorReviewedLesson({ async run() {
-    if (calls++ === 0) return JSON.stringify(lesson('six'));
-    throw new Error('Interrupted before fresh review');
-  } }, request, root, new AbortController().signal)).rejects.toThrow('Interrupted before fresh review');
-  const secondRun = (await readdir(join(root, 'editorial'))).find(id => id !== firstRun)!;
-  const secondDirectory = join(root, 'editorial', secondRun);
-  const secondDraft = await readFile(join(secondDirectory, 'lesson-draft-0.json'), 'utf8');
-  expect(secondDraft).toContain('six');
-  expect(await readdir(secondDirectory)).not.toContain('lesson-review-0.json'); // No stale first-run verdict.
-
-  calls = 0;
-  const approved = await authorReviewedLesson({ async run() { return JSON.stringify(calls++ === 0 ? lesson() : review()); } }, request, root, new AbortController().signal);
+  const approved = await authorReviewedLesson({ async run(task) {
+    calls++; expect(task.logContext?.stage).toBe('review');
+    expect(task.prompt).toContain('four'); return JSON.stringify(review());
+  } }, request, root, new AbortController().signal);
+  expect(calls).toBe(1);
   const { runId, attempt, draftSha256 } = approved.editorialReview;
-  expect([firstRun, secondRun]).not.toContain(runId); expect(attempt).toBe(0);
-  const approvedDirectory = join(root, 'editorial', runId);
-  const draft = await readFile(join(approvedDirectory, `lesson-draft-${attempt}.json`), 'utf8');
+  expect(runId).toBe(firstRun); expect(attempt).toBe(1);
+  const draft = await readFile(join(root, 'editorial', runId, `lesson-draft-${attempt}.json`), 'utf8');
   expect(createHash('sha256').update(draft).digest('hex')).toBe(draftSha256);
-  const { editorialReview: _provenance, instructionVersion: _version, ...committedLesson } = approved;
-  expect(JSON.parse(draft)).toEqual(committedLesson);
-  expect(JSON.parse(await readFile(join(approvedDirectory, `lesson-review-${attempt}.json`), 'utf8')).verdict).toBe('pass');
-  expect(await readdir(approvedDirectory)).not.toContain('lesson-review-1.json');
-  for (const file of evidence) expect(await readFile(join(firstDirectory, file.name), 'utf8')).toBe(file.bytes);
-  expect(await readFile(join(secondDirectory, 'lesson-draft-0.json'), 'utf8')).toBe(secondDraft);
+  expect(JSON.parse(draft)).toEqual(lesson());
 });
 
-test('three rejected drafts fail before submitting paid speech or publishing a lesson', async () => {
+test('editorial continues beyond three rejected drafts, retains bounded evidence, and remains cancellable before speech', async () => {
   const root = await directory(); let calls = 0, speechCalls = 0;
+  const controller = new AbortController();
   const narration = new NarrationService({ root: join(root, 'speech'), provider: {
     settings: settingsFromEnv({ ELEVENLABS_VOICE_ID: 'test' }), async synthesize() { speechCalls++; throw new Error('Speech must not run'); },
   } });
   const id = crypto.randomUUID();
-  const generate = createPiGenerator({ async run() { return JSON.stringify(calls++ % 2 === 0 ? lesson('five') : review('revise')); } }, narration, root);
-  await expect(generate(request, 0, { owner: 'shared-user', videoId: id, signal: new AbortController().signal })).rejects.toMatchObject({ code: 'EDITORIAL' });
-  expect(calls).toBe(6); expect(speechCalls).toBe(0);
+  const generate = createPiGenerator({ async run() {
+    if (calls === 10) controller.abort(new Error('Stopped after five reviews'));
+    return JSON.stringify(calls++ % 2 === 0 ? lesson('five') : review('revise'));
+  } }, narration, root);
+  await expect(generate(request, 0, { owner: 'shared-user', videoId: id, signal: controller.signal })).rejects.toThrow('Stopped after five reviews');
+  expect(calls).toBe(11); expect(speechCalls).toBe(0);
   const files = await readdir(join(root, id));
   const runs = await readdir(join(root, id, 'editorial'));
-  expect(await readdir(join(root, id, 'editorial', runs[0]))).toContain('lesson-review-2.json'); expect(files).not.toContain('lesson.json'); expect(files).not.toContain('narration-id');
+  const evidence = await readdir(join(root, id, 'editorial', runs[0]));
+  expect(evidence).toContain('lesson-review-4.json'); expect(evidence).not.toContain('lesson-review-0.json');
+  expect(files).not.toContain('lesson.json'); expect(files).not.toContain('narration-id');
 });
 
 test('cancellation during review cannot publish an approved lesson or start speech', async () => {
@@ -209,10 +194,16 @@ test('cancellation during review cannot publish an approved lesson or start spee
   expect(await readdir(join(root, id))).not.toContain('lesson.json');
 });
 
-test('malformed review cannot unlock speech even if a runner skips the validation tool', async () => {
+test('malformed review is retried with feedback and cannot unlock approval', async () => {
   const root = await directory(); let calls = 0;
-  await expect(authorReviewedLesson({ async run() { return calls++ === 0 ? JSON.stringify(lesson()) : JSON.stringify({ ...review(), checks: [] }); } }, request, root, new AbortController().signal)).rejects.toThrow('specific checks');
-  expect(await readdir(root)).not.toContain('lesson.json');
+  const approved = await authorReviewedLesson({ async run(task) {
+    calls++;
+    if (calls === 1) return JSON.stringify(lesson());
+    if (calls === 2) return JSON.stringify({ ...review(), checks: [] });
+    expect(task.prompt).toContain('specific checks');
+    return JSON.stringify(review());
+  } }, request, root, new AbortController().signal);
+  expect(calls).toBe(3); expect(approved).toMatchObject(lesson());
 });
 
 test('inserted scene authoring, review and repair receive no lesson duration or word-count targets', async () => {
@@ -231,4 +222,13 @@ test('inserted scene authoring, review and repair receive no lesson duration or 
     expect(task.prompt).not.toContain('concise visual lesson');
   }
   expect(tasks[0].prompt).toContain('Write one inserted scene');
+});
+
+test('editorial stops at 50 reviews and cannot reset its cap after restart', async () => {
+  const root = await directory(); let calls = 0;
+  const runner = { async run() { return JSON.stringify(calls++ % 2 === 0 ? lesson('five') : review('revise')); } };
+  await expect(authorReviewedLesson(runner, request, root, new AbortController().signal)).rejects.toMatchObject({ code: 'RECOVERY_EXHAUSTED' });
+  expect(calls).toBe(100);
+  await expect(authorReviewedLesson(runner, request, root, new AbortController().signal)).rejects.toMatchObject({ code: 'RECOVERY_EXHAUSTED' });
+  expect(calls).toBe(100);
 });

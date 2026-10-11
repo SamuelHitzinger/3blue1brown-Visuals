@@ -172,7 +172,16 @@ export class NarrationService {
       validateAlignment(cached.normalizedAlignment, sampleCount(pcm) / SAMPLE_RATE);
       logEvent('narration.chunk_reused', { narrationId: job.id, completedChunks: job.completedChunks, cached: true });
       return { ...cached, pcm };
-    } catch (error) { if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error; }
+    } catch (error) {
+      const missing = (error as NodeJS.ErrnoException).code === 'ENOENT';
+      const corrupt = error instanceof SyntaxError || error instanceof TypeError
+        || (error instanceof NarrationError && error.code === 'ALIGNMENT_INVALID');
+      if (!missing && !corrupt) throw error;
+      if (corrupt) {
+        await unlink(path);
+        logEvent('narration.chunk_invalidated', { narrationId: job.id, code: 'ALIGNMENT_INVALID' }, 'warn');
+      }
+    }
     const started = performance.now();
     logEvent('narration.speech_started', { narrationId: job.id, completedChunks: job.completedChunks, totalChunks: job.totalChunks });
     const result = await this.provider.synthesize(input);

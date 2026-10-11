@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { CanvasRenderer } from '../dist/renderer.js';
-import { withOfflineScene } from '../dist/core.js';
+import { withOfflineScene, SceneCompileError } from '../dist/core.js';
 import { loadAssetRegistry } from './load-assets.mjs';
 import { createOfflineModelStore } from './load-models.mjs';
 import { dirname, resolve } from 'node:path';
@@ -84,4 +84,4 @@ async function main() {
   },{modelAssets});
   } finally { models.dispose(); }
 }
-main().then(()=>process.exit(0),error=>{console.error(error instanceof Error?error.message:String(error));process.exit(1);});
+main().then(()=>process.exit(0),error=>{console.error(JSON.stringify({code:error instanceof SceneCompileError?'SCENE_COMPILE':'RENDER',message:error instanceof Error?error.message:String(error)}));process.exit(1);});

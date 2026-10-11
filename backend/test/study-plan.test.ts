@@ -60,7 +60,9 @@ test('model receives the original prompts plus course grouping requirements, fin
     return JSON.stringify(output());
   } }, document, new AbortController().signal);
   expect(plan.chapters[0].segments.length).toBe(2);
-  await expect(generateStudyPlan({ run: async () => '{}' }, document, new AbortController().signal)).rejects.toThrow();
+  let calls = 0;
+  const recovered = await generateStudyPlan({ run: async () => ++calls === 1 ? '{}' : JSON.stringify(output()) }, document, new AbortController().signal);
+  expect(calls).toBe(2); expect(recovered.chapters).toEqual(plan.chapters);
 });
 
 test('endpoint bounds concurrency and sanitizes provider failures', async () => {

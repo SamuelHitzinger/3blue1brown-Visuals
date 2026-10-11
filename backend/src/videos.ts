@@ -6,6 +6,7 @@ import { SceneSequence } from 'animlib/core'
 import type { Frame } from 'animlib/core'
 import type { VideoManifest, VideoRequest, VideoScene } from '../../shared/video/contract'
 import { AgentError } from './agents/config.js'
+import { recoveryDelay, waitForRecovery } from './agents/recovery.js'
 import { contextualVideoRequest, validateSceneRequest } from './scene-requests.js'
 import { insertedSceneId } from '../../shared/video/scene-requests'
 import type { SceneRequest, SceneRequestInput } from '../../shared/video/scene-requests'
@@ -63,7 +64,8 @@ export class VideoService {
   private abort = new AbortController()
   private active = new Map<string, { abort: AbortController; work: Promise<void> }>()
 
-  constructor(path: string, private generate: Generator = simulatedGenerator, private provider: VideoManifest['provider'] = 'simulated', private generateThumbnail?: ThumbnailGenerator) {
+  constructor(path: string, private generate: Generator = simulatedGenerator, private provider: VideoManifest['provider'] = 'simulated', private generateThumbnail?: ThumbnailGenerator,
+    private recoveryOptions: { wait?: typeof waitForRecovery; delay?: typeof recoveryDelay } = {}) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true })
     this.db = new Database(path, { create: true })
     this.db.exec(`PRAGMA journal_mode=WAL;
@@ -220,13 +222,70 @@ export class VideoService {
       const abort = new AbortController()
       // Register before starting so repeated kicks cannot launch the same job twice.
       const work = Promise.resolve().then(() => {
-        if (this.stopped || !this.row(row.id)) return
+        if (this.stopped) return
         return this.run(row, abort)
+      }).catch(error => {
+        if (!this.stopped && !abort.signal.aborted) logEvent('video.worker_error', { videoId: row.id, code: 'PERSISTENCE' }, 'error')
       }).finally(() => { this.active.delete(row.id) })
       this.active.set(row.id, { abort, work })
     }
   }
   private async run(row: Row, abort: AbortController) {
+    // Simulated fixtures retain their deterministic terminal-error contract.
+    if ((JSON.parse(row.manifest) as VideoManifest).provider !== 'pi') return this.runAttempt(row, abort)
+    const signal = AbortSignal.any([this.abort.signal, abort.signal])
+    const wait = this.recoveryOptions.wait ?? waitForRecovery
+    let attempt = (JSON.parse(row.manifest) as VideoManifest).recovery?.attempt ?? 0
+    for (;;) {
+      if (signal.aborted) return
+      try {
+        const current = this.row(row.id)
+        if (!current) return
+        const manifest: VideoManifest = JSON.parse(current.manifest)
+        if (manifest.recovery) {
+          const remaining = Math.max(0, Date.parse(manifest.recovery.nextRetryAt) - Date.now())
+          if (remaining) await wait(remaining, signal)
+          signal.throwIfAborted()
+          delete manifest.recovery
+          this.save(manifest); this.notify(manifest)
+        }
+        const refreshed = this.row(row.id)
+        if (!refreshed || signal.aborted) return
+        await this.runAttempt(refreshed, abort)
+        return
+      } catch (error) {
+        if (signal.aborted) return
+        const code = error instanceof AgentError ? error.code : 'GENERATION'
+        const retryDelayMs = (this.recoveryOptions.delay ?? recoveryDelay)(++attempt, code)
+        try {
+          const current = this.row(row.id)
+          if (!current) return
+          const persisted: VideoManifest = JSON.parse(current.manifest)
+          if (code === 'RECOVERY_EXHAUSTED') {
+            persisted.status = 'failed'; persisted.errorCode = code
+            persisted.error = videoFailureMessage(code, persisted.scenes.length > 0)
+            delete persisted.recovery
+            this.save(persisted); this.notify(persisted)
+            logEvent('video.recovery_exhausted', { videoId: row.id, code }, 'warn')
+            return
+          }
+          persisted.status = 'generating'
+          delete persisted.error; delete persisted.errorCode
+          persisted.recovery = { attempt, code, nextRetryAt: new Date(Date.now() + retryDelayMs).toISOString(),
+            message: ['QUOTA', 'ALIGNMENT_INVALID', 'NARRATION', 'PROVIDER_AUTH', 'NOT_CONFIGURED'].includes(code)
+              ? 'Waiting for narration to recover. Retrying automatically; your progress is saved.'
+              : 'Generation will retry automatically. Your completed scenes are saved.' }
+          logEvent('video.retrying', { videoId: row.id, sceneCount: persisted.scenes.length, attempt, code, retryDelayMs }, 'warn')
+          this.save(persisted); this.notify(persisted)
+        } catch {
+          // Even unavailable storage must not abandon an otherwise durable job.
+          logEvent('video.persistence_retrying', { videoId: row.id, code: 'PERSISTENCE', retryDelayMs }, 'error')
+          try { await wait(retryDelayMs, signal) } catch (waitError) { if (signal.aborted) return; throw waitError }
+        }
+      }
+    }
+  }
+  private async runAttempt(row: Row, abort: AbortController) {
     const manifest: VideoManifest = JSON.parse(row.manifest)
     const models: import('animlib/core').CompileInput['models'] = Object.create(null)
     for (const scene of manifest.scenes) for (const [id, asset] of Object.entries(scene.assets ?? {})) models![id] = asset.metadata
@@ -234,7 +293,9 @@ export class VideoService {
     const signal = AbortSignal.any([this.abort.signal, abort.signal])
     const usage = new TokenUsageTracker(tokenUsage => {
       if (!this.row(row.id)) return
-      manifest.tokenUsage = tokenUsage; this.save(manifest); this.notify(manifest)
+      manifest.tokenUsage = tokenUsage
+      try { this.save(manifest); this.notify(manifest) }
+      catch { logEvent('video.usage_persistence_error', { videoId: manifest.id, code: 'PERSISTENCE' }, 'warn') }
     }, manifest.tokenUsage)
     const started = performance.now()
     logEvent('video.started', { videoId: manifest.id, sceneCount: manifest.scenes.length, resumed: manifest.status === 'generating' })
@@ -287,6 +348,7 @@ export class VideoService {
     } catch (error) {
       await thumbnailWork
       if (this.stopped || !this.row(row.id)) return
+      if (manifest.provider === 'pi') throw error
       usage.flush(); manifest.status = 'failed'; manifest.errorCode = error instanceof AgentError ? error.code : 'GENERATION'
       manifest.error = videoFailureMessage(manifest.errorCode, manifest.scenes.length > 0)
       logEvent('video.failed', { videoId: manifest.id, sceneCount: manifest.scenes.length, code: error instanceof AgentError ? error.code : 'GENERATION', elapsedMs: Math.round(performance.now() - started) }, 'error')
@@ -294,7 +356,7 @@ export class VideoService {
     } finally {
       await thumbnailWork
       if (this.stopped) logEvent('video.interrupted', { videoId: manifest.id, sceneCount: manifest.scenes.length, elapsedMs: Math.round(performance.now() - started) })
-      usage.flush(); sequence.dispose()
+      try { usage.flush() } finally { sequence.dispose() }
     }
   }
   async close() {

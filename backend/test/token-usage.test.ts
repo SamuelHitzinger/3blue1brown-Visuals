@@ -1,3 +1,4 @@
+import { AgentError } from '../src/agents/config.js'
 import { expect, test } from 'bun:test'
 import { mkdtemp, rm } from 'node:fs/promises'
 import { join } from 'node:path'
@@ -55,7 +56,7 @@ test('live SSE usage arrives before scenes, survives reconnect, and flushes on s
       emit({ type: 'message_update', assistantMessageEvent: { type: 'text_delta', delta: 'a'.repeat(400) } })
       await gate
       emit({ type: 'message_end', message: { role: 'assistant', usage: { input: 250, output: 110 } } })
-      if (fail) throw new Error('Test failure')
+      if (fail) throw new AgentError('RECOVERY_EXHAUSTED', 'Test failure')
       return null
     }, 'pi')
     try {

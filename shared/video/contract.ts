@@ -52,4 +52,6 @@ export interface VideoManifest {
   thumbnailStatus?: 'generating' | 'complete' | 'failed'
   error?: string
   errorCode?: string
+  /** Durable automatic recovery; published scenes remain playable while waiting. */
+  recovery?: { attempt: number; code: string; nextRetryAt: string; message: string }
 }
