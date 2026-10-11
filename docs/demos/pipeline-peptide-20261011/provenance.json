@@ -1,0 +1,84 @@
+{
+  "createdAt": "2026-10-11T06:25:17.449Z",
+  "jobId": "872ef266-3328-4b6b-a520-c911f0952d69",
+  "repositoryRevision": "7d6030f21bc492701eec45b99dc7a07c6899bc5a",
+  "branch": "amilibsam",
+  "model": "gpt-6-astra",
+  "thinking": "high",
+  "provider": "openai-codex",
+  "elapsedMs": 509243.05409999995,
+  "guideHashes": {
+    "reference.md": "ad56d2b070948e180c6489bde2c9a6631ebaf02feda53e1ea72367257702f4dc",
+    "capabilities.md": "8bcba53d4dc618a9d7151d23592fbe1bcc52f2a544caf7bd84b1ee88f201406e"
+  },
+  "sourceSha256": "70968c5345f11e026cddf1ca98494fdb0ed665ea158a8036ec90bb484458cc6f",
+  "generatedSourceHandEdited": false,
+  "seededLesson": false,
+  "optionalAuthorChromiumPreview": false,
+  "productionNativeVisualReview": {
+    "backend": "native-webgpu",
+    "approved": true,
+    "attempt": 0,
+    "findings": [],
+    "nativeFrames": 24,
+    "sizes": [
+      "1280x720",
+      "960x720"
+    ],
+    "sourceSha256": "70968c5345f11e026cddf1ca98494fdb0ed665ea158a8036ec90bb484458cc6f"
+  },
+  "media": {
+    "backend": "native-webgpu",
+    "codec": "h264",
+    "pixelFormat": "yuv420p",
+    "width": 1280,
+    "height": 720,
+    "fps": 24,
+    "frames": 485,
+    "encodedDuration": 20.208333333333332,
+    "sceneDuration": 20.167,
+    "audio": false,
+    "embeddedSubtitles": true,
+    "fullDecodePassed": true
+  },
+  "boundary": "Actual createPiGenerator with no seeded lesson or narration fixtures: production editorial, subtitle timing, authoring, validation, native visual review and optional repair. TTS is intentionally bypassed through the supported subtitle mode.",
+  "scope": "One original idealized six-residue peptide with prescribed phi[2] torsion; not physical folding or broad recipe coverage.",
+  "artifacts": {
+    "request.json": {
+      "sha256": "de69d3111d650b46a02a9c3cd67530afef8bb65c32398331640c1568fa4a3fac",
+      "bytes": 4625
+    },
+    "scene.js": {
+      "sha256": "70968c5345f11e026cddf1ca98494fdb0ed665ea158a8036ec90bb484458cc6f",
+      "bytes": 11546
+    },
+    "demo.mp4": {
+      "sha256": "edc0e44e0ba10f5e0ccf8ff8602c35ec11fc5dd1dcd968abd19dd82f1e0d5ba6",
+      "bytes": 230971
+    },
+    "demo.srt": {
+      "sha256": "ee6963d2fa374b84707626bc9a80002353086500f93ef6401b8188bbda021b0f",
+      "bytes": 477
+    },
+    "demo.vtt": {
+      "sha256": "5976d397080e80b62ec94ea5d92edd1cb8f899b8d1d4e157fef873600dc68885",
+      "bytes": 485
+    },
+    "poster.png": {
+      "sha256": "1d5363391d1fae7794cf5c3ef9022b3abaa4720b36b91ebac36910e285960ce8",
+      "bytes": 58968
+    },
+    "manifest.json": {
+      "sha256": "7d1b2bb8cc8cf962870f983b838434d6b96cfb20b4657e2de10797bc83ea9525",
+      "bytes": 962
+    },
+    "export-generated.mjs": {
+      "sha256": "907355eaeea3955dad00986e79bf7616e4e23661fdd13ee31010efffde7dafa8",
+      "bytes": 3674
+    },
+    "verify-generated.mjs": {
+      "sha256": "c0966f8c8b1ae58605259bbb0d1e05c8512838a431cc1ee9d9c782806783404e",
+      "bytes": 11257
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "narrationMode": "subtitles",
+  "scenes": [
+    {
+      "id": "beat-1",
+      "file": "scene.js",
+      "duration": 20.167
+    }
+  ],
+  "captions": [
+    {
+      "start": 0.4,
+      "end": 4.066666666666666,
+      "text": "One middle nitrogen–alpha-carbon bond defines the axis."
+    },
+    {
+      "start": 4.066666666666666,
+      "end": 6.866666666666666,
+      "text": "The faint copy marks their starting pose."
+    },
+    {
+      "start": 6.866666666666666,
+      "end": 12.2,
+      "text": "Changing its phi angle rotates downstream atoms around that axis; upstream atoms"
+    },
+    {
+      "start": 12.2,
+      "end": 13.7,
+      "text": "stay fixed."
+    },
+    {
+      "start": 13.7,
+      "end": 15.833333333333332,
+      "text": "Rotation preserves bond lengths."
+    },
+    {
+      "start": 15.833333333333332,
+      "end": 19.366666666666667,
+      "text": "This torsion is prescribed, not a folding simulation."
+    }
+  ],
+  "models": {}
+}
