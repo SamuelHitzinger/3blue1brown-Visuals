@@ -65,6 +65,13 @@ html, body, #root { min-height: 100%; background: var(--bg); transition: backgro
 .panel-heading h1 { font-size: 30px; }
 .panel-heading h2 { font-size: 25px; }
 .panel-heading p { color: var(--muted); font-size: 14px; margin: 9px 0 0; }
+.archive-note { color: var(--muted); font-size: 13px; line-height: 1.6; margin: -10px 0 24px; }
+@media (max-width: 650px) {
+  .library-page .section-heading { flex-wrap: wrap; gap: 14px; }
+  .library-page .library-actions { flex-wrap: wrap; }
+  .library-page .saved-button { padding: 8px 10px; }
+  .library-page .saved-button span { display: inline; }
+}
 .section-icon { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; flex-shrink: 0; }
 
 /* A full-height drawer. Only its contents scroll; the theme control stays at the bottom. */

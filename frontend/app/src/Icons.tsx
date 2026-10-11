@@ -21,6 +21,7 @@ export const Trash = icon('Trash', <><path d="M4 6h16M9 6V4q0-1 1-1h4q1 0 1 1v2M
 export const Check = icon('Check', <path d="m5 12 3 3.5q1.5 1.8 3-.2L19 7"/>)
 export const Search = icon('Search', <><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></>)
 export const Bookmark = icon('Bookmark', <path d="M8 4h8q3 0 3 3v11q0 3-2.5 1.5l-3-1.8q-1.5-.9-3 0l-3 1.8Q5 21 5 18V7q0-3 3-3Z"/>)
+export const Archive = icon('Archive', <><rect x="3" y="3" width="18" height="5" rx="2"/><path d="M5 8v10q0 3 3 3h8q3 0 3-3V8M10 12h4" strokeWidth="2.5"/></>)
 export const FolderOpen = icon('FolderOpen', <><path d="M3 16V7q0-3 3-3h3c2 0 2 3 4 3h5q3 0 3 3"/><path d="M7 11h12q3 0 2.4 3l-.7 3q-.7 3-3.7 3H6q-3 0-2.4-3l.6-3q.6-3 2.8-3Z"/></>)
 export const BookOpen = icon('BookOpen', <><path d="M12 7c-2-2-5-3-7-3Q3 4 3 6v10q0 2 2 2c3 0 5 1 7 2 2-1 4-2 7-2q2 0 2-2V6q0-2-2-2c-2 0-5 1-7 3Z"/><path d="M12 7v13"/></>)
 export const Library = icon('Library', <><path d="M4 5c-.4 4-.4 10 0 14M10 4c.4 5 .4 10 0 15m6-13c.7 4 2 9 3 13"/></>)

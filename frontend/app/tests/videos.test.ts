@@ -9,6 +9,46 @@ const manifest = (id = 'video-1'): VideoManifest => ({
   scenes: [{ id: 'scene-1', index: 0, source: '', duration: 6, audio: { id: 'audio-1', url: '/audio.wav' }, captions: [] }],
 })
 
+test('archive survives stale polling while generation data continues to refresh', () => {
+  const video = { ...manifest(), archivedAt: '2026-10-11T10:00:00.000Z' }
+  const archived = videoLesson(video)
+  assert.equal(archived.archivedAt, video.archivedAt)
+  const stale = { ...manifest(), status: 'generating' as const }
+  const [updated] = mergeVideoLessons([stale], [archived])
+  assert.equal(updated.archivedAt, video.archivedAt)
+  assert.equal(updated.generationStatus, 'generating')
+  assert.equal(mergeVideoLessons([video], [])[0].archivedAt, video.archivedAt)
+})
+
+test('archiving uses the archive endpoint without deleting the video', async () => {
+  const { archiveVideo } = await import('../src/videos.ts')
+  const original = globalThis.fetch
+  const video = { ...manifest(), archivedAt: '2026-10-11T10:00:00.000Z' }
+  globalThis.fetch = async (url, options) => {
+    assert.equal(url, '/api/videos/video-1/archive')
+    assert.equal(options?.method, 'POST')
+    return Response.json(video)
+  }
+  try { assert.deepEqual(await archiveVideo('video-1'), video) }
+  finally { globalThis.fetch = original }
+})
+
+test('failed archive and permanent delete requests report failure; a missing video is already deleted', async () => {
+  const { archiveVideo, deleteVideo } = await import('../src/videos.ts')
+  const original = globalThis.fetch
+  try {
+    globalThis.fetch = async () => Response.json({ detail: 'Try again' }, { status: 503 })
+    await assert.rejects(archiveVideo('video-1'), /Try again/)
+    await assert.rejects(deleteVideo('video-1'), /Try again/)
+    globalThis.fetch = async (url, options) => {
+      assert.equal(url, '/api/videos/video-1')
+      assert.equal(options?.method, 'DELETE')
+      return new Response(null, { status: 404 })
+    }
+    await deleteVideo('video-1')
+  } finally { globalThis.fetch = original }
+})
+
 test('server refresh preserves curriculum context and updates measured duration', () => {
   const video = manifest()
   const previous = { ...videoLesson(video), videoMode: 'interactive' as const, subject: 'Analysis', subtitle: 'Sequences', color: 'blue', duration: 0,

@@ -44,6 +44,8 @@ export interface VideoManifest {
   provider: 'simulated' | 'pi'
   narrationMode?: 'speech' | 'subtitles'
   createdAt: string
+  /** Archived videos retain their scenes and assets until permanently deleted. */
+  archivedAt?: string
   scenes: VideoScene[]
   tokenUsage?: VideoTokenUsage
   thumbnail?: import('./thumbnail').ThumbnailArtwork

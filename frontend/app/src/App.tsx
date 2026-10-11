@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, ArrowUpRight, Atom, Bookmark, Check, ChevronDown, FileText, MenuGlyph, Search, SlidersHorizontal, X } from './Icons'
+import { Archive, ArrowRight, ArrowUpRight, Atom, Bookmark, Check, ChevronDown, FileText, MenuGlyph, Search, SlidersHorizontal, X } from './Icons'
 import ThumbnailArtwork from './ThumbnailArtwork'
 import LessonPlayer from './LessonPlayer'
 import NavigationDrawer from './NavigationDrawer'
@@ -13,7 +13,9 @@ import type { CourseLessonRef, SubjectPlans, TopicParent, TopicVideoRequest } fr
 import type { StudyPlan } from './plan'
 import { formatTime, artworkForTitle } from './data'
 import type { Lesson } from './data'
-import { deleteVideo, listVideos, mergeVideoLessons } from './videos'
+import { archiveVideo, deleteVideo, listVideos, mergeVideoLessons } from './videos'
+import { applyLocalLibrary, libraryViewLessons, loadLocalLibrary, localLibraryKey } from './libraryArchive'
+import type { LibraryView, LocalLibraryState } from './libraryArchive'
 
 // Five colours keep neighbours distinct in the one-, two-, and three-column grids.
 const libraryColors = ['sage', 'lavender', 'butter', 'blue', 'peach'] as const
@@ -34,11 +36,11 @@ function VideoThumbnail({ lesson, color, onOpen }: { lesson: Lesson, color: stri
     </button>
 }
 
-function VideoCard({ lesson, color, saved, onOpen, onToggleSaved, onDelete, deleting, index = 0 }: { lesson: Lesson, color: string, saved: boolean, onOpen: () => void, onToggleSaved: () => void, onDelete?: () => void, deleting?: boolean, index?: number }) {
+function VideoCard({ lesson, color, saved, onOpen, onToggleSaved, onDelete, deleting, archived, index = 0 }: { lesson: Lesson, color: string, saved: boolean, onOpen: () => void, onToggleSaved: () => void, onDelete?: () => void, deleting?: boolean, archived?: boolean, index?: number }) {
   return <article className="video-card" style={{ animationDelay: `${index * 45}ms` }}>
     <VideoThumbnail lesson={lesson} color={color} onOpen={onOpen}/>
-    <button className={`bookmark-button ${saved ? 'saved' : ''}`} onClick={onToggleSaved} aria-label={`${saved ? 'Unsave' : 'Save'} ${lesson.title}`} aria-pressed={saved}><Bookmark size={16} fill={saved ? 'currentColor' : 'none'}/></button>
-    {onDelete && <button className="delete-video-button" disabled={deleting} onClick={onDelete} aria-label={`Delete ${lesson.title}`}><X size={14}/></button>}
+    {!archived && <button className={`bookmark-button ${saved ? 'saved' : ''}`} onClick={onToggleSaved} aria-label={`${saved ? 'Unsave' : 'Save'} ${lesson.title}`} aria-pressed={saved}><Bookmark size={16} fill={saved ? 'currentColor' : 'none'}/></button>}
+    {onDelete && <button className="delete-video-button" disabled={deleting} onClick={onDelete} aria-label={`${archived ? 'Permanently delete' : 'Delete'} ${lesson.title}`} title={archived ? 'Delete permanently' : 'Move to Archive'}><X size={14}/></button>}
     {lesson.generationStatus && <span className="video-generation-status">{lesson.generationStatus === 'complete' ? 'Ready' : lesson.generationStatus === 'failed' ? 'Generation failed' : lesson.generationStatus === 'queued' ? 'Queued' : 'Generating…'}</span>}
   </article>
 }
@@ -50,12 +52,14 @@ export default function App() {
   const [filter, setFilter] = useState('All subjects')
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState('recent')
-  const [savedOnly, setSavedOnly] = useState(false)
+  const [libraryView, setLibraryView] = useState<LibraryView>('all')
+  const [localLibrary, setLocalLibrary] = useState(() => loadLocalLibrary(localStorage))
   const [bookmarks, setBookmarks] = useState<string[]>(() => readLocal('aha-bookmarks', []))
   const [customLessons, setCustomLessons] = useState<Lesson[]>(() => readLocal('aha-lessons', []))
   const [toast, setToast] = useState('')
   const [deleting, setDeleting] = useState<string[]>([])
   const deletedIds = useRef(new Set<string>())
+  const busyIds = useRef(new Set<string>())
   const currentLessons = useRef(customLessons)
   currentLessons.current = customLessons
   const [topicRequest, setTopicRequest] = useState<TopicVideoRequest | null>(null)
@@ -63,7 +67,8 @@ export default function App() {
   const [playHistory, setPlayHistory] = useState(() => loadRecentPlayback(localStorage))
   const [subjectPlans, setSubjectPlans] = useState(() => loadSubjectPlans(localStorage, courses))
   const [planStorageNote, setPlanStorageNote] = useState('')
-  const allLessons = useMemo(() => customLessons.map(lesson => ({ ...lesson, artwork: artworkForTitle(lesson.title, lesson.artwork) })), [customLessons])
+  const allLessons = useMemo(() => applyLocalLibrary(customLessons.map(lesson => ({ ...lesson, artwork: artworkForTitle(lesson.title, lesson.artwork) })), localLibrary), [customLessons, localLibrary])
+  const activeLessons = allLessons.filter(lesson => !lesson.archivedAt)
   const pendingCourseLessons = customLessons.flatMap(lesson => lesson.courseLesson && (lesson.generationStatus === 'queued' || lesson.generationStatus === 'generating') ? [lesson.courseLesson] : [])
   const hasPendingCourseVideos = pendingCourseLessons.length > 0
   useEffect(() => {
@@ -99,6 +104,11 @@ export default function App() {
   useEffect(() => { const listener = () => { setPath(window.location.pathname); setMenu(false) }; window.addEventListener('popstate', listener); return () => window.removeEventListener('popstate', listener) }, [])
   useEffect(() => { localStorage.setItem('aha-bookmarks', JSON.stringify(bookmarks)) }, [bookmarks])
   useEffect(() => { localStorage.setItem('aha-lessons', JSON.stringify(customLessons)) }, [customLessons])
+  useEffect(() => {
+    const sync = (event: StorageEvent) => { if (event.key === localLibraryKey || event.key === null) setLocalLibrary(loadLocalLibrary(localStorage)) }
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [])
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 3500); return () => clearTimeout(timer) }, [toast])
   useEffect(() => { document.title = selected ? `${selected.title} — Aha!` : settings ? 'Settings — Aha!' : planning ? 'Courses — Aha!' : libraryPage ? 'Library — Aha!' : 'Aha! — Make it click.' }, [selected, settings, planning, libraryPage])
 
@@ -135,17 +145,48 @@ export default function App() {
     setToast(`${course.title} deleted. Your videos are still in Library.`)
   }
   const toggleSaved = (id: string) => setBookmarks(old => old.includes(id) ? old.filter(value => value !== id) : [...old, id])
+  const saveLocalLibrary = (update: (stored: LocalLibraryState) => LocalLibraryState) => {
+    const next = update(loadLocalLibrary(localStorage))
+    // Commit before hiding the card so a storage failure cannot silently lose it.
+    localStorage.setItem(localLibraryKey, JSON.stringify(next))
+    setLocalLibrary(next)
+  }
   const removeLesson = async (lesson: Lesson) => {
-    if (deleting.includes(lesson.id)) return
+    if (busyIds.current.has(lesson.id)) return
+    busyIds.current.add(lesson.id)
     setDeleting(old => [...old, lesson.id])
+    const permanent = libraryView === 'archive' && !!lesson.archivedAt
     try {
-      if (lesson.videoId) await deleteVideo(lesson.videoId)
-      deletedIds.current.add(lesson.id)
-      setCustomLessons(old => old.filter(item => item.id !== lesson.id))
-      setBookmarks(old => old.filter(id => id !== lesson.id))
-      setToast('Video deleted.')
-    } catch (error) { setToast(error instanceof Error ? error.message : 'Could not delete the video.') }
-    finally { setDeleting(old => old.filter(id => id !== lesson.id)) }
+      if (!permanent) {
+        if (lesson.videoId) {
+          const archived = await archiveVideo(lesson.videoId)
+          setCustomLessons(old => old.map(item => item.id === lesson.id ? { ...item, archivedAt: archived.archivedAt } : item))
+        } else {
+          saveLocalLibrary(stored => ({ ...stored, archived: { ...stored.archived, [lesson.id]: new Date().toISOString() } }))
+        }
+        setToast('Video moved to Archive.')
+      } else {
+        if (lesson.videoId) await deleteVideo(lesson.videoId)
+        else {
+          saveLocalLibrary(stored => {
+            const archived = { ...stored.archived }
+            delete archived[lesson.id]
+            return { archived, deleted: [...new Set([...stored.deleted, lesson.id])] }
+          })
+        }
+        deletedIds.current.add(lesson.id)
+        setCustomLessons(old => old.filter(item => item.id !== lesson.id))
+        setBookmarks(old => old.filter(id => id !== lesson.id))
+        setPlayHistory(old => old.filter(id => id !== lesson.id))
+        setToast('Video permanently deleted.')
+      }
+    } catch (error) { setToast(error instanceof Error ? error.message : permanent ? 'Could not delete the video.' : 'Could not archive the video.') }
+    finally { busyIds.current.delete(lesson.id); setDeleting(old => old.filter(id => id !== lesson.id)) }
+  }
+  const changeLibraryView = (view: LibraryView) => {
+    setLibraryView(current => current === view ? 'all' : view)
+    setFilter('All subjects')
+    setQuery('')
   }
   const goLibrary = () => navigate('/library')
 
@@ -169,7 +210,7 @@ export default function App() {
     setCustomLessons(old => [lesson, ...old])
     setTopicRequest(null)
     setFilter('All subjects')
-    setSavedOnly(false)
+    setLibraryView('all')
     setQuery('')
     openLesson(lesson)
     setToast('Your video is being prepared. Saved to your library.')
@@ -187,8 +228,9 @@ export default function App() {
   />
 
   const subjectTitle = (lesson: Lesson) => courseForSubject(courses, lesson.subject)?.title ?? lesson.subject
-  const visible = allLessons.filter(l => (filter === 'All subjects' || subjectTitle(l) === filter) && (!savedOnly || bookmarks.includes(l.id)) && `${l.title} ${l.subject} ${subjectTitle(l)}`.toLowerCase().includes(query.toLowerCase())).sort((a, b) => sort === 'az' ? a.title.localeCompare(b.title) : sort === 'duration' ? a.duration - b.duration : 0)
-  const availableSubjects = [...new Set(allLessons.map(subjectTitle))]
+  const scopedLessons = libraryViewLessons(allLessons, libraryView, bookmarks)
+  const visible = scopedLessons.filter(l => (filter === 'All subjects' || subjectTitle(l) === filter) && `${l.title} ${l.subject} ${subjectTitle(l)}`.toLowerCase().includes(query.toLowerCase())).sort((a, b) => sort === 'az' ? a.title.localeCompare(b.title) : sort === 'duration' ? a.duration - b.duration : 0)
+  const availableSubjects = [...new Set(scopedLessons.map(subjectTitle))]
   const groups = availableSubjects.map(subject => ({ subject, lessons: visible.filter(l => subjectTitle(l) === subject) })).filter(group => group.lessons.length)
   // Follow the rendered order across subject groups, after filtering and sorting.
   const thumbnailColors = new Map(groups.flatMap(group => group.lessons).map((lesson, index) => [lesson.id, libraryColors[index % libraryColors.length]]))
@@ -200,12 +242,13 @@ export default function App() {
         <div className="header-start"><div className="menu-anchor"><button className={`icon-button menu-toggle ${menu ? 'is-open' : ''}`} aria-label="Open navigation" aria-expanded={menu} aria-controls="navigation-drawer" onClick={() => setMenu(!menu)}><MenuGlyph/></button>{menuContent}</div><button className="wordmark" onClick={goWorkspace}>Aha!</button></div>
         {!settings && !planning && !libraryPage && <button className="workspace-library-link" onClick={goLibrary}>Your library <ArrowUpRight size={15}/></button>}
       </header>
-      {settings ? <SettingsPage theme={theme} onTheme={setTheme}/> : planning ? <CoursesPage curriculum={courses} selectedId={path.split('/')[2]} onSelect={id => navigate(id ? `/courses/${id}` : '/courses', false)} plans={subjectPlans} onAddMaterial={addPlanMaterial} onAddTopic={createTopic} onDeleteTopic={removeTopic} onAddLesson={createPlanLesson} onDeleteLesson={removePlanLesson} pendingLessons={pendingCourseLessons} onMakeVideo={makeTopicVideo} onAddCourse={createCourse} onDeleteCourse={removeCourse} onNewVideo={goWorkspace} recent={overviewLessons(playHistory, allLessons, courses)} renderVideo={lesson => <VideoThumbnail lesson={lesson} color={lesson.color} onOpen={() => openLesson(lesson)}/>} storageNote={planStorageNote}/> : libraryPage ? <main className="library-page">
+      {settings ? <SettingsPage theme={theme} onTheme={setTheme}/> : planning ? <CoursesPage curriculum={courses} selectedId={path.split('/')[2]} onSelect={id => navigate(id ? `/courses/${id}` : '/courses', false)} plans={subjectPlans} onAddMaterial={addPlanMaterial} onAddTopic={createTopic} onDeleteTopic={removeTopic} onAddLesson={createPlanLesson} onDeleteLesson={removePlanLesson} pendingLessons={pendingCourseLessons} onMakeVideo={makeTopicVideo} onAddCourse={createCourse} onDeleteCourse={removeCourse} onNewVideo={goWorkspace} recent={overviewLessons(playHistory, activeLessons, courses)} renderVideo={lesson => <VideoThumbnail lesson={lesson} color={lesson.color} onOpen={() => openLesson(lesson)}/>} storageNote={planStorageNote}/> : libraryPage ? <main className="library-page">
         <section className="library-section" id="library">
           <div className="section-heading">
             <h1>Library</h1>
             <div className="library-actions">
-              <button className={`saved-button ${savedOnly ? 'active' : ''}`} onClick={() => setSavedOnly(!savedOnly)} aria-label="Saved videos" aria-pressed={savedOnly}><Bookmark size={16} fill={savedOnly ? 'currentColor' : 'none'}/><span>Saved</span></button>
+              <button className={`saved-button ${libraryView === 'saved' ? 'active' : ''}`} onClick={() => changeLibraryView('saved')} aria-label="Saved videos" aria-pressed={libraryView === 'saved'}><Bookmark size={16} fill={libraryView === 'saved' ? 'currentColor' : 'none'}/><span>Saved</span></button>
+              <button className={`saved-button ${libraryView === 'archive' ? 'active' : ''}`} onClick={() => changeLibraryView('archive')} aria-label="Archived videos" aria-pressed={libraryView === 'archive'}><Archive size={16}/><span>Archive</span></button>
               <label className="sort-select"><SlidersHorizontal size={16}/><select aria-label="Sort videos" value={sort} onChange={e => setSort(e.target.value)}><option value="recent">Recently added</option><option value="az">Title A–Z</option><option value="duration">Shortest first</option></select><ChevronDown size={13}/></label>
             </div>
           </div>
@@ -213,11 +256,12 @@ export default function App() {
             <div className="filter-tabs" role="group" aria-label="Filter by subject">{['All subjects', ...availableSubjects].map(subject => <button key={subject} className={filter === subject ? 'active' : ''} aria-pressed={filter === subject} onClick={() => setFilter(subject)}>{subject}</button>)}</div>
             <label className="search-box"><Search size={17}/><input placeholder="Search videos" aria-label="Search your library" value={query} onChange={e => setQuery(e.target.value)}/>{query && <button aria-label="Clear search" onClick={() => setQuery('')}><X size={14}/></button>}</label>
           </div>
+          {libraryView === 'archive' && <p className="archive-note">Deleted videos stay here. Deleting a video from Archive removes it permanently.</p>}
           {groups.map(({ subject, lessons: groupLessons }) => <div className="subject-group" key={subject}>
             <div className="subject-heading"><span className="subject-symbol">{subject === 'Organic chemistry' ? <Atom size={20}/> : (subject === 'Linear algebra' || subject === 'Lineare Algebra') ? <ArrowUpRight size={19}/> : <FileText size={18}/>}</span><h3>{subject}</h3></div>
-            <div className="video-grid">{groupLessons.map((lesson, index) => <VideoCard key={lesson.id} lesson={lesson} color={thumbnailColors.get(lesson.id)!} saved={bookmarks.includes(lesson.id)} onOpen={() => openLesson(lesson)} onToggleSaved={() => toggleSaved(lesson.id)} onDelete={customLessons.some(item => item.id === lesson.id) ? () => { void removeLesson(lesson) } : undefined} deleting={deleting.includes(lesson.id)} index={index}/>)}</div>
+            <div className="video-grid">{groupLessons.map((lesson, index) => <VideoCard key={lesson.id} lesson={lesson} color={thumbnailColors.get(lesson.id)!} saved={bookmarks.includes(lesson.id)} onOpen={() => openLesson(lesson)} onToggleSaved={() => toggleSaved(lesson.id)} onDelete={() => { void removeLesson(lesson) }} archived={libraryView === 'archive'} deleting={deleting.includes(lesson.id)} index={index}/>)}</div>
           </div>)}
-          {!visible.length && <div className="empty-library"><h3>{savedOnly ? 'No saved videos' : 'No videos found'}</h3><button className="secondary-button" onClick={() => { setQuery(''); setFilter('All subjects'); setSavedOnly(false) }}>Clear filters</button></div>}
+          {!visible.length && <div className="empty-library"><h3>{query || filter !== 'All subjects' ? 'No videos found' : libraryView === 'archive' ? 'No archived videos' : libraryView === 'saved' ? 'No saved videos' : 'No videos found'}</h3>{(query || filter !== 'All subjects') && <button className="secondary-button" onClick={() => { setQuery(''); setFilter('All subjects') }}>Clear filters</button>}</div>}
         </section>
       </main> : <>
         {invalidLesson && <div className="not-found"><p>This explanation isn’t in your library yet.</p><button onClick={goLibrary}>Open your library <ArrowRight size={16}/></button></div>}

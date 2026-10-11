@@ -143,6 +143,18 @@ export class VideoService {
     })()
     return { id: video.id, afterSceneId: after, question: input.question, video }
   }
+  archive(id: string): VideoManifest | undefined {
+    const row = this.row(id)
+    if (!row) return undefined
+    const manifest: VideoManifest = JSON.parse(row.manifest)
+    if (!manifest.archivedAt) {
+      manifest.archivedAt = new Date().toISOString()
+      this.save(manifest)
+      this.notify(manifest)
+      logEvent('video.archived', { videoId: id })
+    }
+    return publicManifest(manifest)
+  }
   delete(id: string): boolean {
     if (!this.row(id)) return false
     for (const child of this.sceneRequests(id)) this.delete(child.id)
@@ -174,7 +186,13 @@ export class VideoService {
     return { request, images }
   }
   private save(manifest: VideoManifest) {
-    manifest.revision++
+    // Generation keeps a manifest in memory across awaits. Preserve archive writes
+    // made during those awaits, including a monotonically increasing revision.
+    const row = this.row(manifest.id)
+    if (!row) return
+    const stored: VideoManifest = JSON.parse(row.manifest)
+    if (stored.archivedAt) manifest.archivedAt = stored.archivedAt
+    manifest.revision = Math.max(manifest.revision, stored.revision) + 1
     this.db.query('UPDATE videos SET manifest = ? WHERE id = ?').run(JSON.stringify(manifest), manifest.id)
   }
   private notify(manifest: VideoManifest) {
@@ -361,6 +379,7 @@ export class VideoService {
     const row = this.row(parts[3])
     const manifest: VideoManifest | undefined = row ? publicManifest(JSON.parse(row.manifest)) : undefined
     if (!manifest) return json({ detail: 'Not Found' }, 404)
+    if (parts.length === 5 && parts[4] === 'archive' && request.method === 'POST') return json(this.archive(manifest.id))
     if (parts.length === 4 && request.method === 'DELETE') { this.delete(manifest.id); return new Response(null, { status: 204, headers }) }
     if (request.method !== 'GET') return json({ detail: 'Method Not Allowed' }, 405)
     if (parts.length === 4) return json(manifest)

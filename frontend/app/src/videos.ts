@@ -21,9 +21,10 @@ export async function deleteVideo(id: string) {
   const response = await fetch(`/api/videos/${encodeURIComponent(id)}`, { method: 'DELETE' })
   if (!response.ok && response.status !== 404) await responseJSON(response)
 }
+export const archiveVideo = (id: string) => fetch(`/api/videos/${encodeURIComponent(id)}/archive`, { method: 'POST' }).then(responseJSON<VideoManifest>)
 
 export function videoLesson(video: VideoManifest): Lesson {
-  return { id: video.id, videoId: video.id, title: video.title, subtitle: video.provider === 'pi' ? 'Visual explanation' : 'Sample animation', subject: 'My ideas', duration: video.scenes.reduce((sum, scene) => sum + scene.duration, 0), artwork: 'vectors', thumbnail: video.thumbnail, color: 'sage', demo: video.provider === 'simulated', generationStatus: video.status }
+  return { id: video.id, videoId: video.id, archivedAt: video.archivedAt, title: video.title, subtitle: video.provider === 'pi' ? 'Visual explanation' : 'Sample animation', subject: 'My ideas', duration: video.scenes.reduce((sum, scene) => sum + scene.duration, 0), artwork: 'vectors', thumbnail: video.thumbnail, color: 'sage', demo: video.provider === 'simulated', generationStatus: video.status }
 }
 
 /** Keep browser-local curriculum context while refreshing server-owned job state. */
@@ -31,7 +32,8 @@ export function mergeVideoLessons(videos: VideoManifest[], previous: Lesson[], p
   const saved = new Map(previous.filter(lesson => lesson.videoId).map(lesson => [lesson.videoId, lesson]))
   const refreshed = videos.map(video => {
     const lesson = videoLesson(video), local = saved.get(video.id)
-    return local ? { ...lesson, videoMode: local.videoMode, subject: local.subject, subtitle: local.subtitle, color: local.color, artwork: local.artwork, source: local.source, courseLesson: local.courseLesson } : lesson
+    // A list request started before archiving may finish after the archive request.
+    return local ? { ...lesson, archivedAt: lesson.archivedAt ?? local.archivedAt, videoMode: local.videoMode, subject: local.subject, subtitle: local.subtitle, color: local.color, artwork: local.artwork, source: local.source, courseLesson: local.courseLesson } : lesson
   })
   // A list request may finish after a newly submitted job has entered the library.
   const ids = new Set(videos.map(video => video.id))
