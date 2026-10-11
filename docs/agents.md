@@ -153,6 +153,13 @@ agreement between neighboring scripts and plans. Visual plans remain valid in
 nonspoken metadata. Unreadable or missing source details must not be invented;
 the explanation need not force every topic into a puzzle or mathematical derivation.
 
+Editorial review does not gate approval on engine support, registered host behaviors,
+or proof of implementation feasibility. Those concerns are nonblocking warnings;
+the scene author and downstream validation handle implementation. Requested effects
+must remain in the plan: uncertainty must not turn an interactive toy into a static
+specification or an apology. Missing functionality and false explanations still
+require editorial revision. Approval does not certify a working implementation.
+
 Material errors trigger a fresh authoring conversation that repairs the script
 and plan together; cosmetic warnings do not trigger a rewrite. Up to 50
 draft/review pairs are allowed. Exhaustion stops before speech submission and keeps saved progress. Reviews
