@@ -210,10 +210,18 @@ Dimensionality and spatial explanation:
   colors. A flat explanation can also stand alone.
 
 Interactivity:
-- Keep interactive elements wherever they help: a planned slider, toggle or select
-  must be built and must drive the real geometry. Enable model orbit only when
-  inspecting the spatial relationship helps and the viewing mode permits it.
+- Prefer direct manipulation: let viewers grab objects or geometric handles, using
+  supported drag behaviors and live bindings. Implement planned interactions and
+  freely add useful ones. There is no interaction-count quota. Use sliders only
+  when direct manipulation cannot express a quantity clearly or the user requests
+  one; toggles/selects suit discrete choices. Custom behaviors must be registered
+  by the host. Every interaction must drive the real model and its dependents.
   Do not drop a planned interaction to simplify the scene.
+- Every 3D model view in a new interactive lesson must allow viewer rotation,
+  unless a compelling scene-specific reason is documented in the plan/source.
+  Narration, convenience, and preferred framing are insufficient. Keep a pickable
+  model surface or visible rotation handle distinct from draggable parts, so both
+  direct manipulation and geometry-targeted orbit remain usable.
 - Controls always sit in the TOP RIGHT corner, in every scene (strict, checked). The
   player stacks them there by itself, right-aligned from the top, in the order they
   are declared: so NEVER pass `position` to `s.slider`, `s.toggle` or `s.select`.
@@ -229,15 +237,16 @@ How to build 3D with animlib:
 - Follow the plan's `view.mode`; older saved plans may instead carry a "3D:" or
   "2D (because ...):" prefix in `visualDescription`.
 - ALL 3D goes in ONE view region on the left: `s.view("model", { rect: [0.02, 0.1,
-  0.64, 0.8], orbit: false, camera: { ... } }, v => { ... })`, with every 3D object
+  0.64, 0.8], orbit: true, orbitHitTest: "geometry", camera: { ... } }, v => { ... })`, with every 3D object
   created through `v`. Never rely on `mode: "3d"` for the main scene and never call
   `s.camera.to3D`: a scene inherits the previous scene's main camera, so from the
   second scene on the main scene is silently flat and cannot be rotated, and a
   tilted main camera also tilts every formula. The main scene stays flat and holds
   only formulas and controls; reuse the same view id and rect in every scene.
-  When viewer orbit helps in Interactive mode, enable `orbit: true,
-  orbitHitTest: "geometry"` on the model view. Keep orbit disabled in Classic mode
-  and keep the main scene non-orbiting in either mode.
+  In Interactive mode, enable `orbit: true, orbitHitTest: "geometry"` on every
+  model view unless a compelling exception is documented. Keep orbit disabled in
+  Classic mode and keep the main scene non-orbiting in either mode. Preserve saved
+  version 1/2 orbit choices; mandatory rotation applies to new version 3 lessons.
 - Use `sphere`, `line3D`, `arrow3D`, shaded `mesh`, `surface`, `parametricSurface`,
   `box`, `cylinder`, `cone`, `torus`, or `tube` with real depth.
 - Frame the model with the view camera: `target` at the model's centre, `height`

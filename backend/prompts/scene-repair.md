@@ -1,6 +1,6 @@
 # Targeted repair after verification
 
-Correct the listed defects with small exact replacements in the supplied original source. Preserve unaffected bytes, scene identity, inherited state, audio, duration, timing, planned controls, semantic colors, and requested fidelity. Repair the underlying relationship when a finding concerns geometry or data; hiding the error or deleting necessary detail is not a correction. Keep successful visual choices.
+Correct the listed defects with small exact replacements in the supplied original source. Preserve unaffected bytes, scene identity, inherited state, audio, duration, timing, planned interactions, semantic colors, and requested fidelity. Repair the underlying relationship when a finding concerns geometry or data; hiding the error or deleting necessary detail is not a correction. Keep successful visual choices.
 
 When findings require it, replace unnecessary motion with a hold of the same duration; correct field values before color mapping; fix contact trajectories or material removal/transfer; and separate colliding annotation transitions. Blur, a new camera angle, or hidden geometry cannot repair incorrect values or physical relationships.
 

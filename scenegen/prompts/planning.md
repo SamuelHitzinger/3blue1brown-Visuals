@@ -1,8 +1,8 @@
 # Planning additions (scenegen)
 
 <!-- The scenegen planning rules. When the app runs through scenegen/backend/dev.ts
-     they are appended to the lesson-planning prompt. The plan decides which controls
-     and views each scene has; the scene agent must then build exactly those.
+     they are appended to the lesson-planning prompt. The plan specifies required
+     interactions and views; the scene agent may add useful interactions.
      Re-read per lesson. -->
 
 When writing the plan:
@@ -26,8 +26,9 @@ When writing the plan:
   cone, ring), with spheres for atoms and particles. Prefer one such shape to many
   small spheres. A two-variable quantity may use a flat plot or a 3D surface;
   choose according to the relationship being explained.
-  A slider may reshape a surface (an amplitude, a curvature, a parameter of the
-  function); plan that as an ordinary slider.
+  Prefer manipulating the model or a geometric handle when supported. Use a
+  slider to reshape a surface only when direct manipulation cannot clearly express
+  the parameter with the supplied API, or when the user explicitly requests one.
 - **Surface patterns and materials, only with a reason.** A 3D body can carry a
   simple pattern (checker, stripes, noise, marble, wood) or look metallic, matte or
   glowing. Plan one when it shows something a plain body cannot: stripes or a
@@ -90,11 +91,16 @@ When writing the plan:
   it is mentioned (a temporary thin yellow frame for text and flat things, a brief
   pulse for 3D objects, lines and arrows). One focus per sentence; do not list the
   frame as an entity.
-- **Interactions (interactive mode only; in classic mode plan none):** plan a control
-  in a scene where playing with a value deepens that scene's idea (a slider for a
-  quantity, a toggle to compare with and without, a select between a few named
-  cases), and leave a scene without one when it would distract. Each control must
-  drive the real geometry and have something to discover. The objects a control
-  drives must still be on screen in endsWith and are never listed under cleanup, so
-  the control still works on the final held picture. Rotating a 3D view needs no
-  control. Plan nothing for the top right corner of the picture: controls live there.
+- **Interactions (interactive mode only; in classic mode plan none):** prefer direct
+  manipulation of objects or geometric handles over sliders. Use supported drag
+  and live bindings, or available host-registered custom behaviors. Use sliders
+  only when direct manipulation cannot clearly express the quantity or the user
+  requests one; toggles/selects suit discrete choices. No interaction-count quota
+  applies, and the scene author may add useful interactions. Every interaction
+  must drive real geometry and reveal something. Keep the manipulated objects
+  available on the final held picture so viewers can explore while paused.
+  Every 3D model view must allow viewer rotation unless a compelling scene-specific
+  reason is documented in visualDescription; narration, convenience, and preferred
+  framing are not reasons. Rotation needs no separate planned control. Leave a
+  pickable model surface or visible rotation handle distinct from draggable parts.
+  Reserve the top right for any widget controls that are actually used.

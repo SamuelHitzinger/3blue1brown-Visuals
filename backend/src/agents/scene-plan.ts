@@ -3,11 +3,9 @@ import type { ScenePlan } from './planning.js';
 
 /** Check input mechanisms, not camera animation or ordinary playback controls. */
 export function validateViewingMode(compiled: CompiledScene, mode: 'classic' | 'interactive') {
-  if (compiled.behaviors?.some(({ behavior }) => behavior.type === 'drag' || behavior.type === 'custom')) {
-    throw new Error('Lesson input must use planned sliders, toggles, or selects; do not add unplanned drag or custom input behaviors.');
-  }
-  if (mode === 'classic' && (compiled.controls.length || compiled.options.orbit || compiled.views?.some(view => view.orbit))) {
-    throw new Error('Classic scenes cannot contain lesson controls or camera orbit. Remove controls and set orbit: false on the scene and every subview. Authored camera animation is allowed.');
+  const inputBehaviors = compiled.behaviors?.some(({ behavior }) => behavior.type === 'drag' || behavior.type === 'custom');
+  if (mode === 'classic' && (inputBehaviors || compiled.controls.length || compiled.options.orbit || compiled.views?.some(view => view.orbit))) {
+    throw new Error('Classic scenes cannot contain lesson controls, input behaviors, or camera orbit. Remove interactive behaviors and controls and set orbit: false on the scene and every subview. Authored camera animation is allowed.');
   }
 }
 
@@ -40,8 +38,13 @@ export function validateScenePlan(compiled: CompiledScene, finalFrame: Frame, pl
   for (const id of plan.cleanup) {
     if (opacity(id) > 0.01 || elements.get(id)?.persistent) errors.push(`Cleanup entity "${id}" must be removed or faded out by the end, and must not be kept.`);
   }
-  const expected = plan.interactions.map(control => `${control.id}:${control.type}`).sort();
-  const actual = compiled.controls.map(control => `${control.id}:${control.kind}`).sort();
-  if (JSON.stringify(actual) !== JSON.stringify(expected)) errors.push(`Declare exactly the planned controls (${expected.join(', ') || 'none'}); received ${actual.join(', ') || 'none'}.`);
+  // Planned interactions are requirements, not a ceiling on the author's choices.
+  // Behavioral IDs refer to target elements/groups, rather than widget IDs.
+  const actual = new Set([
+    ...compiled.controls.map(control => `${control.id}:${control.kind}`),
+    ...(compiled.behaviors ?? []).map(({ target, behavior }) => `${target}:${behavior.type}`),
+  ]);
+  const missing = plan.interactions.map(interaction => `${interaction.id}:${interaction.type}`).filter(key => !actual.has(key));
+  if (missing.length) errors.push(`Implement the planned interactions (${missing.join(', ')}). Direct behaviors must target their planned element/group IDs; additional useful interactions are allowed.`);
   if (errors.length) throw new Error(`${plan.id} plan validation:\n${errors.join('\n')}\nKeep the inherited state, example values, narration, and measured duration while repairing.`);
 }

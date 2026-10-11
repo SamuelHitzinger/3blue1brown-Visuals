@@ -103,15 +103,21 @@ existing visualDescription prefixes when resuming saved plans.
 Rotation targets visual models only. Do not put text, formulas, or the entire
 annotated canvas inside a rotating group. Prefer a geometry-only s.group and
 rotateTo for authored object turns, with upright labels attached separately.
-For viewer orbit, put the model in its own s.view and keep explanatory text in
-the main non-orbiting scene. Use orbit:true, orbitHitTest:"geometry" on that view
+Every 3D model view in a new interactive lesson must allow viewer rotation unless
+a compelling scene-specific reason is documented in the plan/source. Narration,
+convenience, and preferred initial framing do not qualify. Put the model in its own
+s.view and keep explanatory text in the main non-orbiting scene.
+Use orbit:true, orbitHitTest:"geometry" on that view
 so only pickable model surfaces start orbit (spheres, circles, rectangles, meshes).
 Standalone text and empty space do not start rotation. Labels belonging to model parts may use billboard
 text with stable anchors, but text is never a rotation handle. Set whole-scene
 orbit:false explicitly (mode:'3d' otherwise defaults to whole-scene orbit).
-Use targeted views for all viewer rotation in new version 2 lessons; preserve
-the approved orbit contract of saved unversioned/version 1 lessons. Only offer manipulation
-that supports the lesson and the requested interaction mode.
+Use targeted views for viewer rotation in version 2 and later lessons; preserve
+the approved orbit contract of saved unversioned/version 1 lessons. Mandatory
+3D rotation applies to new version 3 interactive lessons. Prefer direct object
+manipulation over sliders, and freely add useful interactions. Keep a pickable
+model surface or visible rotation handle separate from draggable parts, so users
+can both manipulate the model and rotate it.
 
 When transitioning 3D to 2D, retain the selected meaningful parts, show how they
 open, unfold or project into the flat representation, and keep their color/identity.

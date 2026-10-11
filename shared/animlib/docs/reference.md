@@ -3395,8 +3395,9 @@ infinite scenes, branching navigation, playback-rate controls,
 in-player video recording, or mobile-browser support guarantees. Native Node
 frame/video export is provided by `tools/render-frames.mjs` and
 `tools/render-video.mjs`; use `withOfflineScene` to sample retained time bindings.
-The initial control surface
-is sliders, toggles, selects, and requested orbit rotation.
+Available interaction includes object/group dragging, spring return, live
+attachments/connections, host-registered custom behaviors, sliders, toggles, selects,
+and camera orbit/pan. Application prompts define which interactions to prefer.
 
 Useful follow-up work should be driven by the three application demos: reusable
 additional domain helpers, accessible descriptions of visual objects, measured

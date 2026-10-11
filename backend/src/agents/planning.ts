@@ -5,7 +5,8 @@ import type { Storyline } from '../narration/types.js';
 
 export interface PlannedEntity { id: string; meaning: string; color: string }
 export interface PlannedInteraction {
-  id: string; type: 'slider' | 'toggle' | 'select'; label: string; drives: string; discover: string;
+  /** Widget ID for controls; target element/group ID for direct behaviors. */
+  id: string; type: 'drag' | 'custom' | 'slider' | 'toggle' | 'select'; label: string; drives: string; discover: string;
 }
 export interface ScenePlan {
   id: string; purpose: string; whyNow: string; keyPoints: string[];
@@ -46,12 +47,12 @@ export const PLANNING_CONTRACT = `Return one JSON object, without code fences, c
       "carry": ["entity IDs to keep into the next scene"],
       "cleanup": ["entity IDs that should no longer be visible at the end"],
       "sourceRefs": [{"document": "exact supplied filename or request", "location": "page, heading, or supplied text", "supports": "what fact/example is grounded here"}],
-      "interactions": [{"id": "control-id", "type": "slider", "label": "Short label", "drives": "the real quantity/geometry and sensible range", "discover": "why changing it helps understanding"}]
+      "interactions": [{"id": "movable-object", "type": "drag", "label": "Move the object", "drives": "the target object's position, allowed axis/plane, and dependent geometry/readouts", "discover": "what moving it reveals"}]
     }]
   }
 }
 Plan and write the script together in this one response. The host performs a separate editorial review before speech synthesis.
-For interactive requests, explicitly requested interactivity, toys, explorations, and controls must appear in the relevant scenes' interactions arrays as supported sliders, toggles, or selects driving the actual model. Plan 0–2 per scene, preserving the requested effect and discovery; scenes without requested or useful interaction may use []. A complete narrated default does not make requested controls optional. The scene author must implement exactly this list and cannot add controls missing from the plan.
+For interactive requests, prefer direct manipulation: let viewers grab and move objects or handles to explore the actual model. Interaction types are drag, custom, slider, toggle, and select. For drag/custom, id names the target element or group; drives describes the gesture, constraints, and dependent geometry/readouts. Custom behaviors require an implementation registered by the host; do not invent unavailable behavior names. Use sliders only when direct manipulation cannot express the quantity clearly or the user explicitly requests one. There is no pedagogical interaction-count quota. Explicitly requested interactions must appear in the relevant scenes' interactions arrays; scenes without useful interaction may use []. The scene author must implement these requirements and may add useful interactions without a planning round trip. A complete narrated default does not make requested interactions optional. In interactive lessons, every 3D model view must allow viewer rotation unless a compelling scene-specific reason makes it misleading or prevents the required task. Explain any exception in visualDescription; convenience, narration, and default framing are not reasons to disable rotation. Orbit is independent of the interactions list.
 Each plan scene must match a parsed Markdown beat ID exactly and in the same order: ## Beat 1 produces beat-1; ## Ponder 2 produces ponder-2. Every beat needs speech and a Content needed description consistent with its plan. Respect requested scene count and duration; no fixed 4-8 scene quota.
 Use a small shared entity registry for named core objects and any named temporary objects listed for cleanup. IDs must be unique and colors must be animlib palette tokens (BLUE, GREEN, RED, YELLOW, TEAL, GOLD, PURPLE, GREY, WHITE, etc.; no CSS colors). Carry/cleanup IDs must exist in entities and may not overlap. A carried object keeps its meaning and color. Do not assign the same color to unrelated concepts when that would confuse the explanation.
 Define scene starts from the actual previous scene's end; do not invent a separate starting picture. Keep useful core objects, not every temporary helper. Do not prematurely expose an answer through a planned label or formula.
@@ -116,13 +117,13 @@ export function parsePlannedLesson(output: string, request: VideoRequest, option
       if (!sources.has(document)) throw new Error(`${sceneId} references unavailable source ${document}. Use an exact supplied filename or request.`);
       return { document, location: text(ref.location, 'sourceRef.location'), supports: text(ref.supports, 'sourceRef.supports') };
     });
-    const interactions = list(s.interactions, `${sceneId}.interactions`, 2).map((value, j): PlannedInteraction => {
+    const interactions = list(s.interactions, `${sceneId}.interactions`).map((value, j): PlannedInteraction => {
       const c = object(value, `${sceneId}.interactions[${j}]`);
-      if (c.type !== 'slider' && c.type !== 'toggle' && c.type !== 'select') throw new Error(`${sceneId} control type must be slider, toggle, or select.`);
+      if (c.type !== 'drag' && c.type !== 'custom' && c.type !== 'slider' && c.type !== 'toggle' && c.type !== 'select') throw new Error(`${sceneId} interaction type must be drag, custom, slider, toggle, or select.`);
       return { id: id(c.id, 'interaction.id'), type: c.type, label: text(c.label, 'interaction.label'), drives: text(c.drives, 'interaction.drives'), discover: text(c.discover, 'interaction.discover') };
     });
     if (!options.legacy && (request.videoMode ?? 'classic') === 'classic' && interactions.length) throw new Error(`${sceneId}: Classic lessons must have interactions: [].`);
-    if (new Set(interactions.map(c => c.id)).size !== interactions.length) throw new Error(`${sceneId} control IDs must be unique.`);
+    if (new Set(interactions.map(c => c.id)).size !== interactions.length) throw new Error(`${sceneId} interaction IDs must be unique.`);
     let view: ScenePlan['view'];
     if (s.view !== undefined) {
       const v = object(s.view, `${sceneId}.view`);

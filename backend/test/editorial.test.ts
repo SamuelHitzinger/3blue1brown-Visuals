@@ -43,7 +43,8 @@ test.each(['classic', 'interactive', undefined] as const)('viewing preference %s
     expect((index === 0 ? payload : payload.request).videoMode).toBe(videoMode);
     expect(task.systemPrompt).toContain('Use `classic` when `videoMode` is absent');
     expect(task.systemPrompt).toContain('empty `interactions` arrays');
-    expect(task.systemPrompt).toContain('0–2');
+    expect(task.systemPrompt).toContain('Prefer direct manipulation over sliders');
+    expect(task.systemPrompt).not.toContain('0–2');
   });
 });
 
@@ -116,11 +117,12 @@ test.each([false, true])('requested controls survive editorial repair and become
   expect(tasks).toHaveLength(4);
   for (const task of tasks) {
     expect(task.systemPrompt).toContain('An explicit request for interactivity');
-    expect(task.systemPrompt).toContain('cannot add controls missing from the plan');
+    expect(task.systemPrompt).toContain('may add useful interactions');
+    expect(task.systemPrompt).toContain('every 3D model view must allow viewer rotation');
     expect(task.systemPrompt).not.toContain('no control is required');
     expect(task.systemPrompt).not.toContain('Controls are optional when they do not help');
   }
-  expect(tasks[1].systemPrompt).toContain('Missing requested controls');
+  expect(tasks[1].systemPrompt).toContain('Missing requested interactions');
   expect(tasks[1].systemPrompt).toContain('material errors requiring revision');
   expect(tasks[2].prompt).toContain(missingControls.issues[0].detail);
   expect(tasks[2].prompt).toContain(interactiveRequest.topic);

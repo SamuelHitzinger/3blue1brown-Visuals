@@ -318,9 +318,14 @@ test("the video pipeline preserves narration audio IDs and reuses completed scri
       const output = JSON.stringify({ schemaVersion: 1, verdict: "pass", summary: "Sound counting example", issues: [], checks: ["One plus another makes two."] });
       await task.validate!(output); return output;
     }
-    if (task.prompt.startsWith("Write")) { const output = planned(script); await task.validate!(output); return output; }
+    if (task.prompt.startsWith("Write")) {
+      const draft = JSON.parse(planned(script));
+      draft.plan.scenes[0].interactions = [{ id: 'dot', type: 'drag', label: 'Move the dot', drives: 'Position', discover: 'Move and compare' }];
+      const output = JSON.stringify(draft); await task.validate!(output); return output;
+    }
     const packet = JSON.parse(task.prompt.slice(task.prompt.indexOf("\n") + 1));
-    const source = `export default scene({audio:${JSON.stringify(packet.audioAssetId)},end:${JSON.stringify(packet.endMode)}},s=>{s.circle('dot');s.wait(${packet.scene.durationSec});});`;
+    // Required in the first scene, freely added by the author in the second.
+    const source = `export default scene({audio:${JSON.stringify(packet.audioAssetId)},end:${JSON.stringify(packet.endMode)}},s=>{const dot=s.circle('dot');s.behavior(dot,{type:'drag',plane:'xy'});s.wait(${packet.scene.durationSec});});`;
     await task.validate!(source); return source;
   } };
   const generate = createPiGenerator(runner, narration, settings.dataDir);
@@ -334,7 +339,9 @@ test("the video pipeline preserves narration audio IDs and reuses completed scri
     expect(video.provider).toBe("pi");
     expect(video.scenes).toHaveLength(2);
     for (const scene of video.scenes) {
-      expect((await compileSource(scene.source)).options.audio).toBe(scene.audio.id);
+      const compiled = await compileSource(scene.source);
+      expect(compiled.options.audio).toBe(scene.audio.id);
+      expect(compiled.behaviors).toEqual([{ target: 'dot', behavior: { type: 'drag', plane: 'xy' } }]);
       const audio = await service.handle(new Request(`http://localhost${scene.audio.url}`, { headers: { "x-user-id": "demo" } }));
       expect(audio.status).toBe(200);
       expect((await audio.arrayBuffer()).byteLength).toBe(48044);
@@ -459,10 +466,11 @@ test('compiler repair messages retain locations and hints in the actual Pi conve
   expect(JSON.stringify(contexts[1])).toContain('Preserve the task');
 });
 
-test.each(['markdown', 'planned', 'version-1'])('existing saved %s videos resume their historical contract without a new planning call', async format => {
+test.each(['markdown', 'planned', 'version-1', 'version-2'])('existing saved %s videos resume their historical contract without a new planning call', async format => {
   const settings = await config();
   const videoId = crypto.randomUUID(), owner = 'shared-user';
-  const request = { title: 'Old lesson', topic: 'Dots', documents: [], ...(format === 'version-1' ? { videoMode: 'interactive' as const } : {}) };
+  const version = format === 'version-1' ? 1 : format === 'version-2' ? 2 : undefined;
+  const request = { title: 'Old lesson', topic: 'Dots', documents: [], ...(version ? { videoMode: 'interactive' as const } : {}) };
   const directory = join(settings.dataDir, videoId);
   const { mkdir } = await import('node:fs/promises');
   await mkdir(directory, { recursive: true });
@@ -470,7 +478,7 @@ test.each(['markdown', 'planned', 'version-1'])('existing saved %s videos resume
   if (format === 'markdown') await writeFile(join(directory, 'script.md'), markdown);
   else {
     const cached = JSON.parse(planned(markdown));
-    if (format === 'version-1') cached.instructionVersion = 1;
+    if (version) cached.instructionVersion = version;
     cached.plan.scenes[0].interactions = [{ id: 'explore', type: 'toggle', label: 'Explore', drives: 'Example', discover: 'Count' }];
     await writeFile(join(directory, 'lesson.json'), JSON.stringify(cached));
   }
@@ -487,11 +495,11 @@ test.each(['markdown', 'planned', 'version-1'])('existing saved %s videos resume
     calls++;
     expect(task.prompt).toStartWith('Generate');
     const input = JSON.parse(task.prompt.slice(task.prompt.indexOf('\n') + 1));
-    expect(input.legacyPlan).toBe(format !== 'version-1');
-    expect(input.instructionVersion).toBe(format === 'version-1' ? 1 : undefined);
-    expect(input.videoMode).toBe(format === 'version-1' ? 'interactive' : 'classic');
+    expect(input.legacyPlan).toBe(version === undefined);
+    expect(input.instructionVersion).toBe(version);
+    expect(input.videoMode).toBe(version ? 'interactive' : 'classic');
     if (format === 'markdown') expect(input.planning.outline[0].context).toContain('One dot');
-    return `export default scene({audio:${JSON.stringify(input.audioAssetId)},end:"hold",orbit:true},s=>{s.circle('dot');${format !== 'markdown' ? "s.toggle('explore',{default:false});" : ''}s.wait(${input.scene.durationSec});});`;
+    return `export default scene({audio:${JSON.stringify(input.audioAssetId)},end:"hold",orbit:${version === 2 ? false : true}},s=>{s.circle('dot');${format !== 'markdown' ? "s.toggle('explore',{default:false});" : ''}s.wait(${input.scene.durationSec});});`;
   } }, narration, settings.dataDir);
   const result = await generator(request, 0, { videoId, owner, signal: new AbortController().signal });
   expect(result?.scene.narration).toBe('One dot.'); expect(calls).toBe(1);

@@ -37,8 +37,9 @@ test('planning rejects contradictory ownership and unsupported palette/control d
   expect(() => parsePlannedLesson(JSON.stringify(duplicate), request)).toThrow('unique');
   const color = lesson(); color.plan.entities[0].color = '#123456';
   expect(() => parsePlannedLesson(JSON.stringify(color), request)).toThrow('palette token');
-  const controls = lesson(); controls.plan.scenes[0].interactions = Array.from({ length: 3 }, (_, i) => ({ id: `slider-${i}`, type: 'slider', label: 'Count', drives: 'Count', discover: 'Count' }));
-  expect(() => parsePlannedLesson(JSON.stringify(controls), request)).toThrow('at most 2');
+  const unsupported = lesson();
+  Object.assign(unsupported.plan.scenes[0], { interactions: [{ id: 'dot', type: 'telepathy', label: 'Move', drives: 'Position', discover: 'Compare' }] });
+  expect(() => parsePlannedLesson(JSON.stringify(unsupported), { ...request, videoMode: 'interactive' })).toThrow('interaction type');
 });
 
 test('Classic defaults reject planned controls while Interactive and saved legacy plans remain valid', () => {
@@ -71,12 +72,11 @@ test('Classic checks controls and every orbit region without forbidding authored
   expect(() => validateViewingMode(passive, 'classic')).not.toThrow();
 });
 
-test('unplanned drag and custom input behavior cannot bypass lesson controls', async () => {
+test('Interactive permits drag and custom behaviors while Classic keeps its saved linear contract', async () => {
   for (const behavior of ["{type:'drag'}", "{type:'custom',name:'select'}"]) {
     const compiled = await compileSource(`export default scene({},s=>{const dot=s.circle('dot');s.behavior(dot,${behavior});s.wait(1);});`);
-    for (const mode of ['classic', 'interactive'] as const) {
-      expect(() => validateViewingMode(compiled, mode)).toThrow('unplanned drag or custom');
-    }
+    expect(() => validateViewingMode(compiled, 'classic')).toThrow('Classic scenes');
+    expect(() => validateViewingMode(compiled, 'interactive')).not.toThrow();
   }
 });
 
@@ -89,10 +89,10 @@ test('compiled scene plan checks enforce real persistence and cleanup', async ()
   expect(() => validateScenePlan(invalid, evaluateScene(invalid, invalid.duration), plan)).toThrow('Cleanup entity "helper"');
 });
 
-test('cleanup recognizes hidden ancestor groups and controls must match planned types', async () => {
+test('cleanup recognizes hidden ancestors; extra controls are allowed and planned types remain required', async () => {
   const plan = lesson().plan.scenes[0];
   const compiled = await compileSource(`export default scene({},s=>{const dot=s.circle('dot');const helper=s.circle('helper');const g=s.group('helpers',[helper]);s.play(g.fadeOut(),{duration:1});s.keep(dot);s.toggle('explore',{default:false});});`);
-  expect(() => validateScenePlan(compiled, evaluateScene(compiled, compiled.duration), plan)).toThrow('planned controls');
+  expect(() => validateScenePlan(compiled, evaluateScene(compiled, compiled.duration), plan)).not.toThrow();
   plan.interactions = [{ id: 'explore', type: 'toggle', label: 'Explore', drives: 'Hint', discover: 'Count' }];
   expect(() => validateScenePlan(compiled, evaluateScene(compiled, compiled.duration), plan)).not.toThrow();
   plan.interactions[0].type = 'slider';
@@ -174,5 +174,44 @@ test('original scenegen description markers drive view validation without the re
     const flat = await compileSource(`export default scene({},s=>{const dot=s.circle('dot');s.keep(dot);s.wait(1);});`);
     if (mode === '3d') expect(() => validateScenePlan(flat, evaluateScene(flat, flat.duration), plan)).toThrow('requires a camera');
     else expect(() => validateScenePlan(flat, evaluateScene(flat, flat.duration), plan)).not.toThrow();
+  }
+});
+
+
+test('planning accepts direct manipulation, custom behaviors, and more than two interactions', () => {
+  const draft = lesson();
+  draft.plan.scenes[0].interactions = ['drag', 'custom', 'slider', 'toggle', 'select'].map((type, i) => ({
+    id: `target-${i}`, type: type as 'drag' | 'custom' | 'slider' | 'toggle' | 'select',
+    label: 'Explore', drives: 'The model and its dependent geometry', discover: 'Compare the result',
+  }));
+  expect(parsePlannedLesson(JSON.stringify(draft), { ...request, videoMode: 'interactive' })).toEqual(draft);
+  expect(() => parsePlannedLesson(JSON.stringify(draft), request)).toThrow('Classic lessons');
+  draft.plan.scenes[0].interactions[1].id = 'target-0';
+  expect(() => parsePlannedLesson(JSON.stringify(draft), { ...request, videoMode: 'interactive' })).toThrow('interaction IDs must be unique');
+});
+
+test('planned direct behaviors require the right target and type without excluding additional interactions', async () => {
+  for (const type of ['drag', 'custom'] as const) {
+    const plan = { ...lesson().plan.scenes[0], carry: [], cleanup: [], interactions: [
+      { id: 'handle', type, label: 'Move', drives: 'Position and attached label', discover: 'Explore geometry' },
+      { id: 'visible', type: 'toggle' as const, label: 'Visible', drives: 'Visibility', discover: 'Compare' },
+    ] };
+    const compile = (target: string, behavior: string) => compileSource(`export default scene({},s=>{
+      const handle=s.circle('handle'),other=s.circle('other',{position:[2,0]});
+      const label=s.text('label',{text:'Object'});s.attach(label,handle,{offset:[0,1,0]});
+      s.behavior(${target},${behavior});
+      s.toggle('visible',{default:true});s.select('extra',{options:['a','b'],default:'a'});
+      s.wait(1);
+    });`);
+    const spec = type === 'drag' ? "{type:'drag',axis:'x'}" : "{type:'custom',name:'host-registered-behavior'}";
+    const valid = await compile('handle', spec);
+    expect(() => validateViewingMode(valid, 'interactive')).not.toThrow();
+    expect(() => validateScenePlan(valid, evaluateScene(valid, 1), plan)).not.toThrow();
+    // A behavior on a different object or an automatic spring cannot stand in for the requested gesture.
+    for (const invalid of [await compile('other', spec), await compile('handle', "{type:'spring'}")]) {
+      expect(() => validateScenePlan(invalid, evaluateScene(invalid, 1), plan)).toThrow(`handle:${type}`);
+    }
+    plan.interactions = [];
+    expect(() => validateScenePlan(valid, evaluateScene(valid, 1), plan)).not.toThrow();
   }
 });

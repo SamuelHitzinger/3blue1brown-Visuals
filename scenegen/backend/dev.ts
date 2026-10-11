@@ -56,7 +56,7 @@ export class CheckedRunner implements AgentRunner {
       const compiled = await compileSource(sceneSource(output), { previous });
       const problems = renderProblems(compiled);
       if (planned3D && !(compiled as { views?: unknown[] }).views?.length) {
-        problems.push('This scene is planned in 3D but has no 3D view. Put the model in s.view("model", { rect, orbit: false, camera }, v => { ... }). Enable geometry-targeted orbit only when it helps and the viewing mode permits it.');
+        problems.push('This scene is planned in 3D but has no 3D view. Put the model in a dedicated s.view. New Interactive 3D model views must use orbit: true, orbitHitTest: "geometry" unless a compelling scene-specific exception is documented; Classic views use orbit: false. Preserve saved orbit contracts.');
       }
       const dead = await deadControls(sceneSource(output), compiled, previous);
       if (dead.length) problems.push(`Controls without effect at the end: ${dead.join(", ")}.\n${DEAD_CONTROL_HINT}`);
