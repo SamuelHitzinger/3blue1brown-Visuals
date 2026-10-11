@@ -1,0 +1,25 @@
+{
+  "reviewer": "independent delegated visual reviewer",
+  "date": "2026-10-11",
+  "source": "872ef266-3328-4b6b-a520-c911f0952d69/scene-0.subtitles.js",
+  "sourceSha256": "70968c5345f11e026cddf1ca98494fdb0ed665ea158a8036ec90bb484458cc6f",
+  "encode": "demo.mp4",
+  "encodeSha256": "edc0e44e0ba10f5e0ccf8ff8602c35ec11fc5dd1dcd968abd19dd82f1e0d5ba6",
+  "verdicts": {"reasoning": "ready", "visualReadability": "ready", "referenceStyle": "ready", "technicalDelivery": "ready"},
+  "baseline": {
+    "nativeImagesViewed": ["approved-components.png", "approved-derivative.png", "rejected-chart-template.png"],
+    "orderedDecodedMovieSamples": {"startSec": 15, "endSec": 19.5, "fps": 2, "count": 10}
+  },
+  "coverage": {
+    "nativeFinalSourceFrameTimesSec": [0, 3.361166666666667, 5.04175, 8.2, 10.0835, 11.764083333333334, 13.444666666666668, 20.167],
+    "proofFinalOrderedDecodedSamples": {"sourceStartSec": 7.5, "sourceEndSec": 15.25, "fps": 4, "count": 32},
+    "fullMovieOrderedDecodedSamples": {"startSec": 0, "endSec": 19.5, "fps": 2, "count": 40},
+    "fullMovieNativeDecodedFrameTimesSec": [18, 20.166667],
+    "allFramesDecode": {"frames": 485, "errors": 0},
+    "embeddedSubtitleTextExtracted": true
+  },
+  "media": {"codec": "h264", "pixelFormat": "yuv420p", "width": 1280, "height": 720, "fps": 24, "durationSec": 20.208333333333332, "audioStreams": 0, "subtitleCodec": "mov_text"},
+  "requiredRevisions": [],
+  "optionalNotes": ["Length annotation 1.40 to 1.40 uses model units, not a calibrated experimental bond measurement. Retain the schematic qualification."],
+  "limitations": ["Ordered decoded samples and source inspection, not continuous playback.", "Numerical invariants are covered by separate geometry review, not inferred from frames.", "No claim of physical realism, energetic plausibility or predictive folding.", "External-player caption rendering is not verified."]
+}

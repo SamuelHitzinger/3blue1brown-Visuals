@@ -1,0 +1,82 @@
+{
+  "verdict": "pass",
+  "sourcePath": "C:\\Users\\samue\\Stuff\\3yellow3white\\data\\animlib-expansion\\pipeline-demo\\872ef266-3328-4b6b-a520-c911f0952d69\\scene-0.subtitles.js",
+  "sha256": "70968c5345f11e026cddf1ca98494fdb0ed665ea158a8036ec90bb484458cc6f",
+  "checkedAt": "2026-10-11T06:36:44.790Z",
+  "method": "Independent signed dihedral measurement and geometric invariants; closure values extracted from instrumented in-memory copy; untouched source compiled/sampled with native QuickJS with no limits override.",
+  "productionDefaults": {
+    "executionLimitMs": 200,
+    "memoryMiB": 32,
+    "sourceMaximumBytes": 256000,
+    "sourceBytes": 11546,
+    "overrides": false
+  },
+  "scene": {
+    "duration": 20.167,
+    "options": {
+      "mode": "3d",
+      "end": "hold",
+      "orbit": false,
+      "background": "BLACK",
+      "audio": "subtitle-clock-beat-1"
+    },
+    "reactiveBindings": 19
+  },
+  "geometry": {
+    "residues": 6,
+    "atoms": 30,
+    "bonds": 29,
+    "changedPhiIndex": 2,
+    "phiStartDegrees": -120,
+    "phiEndDegrees": -60,
+    "fixedAtoms": 12,
+    "movingAtoms": 18,
+    "trackedAtom": "r3/CA",
+    "axis": [
+      "r2/N",
+      "r2/CA"
+    ],
+    "motionStart": 8.644444444444444,
+    "motionEnd": 12.2,
+    "resultHoldSeconds": 7.967000000000002,
+    "bondLengths": [
+      1.414213562373,
+      1.4,
+      1.166190378969,
+      1.3,
+      1.33
+    ],
+    "worldScale": 0.48619601715504734,
+    "arcRadiusWorld": 0.9166940813495553,
+    "maxDownstreamDisplacement": 4.835227275514647,
+    "minDownstreamEndDisplacement": 0.9899494936611664
+  },
+  "samples": {
+    "rawPoses": 101,
+    "nativeFrames": 110,
+    "reverseSeeks": 117,
+    "arcPoints": 6890
+  },
+  "maximumErrors": {
+    "bondLengthError": 2.886579864025407e-15,
+    "upstreamDrift": 0,
+    "axisDrift": 0,
+    "phiError": 1.3322676295501878e-15,
+    "psiError": 8.881784197001252e-16,
+    "omegaError": 4.440892098500626e-16,
+    "worldBondLengthError": 2.886579864025407e-15,
+    "compiledAtomError": 9.994474079390603e-15,
+    "surfaceConnectorError": 0,
+    "ghostConnectorError": 0,
+    "arcRadiusError": 1.5543122344752192e-15,
+    "arcPlaneError": 1.4710455076283324e-15,
+    "arcEndpointError": 2.0350724194510405e-15,
+    "ghostDrift": 2.7666615208537222e-15
+  },
+  "limitations": [
+    "Surface connectors deliberately shorten visible bond segments by the endpoint sphere radii; atom-center bond distances are invariant.",
+    "Fixed orthographic projection can change apparent 2D bond lengths while preserving true 3D lengths.",
+    "This is an original schematic template and prescribed torsion; no energetic or folding simulation claim is supported.",
+    "Rendered readability and style are delegated to the independent visual reviewer; this audit checks actual compiled geometry, not raster legibility."
+  ]
+}

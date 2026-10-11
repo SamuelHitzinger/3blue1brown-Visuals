@@ -1,0 +1,25 @@
+WEBVTT
+
+1
+00:00:00.400 --> 00:00:04.067
+One middle nitrogen–alpha-carbon bond defines the axis.
+
+2
+00:00:04.067 --> 00:00:06.867
+The faint copy marks their starting pose.
+
+3
+00:00:06.867 --> 00:00:12.200
+Changing its phi angle rotates downstream atoms around that axis; upstream atoms
+
+4
+00:00:12.200 --> 00:00:13.700
+stay fixed.
+
+5
+00:00:13.700 --> 00:00:15.833
+Rotation preserves bond lengths.
+
+6
+00:00:15.833 --> 00:00:19.367
+This torsion is prescribed, not a folding simulation.

@@ -145,3 +145,18 @@ test('retains domain helpers, prepared asset authoring and host ownership limits
     expect(output).toContain(text);
   }
 });
+
+test('delivers both complete recipe collections and their execution boundaries to scene authors', () => {
+  const output = buildAuthoringReference(reference);
+  expect(output).toContain(between('### General animation recipes', '### Molecular and biological animation recipes'));
+  expect(output).toContain(between('### Molecular and biological animation recipes', '## 7. Live source submissions'));
+  for (const text of ['```js scene', '```ts host', 'importPDBStructure',
+    'structureBackboneProps', 'createMolecularEnvelopeParts', 's.peptidePose',
+    's.nucleicTranscriptionCycle', 's.nucleicSplice', 's.nucleicThread',
+    's.nucleicTranslationCycle', 'withOfflineScene', 'HETATM']) {
+    expect(output).toContain(text);
+  }
+  const scenes = (text: string) => [...text.matchAll(/^```js scene\n([\s\S]*?)^```\s*$/gm)].map(match => match[1]);
+  expect(scenes(output)).toEqual(scenes(reference));
+  expect(scenes(output).length).toBeGreaterThan(0);
+});

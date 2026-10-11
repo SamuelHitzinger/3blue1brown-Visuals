@@ -1,0 +1,9 @@
+# Preserve the recorded UTF-8 artifact hashes across Windows checkouts.
+*.md text eol=lf
+*.json text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.srt text eol=lf
+*.vtt text eol=lf
+*.mp4 binary
+*.png binary

@@ -1,0 +1,225 @@
+{
+  "passed": true,
+  "model": "gpt-6-astra",
+  "thinking": "high",
+  "provider": "openai-codex",
+  "sourceSha256": "70968c5345f11e026cddf1ca98494fdb0ed665ea158a8036ec90bb484458cc6f",
+  "guides": {
+    "reference.md": "ad56d2b070948e180c6489bde2c9a6631ebaf02feda53e1ea72367257702f4dc",
+    "capabilities.md": "8bcba53d4dc618a9d7151d23592fbe1bcc52f2a544caf7bd84b1ee88f201406e"
+  },
+  "capabilitiesDeliveredVerbatim": true,
+  "authoringReferenceDeliveredVerbatim": true,
+  "generatedSourceUnmodified": true,
+  "seededLesson": false,
+  "instructionVersion": 2,
+  "editorialAttempt": 0,
+  "visualAttempt": 0,
+  "duration": 20.167,
+  "metrics": [
+    {
+      "file": "task-0-draft.metrics.json",
+      "elapsedMs": 132727.544,
+      "providerCalls": 2,
+      "turns": [
+        {
+          "index": 1,
+          "elapsedMs": 89086.9107,
+          "providerMs": 89075.5947,
+          "stopReason": "toolUse",
+          "inputTokens": 12756,
+          "outputTokens": 2628,
+          "reasoningTokens": 741,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "textChars": 0,
+          "toolArgumentChars": 9395
+        },
+        {
+          "index": 2,
+          "elapsedMs": 43593.45049999999,
+          "providerMs": 43593.26159999998,
+          "stopReason": "stop",
+          "inputTokens": 2725,
+          "outputTokens": 2199,
+          "reasoningTokens": 217,
+          "cacheReadTokens": 12672,
+          "cacheWriteTokens": 0,
+          "textChars": 9862,
+          "toolArgumentChars": 0
+        }
+      ],
+      "validations": [
+        {
+          "kind": "tool",
+          "elapsedMs": 7.974199999996927,
+          "valid": true
+        },
+        {
+          "kind": "final",
+          "elapsedMs": 2.1462000000174157,
+          "valid": true
+        }
+      ]
+    },
+    {
+      "file": "task-1-review.metrics.json",
+      "elapsedMs": 35016.92810000002,
+      "providerCalls": 2,
+      "turns": [
+        {
+          "index": 1,
+          "elapsedMs": 26720.684299999994,
+          "providerMs": 26719.830799999996,
+          "stopReason": "toolUse",
+          "inputTokens": 15653,
+          "outputTokens": 694,
+          "reasoningTokens": 331,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "textChars": 0,
+          "toolArgumentChars": 1867
+        },
+        {
+          "index": 2,
+          "elapsedMs": 8291.098399999988,
+          "providerMs": 8290.662500000006,
+          "stopReason": "stop",
+          "inputTokens": 872,
+          "outputTokens": 265,
+          "reasoningTokens": 0,
+          "cacheReadTokens": 15488,
+          "cacheWriteTokens": 0,
+          "textChars": 1464,
+          "toolArgumentChars": 0
+        }
+      ],
+      "validations": [
+        {
+          "kind": "tool",
+          "elapsedMs": 0.16569999998318963,
+          "valid": true
+        },
+        {
+          "kind": "final",
+          "elapsedMs": 0.01780000000144355,
+          "valid": true
+        }
+      ]
+    },
+    {
+      "file": "task-2-scene.metrics.json",
+      "elapsedMs": 327439.99049999996,
+      "providerCalls": 4,
+      "turns": [
+        {
+          "index": 1,
+          "elapsedMs": 154623.8642,
+          "providerMs": 152122.22440000004,
+          "stopReason": "toolUse",
+          "inputTokens": 59576,
+          "outputTokens": 5000,
+          "reasoningTokens": 1541,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "textChars": 0,
+          "toolArgumentChars": 10032
+        },
+        {
+          "index": 2,
+          "elapsedMs": 84367.0379,
+          "providerMs": 81633.9352,
+          "stopReason": "toolUse",
+          "inputTokens": 8034,
+          "outputTokens": 3636,
+          "reasoningTokens": 287,
+          "cacheReadTokens": 59392,
+          "cacheWriteTokens": 0,
+          "textChars": 0,
+          "toolArgumentChars": 9553
+        },
+        {
+          "index": 3,
+          "elapsedMs": 79798.15890000004,
+          "providerMs": 78225.83360000001,
+          "stopReason": "toolUse",
+          "inputTokens": 8101,
+          "outputTokens": 3459,
+          "reasoningTokens": 165,
+          "cacheReadTokens": 67328,
+          "cacheWriteTokens": 0,
+          "textChars": 0,
+          "toolArgumentChars": 9349
+        },
+        {
+          "index": 4,
+          "elapsedMs": 8646.012800000026,
+          "providerMs": 8645.566799999971,
+          "stopReason": "stop",
+          "inputTokens": 6386,
+          "outputTokens": 138,
+          "reasoningTokens": 124,
+          "cacheReadTokens": 75264,
+          "cacheWriteTokens": 0,
+          "textChars": 29,
+          "toolArgumentChars": 0
+        }
+      ],
+      "validations": [
+        {
+          "kind": "tool",
+          "elapsedMs": 920.4625000000233,
+          "valid": true
+        },
+        {
+          "kind": "tool",
+          "elapsedMs": 653.9267000000109,
+          "valid": true
+        },
+        {
+          "kind": "tool",
+          "elapsedMs": 184.2615999999689,
+          "valid": true
+        },
+        {
+          "kind": "final",
+          "elapsedMs": 0.37919999996665865,
+          "valid": true
+        }
+      ]
+    },
+    {
+      "file": "task-3-review.metrics.json",
+      "elapsedMs": 11375.4657,
+      "providerCalls": 1,
+      "turns": [
+        {
+          "index": 1,
+          "elapsedMs": 11163.591099999961,
+          "providerMs": 11161.726900000009,
+          "stopReason": "toolUse",
+          "inputTokens": 74150,
+          "outputTokens": 357,
+          "reasoningTokens": 329,
+          "cacheReadTokens": 0,
+          "cacheWriteTokens": 0,
+          "textChars": 0,
+          "toolArgumentChars": 48
+        }
+      ],
+      "validations": [
+        {
+          "kind": "tool",
+          "elapsedMs": 0.10230000002775341,
+          "valid": true
+        },
+        {
+          "kind": "final",
+          "elapsedMs": 0.0062000000034458935,
+          "valid": true
+        }
+      ]
+    }
+  ],
+  "boundary": "Real production generation pipeline; supported subtitle reading-time mode intentionally replaces speech synthesis. No automatic claim of independent scientific or motion-style acceptance."
+}
