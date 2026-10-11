@@ -23,6 +23,8 @@ import type { MolecularBackboneProps, MolecularBackboneResult, ArticulatedChainS
 import type { PlaneOptions, CoordinatePlane } from './diagrams/coordinate-types.js';
 import type { GraphData, GraphOptions, GraphDiagram, SearchTrace } from './diagrams/graph-types.js';
 import type { CollectionItem, CollectionOptions, CollectionDiagram } from './diagrams/collection-types.js';
+import type { CompactQueueOptions, CompactQueueDiagram } from './diagrams/compact-queue-types.js';
+export type * from './diagrams/compact-queue-types.js';
 export type * from './molecular-backbone-types.js';
 export type * from './diagrams/coordinate-types.js';
 export type * from './diagrams/graph-types.js';
@@ -513,6 +515,7 @@ export interface SceneContext {
   graph(id: string, data: GraphData, options?: GraphOptions): GraphDiagram;
   dijkstra(data: GraphData, source: string): SearchTrace;
   collection(id: string, items: readonly CollectionItem[], options?: CollectionOptions): CollectionDiagram;
+  compactQueue(id: string, items: readonly CollectionItem[], options?: CompactQueueOptions): CompactQueueDiagram;
   /** Read-only preflight of local, same-view, unparented, distinct children and optional planned element IDs/budget. Reserves nothing. */
   validateGroup(children: readonly ElementHandle[], newIds?: readonly string[]): void;
   group(id: string, children: ElementHandle[], options?: { isolated?: boolean; castShadow?: boolean }): ElementHandle;

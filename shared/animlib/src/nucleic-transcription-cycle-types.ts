@@ -10,12 +10,16 @@ export interface NucleicTranscriptionCycleProps {
   templateDirection:'3to5';codingDirection:'5to3';
   axis:{origin:Vec3;direction:Vec3;normal:Vec3};
   radius:number;pitch:number;twistPerBase:number;baseReach:number;
-  window:{halfWidth:number;separation:number};
+  window:{halfWidth:number;separation:number;lockOrientation?:boolean};
   start:number;cycleDuration:number;dockFraction:number;
   /** Optional initial opening; otherwise the first active window starts open. */
   opening?:{start:number;duration:number};
-  /** Components along active axis, baseward normal, and their cross product. */
+  /** Components in exitFrame: axis tangent, baseward normal, and cross product. */
   exitDirection:Vec3;
+  /** Default active frame; axis uses the fixed declared anatomical basis. */
+  exitFrame?:'active'|'axis';
+  /** Circular exit radians per link, axis frame only; total turn <= pi/2. */
+  exitBend?:number;
   rnaLinkLength:number;
   incomingOffset?:Vec3;
   incomingAngle?:number;

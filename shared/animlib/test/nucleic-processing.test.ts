@@ -6,6 +6,45 @@ const api=createNucleicProcessingBuilders(),dist=(a:Vec3,b:Vec3)=>Math.hypot(...
 const splice=():NucleicSpliceProps=>({sites:Array.from({length:12},(_,i)=>({id:'r'+i,base:'A',position:[i*.5,0,0]})),intron:{start:4,end:7},initialNormal:[0,1,0],baseReach:.25,joinDistance:.5,departure:{translation:[0,3,1],axis:[0,0,1],angle:1.4}});
 const thread=():NucleicThreadProps=>({sites:Array.from({length:8},(_,i)=>({id:'r'+i,base:'U',offset:i*.4})),path:Array.from({length:101},(_,i)=>{const x=(i-50)*.16;return [x,Math.max(0,Math.abs(x)-.7)**2*.035,0] as Vec3;}),initialNormal:[0,0,1],baseReach:.2,aperture:{center:[0,0,0],normal:[1,0,0],radius:1,halfThickness:.5,chainRadius:.3}});
 describe('stable RNA split, remove and rejoin',()=>{
+ it('forms a fixed-arc loop before cutting, carries exons with its endpoints and holds the formed shape',()=>{
+  const p={...splice(),formation:{start:.05,end:.15,angle:Math.PI,bendDirection:[0,1,0] as Vec3}};
+  const initial=api.nucleicSplice(p,0),formed=api.nucleicSplice(p,.15),hold=api.nucleicSplice(p,.199999);
+  // The 2.5-unit bridge becomes a semicircle: radius 2.5/pi and end gap 5/pi.
+  expect(formed.joinDistance).toBeCloseTo(5/Math.PI,11);
+  expect(formed.anchors[5].backbone[1]).toBeGreaterThan(.7);
+  expect(formed.anchors.map(a=>a.id)).toEqual(initial.anchors.map(a=>a.id));
+  expect(formed.bonds).toEqual(initial.bonds);expect(hold.anchors).toEqual(formed.anchors);
+  for(const [a,b] of [[0,3],[8,11]])expect(dist(formed.anchors[a].backbone,formed.anchors[b].backbone)).toBeCloseTo(1.5,11);
+  expect(api.nucleicSplice(p,.2).bonds).not.toContainEqual(['r3','r4']);
+  expect(api.nucleicSplice(p,.7).joinDistance).toBeCloseTo(.5,11);
+ });
+ it('keeps bending poses and frames continuous at zero, formation boundaries, cut and freeze',()=>{
+  const p={...splice(),formation:{start:.05,end:.15,angle:1.8*Math.PI,bendDirection:[0,1,0] as Vec3},joinDistance:.1},snapshot=JSON.stringify(p);
+  let previous=api.nucleicSplice(p,0);
+  for(let i=1;i<=1000;i++){const r=api.nucleicSplice(p,i/1000);for(let j=0;j<r.anchors.length;j++){const a=r.anchors[j],b=previous.anchors[j];expect(dist(a.backbone,b.backbone)).toBeLessThan(.10);expect(a.normal.reduce((v,n,k)=>v+n*b.normal[k],0)).toBeGreaterThan(.99);expect(Math.hypot(...a.normal)).toBeCloseTo(1,10);expect(a.normal.reduce((v,n,k)=>v+n*a.tangent[k],0)).toBeCloseTo(0,10);}previous=r;}
+  for(const t of [.05,.15,.2,.7]){const a=api.nucleicSplice(p,t-1e-9),b=api.nucleicSplice(p,t+1e-9);for(let j=0;j<a.anchors.length;j++)expect(dist(a.anchors[j].backbone,b.anchors[j].backbone)).toBeLessThan(1e-6);}
+  const tiny=api.nucleicSplice({...p,formation:{...p.formation,angle:1e-8}},.15);
+  tiny.anchors.forEach((a,i)=>expect(dist(a.backbone,p.sites[i].position)).toBeLessThan(1e-7));
+  expect(JSON.stringify(p)).toBe(snapshot);const saved=api.nucleicSplice(p,.113);api.nucleicSplice(p,1);expect(api.nucleicSplice(p,.113)).toEqual(saved);
+ });
+ it('preflights the complete bend schedule, arc ordering and frame seeds at progress zero',()=>{
+  const p={...splice(),formation:{start:.05,end:.15,angle:Math.PI,bendDirection:[0,1,0] as Vec3}};
+  for(const formation of [{...p.formation,end:.2},{...p.formation,start:-.1},{...p.formation,angle:2*Math.PI},{...p.formation,bendDirection:[1,0,0] as Vec3}])expect(()=>api.nucleicSplice({...p,formation},0)).toThrow(/formation|bend/i);
+  const bent=structuredClone(p);bent.sites[5].position[1]=.01;expect(()=>api.nucleicSplice(bent,0)).toThrow(/collinear/i);
+  const reversed=structuredClone(p);reversed.sites[5].position=[1.6,0,0];expect(()=>api.nucleicSplice(reversed,0)).toThrow(/offset|order/i);
+  expect(()=>api.nucleicSplice({...p,initialNormal:[1,0,0]},0)).toThrow(/frame/i);
+  const unsafe=structuredClone(p);unsafe.sites.forEach(s=>s.position[1]=99999);expect(()=>api.nucleicSplice(unsafe,0)).toThrow(/schedule coordinate/i);
+  expect(()=>api.nucleicSplice({...p,joinDistance:2},0)).toThrow(/joinDistance/i);
+ });
+ it('enforces the quarter-turn chord boundary and keeps the documented arc rather than Euclidean bond contract',()=>{
+  const p={...splice(),formation:{start:.05,end:.15,angle:Math.PI,bendDirection:[0,1,0] as Vec3}};
+  const formed=api.nucleicSplice(p,.15),radius=2.5/Math.PI;
+  expect(dist(formed.anchors[5].backbone,formed.anchors[6].backbone)).toBeCloseTo(2*radius*Math.sin(.5/(2*radius)),11);
+  expect(dist(formed.anchors[5].backbone,formed.anchors[6].backbone)).toBeLessThan(.5);
+  for(let i=4;i<=7;i++)p.sites[i].position=[1.5+(i-3)*.3125,0,0];
+  expect(()=>api.nucleicSplice(p,0)).not.toThrow();
+  p.sites[7].position[0]-=.0001;expect(()=>api.nucleicSplice(p,0)).toThrow(/chord|quarter|arc/i);
+ });
  it('cuts both boundary edges, retains every identity and joins only closed exon ends',()=>{
   const p=splice(),early=api.nucleicSplice(p,.1),cut=api.nucleicSplice(p,.2),closing=api.nucleicSplice(p,.699),joined=api.nucleicSplice(p,.7);
   expect(early.bonds).toContainEqual(['r3','r4']);expect(early.bonds).toContainEqual(['r7','r8']);

@@ -9,6 +9,35 @@ const adjacentTime=(value:number,up:boolean)=>{
 };
 
 describe('absolute-time moving transcription cycle',()=>{
+ it('keeps a locked active normal and curved anatomical exit with exact links over the whole schedule',()=>{
+  const p=props();p.window.lockOrientation=true;p.exitFrame='axis';p.exitBend=.13;p.exitDirection=[-1,0,0];
+  const reference=api.nucleicTranscriptionCycle(p,p.start).activeSite.normal;
+  for(let j=0;j<=280;j++){
+   const r=api.nucleicTranscriptionCycle(p,j/40),map=new Map([...r.dna.anchors,...r.rna.anchors].map(a=>[a.id,a]));
+   expect(distance(r.activeSite.normal,reference)).toBeLessThan(1e-12);
+   for(const [a,b]of r.dna.bonds)expect(distance(map.get(a)!.backbone,map.get(b)!.backbone)).toBeCloseTo(r.dna.linkLength,12);
+   for(const [a,b]of r.rna.bonds)expect(distance(map.get(a)!.backbone,map.get(b)!.backbone)).toBeCloseTo(p.rnaLinkLength,12);
+   for(const a of map.values()){expect(Math.hypot(...a.normal)).toBeCloseTo(1,12);expect(Math.hypot(...a.tangent)).toBeCloseTo(1,12);expect(a.normal.reduce((n,v,k)=>n+v*a.tangent[k],0)).toBeCloseTo(0,12);}
+  }
+  const end=api.nucleicTranscriptionCycle(p,8),a=end.rna.anchors;
+  expect(distance(a[0].normal,a[4].normal)).toBeGreaterThan(.1);
+  expect(api.nucleicTranscriptionCycle(p,Number.MAX_VALUE)).toEqual(end);
+ });
+ it('rejects invalid exit options and excessive full-schedule circular turning',()=>{
+  for(const change of [{exitFrame:'other'},{exitBend:NaN},{exitBend:.2},{exitFrame:'axis',exitBend:.3},{window:{...props().window,lockOrientation:'yes'}}])expect(()=>api.nucleicTranscriptionCycle({...props(),...change} as NucleicTranscriptionCycleProps,0)).toThrow(/Transcription cycle/);
+ });
+ it('preserves legacy defaults and docking continuity in curved locked mode',()=>{
+  const p=props(),explicit={...p,exitFrame:'active' as const,exitBend:0,window:{...p.window,lockOrientation:false}};
+  for(const t of [0,1.42,3.234,7])expect(api.nucleicTranscriptionCycle(explicit,t)).toEqual(api.nucleicTranscriptionCycle(p,t));
+  p.window.lockOrientation=true;p.exitFrame='axis';p.exitBend=-.12;p.exitDirection=[-1,0,0];
+  for(let i=0;i<8;i++){
+   const t=p.start+(i+p.dockFraction)*p.cycleDuration,r=api.nucleicTranscriptionCycle(p,t);
+   expect(distance(r.rna.anchors[i].backbone,r.activeSite.position)).toBeLessThan(1e-12);
+   expect(distance(r.rna.anchors[i].normal,r.activeSite.normal.map(v=>-v))).toBeLessThan(1e-12);
+   const left=api.nucleicTranscriptionCycle(p,t-1e-7),right=api.nucleicTranscriptionCycle(p,t+1e-7);
+   for(let j=0;j<8;j++)for(const key of ['backbone','tip','normal','tangent'] as const)expect(distance(left.rna.anchors[j][key],right.rna.anchors[j][key])).toBeLessThan(1e-5);
+  }
+ });
  it('incorporates at each exact absolute docking event, never at the preceding representable time',()=>{
   for(const schedule of [{start:.9,cycleDuration:.65},{start:1,cycleDuration:.7},{start:80000,cycleDuration:.01}]){
    const p={...props(),...schedule};

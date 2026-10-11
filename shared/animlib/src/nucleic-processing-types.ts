@@ -5,6 +5,9 @@ export interface NucleicSpliceProps {
   sites:ProcessingSite[];intron:{start:number;end:number};initialNormal:Vec3;baseReach:number;joinDistance:number;
   departure:{translation:Vec3;axis:Vec3;angle:number};
   phases?:{cut:number;closeEnd:number;departEnd:number};
+  /** Bend the initially straight boundary-to-boundary bridge at fixed analytic arc offsets.
+   * Exons translate with endpoints. Euclidean chord lengths change while forming. */
+  formation?:{start:number;end:number;angle:number;bendDirection:Vec3};
 }
 export interface NucleicSpliceResult {
   anchors:NucleicAnchor[];bonds:[string,string][];retainedIds:string[];removedIds:string[];

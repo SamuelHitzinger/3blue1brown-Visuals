@@ -15,9 +15,27 @@ fragment. Before `cut`, the original adjacent graph is intact. At the cut, both
 boundary edges disappear. The two exon fragments translate symmetrically so
 their cut anchors reach `joinDistance`; only at `closeEnd` is the replacement
 exon edge added. The removed interval rotates around its own centroid and
-translates independently. Each fragment preserves every internal distance.
-An intron may start as an authored curve, but this operation does not compute
-biochemical loop/lariat formation or a flexible pre-cut conformation.
+translates independently. After the cut, each fragment preserves every internal distance.
+Without `formation`, fragments remain rigid throughout, and the intron may start
+as an authored curve.
+
+Optional `formation:{start,end,angle,bendDirection}` bends an initially straight
+bridge (left cut anchor, intron sites, right cut anchor) before cutting.
+The bridge's material arc offsets remain fixed while its total bend angle grows
+smoothly from zero to `angle`. Exons translate symmetrically; intron positions and
+frames follow the analytic circular arc. At `end`, the conformation freezes for
+the subsequent rigid cut, closure, and departure. This is schematic kinematics,
+not a biochemical lariat or molecular dynamics model. Euclidean intron bond
+lengths change during formation; only material arc lengths are constant.
+
+Formation requires `0 <= start < end < cut`, `0 < angle <= 1.9π`, a nondegenerate
+component of `bendDirection` perpendicular to the original bridge, and an
+initial normal not parallel to that bridge. Bridge sites must be collinear and
+strictly ordered. Each material interval may turn at most π/2, preventing sparse
+chords from bypassing most of the arc. The final exon gap must accommodate
+`joinDistance`. Stable sinc formulas preserve the straight limit; analytic frame
+rotation has no half-turn singularity. Conservative whole-schedule coordinate
+bounds are checked even at progress zero. The bridge length is at most10000.
 
 Results include `anchors`, `bonds`, `retainedIds`, `removedIds`, `cutEnds`,
 `phase` and the measured current exon `joinDistance`. Before cutting, `cutEnds`
@@ -66,6 +84,7 @@ rejected. Entire inputs/schedules are preflighted on every call, including at
 progress zero. There is no collision solver outside the declared aperture.
 
 See [proof generator](../demo/expansion/rna-processing-proof.mjs),
+[formation and cellular revision proof](../demo/expansion/rna-processing-revision2-proof.mjs),
 [types](../src/nucleic-processing-types.ts) and
 [regressions](../test/nucleic-processing.test.ts). The proof reuses original CC0
 rounded nucleotide/machinery assets and a separately reproducible original

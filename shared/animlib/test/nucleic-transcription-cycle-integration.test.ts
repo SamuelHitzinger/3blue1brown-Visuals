@@ -13,9 +13,9 @@ const builder=(s:SceneContext)=>{
     transcript:Array.from({length:8},(_,i)=>({id:'r'+i,base:'CAUG'[i%4] as 'C',templateId:'t'+(i+6)})),
     templateDirection:'3to5',codingDirection:'5to3',
     axis:{origin:[1,-2,3],direction:[1,.2,.1],normal:[0,1,.2]},
-    radius:.75,pitch:.8,twistPerBase:.58,baseReach:.675,window:{halfWidth:4,separation:1.1},
+    radius:.75,pitch:.8,twistPerBase:.58,baseReach:.675,window:{halfWidth:4,separation:1.1,lockOrientation:true},
     start:1,cycleDuration:.7,dockFraction:.6,opening:{start:0,duration:.8},
-    exitDirection:[-.6,.2,1],rnaLinkLength:.65,incomingAngle:2.1,
+    exitDirection:[-1,0,0],exitFrame:'axis',exitBend:.13,rnaLinkLength:.65,incomingAngle:2.1,
   };
   const vertices=(time:number)=>{
     const pose=s.nucleicTranscriptionCycle(props,time);

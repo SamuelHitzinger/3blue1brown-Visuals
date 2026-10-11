@@ -19,6 +19,60 @@ export interface MolecularEnvelopeOptions {
 
 /** Host-only schematic density envelope. Never installed in the scene VM. */
 export function createMolecularEnvelope(options: MolecularEnvelopeOptions): Geometry {
+  return buildEnvelope(options, 20000, 20000);
+}
+
+export interface MolecularEnvelopePartsOptions extends Omit<MolecularEnvelopeOptions, 'maxTriangles'> {
+  /** Total face ceiling across parts, 1–160,000; default 80,000. */
+  maxTotalTriangles?: number;
+  /** Face ceiling per part, 64–20,000; default 12,000. */
+  trianglesPerPart?: number;
+}
+
+/** Host-only preparation: shared extraction and normals, then deterministic parts. */
+export function createMolecularEnvelopeParts(options: MolecularEnvelopePartsOptions): Geometry[] {
+  const maxTotalTriangles = options?.maxTotalTriangles ?? 80000;
+  const trianglesPerPart = options?.trianglesPerPart ?? 12000;
+  if (!Number.isInteger(maxTotalTriangles) || maxTotalTriangles < 1 || maxTotalTriangles > 160000) {
+    throw new Error('Envelope total triangle budget must be 1–160000');
+  }
+  if (!Number.isInteger(trianglesPerPart) || trianglesPerPart < 64 || trianglesPerPart > 20000) {
+    throw new Error('Envelope triangles per part must be 64–20000');
+  }
+  const geometry = buildEnvelope({ ...options, maxTriangles: maxTotalTriangles }, 160000, 100000);
+  const { vertices, normals, triangles } = geometry;
+  if (triangles!.length <= trianglesPerPart && vertices!.length <= 20000) return [geometry];
+  const parts: Geometry[] = [];
+  let map = new Map<number, number>(), outputVertices = 0;
+  let part: Geometry = { kind: 'mesh', vertices: [], normals: [], triangles: [], shading: 'smooth' };
+  const finish = () => {
+    if (!part.triangles!.length) return;
+    if (parts.length >= 128) throw new Error('Envelope part budget exceeded; increase trianglesPerPart');
+    parts.push(part);
+    map = new Map();
+    part = { kind: 'mesh', vertices: [], normals: [], triangles: [], shading: 'smooth' };
+  };
+  for (const face of triangles!) {
+    const added = face.reduce((n, i) => n + Number(!map.has(i)), 0);
+    if (part.triangles!.length >= trianglesPerPart || part.vertices!.length + added > 20000) finish();
+    const indices = face.map(i => {
+      let local = map.get(i);
+      if (local === undefined) {
+        if (++outputVertices > 100000) throw new Error('Envelope output vertex budget exceeded; increase trianglesPerPart');
+        local = part.vertices!.length;
+        map.set(i, local);
+        part.vertices!.push([...vertices![i]] as Vec3);
+        part.normals!.push([...normals![i]] as Vec3);
+      }
+      return local;
+    }) as [number, number, number];
+    part.triangles!.push(indices);
+  }
+  finish();
+  return parts;
+}
+
+function buildEnvelope(options: MolecularEnvelopeOptions, triangleCeiling: number, vertexCeiling: number): Geometry {
   const {positions,sigma,isoLevel}=options??{},resolution=options?.resolution??16,maxTriangles=options?.maxTriangles??20000;
   const origin=options?.origin??[0,0,0];
   const smoothingIterations=options?.smoothingIterations??6;
@@ -26,7 +80,7 @@ export function createMolecularEnvelope(options: MolecularEnvelopeOptions): Geom
   if(!Number.isFinite(sigma)||sigma<=0||sigma>1e5)throw new Error('Envelope sigma must be positive and at most 100000');
   if(!Number.isFinite(isoLevel)||isoLevel<=0||isoLevel>=positions.length/3)throw new Error('Envelope isoLevel must be positive and below the number of sites');
   if(!Number.isInteger(resolution)||resolution<4||resolution>64)throw new Error('Envelope resolution must be an integer from 4 to 64');
-  if(!Number.isInteger(maxTriangles)||maxTriangles<1||maxTriangles>20000)throw new Error('Envelope triangle budget must be 1–20000');
+  if(!Number.isInteger(maxTriangles)||maxTriangles<1||maxTriangles>triangleCeiling)throw new Error(`Envelope triangle budget must be 1–${triangleCeiling}`);
   if(!Number.isInteger(smoothingIterations)||smoothingIterations<0||smoothingIterations>20)throw new Error('Envelope smoothing iterations must be 0–20');
   if(!Array.isArray(origin)||origin.length!==3)throw new Error('Envelope origin must be a finite Vec3');
   for(let i=0;i<3;i++)if(!Number.isFinite(origin[i])||Math.abs(origin[i])>1e6)throw new Error('Envelope origin must be a finite Vec3 within ±1000000');
@@ -73,7 +127,7 @@ export function createMolecularEnvelope(options: MolecularEnvelopeOptions): Geom
     const normal:Vec3=[gx[a]+(gx[b]-gx[a])*t,gy[a]+(gy[b]-gy[a])*t,gz[a]+(gz[b]-gz[a])*t];
     const length=Math.hypot(...normal);
     if(length<1e-14)throw new Error('Envelope normal is undefined; change resolution or isoLevel');
-    const id=vertices.length;if(id>=20000)throw new Error('Envelope vertex budget exceeded; reduce resolution');
+    const id=vertices.length;if(id>=vertexCeiling)throw new Error('Envelope vertex budget exceeded; reduce resolution');
     vertices.push(v);normals.push(normal.map(x=>x/length) as Vec3);cache.set(key,id);return id;
   }
   const cross=(a:Vec3,b:Vec3):Vec3=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];

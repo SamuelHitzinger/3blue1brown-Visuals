@@ -27,6 +27,13 @@ export function createNucleicTranscriptionCycleBuilders(){
     number(p.start,0,86400,'start');number(p.cycleDuration,.01,86400,'cycle duration');number(p.dockFraction,.05,.9,'dock fraction');check(p.start+p.cycleDuration*p.transcript.length<=86400,'complete schedule exceeds86400');
     if(p.opening!==undefined){check(p.opening&&typeof p.opening==='object','opening required');number(p.opening.start,0,p.start,'opening start');number(p.opening.duration,.01,86400,'opening duration');check(p.opening.start+p.opening.duration<=p.start,'opening must finish before first arrival');}
     number(p.rnaLinkLength,.01,100,'RNA link length');const exit=unit(vec(p.exitDirection));check(Math.hypot(exit[0],exit[2])>1e-6,'exit cannot be parallel to base normal');
+    const exitFrame=p.exitFrame??'active',bend=p.exitBend??0;
+    check(exitFrame==='active'||exitFrame==='axis','invalid exit frame');number(bend,-.3,.3,'exit bend');
+    check(bend===0||Math.abs(bend)>=1e-6,'nonzero exit bend must be >= 1e-6');
+    check(bend===0||exitFrame==='axis','curved exit requires axis frame');
+    check(Math.abs(bend)*(p.transcript.length-1)<=Math.PI/2,'full-schedule exit turn exceeds pi/2');
+    check(exitFrame!=='axis'||Math.abs(exit[0])>=.1,'axis exit requires axial component >= .1');
+    check(p.window.lockOrientation===undefined||typeof p.window.lockOrientation==='boolean','lock orientation must be boolean');
     const offset=vec(p.incomingOffset??[0,1.8,1.2]),angle=p.incomingAngle??2.1;number(angle,-4*Math.PI,4*Math.PI,'incoming angle');
     check(p.axis&&typeof p.axis==='object','axis required');const origin=vec(p.axis.origin),axis=unit(vec(p.axis.direction)),seed=unit(vec(p.axis.normal)),normal=unit(sub(seed,mul(axis,dot(seed,axis)))),binormal=cross(axis,normal);
     const r=p.radius,sep=p.window.separation,twist=p.twistPerBase,L=Math.hypot(p.pitch,2*r*Math.sin(twist/2));
@@ -39,18 +46,38 @@ export function createNucleicTranscriptionCycleBuilders(){
     const progress=time<p.start?0:Math.min(count-1,cycle+(cycle<count-1?smooth((phase-p.dockFraction)/(1-p.dockFraction)):0));
     const center=first+progress,opening=p.opening?smooth((time-p.opening.start)/p.opening.duration):1;
     const weights=Array.from({length:n},(_,i)=>{const d=Math.abs(i-center)/p.window.halfWidth;return d>=1?0:opening*Math.cos(d*Math.PI/2)**2;});
-    const transverse:Vec3[]=[],xs=[0];let theta=0;
-    for(let i=0;i<n;i++){if(i)theta+=twist*(1-(weights[i-1]+weights[i])/2);transverse.push(add(mul(normal,(r+sep*weights[i])*Math.cos(theta)),mul(binormal,(r+sep*weights[i])*Math.sin(theta))));if(i){const d=sub(transverse[i],transverse[i-1]);xs.push(xs[i-1]+Math.sqrt(L*L-dot(d,d)));}}
+    const transverse:Vec3[]=[],xs=[0],angles:number[]=[];let theta=0;
+    for(let i=0;i<n;i++){if(i)theta+=twist*(1-(weights[i-1]+weights[i])/2);angles.push(theta);transverse.push(add(mul(normal,(r+sep*weights[i])*Math.cos(theta)),mul(binormal,(r+sep*weights[i])*Math.sin(theta))));if(i){const d=sub(transverse[i],transverse[i-1]);xs.push(xs[i-1]+Math.sqrt(L*L-dot(d,d)));}}
+    const cLo=Math.floor(center),cHi=Math.min(n-1,cLo+1),cBlend=center-cLo,delta=angles[cHi]-angles[cLo];
+    const activeTheta=angles[cLo]+Math.atan2(cBlend*Math.sin(delta),1-cBlend+cBlend*Math.cos(delta));
+    if(p.window.lockOrientation)for(let i=0;i<n;i++)transverse[i]=add(mul(normal,(r+sep*weights[i])*Math.cos(angles[i]-activeTheta)),mul(binormal,(r+sep*weights[i])*Math.sin(angles[i]-activeTheta)));
     const mean=xs.reduce((a,b)=>a+b,0)/n,dna:NucleicAnchor[]=[],dnaBonds:[string,string][]=[];
     for(const side of [-1,1])for(let i=0;i<n;i++){const site=side<0?p.template[i]:p.coding[i],backbone=add(origin,add(mul(axis,xs[i]-mean),mul(transverse[i],side))),baseward=mul(unit(transverse[i]),-side);dna.push({id:site.id,base:site.base,strand:side<0?'template':'coding',shape:shape(site.base),backbone,tip:add(backbone,mul(baseward,p.baseReach)),tangent:[...axis],normal:baseward});if(i)dnaBonds.push([(side<0?p.template:p.coding)[i-1].id,site.id]);}
     const lo=Math.floor(center),hi=Math.min(n-1,lo+1),blend=center-lo,a=dna[lo],b=dna[hi],templatePosition=add(mul(a.backbone,1-blend),mul(b.backbone,blend)),activeNormal=unit(add(mul(a.normal,1-blend),mul(b.normal,blend))),activeBinormal=cross(axis,activeNormal),position=add(templatePosition,mul(activeNormal,2*p.baseReach));
     const world=(v:Vec3)=>add(add(mul(axis,v[0]),mul(activeNormal,v[1])),mul(activeBinormal,v[2])),exitWorld=world(exit),baseNormal=mul(activeNormal,-1),tangent=unit(sub(exitWorld,mul(baseNormal,dot(exitWorld,baseNormal))));
+    const fixedWorld=(v:Vec3)=>add(add(mul(axis,v[0]),mul(normal,v[1])),mul(binormal,v[2]));
+    const stableExit=fixedWorld(exit),curveSide=unit(sub(normal,mul(stableExit,dot(normal,stableExit)))),curveAxis=cross(stableExit,curveSide);
+    const rotateAbout=(v:Vec3,k:Vec3,a:number)=>add(add(mul(v,Math.cos(a)),mul(cross(k,v),Math.sin(a))),mul(k,dot(k,v)*(1-Math.cos(a))));
     const anchors:NucleicAnchor[]=[],bonds:[string,string][]=[],visibleIds:string[]=[];let incorporated=0,incomingId:string|undefined;
     // Compare declared absolute events directly; inverse arithmetic can round
     // across an arrival/docking boundary. Completion uses the same decisions.
-    for(let i=0;i<count;i++){const arrivalTime=p.start+i*p.cycleDuration,dockingTime=p.start+(i+p.dockFraction)*p.cycleDuration,local=(time-p.start)/p.cycleDuration-i,visible=time>=arrivalTime,docked=time>=dockingTime,u=smooth(local/p.dockFraction),target=add(position,mul(exitWorld,p.rnaLinkLength*(progress-i))),backbone=add(target,mul(world(offset),docked?0:1-u)),rotation=docked?0:angle*(1-u),c=Math.cos(rotation),s=Math.sin(rotation),rotate=(v:Vec3)=>add(add(mul(v,c),mul(cross(exitWorld,v),s)),mul(exitWorld,dot(exitWorld,v)*(1-c))),bn=rotate(baseNormal),bt=rotate(tangent),site=p.transcript[i];anchors.push({id:site.id,base:site.base,strand:'rna',shape:shape(site.base),backbone,tip:add(backbone,mul(bn,p.baseReach)),normal:bn,tangent:bt});if(visible)visibleIds.push(site.id);if(docked){incorporated++;if(i)bonds.push([p.transcript[i-1].id,site.id]);}else if(visible)incomingId=site.id;}
+    for(let i=0;i<count;i++){
+      const arrivalTime=p.start+i*p.cycleDuration,dockingTime=p.start+(i+p.dockFraction)*p.cycleDuration,local=(time-p.start)/p.cycleDuration-i,visible=time>=arrivalTime,docked=time>=dockingTime,u=smooth(local/p.dockFraction),q=progress-i;
+      let target=add(position,mul(exitWorld,p.rnaLinkLength*q)),bn0=baseNormal,bt0=tangent,spin=exitWorld;
+      if(exitFrame==='axis'){
+        const theta=bend*q,half=bend/2,rad=bend===0?0:p.rnaLinkLength/(2*Math.sin(half));
+        target=add(position,bend===0?mul(stableExit,p.rnaLinkLength*q):add(mul(stableExit,rad*Math.sin(theta)),mul(curveSide,rad*2*Math.sin(theta/2)**2)));
+        const unwind=(p.window.lockOrientation?0:activeTheta)*(1-smooth(Math.max(0,q)/2)),localNormal=rotateAbout(mul(normal,-1),axis,unwind);
+        bn0=rotateAbout(localNormal,curveAxis,theta);
+        bt0=rotateAbout(unit(sub(stableExit,mul(localNormal,dot(stableExit,localNormal)))),curveAxis,theta);
+        spin=rotateAbout(stableExit,curveAxis,theta);
+      }
+      const backbone=add(target,mul(world(offset),docked?0:1-u)),rotation=docked?0:angle*(1-u),c=Math.cos(rotation),ss=Math.sin(rotation),rotate=(v:Vec3)=>add(add(mul(v,c),mul(cross(spin,v),ss)),mul(spin,dot(spin,v)*(1-c))),bn=rotate(bn0),bt=rotate(bt0),site=p.transcript[i];
+      anchors.push({id:site.id,base:site.base,strand:'rna',shape:shape(site.base),backbone,tip:add(backbone,mul(bn,p.baseReach)),normal:bn,tangent:bt});
+      if(visible)visibleIds.push(site.id);if(docked){incorporated++;if(i)bonds.push([p.transcript[i-1].id,site.id]);}else if(visible)incomingId=site.id;
+    }
     for(const anchor of [...dna,...anchors])check([...anchor.backbone,...anchor.tip].every(v=>Number.isFinite(v)&&Math.abs(v)<1e5),'generated geometry outside bounds');
-    return {dna:{anchors:dna,pairs:p.pairs.map(([templateId,codingId],i)=>({templateId,codingId,opening:weights[i]})),bonds:dnaBonds,linkLength:L},rna:{anchors,bonds,visibleIds,incorporated,...(incomingId?{incomingId}:{}),linkLength:p.rnaLinkLength},activeSite:{position,templatePosition,tangent:[...axis],normal:activeNormal,binormal:activeBinormal,register:center,templateIds:[a.id,b.id]},progress,complete:incorporated===count,provenance:{kind:'schematic',description:'Original straight-axis moving transcription window with exact strand-link constraints and prescribed straight RNA extrusion. Pair radius and twist close behind the window; common centering can move exterior sites. Not chemical dynamics, a curved exit solver, or a deposited enzyme.'}};
+    return {dna:{anchors:dna,pairs:p.pairs.map(([templateId,codingId],i)=>({templateId,codingId,opening:weights[i]})),bonds:dnaBonds,linkLength:L},rna:{anchors,bonds,visibleIds,incorporated,...(incomingId?{incomingId}:{}),linkLength:p.rnaLinkLength},activeSite:{position,templatePosition,tangent:[...axis],normal:activeNormal,binormal:activeBinormal,register:center,templateIds:[a.id,b.id]},progress,complete:incorporated===count,provenance:{kind:'schematic',description:exitFrame==='axis'||p.window.lockOrientation?'Original straight-axis moving transcription window; optional coherent duplex phase lock and bounded fixed-anatomical circular RNA exit with exact chord links. Illustrative prescribed transport, not chemical dynamics or world-anchored exterior DNA.':'Original straight-axis moving transcription window with exact strand-link constraints and prescribed straight RNA extrusion. Pair radius and twist close behind the window; common centering can move exterior sites. Not chemical dynamics, a curved exit solver, or a deposited enzyme.'}};
   }
   return {nucleicTranscriptionCycle};
 }

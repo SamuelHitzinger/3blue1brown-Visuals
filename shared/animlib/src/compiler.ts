@@ -19,6 +19,7 @@ import { createMolecularBackboneBuilders } from './molecular-backbone.js';
 import { createCoordinateBuilders } from './diagrams/coordinates.js';
 import { createGraphAlgorithms, createGraphBuilders } from './diagrams/graphs.js';
 import { createCollectionBuilders } from './diagrams/collections.js';
+import { createCompactQueueBuilders } from './diagrams/compact-queue.js';
 import { validateLighting } from "./lighting.js";
 import { validatePath } from "./path.js";
 import { validatePathStroke } from './path-stroke.js';
@@ -362,7 +363,7 @@ export async function createSceneProgram(source: string, input: CompileInput = {
       const palette = Object.freeze({ ...__input.palette, colors: __tokens(Object.fromEntries(Object.keys(__input.palette.colors).map(name => [name, name]))) });
       const __buildScene = ${buildScene.toString()};
       const __meshBuilders = Object.freeze({ ...(${createSurfaceBuilders.toString()})(), ...(${createSolidBuilders.toString()})(), ...(${createMoleculeBuilders.toString()})() });
-      const __domainFactories = Object.freeze({createNucleicTranslationBuilders:${createNucleicTranslationBuilders.toString()},createNucleicTranscriptionCycleBuilders:${createNucleicTranscriptionCycleBuilders.toString()},createNucleicProcessingBuilders:${createNucleicProcessingBuilders.toString()},createPeptideBuilders:${createPeptideBuilders.toString()},createSampledState:${createSampledState.toString()},createAssetBuilders:${createAssetBuilders.toString()},createCoordinateBuilders:${createCoordinateBuilders.toString()},createGraphAlgorithms:${createGraphAlgorithms.toString()},createGraphBuilders:${createGraphBuilders.toString()},createCollectionBuilders:${createCollectionBuilders.toString()},createMolecularBackboneBuilders:${createMolecularBackboneBuilders.toString()},createNucleicBuilders:${createNucleicBuilders.toString()}});
+      const __domainFactories = Object.freeze({createCompactQueueBuilders:${createCompactQueueBuilders.toString()},createNucleicTranslationBuilders:${createNucleicTranslationBuilders.toString()},createNucleicTranscriptionCycleBuilders:${createNucleicTranscriptionCycleBuilders.toString()},createNucleicProcessingBuilders:${createNucleicProcessingBuilders.toString()},createPeptideBuilders:${createPeptideBuilders.toString()},createSampledState:${createSampledState.toString()},createAssetBuilders:${createAssetBuilders.toString()},createCoordinateBuilders:${createCoordinateBuilders.toString()},createGraphAlgorithms:${createGraphAlgorithms.toString()},createGraphBuilders:${createGraphBuilders.toString()},createCollectionBuilders:${createCollectionBuilders.toString()},createMolecularBackboneBuilders:${createMolecularBackboneBuilders.toString()},createNucleicBuilders:${createNucleicBuilders.toString()}});
       const scene = (options, builder) => __buildScene(options, builder, __input, update => { globalThis.__animlibUpdate = update; }, __meshBuilders, __domainFactories);
       let __seed = ${JSON.stringify(input.seed ?? 1)} >>> 0;
       Math.random = () => { __seed = (__seed * 1664525 + 1013904223) >>> 0; return __seed / 4294967296; };

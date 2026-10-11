@@ -1,5 +1,13 @@
 # Absolute-time translation choreography
 
+Discrete cycle events use `start + (index + fraction) * cycleDuration` directly.
+Arrival, incorporation, transfer, translocation and exit flags do not divide
+elapsed time and compare a rounded phase. Interpolation clamps against those same
+absolute interval endpoints. The terminal release remains
+`start + senseCodons * cycleDuration + 0.25 * cycleDuration`; stop recognition,
+release and completion retain their documented absolute times. This distinction
+matters at exact events and adjacent representable floating-point times.
+
 `s.nucleicTranslationCycle(props, time)` evaluates a bounded original schematic without changing props or relying on previous samples. The host factory is `createNucleicTranslationBuilders()` from `nucleic-translation.ts`; its source is self-contained for the compiler's QuickJS installation. `NucleicTranslationProps` and `NucleicTranslationResult` are public types.
 
 Supply a dense RNA list of 6–192 uniquely identified bases, in complete codons starting AUG and ending in exactly one terminal stop. Supply one carrier per sense codon, each with its own unique carrier and residue IDs, correct three-letter amino-acid name, and complementary anticodon written **3′→5′** against the RNA's **5′→3′** direction. The helper validates all 64 standard-code assignments using [NCBI table 1](https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi#SG1), not source-film labels. UAA/UAG/UGA never create a carrier or residue. Alternative genetic codes, alternative start codons and wobble are unsupported.
@@ -21,4 +29,8 @@ node shared/animlib/demo/expansion/translation-proof.mjs
 node shared/animlib/tools/render-frames.mjs data/animlib-expansion/translation-proof/frames.json
 ```
 
-The generated manifest is compatible with `tools/render-video.mjs` at 1280×720 or 960×720, 30 fps. The proof uses three residues deliberately: AUG GGU GCU UAA → Met–Gly–Ala, stop. Its original lobed assets are reusable and hashed. The proof demonstrates operations, but current Nucleus style acceptance remains **revise**: the subunit silhouette is too simple, the tunnel is not the reference's elongated exit path, the foreground-carrier hold is shorter, and the source's many-residue accumulation is not reproduced.
+Optional `productCoil: {radius, twist}` places residues on an original helix. Adjacent chord length stays exactly `peptideSpacing`, including fractional transfer progress. Radius is 0.001–5, twist is 0.01–π radians, and `2*radius*sin(twist/2)` must be strictly smaller than the peptide spacing. Axial rise is the positive square root of the residual squared length. Omitting this option preserves the straight chain. This is prescribed geometry, not a folding prediction.
+
+The generated manifest is compatible with `tools/render-video.mjs` at 1280×720 or 960×720, 30 fps. The 43-second proof uses AUG GGU GCU UUU GAA AAA CCG UAA → Met–Gly–Ala–Phe–Glu–Lys–Pro, stop. Seven carrier/residue identities persist, with an explicit 2.5-second scene-clock pause during the foreground Gly reading hold. The absolute-time helper itself is unchanged by this presentation pause. Original asymmetric subunit, bent adaptor and posterior half-conduit assets are reusable and hashed. The conduit includes separate inner/outer walls and half-annular rims; its anterior half is intentionally removed for visibility.
+
+The product occupies the conduit at its P-site holds; transfer is a geometric schematic and does not constrain an atomistic chain to a physical ribosome tunnel. Current Nucleus fidelity remains subject to visual review: the reference has more detailed surface relief, softer luminous material, stronger desaturation of context during close-up, and a larger accumulated protein. No near-identical fidelity claim follows from helper tests or codec validation. See the expansion translation review for the exact inspected candidate and verdicts.

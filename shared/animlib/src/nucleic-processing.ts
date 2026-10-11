@@ -27,15 +27,51 @@ export function createNucleicProcessingBuilders(){
   const {start,end}=range,seed=vec(props.initialNormal);unit(seed);positive(props.baseReach,'baseReach',100);positive(props.joinDistance,'joinDistance',100);
   const ph=props.phases??{cut:.2,closeEnd:.7,departEnd:.95};if(!ph||![ph.cut,ph.closeEnd,ph.departEnd].every(Number.isFinite)||ph.cut<=0||ph.closeEnd<=ph.cut||ph.departEnd<ph.closeEnd||ph.departEnd>1)throw Error('Invalid ordered splice phases');
   const departure=props.departure;if(!departure)throw Error('Missing departure');const translation=vec(departure.translation),axis=unit(vec(departure.axis));if(!Number.isFinite(departure.angle)||Math.abs(departure.angle)>4*Math.PI)throw Error('Invalid departure rotation');
+  // Optional analytic pre-cut bending. The bridge's material arc coordinates stay
+  // fixed; its straight chords are deliberately not a chemical bond invariant.
+  let formedFrames:{tangents:Vec3[];normals:Vec3[]}|undefined;
+  if(props.formation){
+   const f=props.formation;
+   if(![f.start,f.end,f.angle].every(Number.isFinite)||f.start<0||f.end<=f.start||f.end>=ph.cut||f.angle<=0||f.angle>1.9*Math.PI)throw Error('Invalid formation phases or bend angle (0,1.9pi]');
+   const oldLeft=sites[start-1].position,oldRight=sites[end+1].position,d=sub(oldRight,oldLeft),length=Math.hypot(...d);positive(length,'formation arc length');
+   const tangent=unit(d),bendInput=vec(f.bendDirection),perpendicular=sub(bendInput,mul(tangent,dot(bendInput,tangent)));
+   if(Math.hypot(...perpendicular)<1e-6)throw Error('Formation bendDirection must have a nondegenerate perpendicular component');
+   const bend=unit(perpendicular),bendAxis=unit(cross(tangent,bend)),initial=project(unit(seed),tangent),center=mul(add(oldLeft,oldRight),.5);
+   const sinc=(v:number)=>Math.abs(v)<1e-4?1-v*v/6+v*v*v*v/120:Math.sin(v)/v;
+   const finalGap=length*sinc(f.angle/2);if(props.joinDistance>finalGap)throw Error('joinDistance must not exceed formed exon gap');
+   const offsets:number[]=[];
+   for(let i=start-1;i<=end+1;i++){
+    const v=sub(sites[i].position,oldLeft),s=dot(v,tangent);
+    if(Math.hypot(...sub(v,mul(tangent,s)))>1e-7)throw Error('Formation bridge must be collinear');
+    if(i>start-1&&s-offsets[offsets.length-1]<1e-5)throw Error('Formation arc offsets must be strictly ordered');offsets.push(s);
+   }
+   // A quarter-turn maximum between material samples prevents a long chord from
+   // cutting across most of the loop, including at its fully bent endpoint.
+   for(let i=1;i<offsets.length;i++)if((offsets[i]-offsets[i-1])*f.angle/length>Math.PI/2)throw Error('Formation arc samples exceed quarter-turn chord limit');
+   // Every intermediate arc lies within length of the fixed bridge midpoint.
+   // Reserve rigid exon travel, subsequent closure, rotation and departure too.
+   for(const s of sites)for(let k=0;k<3;k++)if(Math.max(Math.abs(s.position[k]),Math.abs(center[k]))+2*length+Math.abs(translation[k])+props.baseReach>100000)throw Error('Splice formation schedule coordinate bound exceeded');
+   const theta=f.angle*smooth(p,f.start,f.end),gap=length*sinc(theta/2),shift=mul(tangent,(length-gap)/2);
+   for(let i=0;i<start;i++)sites[i].position=add(sites[i].position,shift);
+   for(let i=end+1;i<n;i++)sites[i].position=sub(sites[i].position,shift);
+   formedFrames={tangents:[],normals:[]};
+   for(let i=start;i<=end;i++){
+    const u=offsets[i-start+1]/length-.5,axial=length*u*sinc(theta*u);
+    // Stable cos(theta*u)-cos(theta/2), including theta approaching zero.
+    const radial=length*theta/2*(.25-u*u)*sinc(theta*(.5+u)/2)*sinc(theta*(.5-u)/2);
+    sites[i].position=add(center,add(mul(tangent,axial),mul(bend,radial)));
+    formedFrames.tangents.push(rotate(tangent,bendAxis,-theta*u));formedFrames.normals.push(rotate(initial,bendAxis,-theta*u));
+   }
+  }
   const left=sites[start-1].position,right=sites[end+1].position,direction=unit(sub(right,left)),distance=Math.hypot(...sub(right,left));if(props.joinDistance>distance)throw Error('joinDistance must not exceed original exon gap');
   const delta=mul(direction,(distance-props.joinDistance)/2),centroid:Vec3=[0,0,0];for(let i=start;i<=end;i++)for(let k=0;k<3;k++)centroid[k]+=sites[i].position[k]/(end-start+1);
   // Bound the entire rotation/translation schedule, not only the requested frame.
   for(let i=0;i<n;i++){const s=sites[i],removed=i>=start&&i<=end;if(removed){const r=Math.hypot(...sub(s.position,centroid))+props.baseReach;for(let k=0;k<3;k++)if(Math.max(Math.abs(centroid[k]),Math.abs(centroid[k]+translation[k]))+r>100000)throw Error('Splice schedule coordinate bound exceeded');}else{vec(add(s.position,mul(delta,i<start?1:-1)));for(let k=0;k<3;k++)if(Math.abs(s.position[k])+Math.abs(delta[k])+props.baseReach>100000)throw Error('Splice schedule coordinate bound exceeded');}}
   const closure=smooth(p,ph.cut,ph.closeEnd),depart=smooth(p,ph.cut,ph.departEnd),anchors:NucleicAnchor[]=[];
-  for(const [a,b] of [[0,start-1],[start,end],[end+1,n-1]]){const fragment=sites.slice(a,b+1),f=frames(fragment.map(s=>s.position),seed),removed=a===start;for(let j=0;j<fragment.length;j++){const s=fragment[j],pos=removed?add(add(centroid,rotate(sub(s.position,centroid),axis,depart*departure.angle)),mul(translation,depart)):add(s.position,mul(delta,(a===0?1:-1)*closure)),t=removed?rotate(f.tangents[j],axis,depart*departure.angle):f.tangents[j],normal=removed?rotate(f.normals[j],axis,depart*departure.angle):f.normals[j];anchors.push(anchor(s,pos,t,normal,props.baseReach));}}
+  for(const [a,b] of [[0,start-1],[start,end],[end+1,n-1]]){const fragment=sites.slice(a,b+1),removed=a===start,f=removed&&formedFrames?formedFrames:frames(fragment.map(s=>s.position),seed);for(let j=0;j<fragment.length;j++){const s=fragment[j],pos=removed?add(add(centroid,rotate(sub(s.position,centroid),axis,depart*departure.angle)),mul(translation,depart)):add(s.position,mul(delta,(a===0?1:-1)*closure)),t=removed?rotate(f.tangents[j],axis,depart*departure.angle):f.tangents[j],normal=removed?rotate(f.normals[j],axis,depart*departure.angle):f.normals[j];anchors.push(anchor(s,pos,t,normal,props.baseReach));}}
   const cut=p>=ph.cut,joined=p>=ph.closeEnd,bonds:[string,string][]=[];for(let i=1;i<n;i++)if(!cut||i!==start&&i!==end+1)bonds.push([sites[i-1].id,sites[i].id]);
   const gap=Math.hypot(...sub(anchors[start-1].backbone,anchors[end+1].backbone));if(joined){if(Math.abs(gap-props.joinDistance)>1e-7)throw Error('Splice closure did not reach joinDistance');bonds.push([sites[start-1].id,sites[end+1].id]);}
-  return {anchors,bonds,retainedIds:sites.filter((_,i)=>i<start||i>end).map(s=>s.id),removedIds:sites.slice(start,end+1).map(s=>s.id),cutEnds:cut?(joined?[sites[start].id,sites[end].id]:[sites[start-1].id,sites[start].id,sites[end].id,sites[end+1].id]):[],phase:joined?'joined':cut?'closing':'intact',joinDistance:gap,provenance:{kind:'schematic',description:'Rigid fragments preserve internal distances. Ordered cut, closure, join and independently departing intron; no biochemical kinetics or conformational dynamics.'}};
+  return {anchors,bonds,retainedIds:sites.filter((_,i)=>i<start||i>end).map(s=>s.id),removedIds:sites.slice(start,end+1).map(s=>s.id),cutEnds:cut?(joined?[sites[start].id,sites[end].id]:[sites[start-1].id,sites[start].id,sites[end].id,sites[end+1].id]):[],phase:joined?'joined':cut?'closing':'intact',joinDistance:gap,provenance:{kind:'schematic',description:props.formation?'Analytic circular pre-cut formation preserves material arc offsets, not Euclidean chord lengths. Exons translate rigidly; all post-cut fragments are rigid. Ordered cut, closure, join and independent departure; no biochemical lariat or kinetics.':'Rigid fragments preserve internal distances. Ordered cut, closure, join and independently departing intron; no biochemical kinetics or conformational dynamics.'}};
  }
  function nucleicThread(props:NucleicThreadProps,p:number):NucleicThreadResult{
   progress(p);if(!props)throw Error('Missing threading props');identities(props.sites);positive(props.baseReach,'baseReach',100);if(!Array.isArray(props.path)||props.path.length<2||props.path.length>512)throw Error('Thread path budget2–512');
