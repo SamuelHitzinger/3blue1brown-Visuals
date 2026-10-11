@@ -84,9 +84,14 @@ export class VideoService {
     return (rows as { manifest: string }[]).map(row => publicManifest(JSON.parse(row.manifest)))
   }
   create(owner: string, key: string, request: VideoRequest, uploads: Upload[] = []): VideoManifest {
+    // New videos always support interaction, including requests from older clients.
+    const { videoMode: _videoMode, ...content } = request
+    request = { ...content, videoMode: 'interactive' }
     const prior = this.db.query('SELECT * FROM videos WHERE owner = ? AND key = ?').get(owner, key) as Row | null
     if (prior) {
-      if (prior.request !== JSON.stringify(request)) throw new Error('Idempotency key already used for a different request')
+      // Compare the effective request without rewriting an existing job's saved policy.
+      const { videoMode: _priorMode, ...priorContent } = JSON.parse(prior.request)
+      if (JSON.stringify(priorContent) !== JSON.stringify(content)) throw new Error('Idempotency key already used for a different request')
       return publicManifest(JSON.parse(prior.manifest))
     }
     const manifest: VideoManifest = { schemaVersion: 1, id: crypto.randomUUID(), title: request.title, revision: 0, status: 'queued', provider: this.provider, ...(request.narrationMode ? { narrationMode: request.narrationMode } : {}), createdAt: new Date().toISOString(), scenes: [], ...(this.provider !== 'simulated' ? { tokenUsage: emptyTokenUsage() } : {}) }

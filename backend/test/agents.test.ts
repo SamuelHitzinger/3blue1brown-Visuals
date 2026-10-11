@@ -326,7 +326,7 @@ test("the video pipeline preserves narration audio IDs and reuses completed scri
   const generate = createPiGenerator(runner, narration, settings.dataDir);
   const service = new VideoService(join(settings.agentDir, "videos.sqlite"), generate, "pi");
   try {
-    const request = { title: "Counting", topic: "Dots", documents: [] };
+    const request = { title: "Counting", topic: "Dots", documents: [], videoMode: 'interactive' as const };
     const created = service.create("user:demo", "one", request);
     for (let i = 0; i < 200 && service.get(created.id, "user:demo")?.status !== "complete"; i++) await Bun.sleep(10);
     const video = service.get(created.id, "user:demo")!;
@@ -374,7 +374,7 @@ test("the video pipeline preserves narration audio IDs and reuses completed scri
   } finally { await service.close(); await narration.idle(); }
 });
 
-test.each(['classic', 'interactive'] as const)('%s scenes receive the shared policy and evaluated end-state while later TTS is pending', async videoMode => {
+test.each(['classic', 'interactive', undefined] as const)('%s requests generate interactive scenes that receive the shared policy and evaluated end-state while later TTS is pending', async videoMode => {
   const settings = await config();
   let release!: () => void, secondSpeechStarted = false;
   const gate = new Promise<void>(resolve => { release = resolve; });
@@ -402,7 +402,7 @@ test.each(['classic', 'interactive'] as const)('%s scenes receive the shared pol
     expect(task.systemPrompt).toContain('# animlib scene-authoring reference');
     expect(task.systemPrompt).not.toContain('### Player API');
     expect(task.systemPrompt).not.toContain('3D is the default');
-    expect(input.videoMode).toBe(videoMode);
+    expect(input.videoMode).toBe('interactive');
     expect(input.legacyPlan).toBe(false);
     expect(task.systemPrompt).toContain('s.previous');
     expect(input.scene.utterances[0].words[0].startSec).toBe(0);
@@ -419,12 +419,9 @@ test.each(['classic', 'interactive'] as const)('%s scenes receive the shared pol
     }
     const source = `export default scene({audio:${JSON.stringify(input.audioAssetId)},end:${JSON.stringify(input.endMode)}},s=>{${commands}s.wait(${input.scene.durationSec});});`;
     const withOrbit = source.replace('scene({', 'scene({orbit:true,');
-    if (videoMode === 'classic') await expect(task.validate!(withOrbit)).rejects.toThrow('Classic scenes');
-    else {
-      await expect(task.validate!(withOrbit)).rejects.toThrow('whole-scene orbit');
-      const targetedOrbit = source.replace('s=>{', "s=>{s.view('inspection',{rect:[0,0,1,1],orbit:true,orbitHitTest:'geometry'},v=>v.circle('inspection-dot'));");
-      await task.validate!(targetedOrbit);
-    }
+    await expect(task.validate!(withOrbit)).rejects.toThrow('whole-scene orbit');
+    const targetedOrbit = source.replace('s=>{', "s=>{s.view('inspection',{rect:[0,0,1,1],orbit:true,orbitHitTest:'geometry'},v=>v.circle('inspection-dot'));");
+    await task.validate!(targetedOrbit);
     await task.validate!(source); return source;
   } };
   const service = new VideoService(join(settings.agentDir, 'progressive.sqlite'), createPiGenerator(runner, narration, settings.dataDir), 'pi');

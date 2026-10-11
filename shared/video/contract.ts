@@ -7,7 +7,7 @@ export interface VideoRequest {
   sceneRequest?: boolean
   topic: string
   documents: { name: string; text: string }[]
-  /** Viewing preference supplied to the storyline planner; omitted means classic. */
+  /** Legacy viewing metadata. New jobs normalize to interactive; saved jobs retain their original policy. */
   videoMode?: VideoMode
   /** Explicit subtitle-only delivery bypasses speech synthesis. */
   narrationMode?: 'speech' | 'subtitles'

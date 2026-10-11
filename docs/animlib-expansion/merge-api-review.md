@@ -36,3 +36,11 @@ The heading inventory now recognizes the actual domain-helper section in its exi
 The scene-craft fence expression now accepts both LF and CRLF while retaining the requirement for exactly one JavaScript example and compilation of that example. It changes only the test's Markdown extraction.
 
 Independently executed Node assertions against the actual TypeScript extractor and reference: successful extraction; exact LF/CRLF output equivalence; all five existing host/development section exclusions; rejection of a renamed domain heading; and identical fenced-code extraction under LF and CRLF. All passed. Did not rerun the backend full suite; its final result remains the coordinator's responsibility.
+
+## Follow-up: latest main PR 101 integration — 2026-10-11
+
+Reviewed the clean staged integration of main `d2fbc57` on the saved resolved merge `b2e9303`, relative to prior main `b35e4a8`. No actionable merge-interaction finding.
+
+Compared the entire staged raw diff from `b2e9303` with main's raw diff from `b35e4a8` to `d2fbc57`, disabling rename detection. The transitions match exactly, including every old/new blob ID. Also checked the affected paths against `d2fbc57` in the index and working tree: both diffs are empty. This establishes byte-for-byte integration of the 16 logical changed paths, including renamed/deleted built assets, without alteration or loss of the already-reviewed merge content. The staged diff for animlib and the prior authoring-reference/CRLF fixes is empty.
+
+The request contract retains optional legacy videoMode metadata. New VideoService.create calls normalize it to interactive before persistence; matching retries compare content while returning existing records without rewriting their saved mode. Existing planning/generator consumers retain their classic fallback for old saved requests. WorkspacePage now explicitly supplies interactive and removes the selector. These contracts are consistent at this merge boundary and do not interfere with prepared/GLB asset dispatch or the expanded scene API. Reviewed upstream tests for JSON/multipart creation and saved-job retry/restart preservation; fresh backend/frontend execution is owned by the host-validation agent, not claimed here.

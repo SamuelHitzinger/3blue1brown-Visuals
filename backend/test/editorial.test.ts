@@ -39,7 +39,7 @@ test.each(['classic', 'interactive', undefined] as const)('viewing preference %s
   tasks.forEach((task, index) => {
     const payload = JSON.parse(task.prompt.slice(task.prompt.indexOf('\n') + 1));
     expect((index === 0 ? payload : payload.request).videoMode).toBe(videoMode);
-    expect(task.systemPrompt).toContain('Missing mode means `classic`');
+    expect(task.systemPrompt).toContain('All new app videos use `interactive`');
     expect(task.systemPrompt).toContain('Every planned `interactions` array is empty');
     expect(task.systemPrompt).toContain('No minimum count or quota applies');
   });

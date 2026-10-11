@@ -39,12 +39,6 @@
 .video-composer textarea::placeholder { color: inherit; opacity: .58; }
 .video-composer textarea:focus-visible { outline: none; }
 .composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.interactive-toggle { position: relative; display: inline-flex; align-items: center; gap: 7px; min-height: 36px; margin-left: auto; padding: 4px 0; border-radius: 8px; font-size: 12px; white-space: nowrap; cursor: pointer; }
-.interactive-toggle > input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: inherit; }
-.interactive-toggle:has(input:focus-visible) { outline: 2px solid var(--card-ink); outline-offset: 4px; }
-.interactive-toggle .selection-check { position: static; width: 18px; height: 18px; flex-shrink: 0; background: transparent; box-shadow: inset 0 0 0 1px currentColor; }
-.interactive-toggle.selected .selection-check { background: #222; color: #fff; box-shadow: none; }
-.interactive-toggle:has(input:disabled) { opacity: .5; cursor: wait; }
 .attach-source { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 8px 11px; margin-left: -11px; border-radius: 18px; font-size: 12px; }
 .attach-source:hover { background: #ffffff38; }
 .create-video-button { min-height: 48px; padding: 14px 22px; border-radius: 999px; font-size: 13px; margin-left: auto; background: var(--card-ink); color: var(--input-color); }
@@ -96,7 +90,6 @@
   .video-composer { min-height: 360px; padding: 19px; }
   .video-composer textarea { height: 194px; font-size: 16px; margin: 17px 0; }
   .composer-actions { flex-wrap: wrap; gap: 7px; }
-  .interactive-toggle { min-height: 32px; font-size: 11px; }
   .attach-source { font-size: 11px; }
   .create-video-button { font-size: 11px; padding: 12px 15px; min-height: 44px; }
   .composer-heading h2 { font-size: 12px; }
@@ -118,5 +111,5 @@
   .create-video-button { width: 100%; margin: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .input-card, .mode-switch, .interactive-toggle .selection-check, .interactive-toggle .selection-check > svg { transition: none; }
+  .input-card, .mode-switch { transition: none; }
 }

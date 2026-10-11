@@ -1,5 +1,9 @@
 # Main merge conflict audit
 
+**Resolution follow-up:** the historical investigation below is superseded for
+integration status by [main integration and validation](main-merge-resolution.md).
+Its original conflict analysis remains the record of the two designs being joined.
+
 Audited 2026-10-11 against freshly fetched `origin/main`. This is an investigation only: no merge, rebase, checkout, index update, or conflict resolution was performed.
 
 ## Exact scope and result

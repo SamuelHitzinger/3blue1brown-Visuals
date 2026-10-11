@@ -84,7 +84,7 @@ test('shutdown drains all active videos and restart resumes them concurrently', 
   }
 })
 
-test('JSON and multipart creation forward the viewing preference and distinguish idempotent requests', async () => {
+test('JSON and multipart creation always generate interactive videos, including older clients', async () => {
   const received: unknown[] = []
   const service = new VideoService(':memory:', async request => { received.push(request.videoMode); return null }); services.push(service)
   for (const multipart of [false, true]) {
@@ -93,21 +93,52 @@ test('JSON and multipart creation forward the viewing preference and distinguish
       const post = (mode: unknown) => {
         const payload = JSON.stringify({ ...input, videoMode: mode })
         const form = new FormData(); form.set('request', payload)
+        if (multipart) form.append('files', new File(['Source notes'], 'notes.txt'))
         return api('', { method: 'POST', headers: { 'Idempotency-Key': key }, body: multipart ? form : payload })
       }
       const response = await service.handle(post(videoMode))
       expect(response.status).toBe(202)
       const video = await response.json()
       await waitFor(() => service.get(video.id, SHARED_OWNER)?.status === 'complete')
-      expect(received.at(-1)).toBe(videoMode)
+      expect(received.at(-1)).toBe('interactive')
       expect((await (await service.handle(post(videoMode))).json()).id).toBe(video.id)
-      expect((await service.handle(post(videoMode === 'interactive' ? 'classic' : 'interactive'))).status).toBe(409)
+      expect((await (await service.handle(post(videoMode === 'interactive' ? 'classic' : 'interactive'))).json()).id).toBe(video.id)
+      expect((await (await service.handle(post(undefined))).json()).id).toBe(video.id)
       for (const invalid of ['unknown', '', null, true, 1, {}]) {
         expect((await service.handle(post(invalid))).status).toBe(400)
       }
     }
   }
-  expect(received).toEqual(['classic', 'interactive', undefined, 'classic', 'interactive', undefined])
+  expect(received).toEqual(Array(6).fill('interactive'))
+})
+
+test('saved jobs retain their original mode on retry and restart', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aha-saved-mode-'))
+  const path = join(dir, 'db')
+  const service = new VideoService(path, async () => null); services.push(service)
+  try {
+    const modes = ['classic', undefined] as const
+    const videos = modes.map((_, i) => service.create(SHARED_OWNER, `saved-${i}`, input))
+    await waitFor(() => videos.every(video => service.get(video.id, SHARED_OWNER)?.status === 'complete'))
+    await service.close(); services.splice(services.indexOf(service), 1)
+    // Reproduce records persisted before interaction became the default.
+    const db = new Database(path)
+    try {
+      videos.forEach((video, i) => db.query('UPDATE videos SET request = ?, manifest = ? WHERE id = ?')
+        .run(JSON.stringify({ ...input, videoMode: modes[i] }), JSON.stringify(video), video.id))
+    } finally { db.close() }
+    const received: unknown[] = []
+    const reopened = new VideoService(path, async request => { received.push(request.videoMode); return null }); services.push(reopened)
+    for (const [i, video] of videos.entries()) {
+      expect(reopened.create(SHARED_OWNER, `saved-${i}`, { ...input, videoMode: 'interactive' }).id).toBe(video.id)
+      expect(() => reopened.create(SHARED_OWNER, `saved-${i}`, { ...input, topic: 'A different topic' })).toThrow('Idempotency')
+    }
+    await waitFor(() => videos.every(video => reopened.get(video.id, SHARED_OWNER)?.status === 'complete'))
+    expect(received).toEqual([...modes])
+  } finally {
+    await Promise.all(services.splice(0).map(service => service.close()))
+    await rm(dir, { recursive: true, force: true })
+  }
 })
 
 test('video creation retains more than ten uploaded, JSON, or combined documents', async () => {

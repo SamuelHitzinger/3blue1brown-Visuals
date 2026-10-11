@@ -8,7 +8,7 @@ This is the maintainer map of active instructions. It is not injected into model
 | --- | --- | --- |
 | [guidance.md](../backend/prompts/guidance.md) | Audience-dependent teaching progression, visual reasoning, narration, pauses, Markdown script format | Lesson author and editorial reviewer |
 | [animation-quality.md](../backend/prompts/animation-quality.md) | Visual model fidelity, composition, material and motion requirements | Lesson author, editorial reviewer, scene author, and scene reviewer |
-| [viewing-mode.md](../backend/prompts/viewing-mode.md) | Classic/Interactive policy, purposeful view choices, saved-job exception | Lesson author, editorial reviewer, scene author; scene repairs inherit the saved policy |
+| [viewing-mode.md](../backend/prompts/viewing-mode.md) | Default interactive behavior, saved Classic compatibility, purposeful view choices | Lesson author, editorial reviewer, scene author; scene repairs inherit the saved policy |
 | [scene-craft.md](../backend/prompts/scene-craft.md) | Visual implementation, continuity, layout, motion, readability | Scene author; scene repairs inherit the saved prompt |
 | [story-review.md](../backend/prompts/story-review.md) | Editorial checks and review response format | Editorial reviewer |
 | [scene-review.md](../backend/prompts/scene-review.md) | Rendered-sample review and repair response format | Optional scene reviewer |
@@ -40,7 +40,7 @@ The old `scenegen/planning.md` and `scenegen/visualization.md` layers are retire
 
 ## Validation and snapshots
 
-For newly authored lessons, plan validation rejects controls in Classic mode. Compiled scene validation rejects Classic controls and main/subview orbit, and rejects unplanned drag/custom input behaviors in either mode. Interactive scenes must implement exactly the planned controls. Authored camera animation and passive supported behavior are still allowed. Existing timing, audio, palette, identity, source-name, carry/cleanup, and view checks remain in force.
+All new app jobs normalize to Interactive before persistence and generation, including requests that omit the mode or send Classic. There is no viewing-mode selector. Saved jobs retain their original policy; compatibility plan validation rejects controls in Classic mode. Compiled scene validation rejects Classic controls and main/subview orbit, and rejects unplanned drag/custom input behaviors in either mode. Interactive scenes must implement exactly the planned controls. Authored camera animation and passive supported behavior are still allowed. Existing timing, audio, palette, identity, source-name, carry/cleanup, and view checks remain in force.
 
 These checks do not prove mathematical correctness, useful control behavior, visual readability, or teaching quality. Editorial review evaluates the planned explanation before paid speech. Newly generated scenes also pass the first-render verification gate before any targeted visual repair. The separate, user-requested scene-review command supports reviewing saved scenes from screenshots/contact sheets. Compilation and editorial approval do not substitute for inspecting a rendering. See [agent operation](agents.md).
 
