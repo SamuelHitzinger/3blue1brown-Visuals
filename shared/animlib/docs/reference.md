@@ -957,7 +957,7 @@ scenes can retrieve them and preserve their relationships.
 | A chain bending while each link keeps its length | Nested groups with origins at joints and fixed local offsets; `rotateTo` on joints | Segment lengths throughout interpolation. The author supplies the hierarchy and joint angles. |
 | Independent translation or style changes | `moveTo` or `animate` | Interpolated properties, without inferring relationships to other objects. |
 | An intentional change of shape | `morphTo` | Object identity and supported geometric correspondence, not physical constraints such as length or rigidity. |
-| Viewer dragging or spring return | `s.behavior` with `drag` or `spring` | Live presentation behavior. A spring returns toward an authored target; it is not a distance constraint between objects. |
+| Viewer dragging, bounded handles, path-following, or spring return | `s.behavior` with `drag` or `spring` | Live presentation behavior. A spring returns toward an authored target; it is not a distance constraint between objects. |
 
 For a semantic connection, prefer `connect` even if its sources are initially
 still. Animate the sources instead of independently moving or replacing the
@@ -1021,6 +1021,48 @@ s.connect(bond, atom, otherAtom, { endpoints: 'surface' });
 axis or a plane. The grab point is preserved, and the held object stays at its
 world position while the authored target moves. After release, a drag on its own
 retains its local offset from the authored timeline.
+
+Use `bounds` to clamp the dragged target's origin to a world-space box, or `path`
+to keep it on an ordered world-space polyline. Both are built in: no host custom
+behavior registration is needed.
+
+```js
+// A handle inside a rectangle. Use axis: 'x' instead for a bounded rail.
+s.behavior(handle, {
+  type: 'drag', plane: 'xy',
+  bounds: { min: [-3, -2, 0], max: [3, 2, 0] },
+});
+// A vehicle following a closed road centerline; omit a repeated closing point.
+s.behavior(plow, {
+  type: 'drag', plane: 'xy',
+  path: { points: [[-8,-8,0], [8,-8,0], [8,8,0], [-8,8,0]], closed: true },
+});
+```
+
+Choose **one** constraint: `bounds` or `path`. Bounds require a fixed world plane
+(`xy`, `xz`, `yz`) or an axis; min/max are finite Vec3 values with min <= max on
+every coordinate. Path dragging requires a fixed world plane, no axis, and 2–256
+finite Vec3 points on that plane (at least 3 when closed). Adjacent points must be
+distinct; closing is implicit. Curves can be sampled into polyline points.
+
+Bounds constrain the target **origin**, not its full geometry: inset the bounds
+by the object's footprint when needed. The constraints are world-space even for
+transformed children; attached labels, parts and connections follow normally.
+The initial path position is projected to its nearest segment. During a gesture,
+only the current segment and a neighbor at a reached endpoint are eligible:
+large pointer jumps cannot select a distant parallel road or cross a block.
+Corners are visited before entering the next segment; a fast pointer jump may
+require further pointer movement to follow successive segments. Closed paths wrap
+between the first and last segments; open paths stop at endpoints. At crossings,
+movement follows the ordered segments rather than switching branches.
+
+These constraints apply during the drag gesture. After release, ordinary local
+offset/timeline and spring behavior resumes; animated targets can leave the
+constraint. Authored/offline frames remain deterministic and do not simulate user
+input. This is constrained translation, not collision detection, automatic vehicle
+heading, swept-area history, or persistent snow clearing. Bounds with a starting
+position outside the fixed coordinates of their plane/axis cannot capture a drag;
+place the authored target on the intended plane/rail.
 
 `spring` is independent of dragging. It restores the position toward the current
 authored target when the object is not held. Defaults are stiffness 65 and damping
@@ -3395,7 +3437,7 @@ infinite scenes, branching navigation, playback-rate controls,
 in-player video recording, or mobile-browser support guarantees. Native Node
 frame/video export is provided by `tools/render-frames.mjs` and
 `tools/render-video.mjs`; use `withOfflineScene` to sample retained time bindings.
-Available interaction includes object/group dragging, spring return, live
+Available interaction includes object/group dragging with world bounds or ordered open/closed paths, spring return, live
 attachments/connections, host-registered custom behaviors, sliders, toggles, selects,
 and camera orbit/pan. Application prompts define which interactions to prefer.
 

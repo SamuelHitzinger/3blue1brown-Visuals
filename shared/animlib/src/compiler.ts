@@ -213,6 +213,27 @@ export function validateCompiledScene(scene: CompiledScene, catalog: AssetDescri
       check(b.plane === undefined || ["screen", "xy", "xz", "yz"].includes(b.plane), "Invalid drag plane");
       check(b.axis === undefined || ["x", "y", "z"].includes(b.axis), "Invalid drag axis");
       check(b.axis === undefined || b.plane === undefined, "Choose a drag axis or plane");
+      check(b.bounds === undefined || b.path === undefined, "Choose drag bounds or path");
+      if (b.bounds !== undefined) {
+        check(b.bounds && typeof b.bounds === 'object', 'Invalid drag bounds');
+        check(b.axis !== undefined || ['xy','xz','yz'].includes(b.plane ?? ''), 'Drag bounds require a fixed world plane or axis');
+        vec(b.bounds.min, 'drag bounds min'); vec(b.bounds.max, 'drag bounds max');
+        check(b.bounds.min.every((v,i)=>v<=b.bounds!.max[i]), 'Drag bounds min must not exceed max');
+      }
+      if (b.path !== undefined) {
+        check(b.path && typeof b.path === 'object', 'Invalid drag path');
+        check(b.axis === undefined && ['xy','xz','yz'].includes(b.plane ?? ''), 'Drag path requires a fixed world plane and no axis');
+        check(b.path.closed === undefined || typeof b.path.closed === 'boolean', 'Invalid closed drag path');
+        const points=b.path.points;
+        check(Array.isArray(points) && points.length >= (b.path.closed ? 3 : 2) && points.length <= 256, 'Drag path requires 2–256 points (at least 3 when closed)');
+        points.forEach(p=>vec(p,'drag path point'));
+        const fixed=b.plane==='xy'?2:b.plane==='xz'?1:0;
+        check(points.every(p=>Math.abs(p[fixed]-points[0][fixed])<1e-9), 'Drag path must lie on its selected world plane');
+        for(let i=0;i<points.length-(b.path.closed?0:1);i++) {
+          const a=points[i],next=points[(i+1)%points.length];
+          check(Math.hypot(...a.map((v,j)=>v-next[j]))>1e-6, 'Drag path segments must have nonzero length; do not repeat the closing point');
+        }
+      }
     } else if (b.type === "spring") {
       for (const k of ["stiffness", "damping"] as const) if (b[k] !== undefined) { number(b[k], k); check(b[k]! > 0 && b[k]! <= 1000, `Invalid spring ${k}`); }
     } else {

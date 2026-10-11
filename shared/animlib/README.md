@@ -138,6 +138,9 @@ composited object fade. All interaction is declared in the scene.
 
 ```js
 s.behavior(atom, { type: 'drag', plane: 'screen' });
+// Optional built-in constraints (use a fixed world plane or axis):
+// s.behavior(atom, { type: 'drag', plane: 'xy', bounds: { min: [-2,-1,0], max: [2,1,0] } });
+// s.behavior(atom, { type: 'drag', plane: 'xy', path: { points: [[0,0,0],[2,0,0],[2,2,0]] } });
 s.behavior(atom, { type: 'spring', stiffness: 65, damping: 9 });
 s.attach(label, atom);
 s.connect(bond, atom, otherAtom, { endpoints: 'surface' });
@@ -327,3 +330,6 @@ See [imported static models](docs/reference.md#imported-static-3d-models) for th
 API, static glTF compatibility profile, budgets, and current limitations. Run
 `/models.html` for focused browser pixel checks; native `test:gpu` covers the
 same UV/material behavior on Vulkan WebGPU.
+
+Drag constraints support world-space bounds and ordered open/closed polyline paths,
+including transformed children and live attachments. See [Behaviors and live bindings](docs/reference.md#behaviors-and-live-bindings) for validation rules, corner traversal, and gesture-only semantics.

@@ -54,3 +54,5 @@ When the host supplies `legacyPlan: true`, preserve the saved job's approved int
 ## Authoring checks
 
 Follow the host's inspection and submission protocol. Use available source diagnostics and rendered samples to check the visual argument, narration synchronization, intermediate relationships, readable framing, and final carry/cleanup state. Compiler success alone cannot establish these. Correct demonstrated defects while preserving working content; do not spend the tool budget on cosmetic alternatives or claim to have inspected unavailable frames.
+
+For constrained direct manipulation, use built-in `s.behavior(target, {type:"drag", plane:"xy", bounds:{min:[...],max:[...]}})` or `path:{points:[[...],...],closed:true}` on a fixed world plane. Bounds constrain the target origin, so account for its footprint. Paths visit neighboring segments through their shared corners and cannot jump across a block. Do not invent a host behavior for these constraints. They do not provide vehicle heading, collision detection, or accumulated clearing state. Follow the full reference for limits and post-release semantics.

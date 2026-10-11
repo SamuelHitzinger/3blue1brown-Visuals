@@ -104,3 +104,5 @@ When writing the plan:
   framing are not reasons. Rotation needs no separate planned control. Leave a
   pickable model surface or visible rotation handle distinct from draggable parts.
   Reserve the top right for any widget controls that are actually used.
+
+Built-in direct dragging can constrain a target origin to world-space bounds or an ordered open/closed polyline path, useful for bounded handles and road centerlines. Live attachments follow the target. These are gesture constraints, not collision simulation, automatic heading, or persistent swept-area state; describe additional requested effects separately. The scene author receives the exact `drag.bounds`/`drag.path` API.
