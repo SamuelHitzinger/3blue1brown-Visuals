@@ -22,4 +22,9 @@ export { decodeModelPackage, decodeImagePackage } from './asset-package.js';
 export { resolveAssetGeometry, sceneAssetRefs } from './asset-geometry.js';
 
 export { createNucleicBuilders } from './nucleic-structures.js';
+export { createNucleicProcessingBuilders } from './nucleic-processing.js';
+export { createNucleicTranscriptionCycleBuilders } from './nucleic-transcription-cycle.js';
+export { createNucleicTranslationBuilders } from './nucleic-translation.js';
+export { createPeptideBuilders } from './peptide-motion.js';
 export { importPDBStructure, structureBackboneProps } from './molecular-structure-data.js';
+export { createSampledState } from './diagrams/sampled-state.js';

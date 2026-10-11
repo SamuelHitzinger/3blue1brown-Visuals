@@ -90,17 +90,63 @@ export function createNucleicBuilders(molecular:{molecularBackbone(props:Molecul
       const reach=Math.hypot(...sub(vec(a.tip),vec(a.backbone))),inward=unit(vec(a.normal),'Template frame'),p=add(vec(a.backbone),mul(inward,2*reach)),normal=mul(inward,-1),tangent=project(vec(a.tangent),normal);
       targets.push({id:site.id,base:site.base,strand:'rna',shape:shape(site.base),backbone:p,tip:add(p,mul(normal,reach)),tangent,normal});
     }
+    const baselineLinks=targets.slice(1).map((a,i)=>Math.hypot(...sub(a.backbone,targets[i].backbone)));
+    const emergence=props.emergence;
+    if(emergence){
+      positive(emergence.distance,'emergence distance',100);positive(emergence.duration,'emergence duration',86400);
+      if(!Number.isFinite(emergence.delay)||emergence.delay<0||emergence.delay>86400)throw new Error('Invalid emergence delay');
+      const direction=unit(vec(emergence.direction),'Emergence direction'),original=targets.map(a=>({...a,backbone:[...a.backbone] as Vec3}));
+      // Adjacent smoothstep weights differ by at most h(3-h²)/2, h<=1.
+      // Every desired forward link lies on L-lambda*direction, 0<=lambda<=span.
+      // Check this whole segment before sampling time: a zero would make normalized
+      // integration jump; an antipodal endpoint makes minimal frame rotation singular.
+      const h=Math.min(1,props.secondsPerBase/emergence.duration),span=emergence.distance*h*(3-h*h)/2;
+      for(let i=0;i<baselineLinks.length;i++){
+        const link=sub(original[i+1].backbone,original[i].backbone),length=baselineLinks[i];
+        positive(length,'RNA target link',1000);
+        const closest=sub(link,mul(direction,Math.max(0,Math.min(span,dot(link,direction))))),end=sub(link,mul(direction,span));
+        const minLength=Math.hypot(...closest),endLength=Math.hypot(...end);
+        if(minLength<=1e-7*Math.max(1,length,span)||dot(link,end)/(length*endLength)<=-1+1e-6)
+          throw new Error('Unsupported RNA emergence schedule: folding exit geometry; use a smaller distance, longer duration, or noncollinear direction');
+      }
+      const weights=targets.map((_,i)=>{const age=time-props.start-(i+props.approachFraction)*props.secondsPerBase-emergence.delay,u=Math.max(0,Math.min(1,age/emergence.duration));return u*u*(3-2*u);});
+      const desired=targets.map((a,i)=>add(a.backbone,mul(direction,weights[i]*emergence.distance))),points=desired.map(p=>[...p] as Vec3);
+      for(let i=targets.length-2;i>=0;i--)if(weights[i]>0||weights[i+1]>0)points[i]=add(points[i+1],mul(unit(sub(desired[i],desired[i+1]),'RNA exit link'),baselineLinks[i]));
+      for(let i=0;i<targets.length;i++)if(weights[i]>0){
+        const a=targets[i],next=i+1;
+        let normal=a.normal,tangent=a.tangent;
+        // The terminal base has no outgoing link: its pure exit translation
+        // retains the docked frame. Following the already-bent previous link
+        // only after its own weight becomes positive would cause an onset snap.
+        if(next<targets.length){
+          const before=unit(sub(original[next].backbone,original[i].backbone),'RNA old frame'),after=unit(sub(points[next],points[i]),'RNA exit frame'),c=dot(before,after),v=cross(before,after);
+          if(c<-1+1e-7)throw new Error('RNA emergence frame reversal');
+          const rotate=(n:Vec3)=>add(add(n,cross(v,n)),mul(cross(v,cross(v,n)),1/(1+c)));
+          normal=rotate(normal);tangent=rotate(tangent);
+        }
+        const reach=Math.hypot(...sub(a.tip,a.backbone));a.backbone=points[i];a.tip=add(a.backbone,mul(normal,reach));a.normal=normal;a.tangent=tangent;
+      }
+    }
+    const rotation=props.incomingRotation;
+    if(rotation&&(!Number.isFinite(rotation.angle)||Math.abs(rotation.angle)>4*Math.PI))throw new Error('Incoming rotation angle must be finite within ±4PI');
+    const rotationAxis=rotation?unit(vec(rotation.axis),'Incoming rotation axis'):undefined;
     const offset=vec(props.incomingOffset??[0,2,1.5]),parts:NucleicPart[]=[],anchors:NucleicAnchor[]=[],bonds:[string,string][]=[],linkLengths:number[]=[];let incorporated=0,incomingId:string|undefined;
     for(let i=0;i<targets.length;i++){
       const age=(time-props.start)/props.secondsPerBase-i,docked=age>=props.approachFraction,visible=age>=0,arrival=Math.max(0,Math.min(1,age/props.approachFraction)),eased=arrival*arrival*(3-2*arrival),delta=mul(offset,1-eased),target=targets[i];
       if(docked)incorporated++;else if(visible)incomingId=target.id;
       const anchor={...target,backbone:add(target.backbone,delta),tip:add(target.tip,delta),tangent:[...target.tangent] as Vec3,normal:[...target.normal] as Vec3};anchors.push(anchor);
+      if(rotation&&rotationAxis&&!docked){
+        const angle=rotation.angle*(1-eased),c=Math.cos(angle),s=Math.sin(angle);
+        const rotate=(v:Vec3)=>add(add(mul(v,c),mul(cross(rotationAxis,v),s)),mul(rotationAxis,dot(rotationAxis,v)*(1-c)));
+        anchor.tip=add(anchor.backbone,rotate(sub(target.tip,target.backbone)));
+        anchor.tangent=rotate(target.tangent);anchor.normal=rotate(target.normal);
+      }
       parts.push({id:`${props.id}/base/${i}`,role:'rna-nucleotide',geometry:plateMesh([anchor]),opacity:visible?1:0});
-      if(i>0){const a=targets[i-1],b=target,length=Math.hypot(...sub(a.backbone,b.backbone));positive(length,'RNA target link',1000);linkLengths.push(length);
+      if(i>0){const a=targets[i-1],b=target,length=baselineLinks[i-1];positive(length,'RNA target link',1000);linkLengths.push(length);
         parts.push({id:`${props.id}/link/${i}`,role:'rna-backbone',geometry:backbone([a.backbone,b.backbone],[a.id,b.id],props.radius,project(a.normal,unit(sub(b.backbone,a.backbone),'RNA link')),'ORANGE',8,2),opacity:docked?1:0});if(docked)bonds.push([a.id,b.id]);}
     }
     const triplets:[string,string,string][]=[];for(let i=0;i+2<incorporated;i+=3)triplets.push([targets[i].id,targets[i+1].id,targets[i+2].id]);
-    return {parts,anchors,incorporated,...(incomingId?{incomingId}:{}),bonds,linkLengths,...(incorporated?{ends:{fivePrime:targets[0].id,threePrime:targets[incorporated-1].id}}:{}),triplets,provenance:{kind:'schematic',description:'RNA5to3 incorporation on a fixed open-template snapshot. Base-pair complement is explicit; only incorporated sites form edges. Target backbone distances are schematic and remain fixed; free incoming nucleotides are not yet covalently linked.'}};
+    return {parts,anchors,incorporated,...(incomingId?{incomingId}:{}),bonds,linkLengths,...(incorporated?{ends:{fivePrime:targets[0].id,threePrime:targets[incorporated-1].id}}:{}),triplets,provenance:{kind:'schematic',description:emergence?'RNA5to3 incorporation on an open-template snapshot. Base-pair complement is explicit; only incorporated sites form edges. Optional post-incorporation emergence deliberately moves formed anchors while retaining baseline link lengths. Free incoming nucleotides are not yet covalently linked.':'RNA5to3 incorporation on a fixed open-template snapshot. Base-pair complement is explicit; only incorporated sites form edges. Target backbone distances are schematic and remain fixed; free incoming nucleotides are not yet covalently linked.'}};
   }
   return {nucleicDuplex,nucleicTranscript};
 }

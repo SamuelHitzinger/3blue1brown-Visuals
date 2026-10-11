@@ -1,4 +1,9 @@
+import { createSampledState } from './diagrams/sampled-state.js';
 import { createNucleicBuilders } from './nucleic-structures.js';
+import { createNucleicProcessingBuilders } from './nucleic-processing.js';
+import { createNucleicTranscriptionCycleBuilders } from './nucleic-transcription-cycle.js';
+import { createNucleicTranslationBuilders } from './nucleic-translation.js';
+import { createPeptideBuilders } from './peptide-motion.js';
 import type { AnimationAction, CameraState, CompileInput, CompiledScene, ControlDefinition, ControlValue, ElementHandle, ElementProps, ElementState, ElementStyle, Geometry, ReactiveDependency, ReactiveProperties, ReactiveUpdate, SceneContext, SceneOptions, SliderHandle, SliderOptions, Vec2, Vec3, ViewState } from "./types.js";
 import { createSurfaceBuilders } from "./surfaces.js";
 import { createSolidBuilders } from "./solids.js";
@@ -10,13 +15,17 @@ import { createGraphAlgorithms, createGraphBuilders } from './diagrams/graphs.js
 import { createCollectionBuilders } from './diagrams/collections.js';
 
 type MeshBuilders = ReturnType<typeof createSurfaceBuilders> & ReturnType<typeof createSolidBuilders> & ReturnType<typeof createMoleculeBuilders>;
-type DomainFactories = {createAssetBuilders: typeof createAssetBuilders; createCoordinateBuilders: typeof createCoordinateBuilders; createGraphAlgorithms: typeof createGraphAlgorithms; createGraphBuilders: typeof createGraphBuilders; createCollectionBuilders: typeof createCollectionBuilders; createMolecularBackboneBuilders: typeof createMolecularBackboneBuilders; createNucleicBuilders: typeof createNucleicBuilders};
+type DomainFactories = {createNucleicTranslationBuilders: typeof createNucleicTranslationBuilders; createNucleicTranscriptionCycleBuilders: typeof createNucleicTranscriptionCycleBuilders; createNucleicProcessingBuilders: typeof createNucleicProcessingBuilders; createPeptideBuilders: typeof createPeptideBuilders; createSampledState: typeof createSampledState; createAssetBuilders: typeof createAssetBuilders; createCoordinateBuilders: typeof createCoordinateBuilders; createGraphAlgorithms: typeof createGraphAlgorithms; createGraphBuilders: typeof createGraphBuilders; createCollectionBuilders: typeof createCollectionBuilders; createMolecularBackboneBuilders: typeof createMolecularBackboneBuilders; createNucleicBuilders: typeof createNucleicBuilders};
 
 /** Self-contained on purpose: the function is installed inside QuickJS, never eval'd by the host. */
-export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders: MeshBuilders = {...createSurfaceBuilders(), ...createSolidBuilders(), ...createMoleculeBuilders()}, domainFactories: DomainFactories = {createAssetBuilders, createCoordinateBuilders, createGraphAlgorithms, createGraphBuilders, createCollectionBuilders, createMolecularBackboneBuilders, createNucleicBuilders}): CompiledScene {
+export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders: MeshBuilders = {...createSurfaceBuilders(), ...createSolidBuilders(), ...createMoleculeBuilders()}, domainFactories: DomainFactories = {createNucleicTranslationBuilders, createNucleicTranscriptionCycleBuilders, createNucleicProcessingBuilders, createPeptideBuilders, createSampledState, createAssetBuilders, createCoordinateBuilders, createGraphAlgorithms, createGraphBuilders, createCollectionBuilders, createMolecularBackboneBuilders, createNucleicBuilders}): CompiledScene {
   const algorithms = domainFactories.createGraphAlgorithms();
   const molecular = domainFactories.createMolecularBackboneBuilders(meshBuilders);
   const nucleic = domainFactories.createNucleicBuilders(molecular);
+  const processing = domainFactories.createNucleicProcessingBuilders();
+  const transcriptionCycle = domainFactories.createNucleicTranscriptionCycleBuilders();
+  const translation = domainFactories.createNucleicTranslationBuilders();
+  const peptide = domainFactories.createPeptideBuilders();
   const assets = domainFactories.createAssetBuilders(input.assetCatalog);
   const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
   const vector = (value: number[] = [0, 0, 0]): Vec3 => [value[0] ?? 0, value[1] ?? 0, value[2] ?? 0];
@@ -90,6 +99,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
   const bindings: NonNullable<CompiledScene["bindings"]> = [];
   const callbacks: { target: string; slot?: number; controls: string[]; dependencies: ReactiveDependency[]; time?: true; callback: (...values: number[]) => ReactiveProperties; keys?: string[] }[] = [];
   const reactiveHandles = new Set<SliderHandle>();
+  const elementHandles = new WeakMap<ElementHandle, string>();
   const timeHandle = Object.freeze({ time: true as const, [Symbol.toPrimitive]() { throw new Error("Read s.time through a binding"); } });
   let building = true;
   let cursor = 0;
@@ -104,7 +114,32 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     return [...new Set(result)];
   };
 
-  const handle = (id: string): ElementHandle => ({
+  const validateIds = (ids: readonly string[]): void => {
+    const planned = new Set<string>();
+    for (const id of ids) {
+      idCheck(id);
+      if (used.has(id) || planned.has(id)) throw new Error(`Duplicate element ID: ${id}`);
+      planned.add(id);
+    }
+    if (used.size + planned.size > 2000) throw new Error("Scene element limit exceeded (2000)");
+  };
+  const validateGroup = (children: readonly ElementHandle[], newIds: readonly string[] = []): string[] => {
+    const childIds = Array.from(children, child => {
+      if (!child || elementHandles.get(child) !== child.id) throw new Error("Groups require handles from this scene");
+      return child.id;
+    });
+    if (new Set(childIds).size !== childIds.length) throw new Error("Duplicate group child handle");
+    for (const child of childIds) if (states.get(child)?.view !== currentView) throw new Error("Groups must contain elements from the same view");
+    for (const child of childIds) {
+      descendants(child);
+      if (groups.has(child)) throw new Error(`Element ${child} already has a parent group`);
+    }
+    validateIds(newIds);
+    return childIds;
+  };
+
+  const handle = (id: string): ElementHandle => {
+    const result: ElementHandle = {
     id,
     animate: properties => {
       const normalized = { ...properties };
@@ -120,12 +155,17 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     fadeOut: () => ({ ids: [id], type: "animate", properties: { opacity: 0 } }),
     morphTo: (geometry, morphOptions = {}) => { if(geometry.asset || descendants(id).some(id=>states.get(id)?.geometry.asset)) throw new Error('Referenced model assets cannot morph'); numericFormat(geometry.numberFormat);return { ids: [id], type: "morph", geometry: clone(geometry), map: morphOptions.map }; },
     countTo: values => ({ ids: [id], type: "numbers", values: clone(values) }),
-  });
+    };
+    elementHandles.set(result, id);
+    return result;
+  };
 
   const add = (kind: Geometry["kind"], id: string, props: ElementProps = {}, internal = false): ElementHandle => {
-    if (!internal) idCheck(id);
-    if (used.has(id)) throw new Error(`Duplicate element ID: ${id}`);
-    if (used.size >= 2000) throw new Error("Scene element limit exceeded (2000)");
+    if (!internal) validateIds([id]);
+    else {
+      if (used.has(id)) throw new Error(`Duplicate element ID: ${id}`);
+      if (used.size >= 2000) throw new Error("Scene element limit exceeded (2000)");
+    }
     used.add(id);
     const { position, rotation: r, scale, opacity, fill, stroke, strokeWidth, strokeProfile, strokeStart, strokeEnd, dashArray, dashOffset, space, castShadow, billboard, billboardOffset, viewportOffset, ...geometry } = props;
     numericFormat(geometry.numberFormat);
@@ -266,8 +306,14 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     },
     nucleicDuplex: (props, opening) => nucleic.nucleicDuplex(props, opening),
     nucleicTranscript: (props, time) => nucleic.nucleicTranscript(props, time),
+    nucleicSplice: (props, progress) => processing.nucleicSplice(props, progress),
+    nucleicThread: (props, progress) => processing.nucleicThread(props, progress),
+    nucleicTranscriptionCycle: (props, time) => transcriptionCycle.nucleicTranscriptionCycle(props, time),
+    nucleicTranslationCycle: (props, time) => translation.nucleicTranslationCycle(props, time),
+    peptidePose: (spec, phi, psi) => peptide.peptidePose(spec, phi, psi),
     molecularBackboneGeometry: props => molecular.molecularBackbone(props),
     articulatedChainPose: (spec,time) => molecular.articulatedChainPose(spec,time),
+    sampledState: options => domainFactories.createSampledState(options),
     plane: (id,options) => domainFactories.createCoordinateBuilders(context).plane(id,options),
     graph: (id,data,options) => domainFactories.createGraphBuilders(context,algorithms).graph(id,data,options),
     collection: (id,items,options) => domainFactories.createCollectionBuilders(context).collection(id,items,options),
@@ -284,15 +330,12 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
       descendants(target.id); descendants(from.id); descendants(to.id);
       bindings.push({ type: "connect", target: target.id, from: from.id, to: to.id, ...clone(spec) });
     },
+    validateGroup: (children, newIds) => { validateGroup(children, newIds); },
     group: (id, children, spec = {}) => {
-      const childIds = children.map(child => child.id);
-      for (const child of childIds) if (states.get(child)?.view !== currentView) throw new Error("Groups must contain elements from the same view");
-      for (const child of childIds) {
-        descendants(child);
-        if (groups.has(child)) throw new Error(`Element ${child} already has a parent group`);
-        groups.add(child);
-      }
-      return add("group", id, { children: childIds, space: states.get(childIds[0])?.space ?? "world", ...clone(spec) });
+      const childIds = validateGroup(children, [id]);
+      const group = add("group", id, { children: childIds, space: states.get(childIds[0])?.space ?? "world", ...clone(spec) });
+      for (const child of childIds) groups.add(child);
+      return group;
     },
     play: (actionList, timing) => {
       const duration = finite(timing.duration, "duration");
@@ -425,7 +468,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
   // Retained callbacks may calculate property values, but cannot mutate the builder.
   for (const key of Object.keys(context)) {
     const fn = (context as unknown as Record<string, unknown>)[key];
-    if (typeof fn === 'function' && !['molecularBackboneGeometry','articulatedChainPose','dijkstra','nucleicDuplex','nucleicTranscript'].includes(key)) (context as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => {
+    if (typeof fn === 'function' && !['nucleicTranslationCycle','nucleicTranscriptionCycle','nucleicSplice','nucleicThread','peptidePose','molecularBackboneGeometry','articulatedChainPose','dijkstra','nucleicDuplex','nucleicTranscript'].includes(key)) (context as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => {
       if (!building) throw new Error('Scene building APIs cannot be called from reactive bindings');
       return fn(...args);
     };

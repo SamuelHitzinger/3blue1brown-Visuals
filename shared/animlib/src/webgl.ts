@@ -7,6 +7,8 @@ import { VERTEX_FLOATS, textureGLSL } from './texture-shader.js';
 import type { CameraState, Frame } from './types.js';
 import type { RenderCommand } from './composition.js';
 import { GLCompositor } from './gl-compositor.js';
+import {GLDepthFocus} from './gl-depth-focus.js';
+import {apertureSamples,normalizeFocus} from './depth-focus.js';
 
 /** The same packed triangles and camera data are submitted by both backends. */
 export interface RenderBatch {
@@ -18,6 +20,7 @@ export interface RenderBatch {
   opaqueVertices: number;
   floatCount: number;
   commands?: RenderCommand[];
+  screen?:boolean;
 }
 
 const vertex = `#version 300 es
@@ -42,6 +45,7 @@ uniform vec4 objectInfo[${MAX_INSTANCES}];
 uniform vec4 focus;
 uniform vec4 angles;
 uniform vec4 viewport;
+uniform vec4 lens;
 out vec4 vColor;
 out vec3 vNormal;
 out float vLit;
@@ -71,6 +75,7 @@ void main() {
   float divisor=mix(1.,depth/angles.z,angles.w);
   float halfHeight=viewport.z/2.;
   vec4 position=vec4(p.x/halfHeight*viewport.y/viewport.x,p.y/halfHeight,(depth-0.01)/(angles.z*100.-0.01)*divisor,divisor);
+  if(lens.z>0.&&screen<0.5){vec2 shift=lens.xy*(depth/lens.z-1.);position.xy+=vec2(shift.x/halfHeight*viewport.y/viewport.x,shift.y/halfHeight);}
   if(screen>0.5) position=vec4(world.x*2./viewport.x,world.y*2./viewport.y,0.0001,1.);
   position.z-=layer*0.00000002*position.w;
   position.xy+=viewportOffset*2.*position.w;
@@ -82,6 +87,7 @@ void main() {
   vLit=lit; vColor=color;vImageUV=imageUV;
   vTexPosition=texPosition;vTexKind=texKind;vTexColor=texColor;vTexSeed=texSeed;
   vMaterial=material;vEmission=emission;vViewPosition=p;vBumpStrength=bumpStrength*info.y;vViewDirection=mix(vec3(0.,0.,1.),vec3(-p.x,-p.y,depth),angles.w);
+  if(lens.z>0.&&screen<0.5)vViewDirection=mix(vec3(lens.xy/lens.z,1.),vec3(lens.xy-p.xy,depth),angles.w);
 }`;
 const fragment = `#version 300 es
 precision highp float;
@@ -136,6 +142,8 @@ export class WebGLBackend {
   private viewport: WebGLUniformLocation;
   private light: WebGLUniformLocation;
   private ambient: WebGLUniformLocation;
+  private lens:WebGLUniformLocation;
+  private depthFocus?:GLDepthFocus;
   private capacity = 0;
   private objectTransform: WebGLUniformLocation;
   private objectInfo: WebGLUniformLocation;
@@ -170,6 +178,7 @@ export class WebGLBackend {
       };
       this.focus = uniform('focus'); this.angles = uniform('angles'); this.viewport = uniform('viewport');
       this.light = uniform('light'); this.ambient = uniform('ambient');
+      this.lens=uniform('lens');
       this.objectTransform = uniform('objectTransform[0]'); this.objectInfo = uniform('objectInfo[0]');
       gl.bindVertexArray(vao); gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
       this.attributes();
@@ -211,6 +220,8 @@ export class WebGLBackend {
   render(data: Float32Array, batches: RenderBatch[], clear: number[], width: number, height: number): void {
     const gl = this.gl;
     if (gl.isContextLost()) return;
+    const focuses=batches.map(b=>b.screen?undefined:normalizeFocus(b.camera.focus));
+    if(focuses.some(f=>f?.aperture)){GLDepthFocus.validate(gl);this.depthFocus??=new GLDepthFocus(gl);this.depthFocus.prepare(width,height);}
     gl.useProgram(this.program); gl.bindVertexArray(this.vao); gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
     if (data.byteLength > this.capacity) {
       this.capacity = Math.max(256, data.byteLength * 2);
@@ -227,7 +238,7 @@ export class WebGLBackend {
     this.images?.beginFrame();
     const used = new Set<RetainedMesh>();
     let first = 0;
-    for (const batch of batches) {
+    for (const [batchIndex,batch] of batches.entries()) {
       gl.useProgram(this.program);
       // Match WebGPU's independent depth attachment clear for every view/overlay.
       gl.disable(gl.SCISSOR_TEST); gl.depthMask(true); gl.clear(gl.DEPTH_BUFFER_BIT);
@@ -238,6 +249,7 @@ export class WebGLBackend {
       gl.uniform4f(this.focus, ...c.target, 0);
       gl.uniform4f(this.angles, c.yaw, c.pitch, c.distance, c.perspective);
       gl.uniform4f(this.viewport, batch.width, batch.height, c.height, 0);
+      gl.uniform4f(this.lens,0,0,0,0);
       const light = lightingUniform(batch.lighting, c);
       gl.uniform4f(this.light, light[0], light[1], light[2], light[3]);
       gl.uniform4f(this.ambient, light[4], 0, 0, 0);
@@ -257,10 +269,15 @@ export class WebGLBackend {
           gl.drawElementsInstanced(gl.TRIANGLES,command.mesh.indices.length,gl.UNSIGNED_INT,0,instances.length);
         } else gl.drawArrays(gl.TRIANGLES,command.first,command.count);
       };
+      const renderCommands=(parent:WebGLFramebuffer|null)=>{
       if (commands.some(command => 'children' in command)) {
         this.compositor ??= new GLCompositor(gl);
-        this.compositor.render(commands,batch.rect,width,height,draw);
+        this.compositor.render(commands,batch.rect,width,height,draw,parent);
       } else for (const command of commands) if ('first' in command) draw(command);
+      };
+      const focus=focuses[batchIndex];
+      if(focus?.aperture){this.depthFocus??=new GLDepthFocus(gl);const samples=apertureSamples(focus.samples);this.depthFocus.render(batch.rect,width,height,focus.samples,(parent,i)=>{gl.useProgram(this.program);gl.uniform4f(this.lens,samples[i][0]*focus.aperture,samples[i][1]*focus.aperture,focus.distance,0);renderCommands(parent);});}
+      else renderCommands(null);
       first += count;
     }
     this.images?.endFrame();
@@ -271,6 +288,7 @@ export class WebGLBackend {
   }
 
   dispose(): void {
+    this.depthFocus?.dispose();
     this.images?.dispose();
     this.compositor?.dispose();
     for (const resource of this.meshes.values()) {

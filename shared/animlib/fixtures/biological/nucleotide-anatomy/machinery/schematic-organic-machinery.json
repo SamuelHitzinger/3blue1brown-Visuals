@@ -1,0 +1,108 @@
+{
+  "id": "schematic-organic-machinery",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic local units",
+  "provenance": {
+    "source": "Original four-lobe channel scaffold in prepare-nucleotide-anatomy.mjs",
+    "sourceHash": "5d4ec318f655cfcb7fdc1a399e17e082b18e0e71974ea924d85084af63bc785b",
+    "creator": "Original animlib biological proof",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Gaussian schematic lobes",
+      "version": "1",
+      "options": {
+        "resolution": 28
+      }
+    },
+    "selection": "Four original subunit scaffolds",
+    "modifications": [
+      "Smooth Gaussian union within each subunit; central aperture retained."
+    ],
+    "fidelity": "Original illustrative machinery, not deposited polymerase or recovered source geometry."
+  },
+  "parts": [
+    {
+      "id": "lobe-0",
+      "vertexCount": 2918,
+      "triangleCount": 5832,
+      "positions": {
+        "path": "blobs/afb7d40a11bbcb20bbd3b9d07814f85a8cbfe4de78fe0d3ed68c53bb67145b61.bin",
+        "hash": "afb7d40a11bbcb20bbd3b9d07814f85a8cbfe4de78fe0d3ed68c53bb67145b61",
+        "byteLength": 35016
+      },
+      "indices": {
+        "path": "blobs/93613ab937e885912864ea5f0756796c645161950c7a8acbdfed1bd0198ad7fb.bin",
+        "hash": "93613ab937e885912864ea5f0756796c645161950c7a8acbdfed1bd0198ad7fb",
+        "byteLength": 69984
+      },
+      "normals": {
+        "path": "blobs/59d3e4fcad75539809698abc98312f4787a7ade21e5863e79ab5ef31451eb722.bin",
+        "hash": "59d3e4fcad75539809698abc98312f4787a7ade21e5863e79ab5ef31451eb722",
+        "byteLength": 35016
+      }
+    },
+    {
+      "id": "lobe-1",
+      "vertexCount": 2574,
+      "triangleCount": 5144,
+      "positions": {
+        "path": "blobs/5352d7d65ff2ea3168dd12f62d5a3b78e1933b8d6bcf4a1d961a9a370f5a0f54.bin",
+        "hash": "5352d7d65ff2ea3168dd12f62d5a3b78e1933b8d6bcf4a1d961a9a370f5a0f54",
+        "byteLength": 30888
+      },
+      "indices": {
+        "path": "blobs/ec424b8b9e6c52addda05c2a3f711efaa94e6c1444c9ed65494698db96c3c2b9.bin",
+        "hash": "ec424b8b9e6c52addda05c2a3f711efaa94e6c1444c9ed65494698db96c3c2b9",
+        "byteLength": 61728
+      },
+      "normals": {
+        "path": "blobs/80af696b6af783d233fce80a3d3b392a40f641ac1f1cda0a00a8c97bb7d10074.bin",
+        "hash": "80af696b6af783d233fce80a3d3b392a40f641ac1f1cda0a00a8c97bb7d10074",
+        "byteLength": 30888
+      }
+    },
+    {
+      "id": "lobe-2",
+      "vertexCount": 2792,
+      "triangleCount": 5580,
+      "positions": {
+        "path": "blobs/af1b0e769a01619f8d3159bb6a33c4720ce098aec3be2277455b07823ff52358.bin",
+        "hash": "af1b0e769a01619f8d3159bb6a33c4720ce098aec3be2277455b07823ff52358",
+        "byteLength": 33504
+      },
+      "indices": {
+        "path": "blobs/5d8efd5715bbdc938bc10d2b3eb617a7945ed9c415350d4fddef3c5997e38880.bin",
+        "hash": "5d8efd5715bbdc938bc10d2b3eb617a7945ed9c415350d4fddef3c5997e38880",
+        "byteLength": 66960
+      },
+      "normals": {
+        "path": "blobs/67a94e48db76541b88f26a3ecc7c1776d3f12524c23645818de562cca5ee68aa.bin",
+        "hash": "67a94e48db76541b88f26a3ecc7c1776d3f12524c23645818de562cca5ee68aa",
+        "byteLength": 33504
+      }
+    },
+    {
+      "id": "lobe-3",
+      "vertexCount": 2616,
+      "triangleCount": 5228,
+      "positions": {
+        "path": "blobs/7fcc9bf8a57a62efee1c4683c5a3de15afb8afa552735132ade4677b9e741775.bin",
+        "hash": "7fcc9bf8a57a62efee1c4683c5a3de15afb8afa552735132ade4677b9e741775",
+        "byteLength": 31392
+      },
+      "indices": {
+        "path": "blobs/05a94da8d6ca18471bf966524cbe0161760bc26d4dd8af37731a222ff2874bb3.bin",
+        "hash": "05a94da8d6ca18471bf966524cbe0161760bc26d4dd8af37731a222ff2874bb3",
+        "byteLength": 62736
+      },
+      "normals": {
+        "path": "blobs/9ee03eb4cff198afae83c2e0ed780b1639073e64e7cbb494159100f1283c9abc.bin",
+        "hash": "9ee03eb4cff198afae83c2e0ed780b1639073e64e7cbb494159100f1283c9abc",
+        "byteLength": 31392
+      }
+    }
+  ],
+  "hash": "94d611c56f3821aad1e79e71f157e41e26efc6e03e1ddb117120467a668b9f55"
+}

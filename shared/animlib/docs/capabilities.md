@@ -39,7 +39,10 @@ Keep these instructions in nonspoken planning; they are not narration.
   structure importer preserves first-model deposited heavy atoms and explicit
   gaps; bonds require CONECT, supplied templates, or opted-in peptide rules.
   Explicit antiparallel DNA duplex and sequential complementary RNA factories
-  support schematic opening/incorporation. These do not infer atomistic chemistry
+  support schematic opening/incorporation, whole-frame incoming rotation and
+  continuous fixed-link RNA emergence. Explicit peptide component templates and
+  absolute phi/psi torsions construct idealized atomic poses with persistent IDs;
+  those poses are separate from any deposited conformation. These do not infer atomistic chemistry
   or simulate folding. Keep measured structure and illustrative machinery distinct.
 - **Prepared models and images:** the host can provide a descriptor catalog of
   immutable static model/image assets. Scene authors instantiate named assets;
@@ -82,6 +85,17 @@ Keep these instructions in nonspoken planning; they are not narration.
   and selective accents. Keep each concept's color consistent across scenes.
 
 ## Motion and transformation
+
+Identity-based collections support ordinary custom grouped content, horizontal or
+vertical layout, swaps, and complete permutations through separated motion lanes.
+The author controls insertion/removal visibility and supplies the algorithm's
+actual state; the helper does not run a sorting or queue algorithm.
+
+Aligned sampled-state vectors can drive trace markers and an explicit 3D linear
+projection together. Missing samples split paths; prefixes retain fixed topology
+and exact current endpoints. Numeric labels use existing `countTo` tracks at the
+same sample knots. This supports original synthetic or supplied measured data;
+it does not infer a biological manifold. See [sampled state](sampled-state.md).
 
 Objects can move, rotate, scale, change style, fade in or out, and animate together
 or in sequence, with explicit holds. Groups can move as one object; isolated

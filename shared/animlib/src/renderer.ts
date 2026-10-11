@@ -21,9 +21,11 @@ export { triangulateContours } from './render-geometry.js';
 import { validateRenderableScene } from './render-validation.js';
 import type { AssetGeometryResolver } from './asset-types.js';
 import {sceneAssetRefs} from './asset-geometry.js';
+import {apertureSamples,normalizeFocus,focusPreflight,FocusBudgetError} from './depth-focus.js';
+import {GPUDepthFocus} from './gpu-depth-focus.js';
 
 const shader=`
-struct Camera { focus: vec4f, angles: vec4f, viewport: vec4f, light: vec4f, ambient: vec4f };
+struct Camera { focus: vec4f, angles: vec4f, viewport: vec4f, light: vec4f, ambient: vec4f, lens: vec4f };
 @group(0) @binding(0) var<uniform> camera: Camera;
 struct ObjectState { transform: mat4x4f, info: vec4f };
 @group(1) @binding(0) var<uniform> objects: array<ObjectState,32>;
@@ -44,6 +46,7 @@ struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @
   let halfHeight=camera.viewport.z/2.;
   var output:Output;
   output.position=vec4f(p.x/halfHeight*camera.viewport.y/camera.viewport.x,p.y/halfHeight,(depth-0.01)/(camera.angles.z*100.-0.01)*divisor,divisor);
+  if(camera.lens.z>0. && screen<0.5){let shift=camera.lens.xy*(depth/camera.lens.z-1.);output.position.x+=shift.x/halfHeight*camera.viewport.y/camera.viewport.x;output.position.y+=shift.y/halfHeight;}
   if(screen>0.5) { output.position=vec4f(world.x*2./camera.viewport.x,world.y*2./camera.viewport.y,0.0001,1.); }
   // Tiny deterministic tie bias fixes coplanar painter order while preserving 3D depth.
   output.position.z-=layer*0.00000002*output.position.w;
@@ -55,6 +58,7 @@ struct Output { @builtin(position) position: vec4f, @location(0) color: vec4f, @
   output.texPosition=texPosition;output.texKind=texKind;output.texColor=texColor;output.texSeed=texSeed;
   output.material=material;output.emission=emission;output.viewPosition=p;output.bumpStrength=bumpStrength*object.info.y;
   output.viewDirection=mix(vec3f(0.,0.,1.),vec3f(-p.x,-p.y,depth),camera.angles.w);
+  if(camera.lens.z>0. && screen<0.5){output.viewDirection=mix(vec3f(camera.lens.xy/camera.lens.z,1.),vec3f(camera.lens.xy-p.xy,depth),camera.angles.w);}
   return output;
 }
 ${textureWGSL}
@@ -119,6 +123,8 @@ export class CanvasRenderer {
   private transparentPipeline:GPURenderPipeline|undefined;
   private transparentBindGroup:GPUBindGroup|undefined;
   private compositor:GPUCompositor|undefined;
+  private depthFocus:GPUDepthFocus|undefined;
+  private focusCameras:GPUBuffer[]=[];
   private pipelineDescriptor:GPURenderPipelineDescriptor|undefined;
   private depthOnlyPipeline:GPURenderPipeline|undefined;
   private uniform:GPUBuffer|undefined;
@@ -153,6 +159,7 @@ export class CanvasRenderer {
     this.onCanvasChange?.(next);
   }
   private releaseGPU():void {
+    this.depthFocus?.dispose();this.depthFocus=undefined;for(const buffer of this.focusCameras)buffer.destroy();this.focusCameras=[];
     this.gpuRetained?.dispose();this.gpuRetained=undefined;
     this.gpuImages?.dispose();this.gpuImages=undefined;this.imagePipeline=undefined;this.imageTransparentPipeline=undefined;this.imageDepthPipeline=undefined;this.imageDescriptor=undefined;this.imageCameras.clear();
     this.compositor?.dispose();this.compositor=undefined;
@@ -351,7 +358,7 @@ export class CanvasRenderer {
     if(this.disposed)throw new Error('Renderer is disposed.');
     this.imageTransparentPipeline=await device.createRenderPipelineAsync({...this.imageDescriptor,depthStencil:{...descriptor.depthStencil!,depthWriteEnabled:false}});
     if(this.disposed)throw new Error('Renderer is disposed.');
-    this.uniform=device.createBuffer({size:80,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+    this.uniform=device.createBuffer({size:96,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
     this.bindGroup=device.createBindGroup({layout:this.pipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:this.uniform}}]});
     this.transparentBindGroup=device.createBindGroup({layout:this.transparentPipeline.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:this.uniform}}]});
     if(lost)throw new Error(lost);
@@ -386,7 +393,7 @@ export class CanvasRenderer {
   }
   private reportError(error:Error):void {
     this.errorGeneration++;
-    if(error instanceof VertexBufferLimitError){
+    if(error instanceof VertexBufferLimitError||error instanceof FocusBudgetError){
       // A scene retry cannot replace an outstanding backend failure with a
       // recoverable budget error, even if that retry is itself oversized.
       if(this.errorKind==='backend')return;
@@ -413,10 +420,14 @@ export class CanvasRenderer {
     const camera=this.effectiveCamera(frame.camera,options.orbit);
     const palette=paletteResolver(this.hostPalette??options.palette);
     const lighting=frame.lighting??options.lighting;
+    try {
+      const focused=[camera,...this.regions.map(v=>v.camera)].map(c=>normalizeFocus(c.focus)).filter(f=>f&&f.aperture>0);
+      focusPreflight(this.canvas.width,this.canvas.height,focused.map(f=>({samples:f!.samples,vertices:0})));
+    }catch(error){this.reportError(error instanceof Error?error:new Error(String(error)));return;}
     this.retained.beginFrame();
     const retention=retentionForFrame({...frame,lighting})?this.retained:undefined;
     const mainItems=addPlanarShadows(buildDrawItems(frame,camera,width,height,palette,undefined,false,retention,undefined,this.assetGeometry),lighting,camera,palette);
-    const batches=[{camera,width,height,rect:undefined as number[]|undefined,items:mainItems.filter(i=>!i.screen),id:''}];
+    const batches=[{camera,width,height,rect:undefined as number[]|undefined,items:mainItems.filter(i=>!i.screen),id:'',screen:false}];
     for(const region of this.regions) {
       const [left,top,w,h]=region.rect;
       // Round shared edges once: adjacent regions neither overlap nor leave gaps at fractional DPR.
@@ -425,10 +436,12 @@ export class CanvasRenderer {
       if(pixelWidth<1||pixelHeight<1)continue;
       const viewWidth=width*pixelWidth/this.canvas.width,viewHeight=height*pixelHeight/this.canvas.height;
       const viewCamera=this.effectiveCamera(region.camera,region.orbit,region.id);
-      batches.push({camera:viewCamera,width:viewWidth,height:viewHeight,rect:[x,y,pixelWidth,pixelHeight],items:addPlanarShadows(buildDrawItems(frame,viewCamera,viewWidth,viewHeight,palette,region.id,false,retention,undefined,this.assetGeometry),lighting,viewCamera,palette),id:region.id});
+      const items=addPlanarShadows(buildDrawItems(frame,viewCamera,viewWidth,viewHeight,palette,region.id,false,retention,undefined,this.assetGeometry),lighting,viewCamera,palette);
+      // Screen vertices bypass lens displacement; keep regional group/order semantics intact.
+      batches.push({camera:viewCamera,width:viewWidth,height:viewHeight,rect:[x,y,pixelWidth,pixelHeight],items,id:region.id,screen:false});
     }
     // Scene-wide screen labels stay above every regional 3D view.
-    if(mainItems.some(i=>i.screen))batches.push({camera,width,height,rect:undefined,items:mainItems.filter(i=>i.screen),id:''});
+    if(mainItems.some(i=>i.screen))batches.push({camera,width,height,rect:undefined,items:mainItems.filter(i=>i.screen),id:'',screen:true});
     let vertexOffset=0;
     const ordered=batches.map(batch=>{
       const composition=composeItems(batch.items,vertexOffset);
@@ -436,6 +449,9 @@ export class CanvasRenderer {
       return {...batch,...composition,lighting,floatCount,opaqueVertices:composition.commands.filter(c=>'first' in c&&c.opaque).reduce((n,c)=>n+('count' in c?c.count:0),0)};
     });
     try {
+    const submitted=(commands:import('./composition.js').RenderCommand[]):number=>commands.reduce((n,c)=>n+('children' in c?submitted(c.children)*2:(c.mesh?.indices.length??c.count)*(c.instances?.length??1)),0);
+    const submissions=(commands:import('./composition.js').RenderCommand[]):number=>commands.reduce((n,c)=>n+('children' in c?submissions(c.children)*2+1:1),0);
+    focusPreflight(this.canvas.width,this.canvas.height,ordered.flatMap(b=>{const f=normalizeFocus(b.camera.focus);return !b.screen&&f?.aperture?[{samples:f.samples,vertices:submitted(b.commands),draws:submissions(b.commands)}]:[];}));
     const floatCount=ordered.reduce((n,batch)=>n+batch.floatCount,0);
     // Reject oversized scene data before the combined CPU allocation or any GPU
     // allocation/write/submit. Keep the last good frame and allow a smaller retry.
@@ -462,16 +478,19 @@ export class CanvasRenderer {
     const encoder=device.createCommandEncoder();
     const colorView=this.colorTexture!.createView(),target=this.context!.getCurrentTexture().createView(),depthView=this.depthTexture!.createView();
     this.compositor?.beginFrame();
+    let focusCameraIndex=0;
     for(const [index,batch] of ordered.entries()) {
       let resources=batch.id?this.viewResources.get(batch.id):{uniform:this.uniform!,bindGroup:this.bindGroup!,transparentBindGroup:this.transparentBindGroup!};
       if(!resources){
-        const uniform=device.createBuffer({size:80,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+        const uniform=device.createBuffer({size:96,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
         resources={uniform,bindGroup:device.createBindGroup({layout:this.pipeline!.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:uniform}}]}),transparentBindGroup:device.createBindGroup({layout:this.transparentPipeline!.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:uniform}}]})};
         this.viewResources.set(batch.id,resources);
       }
       const c=batch.camera;
-      device.queue.writeBuffer(resources.uniform,0,new Float32Array([...c.target,0,c.yaw,c.pitch,c.distance,c.perspective,batch.width,batch.height,c.height,0,...lightingUniform(lighting,c)]));
+      const cameraData=[...c.target,0,c.yaw,c.pitch,c.distance,c.perspective,batch.width,batch.height,c.height,0,...lightingUniform(lighting,c),0,0,0,0];
+      device.queue.writeBuffer(resources.uniform,0,new Float32Array(cameraData));
       const descriptor:GPURenderPassDescriptor={colorAttachments:[{view:colorView,resolveTarget:target,clearValue:{r:clear[0],g:clear[1],b:clear[2],a:1},loadOp:index===0?'clear':'load',storeOp:'store'}],depthStencilAttachment:{view:depthView,depthClearValue:1,depthLoadOp:'clear',depthStoreOp:'store'}};
+      const renderBatch=(descriptor:GPURenderPassDescriptor,resources:{uniform:GPUBuffer;bindGroup:GPUBindGroup;transparentBindGroup:GPUBindGroup})=>{
       if(batch.commands.some(command=>'children' in command)) {
         this.compositor??=new GPUCompositor(device,this.format!);
         this.depthOnlyPipeline??=device.createRenderPipeline({...this.pipelineDescriptor!,fragment:{...this.pipelineDescriptor!.fragment!,targets:[{format:this.format!,writeMask:0}]}});
@@ -486,12 +505,22 @@ export class CanvasRenderer {
         for(const command of batch.commands)if('first' in command){pass.setPipeline(command.opaque?this.pipeline!:this.transparentPipeline!);pass.setBindGroup(0,command.opaque?resources.bindGroup:resources.transparentBindGroup);this.drawGPU(pass,command,resources.uniform,command.opaque?this.pipeline!:this.transparentPipeline!,false);}
         pass.end();
       }
+      };
+      const focus=normalizeFocus(c.focus);
+      if(!batch.screen&&focus?.aperture){
+        this.depthFocus??=new GPUDepthFocus(device,this.format!);const samples=apertureSamples(focus.samples);
+        this.depthFocus.render(encoder,descriptor,batch.rect,this.canvas.width,this.canvas.height,focus.samples,(sampleDescriptor,i)=>{
+          const uniform=this.focusCameras[focusCameraIndex++]??=device.createBuffer({size:96,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+          device.queue.writeBuffer(uniform,0,new Float32Array([...cameraData.slice(0,20),samples[i][0]*focus.aperture,samples[i][1]*focus.aperture,focus.distance,0]));
+          renderBatch(sampleDescriptor,{uniform,bindGroup:device.createBindGroup({layout:this.pipeline!.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:uniform}}]}),transparentBindGroup:device.createBindGroup({layout:this.transparentPipeline!.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:uniform}}]})});
+        });
+      }else renderBatch(descriptor,resources);
     }
     device.queue.submit([encoder.finish()]);
     this.gpuRetained.endFrame();this.gpuImages?.endFrame();
     this.frameRendered();
     } catch(error) {
-      if(error instanceof VertexBufferLimitError){this.reportError(error);return;}
+      if(error instanceof VertexBufferLimitError||error instanceof FocusBudgetError){this.reportError(error);return;}
       this.errorKind='backend';
       // Frame acquisition can fail before device.lost reaches the playback loop.
       if(this.device&&!this.disposed) {

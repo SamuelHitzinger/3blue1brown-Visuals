@@ -15,10 +15,10 @@
 
 | Agent | Model / effort | Ownership | Status |
 |---|---|---|---|
-| molecular_builder | gpt-6-astra / high | molecular-backbone modules, tests, proof | core tests pass, proof in progress |
-| math_builder | gpt-6-astra / high | diagrams modules, tests, proofs | core tests pass, integration regressions pending |
-| path_engine | gpt-6-astra / high | shared path engine and helper integration | implementing pinned APIs |
-| root | orchestrator | design, plan, progress, integration | reference coverage and next asset wave |
+| molecular_builder | gpt-6-astra / high | peptide torsion poses, RNA emergence and biological motion proofs | motion implementation and native proofs |
+| math_frontier_builder | gpt-6-astra / high | matrix term transport, identity-preserving frontier permutations | native proofs and author verification |
+| neural_trajectory_builder | gpt-6-astra / high | sampled state and linked traces/vector/spatial trajectory | native proof and author verification |
+| root | orchestrator | design, source evidence, integration, review scheduling | independent input audits and next review wave |
 
 ## Decisions
 
@@ -171,3 +171,144 @@ reference coverage and artist fidelity remain open; no whole-library parity clai
   transport, multi-candidate frontier reordering, neural traces to spatial
   trajectories and higher-density molecular/local folding/cinematic mechanisms.
   Passing bounded proofs does not constitute broad near-identical fidelity.
+
+## Scientific fixture checkpoint and deeper motion wave
+
+- `f1a86b5` checkpoints licensed biological fixtures, source-motion supplements,
+  independent visual round2, revised proofs, and measured source/asset reuse
+  optimizations. The branch remains `amilibsam`; all commits are local.
+- Independent round2 accepted the bounded shear, discrete graph relaxation,
+  residual-emphasis, and optimized Artem rate/vector proofs. Graph layout
+  repairs were rerendered and checked at both aspect ratios. These verdicts
+  apply to the reviewed clips, not entire channels or unimplemented mechanisms.
+- Independent biological review accepted the current deposited-structure
+  correspondence and schematic incorporation correctness/readability. Reference
+  motion remains revise: local coil formation and global compaction, rotating
+  arrivals, RNA emergence, relative machinery travel, and closer triplet framing
+  require new proofs. See `biological-evaluation-round1.md`.
+- Source review expanded with75 complete matrix frames at nominal1fps across
+  248.999991–322.999852s and41 complete neural-trajectory frames across
+  260–299.999912s. Root viewed all ordered sheets. Actual uninterrupted playback
+  additionally supplied94 matrix samples at297.109278–311.022985s and178 neural
+  samples at264.025364–290.096063s. All those playback samples were full-frame,
+  readyState4 and playing; assigned authors inspect and document dense coverage.
+- Current workers are all Astra/high. The runtime supports root plus three
+  simultaneous subagents; freed slots are immediately reassigned to independent
+  technical review, direct visual comparison, or the next evidenced capability.
+- New motion APIs are not accepted solely on author tests. Root found sparse
+  time-array validation in sampled state and sparse permutation atomicity in
+  collections; workers received concrete regression cases before release.
+- A prior report of missing static movie glyphs was retracted after identical
+  file hashes displayed differently and raw decoded-frame comparisons showed no
+  corresponding large pixel loss. Suspected image-display artifacts must be
+  separated from actual encoded-frame changes before renderer fixes.
+- Full reference fidelity remains open. Nucleus environment/focus, splicing,
+  pore transit, and translation have explicit evidence but are not yet accepted
+  library capabilities. The two native exact GPU pixel-parity failures also
+  remain recorded; no assertion or production sample-count weakening is approved.
+- Root integrated run at02:04:49 passes868/868 tests across69 files with two
+  workers and the normal production VM limits. Typecheck/build also pass at
+  that snapshot. Later scene revisions retain their focused semantic checks.
+- New matrix transport passed all four independent visual gates. Neural proof
+  requires closer source composition, temporal path color and a stronger orbit;
+  its author is repairing those choices. Frontier revision2 now passes its
+  bounded record-layout comparison after compact three-band cards, a second
+  separator and sans fixed-cost text were rendered at both aspects. Exact source
+  reorder easing still needs denser source evidence.
+- Root repaired group ownership and failed-construction parent reservation:
+  foreign handles with colliding IDs, duplicate children, and later validation
+  failures now reject before reserving child membership. Three regression cases
+  failed first; persistent handles and focused compiler/asset/collection suites
+  passed after the repair. Independent code review remains required.
+
+## Independent motion repairs and processing wave
+
+- `2dc0248` is a local `amilibsam` checkpoint containing only the independently
+  reviewed normal-preparation optimization and its work-count regressions.
+  Root's fresh focused check passes 18/18. The paired CPU preparation measurement
+  was 34.54 to 31.62 ms; independent review confirmed exact packed output and
+  eliminated work, but timing varies under concurrent load. No push or merge.
+- Independent review accepted the matrix transport, frontier revision2, and
+  final neural trajectory revision2 bounded clips. Dense Reducible playback
+  additionally establishes compact queue insertion/pop choreography, which
+  still differs from the general separated-lane reorder demonstration.
+- Collection preflight now covers current-scene handles, every generated ID,
+  and element budgets before wrapping. Independent review found one remaining
+  sparse-entry case; three failure-first regressions and dense input capture
+  repair it. Root reviewed that narrow diff and reran the relevant recovery
+  tests. The repair review reports 47/47 focused checks and 4,902 valid RNA poses.
+- RNA emergence uses analytic whole-schedule fold rejection. Its terminal
+  nucleotide retains the docked frame during pure translation, eliminating an
+  onset snap. Default output, positions, links, and nonterminal geometry retain
+  exact sampled compatibility; the terminal plate was deliberately rerendered.
+- Four revised biology films are frozen with hashes in
+  `biological-revision2-report.md`. Independent direct comparison is active.
+  Bright peptide backbone staging and rounded nucleotide anatomy improve the
+  earlier proofs; full source-style fidelity remains unapproved.
+- Root captured 179 full-frame playing samples for splicing/pore export and
+  486 for translation assembly through release. Coverage, pause/resume gap,
+  observations, and source-driven acceptance are recorded in
+  `nucleus-processing-motion-supplement.md`.
+- New processing helpers are in active development: deterministic fragment
+  cut/closure/join and exact polyline arc-distance transport through an aperture.
+  Root wired their host/public QuickJS APIs with three failure-first integration
+  checks. Their authored geometry tests do not replace pending independent
+  technical and visual review.
+- Root integrated snapshot at 02:35:35 passes **905/905 tests in 74 files** with
+  two workers and normal host access for fixture realpaths. Typecheck and build
+  pass at that snapshot. Existing native MSAA parity failures remain separate;
+  this is not a whole-GPU-suite pass.
+- Active Astra/high workers: molecular_builder (new moving reaction window),
+  rna_processing_builder (splicing/pore helpers and proofs), and
+  biology_revision_visual_reviewer (four frozen film comparisons). Root handles
+  shared API integration and keeps the three available worker slots occupied.
+- Next source-backed gaps: moving active chemistry, stronger organic/focus
+  presentation, translation attachment/transfer cycles, cell-scale staging,
+  and the remaining compact queue choreography. Goal remains active.
+
+## Source-driven revisions and optical focus
+
+- Runtime permits three concurrent subagents plus root. All worker launches use
+  `gpt-6-astra` with high reasoning, as requested. Freed slots immediately move
+  to independent review or the next implementation; no main-branch work or push.
+- Root integrated moving-transcription and translation factories into core,
+  public types, host scenes and retained QuickJS callbacks. Each integration had
+  three missing-API failures before wiring, then passed host/VM and reverse seeks.
+- Independent RNA processing review viewed all twelve source sheets, sixteen
+  candidate sheets and native frames. It found a finite-radius aperture defect:
+  centerline-only clipping allowed spheres to hit a membrane face. The repaired
+  preflight expands the slab by chain radius and bounds radial distance at both
+  clipped endpoints. Root independently checked the sufficiency argument and
+  reran all eleven processing/integration checks. Broader cellular staging and
+  visible pre-cut loop formation remain in revision.
+- Independent transcription review viewed all sixteen baseline/focus sheets and
+  native frames. It found exact event-time inconsistencies from subtract/divide
+  rounding. Direct comparisons against declared arrival/docking times now define
+  visibility, incorporated edges and completion; root reviewed the patch and
+  reran eleven focused checks including adjacent representable times. Frozen
+  media predates this boundary correction and is retained as historical evidence.
+  Active-site occlusion and rigid whole-RNA rotation remain visual failures.
+- Real aperture accumulation now works in native WebGPU and browser WebGPU/WebGL2,
+  with animated focus distance, 8/16/32 samples, unchanged zero-aperture path,
+  sharp annotations and bounded resources. Independent optical/technical review
+  is active. Author's complete native suite is 146/148: only the two recorded
+  baseline exact-MSAA parity failures remain. No assertions were relaxed.
+- Translation's first complete proof covers assembly, three mapped additions,
+  A/P transfer, advance, stop, release and separation. The author is extending its
+  original subunit/tunnel geometry and mapped product before independent review;
+  its first sparse schematic proof is not accepted as Nucleus fidelity.
+- Root's peptide revision uses offline inverse kinematics to keep four helix
+  blocks side-visible, reusable instanced bead geometry, and a subdivided envelope
+  derived from the unchanged compact endpoint. Meaningful pose checks caught
+  loop-joint warm-start resets between keyframes; preserving those controls and
+  denser early sampling repairs the transient twist. At 03:05 the three peptide
+  checks plus eleven transcription checks pass. Film revision remains active.
+- Current active roles: depth-focus independent reviewer, translation builder,
+  RNA processing revision builder; root handles peptide and integration. These
+  statuses supersede the preceding historical worker list. Full reference
+  fidelity and the overall goal remain open.
+- Root's 03:09:36 integrated snapshot passes **940/940 tests in 81 files**,
+  followed by typecheck and build. This includes three still-active peptide
+  staging checks outside the stable-foundation checkpoint. Independent focus
+  review now accepts its bounded optical feature and diagnostic; biological
+  mechanism/art-direction revisions remain separate open gates.

@@ -1,4 +1,14 @@
+import type { SampledState, SampledStateOptions } from './diagrams/sampled-state-types.js';
+export type * from './diagrams/sampled-state-types.js';
 import type { NucleicDuplexProps, NucleicDuplexResult, NucleicTranscriptProps, NucleicTranscriptResult } from './nucleic-types.js';
+import type { NucleicSpliceProps, NucleicSpliceResult, NucleicThreadProps, NucleicThreadResult } from './nucleic-processing-types.js';
+export type * from './nucleic-processing-types.js';
+import type { NucleicTranscriptionCycleProps, NucleicTranscriptionCycleResult } from './nucleic-transcription-cycle-types.js';
+export type * from './nucleic-transcription-cycle-types.js';
+import type { NucleicTranslationProps, NucleicTranslationResult } from './nucleic-translation-types.js';
+export type * from './nucleic-translation-types.js';
+import type { PeptideSpec, PeptidePose } from './peptide-types.js';
+export type * from './peptide-types.js';
 export type * from './nucleic-types.js';
 export type * from './molecular-structure-types.js';
 import type { ExplanatoryGeometry, ScalarColors } from "./explanatory-types.js";
@@ -185,6 +195,15 @@ export interface ViewState {
   orbitHitTest?: "geometry";
 }
 
+export interface CameraFocus {
+  /** Optical distance along the camera forward axis, in world units (0.01–1e6). */
+  distance:number;
+  /** Lens radius in world units (0–1000). Zero preserves exact pinhole output. */
+  aperture:number;
+  /** Deterministic disk samples, default 16. Fixed during an animated focus change. */
+  samples?:8|16|32;
+}
+
 export interface CameraState {
   yaw: number;
   pitch: number;
@@ -192,6 +211,8 @@ export interface CameraState {
   height: number;
   distance: number;
   perspective: number;
+  /** Optical focus. Omit or set aperture=0 for the exact pinhole rendering path. */
+  focus?: CameraFocus;
 }
 
 /** White scene lights. Intensities multiply the legacy studio contributions. */
@@ -480,12 +501,20 @@ export interface SceneContext {
   molecularBackbone(id: string, props: MolecularBackboneProps): ElementHandle;
   nucleicDuplex(props: NucleicDuplexProps, opening: number): NucleicDuplexResult;
   nucleicTranscript(props: NucleicTranscriptProps, time: number): NucleicTranscriptResult;
+  nucleicSplice(props: NucleicSpliceProps, progress: number): NucleicSpliceResult;
+  nucleicThread(props: NucleicThreadProps, progress: number): NucleicThreadResult;
+  nucleicTranscriptionCycle(props: NucleicTranscriptionCycleProps, time: number): NucleicTranscriptionCycleResult;
+  nucleicTranslationCycle(props: NucleicTranslationProps, time: number): NucleicTranslationResult;
+  peptidePose(spec: PeptideSpec, phi: number[], psi: number[]): PeptidePose;
   molecularBackboneGeometry(props: MolecularBackboneProps): MolecularBackboneResult;
   articulatedChainPose(spec: ArticulatedChainSpec, time: number): Vec3[];
+  sampledState(options: SampledStateOptions): SampledState;
   plane(id: string, options: PlaneOptions): CoordinatePlane;
   graph(id: string, data: GraphData, options?: GraphOptions): GraphDiagram;
   dijkstra(data: GraphData, source: string): SearchTrace;
   collection(id: string, items: readonly CollectionItem[], options?: CollectionOptions): CollectionDiagram;
+  /** Read-only preflight of local, same-view, unparented, distinct children and optional planned element IDs/budget. Reserves nothing. */
+  validateGroup(children: readonly ElementHandle[], newIds?: readonly string[]): void;
   group(id: string, children: ElementHandle[], options?: { isolated?: boolean; castShadow?: boolean }): ElementHandle;
   behavior(target: ElementHandle, behavior: BehaviorSpec): void;
   attach(target: ElementHandle, source: ElementHandle, options?: { anchor?: 'origin' | 'midpoint'; offset?: Position }): void;

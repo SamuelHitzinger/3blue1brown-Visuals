@@ -6,7 +6,7 @@ import type {SceneContext} from '../src/types.js';
 const builder=(s:SceneContext)=>{
   const props={axis:Array.from({length:6},(_,i)=>[i*.8,0,0]),template:'ACGTAC'.split('').map((base,i)=>({id:`t${i}`,base})),coding:'TGCATG'.split('').map((base,i)=>({id:`c${i}`,base})),pairs:Array.from({length:6},(_,i)=>[`t${i}`,`c${i}`]),templateDirection:'3to5',codingDirection:'5to3',initialNormal:[0,1,0],radius:.85,backboneRadius:.08,twistPerBase:.5,window:{start:0,end:5,separation:1}};
   const initial=s.nucleicDuplex(props as never,0),open=s.nucleicDuplex(props as never,1);
-  const tx={id:'rna',bases:[{id:'r1',base:'G',templateId:'t1'},{id:'r2',base:'C',templateId:'t2'}],duplex:open,start:1,secondsPerBase:.5,approachFraction:.7,radius:.08};
+  const tx={id:'rna',bases:[{id:'r1',base:'G',templateId:'t1'},{id:'r2',base:'C',templateId:'t2'}],duplex:open,start:1,secondsPerBase:.5,approachFraction:.7,radius:.08,incomingRotation:{axis:[0,0,1],angle:1.8},emergence:{direction:[-.4,1,1],distance:2,delay:.1,duration:1}};
   const mesh=s.mesh('dna',initial.parts[0].geometry);
   s.bind(mesh,[s.time],t=>({vertices:s.nucleicDuplex(props as never,Math.min(t,1)).parts[0].geometry.vertices}));
   const rna=s.mesh('rna',s.nucleicTranscript(tx as never,0).parts[0].geometry);

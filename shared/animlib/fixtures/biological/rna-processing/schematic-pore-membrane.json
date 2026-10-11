@@ -1,0 +1,48 @@
+{
+  "id": "schematic-pore-membrane",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic local units",
+  "provenance": {
+    "source": "Original annulus in prepare-rna-processing-assets.mjs",
+    "sourceHash": "2ce9b16e2e255d08d31662a8c58a4b5e97d981c8c4f47d4430d7c48c23f33ccc",
+    "creator": "Original animlib RNA processing proof",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "selection": "Complete original annular patch",
+    "converter": {
+      "name": "Analytic annulus",
+      "version": "1",
+      "options": {
+        "angularSegments": 96
+      }
+    },
+    "modifications": [
+      "Two faces, true empty central aperture and wall; slight original surface undulation."
+    ],
+    "fidelity": "Schematic membrane patch, not recovered cell geometry or source pixels."
+  },
+  "parts": [
+    {
+      "id": "annulus",
+      "vertexCount": 768,
+      "triangleCount": 1536,
+      "positions": {
+        "path": "blobs/2d09ef3ab7297fb24356abaf1dfc861ab11ef1a3441482745fc5ac24e1a8b651.bin",
+        "hash": "2d09ef3ab7297fb24356abaf1dfc861ab11ef1a3441482745fc5ac24e1a8b651",
+        "byteLength": 9216
+      },
+      "indices": {
+        "path": "blobs/93c4f00f320bc9f0ced6923a0ba5fc413305e48f338f1ebff72557b282e12994.bin",
+        "hash": "93c4f00f320bc9f0ced6923a0ba5fc413305e48f338f1ebff72557b282e12994",
+        "byteLength": 18432
+      },
+      "normals": {
+        "path": "blobs/4993b9b85e9012b41b60b39dd05cb346dc611d42bc5cbfe4241575770ce8c3c6.bin",
+        "hash": "4993b9b85e9012b41b60b39dd05cb346dc611d42bc5cbfe4241575770ce8c3c6",
+        "byteLength": 9216
+      }
+    }
+  ],
+  "hash": "39afb63c3e8cd80309734883f6a385271d9e19858fbd0e637d1b0041191d82e3"
+}

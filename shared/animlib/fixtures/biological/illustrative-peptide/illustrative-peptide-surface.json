@@ -1,0 +1,182 @@
+{
+  "id": "illustrative-peptide-surface",
+  "kind": "model",
+  "version": 1,
+  "units": "angstrom",
+  "provenance": {
+    "source": "Original idealized peptide with pinned wwPDB CCD ALA/SER/VAL ideal components",
+    "sourceHash": "ce681f87d88b907c4b1d0a5e130bd3405923886f5003f83b945bf93de5c77a82",
+    "creator": "Original animlib motion proof; wwPDB Chemical Component Dictionary",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "prepare-peptide-motion",
+      "version": "1",
+      "options": {
+        "sourceHashes": {
+          "ALA.cif": "6d32b34d4f7b3ddf0cd3dff3f98ddaf7649bc5303ff9a8bd95ba62283f47a1ca",
+          "SER.cif": "46db0296a07732854d2c3ca67ed0f74f4c82ddc5698d0e59f433039a5d7c88a0",
+          "VAL.cif": "9c3c807970c817b1e1a4b43164db91a5bf1e7bf438b3269c5649f6ce84d4c0ed"
+        },
+        "origin": [
+          1.6698868069942696,
+          6.894212913913172,
+          6.712172673609794
+        ],
+        "sigma": 1.2,
+        "isoLevel": 1.05,
+        "resolution": 31,
+        "smoothingIterations": 2
+      }
+    },
+    "selection": "All original peptide heavy atoms; no deposited protein structure",
+    "modifications": [
+      "Prescribed internal-coordinate torsions and deterministic compact-loop search",
+      "Surface Gaussian envelope from exact final peptidePose coordinates"
+    ],
+    "fidelity": "Illustrative folding and surface; not a physical trajectory, deposited conformation or solvent-excluded surface"
+  },
+  "parts": [
+    {
+      "id": "band-5",
+      "vertexCount": 1368,
+      "triangleCount": 2498,
+      "positions": {
+        "path": "blobs/f645ac60043120fd762610f6d0b16d9941c42b537e43227f886a8685f697ef7a.bin",
+        "hash": "f645ac60043120fd762610f6d0b16d9941c42b537e43227f886a8685f697ef7a",
+        "byteLength": 16416
+      },
+      "indices": {
+        "path": "blobs/e4b29d714fa211725510a87043b536fbaace4dc40e8b07804083e48e84e0355d.bin",
+        "hash": "e4b29d714fa211725510a87043b536fbaace4dc40e8b07804083e48e84e0355d",
+        "byteLength": 29976
+      },
+      "normals": {
+        "path": "blobs/00339640f5f69e8f6b61fb4496c36e51d4318670aad195785772c8cea2ee76d5.bin",
+        "hash": "00339640f5f69e8f6b61fb4496c36e51d4318670aad195785772c8cea2ee76d5",
+        "byteLength": 16416
+      }
+    },
+    {
+      "id": "band-3",
+      "vertexCount": 1503,
+      "triangleCount": 2819,
+      "positions": {
+        "path": "blobs/d72ff7abff8e11141943a0159cc734cba7c791e606355a287a21af263546fc4a.bin",
+        "hash": "d72ff7abff8e11141943a0159cc734cba7c791e606355a287a21af263546fc4a",
+        "byteLength": 18036
+      },
+      "indices": {
+        "path": "blobs/8dcc6b8e1d126599c5e45c9323aad55ac5becf0fa2730e2bf970f398cc608cf2.bin",
+        "hash": "8dcc6b8e1d126599c5e45c9323aad55ac5becf0fa2730e2bf970f398cc608cf2",
+        "byteLength": 33828
+      },
+      "normals": {
+        "path": "blobs/fe0b7cd13f27214d5584800531da1674174beece9eb7d472c90fb1c067e89202.bin",
+        "hash": "fe0b7cd13f27214d5584800531da1674174beece9eb7d472c90fb1c067e89202",
+        "byteLength": 18036
+      }
+    },
+    {
+      "id": "band-0",
+      "vertexCount": 1049,
+      "triangleCount": 1844,
+      "positions": {
+        "path": "blobs/7dc8f03d827593dcc2f57285b2000f2e3820f133f2106d105032f55ffa2f11c5.bin",
+        "hash": "7dc8f03d827593dcc2f57285b2000f2e3820f133f2106d105032f55ffa2f11c5",
+        "byteLength": 12588
+      },
+      "indices": {
+        "path": "blobs/e35d17497ef997edcf4f65e972375e9d3a73c8eaa9646e6dd3f7b0f60c051251.bin",
+        "hash": "e35d17497ef997edcf4f65e972375e9d3a73c8eaa9646e6dd3f7b0f60c051251",
+        "byteLength": 22128
+      },
+      "normals": {
+        "path": "blobs/7da0b6cb79ee4cfd781eddcf826347097544930f55055ed8a391b5ce1cebc89a.bin",
+        "hash": "7da0b6cb79ee4cfd781eddcf826347097544930f55055ed8a391b5ce1cebc89a",
+        "byteLength": 12588
+      }
+    },
+    {
+      "id": "band-6",
+      "vertexCount": 1154,
+      "triangleCount": 2149,
+      "positions": {
+        "path": "blobs/ad96a64bc4666a7c9fe5d69c147cdd1075da62e8cb61105981b51419ce28440b.bin",
+        "hash": "ad96a64bc4666a7c9fe5d69c147cdd1075da62e8cb61105981b51419ce28440b",
+        "byteLength": 13848
+      },
+      "indices": {
+        "path": "blobs/1fcc771dd2cfde8060b4af15c09448fafa75be9322c737f07089fe7bc41b5eec.bin",
+        "hash": "1fcc771dd2cfde8060b4af15c09448fafa75be9322c737f07089fe7bc41b5eec",
+        "byteLength": 25788
+      },
+      "normals": {
+        "path": "blobs/020adffb984a7a9eb0942994461fba8796227c2089354a76788a03ffd2dd2530.bin",
+        "hash": "020adffb984a7a9eb0942994461fba8796227c2089354a76788a03ffd2dd2530",
+        "byteLength": 13848
+      }
+    },
+    {
+      "id": "band-4",
+      "vertexCount": 1157,
+      "triangleCount": 2069,
+      "positions": {
+        "path": "blobs/5303ff1c09c9fcfc98a94a1273b0c52ca43531b372df9a8d6678278a5028c247.bin",
+        "hash": "5303ff1c09c9fcfc98a94a1273b0c52ca43531b372df9a8d6678278a5028c247",
+        "byteLength": 13884
+      },
+      "indices": {
+        "path": "blobs/5e862147e7a2b1dd7ba9d803ce0061acf37a164c83df2b4b5deab52a26e89fd6.bin",
+        "hash": "5e862147e7a2b1dd7ba9d803ce0061acf37a164c83df2b4b5deab52a26e89fd6",
+        "byteLength": 24828
+      },
+      "normals": {
+        "path": "blobs/bb1b8f66ddd40e1fbb4173c6702c50bad2a5f491c25cef2a684cd36a2bdfdd0b.bin",
+        "hash": "bb1b8f66ddd40e1fbb4173c6702c50bad2a5f491c25cef2a684cd36a2bdfdd0b",
+        "byteLength": 13884
+      }
+    },
+    {
+      "id": "band-2",
+      "vertexCount": 1162,
+      "triangleCount": 2060,
+      "positions": {
+        "path": "blobs/c2304b18be51055d96409452155ac5bb2183daa1b982692961ab721b03331783.bin",
+        "hash": "c2304b18be51055d96409452155ac5bb2183daa1b982692961ab721b03331783",
+        "byteLength": 13944
+      },
+      "indices": {
+        "path": "blobs/bbe91e4867b3f288172664b6e30e632739b9189336a5460188e0cb3c9a0a49b3.bin",
+        "hash": "bbe91e4867b3f288172664b6e30e632739b9189336a5460188e0cb3c9a0a49b3",
+        "byteLength": 24720
+      },
+      "normals": {
+        "path": "blobs/7832b5a98a187cd4a829e7ac18423d3c81384ebdae20c68d57da0b62e3721da6.bin",
+        "hash": "7832b5a98a187cd4a829e7ac18423d3c81384ebdae20c68d57da0b62e3721da6",
+        "byteLength": 13944
+      }
+    },
+    {
+      "id": "band-1",
+      "vertexCount": 1411,
+      "triangleCount": 2629,
+      "positions": {
+        "path": "blobs/ae9944722a55b7e289aa9c60f11b76612c2398a99e717325c52ba5e416e355d9.bin",
+        "hash": "ae9944722a55b7e289aa9c60f11b76612c2398a99e717325c52ba5e416e355d9",
+        "byteLength": 16932
+      },
+      "indices": {
+        "path": "blobs/b21b0e127d829b6e9e27e401a3a17c59b6946d5551537851a756122fdaf65c07.bin",
+        "hash": "b21b0e127d829b6e9e27e401a3a17c59b6946d5551537851a756122fdaf65c07",
+        "byteLength": 31548
+      },
+      "normals": {
+        "path": "blobs/6cb34f4a3ee463fd9806fe4637d80e3343c3819be4b20558cbe5b9434a815e0f.bin",
+        "hash": "6cb34f4a3ee463fd9806fe4637d80e3343c3819be4b20558cbe5b9434a815e0f",
+        "byteLength": 16932
+      }
+    }
+  ],
+  "hash": "243803b5870d73e7f6f95f5553cf83d803cb60e0479f5b7500a77b8205e136a2"
+}

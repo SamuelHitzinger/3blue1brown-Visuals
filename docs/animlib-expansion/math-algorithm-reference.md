@@ -50,7 +50,7 @@ The current library already supports most low-level mechanisms required here:
 | Coordinated timeline and holds | `s.play([...], {duration,ease})`, `s.wait` | Reuse current deterministic timeline; pacing helpers should compile to it. |
 | Rigid rotations | Group transforms and `rotateTo` | Use rotation for length-preserving vector movement, not an endpoint morph. |
 | Mathematical typography | `src/latex.ts`, bundled MathJax outlines | Preserve shared em scale, fractions, scripts and matrix layout. |
-| Semantic formula mapping | `\\animpart`, `morphTo(...,{map})`, `anchor`, `partColors` | Do not replace this with token guesses or per-glyph height normalization. |
+| Semantic formula mapping | `\\animpart`, `morphTo(...,{map})`, `anchor` | Do not replace this with token guesses or per-glyph height normalization. Per-part colors are not a supported API; use separate colored LaTeX handles. |
 | Stable numeric slots | `\\animnum`, `countTo` | Use for changing costs/parameters without repeatedly rebuilding text. |
 | Attached labels/edges | `s.attach`, `s.connect`, center/surface endpoints | Build graph edges from node identities, including moving layouts. |
 | Bounds and collision checks | `bounds.ts`, `overlap.ts` | Reuse for layout tests; text-only overlap detection does not catch every label/geometry collision. |

@@ -1,0 +1,88 @@
+{
+  "id": "schematic-nucleotide-pyrimidine-context",
+  "kind": "model",
+  "version": 1,
+  "units": "schematic local units; nominal anchor reach .675",
+  "provenance": {
+    "source": "Original rounded sugar/phosphate/base scaffold in prepare-nucleotide-anatomy.mjs",
+    "sourceHash": "952217f317d66b8d8b266065b02a0c5a28fc53c1e57f1725e32c26c8f8596209",
+    "creator": "Original animlib biological proof",
+    "license": "CC0-1.0",
+    "preparedAt": "2026-10-11",
+    "converter": {
+      "name": "Gaussian schematic subunits",
+      "version": "1",
+      "options": {
+        "resolution": 12
+      }
+    },
+    "selection": "pyrimidine",
+    "modifications": [
+      "Rounded union of original pentagonal sugar, tetrahedral phosphate and one/two ring base scaffolds."
+    ],
+    "fidelity": "Schematic anatomy and ring count only; no deposited coordinates, atom identity, chemical bond geometry or source pixels."
+  },
+  "parts": [
+    {
+      "id": "sugar",
+      "vertexCount": 284,
+      "triangleCount": 564,
+      "positions": {
+        "path": "blobs/03f4e7fe06136d56d54c5969e08e8a842391a9e00f1dc6fe09ec8c39c5e2d752.bin",
+        "hash": "03f4e7fe06136d56d54c5969e08e8a842391a9e00f1dc6fe09ec8c39c5e2d752",
+        "byteLength": 3408
+      },
+      "indices": {
+        "path": "blobs/6c4ce1a52510240825e86e73c0f5fd978a2de35cd3a40785357f9992d56306ff.bin",
+        "hash": "6c4ce1a52510240825e86e73c0f5fd978a2de35cd3a40785357f9992d56306ff",
+        "byteLength": 6768
+      },
+      "normals": {
+        "path": "blobs/8258b1e8dec810d3468c23675575ce7614490a90cee61beee36d8ac8a272431e.bin",
+        "hash": "8258b1e8dec810d3468c23675575ce7614490a90cee61beee36d8ac8a272431e",
+        "byteLength": 3408
+      }
+    },
+    {
+      "id": "phosphate",
+      "vertexCount": 336,
+      "triangleCount": 668,
+      "positions": {
+        "path": "blobs/5199ad88cee2f9183f865ed898ebf230f7a8d336803c1e90125becbca6e9f7bf.bin",
+        "hash": "5199ad88cee2f9183f865ed898ebf230f7a8d336803c1e90125becbca6e9f7bf",
+        "byteLength": 4032
+      },
+      "indices": {
+        "path": "blobs/b3be8713915d276ffb15431febb9fbffca19cfa4f11565cfed2fc3bdb4cb5532.bin",
+        "hash": "b3be8713915d276ffb15431febb9fbffca19cfa4f11565cfed2fc3bdb4cb5532",
+        "byteLength": 8016
+      },
+      "normals": {
+        "path": "blobs/7306361b13f3863eefe32b1de801735eb0b2c107e439442b5158374992f63bc4.bin",
+        "hash": "7306361b13f3863eefe32b1de801735eb0b2c107e439442b5158374992f63bc4",
+        "byteLength": 4032
+      }
+    },
+    {
+      "id": "base",
+      "vertexCount": 336,
+      "triangleCount": 668,
+      "positions": {
+        "path": "blobs/e157e4a52539756c08fde14cb355f28ece7f85de386efed3b04d3f4d8bc3b101.bin",
+        "hash": "e157e4a52539756c08fde14cb355f28ece7f85de386efed3b04d3f4d8bc3b101",
+        "byteLength": 4032
+      },
+      "indices": {
+        "path": "blobs/d1d1c6905d08d921cdd92cbbf7b1d49bd254569198c178accfb73720992a0d3e.bin",
+        "hash": "d1d1c6905d08d921cdd92cbbf7b1d49bd254569198c178accfb73720992a0d3e",
+        "byteLength": 8016
+      },
+      "normals": {
+        "path": "blobs/177f13e45e6a2505b88eb6d085adabd6a2f2664e48f7f5e65bf9476d8bed7e2c.bin",
+        "hash": "177f13e45e6a2505b88eb6d085adabd6a2f2664e48f7f5e65bf9476d8bed7e2c",
+        "byteLength": 4032
+      }
+    }
+  ],
+  "hash": "8371e467eb2bdc479b79ebcd46be3365b7775474e91cafd53f5f9aaf580c6d18"
+}

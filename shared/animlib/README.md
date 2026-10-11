@@ -58,6 +58,12 @@ connectors compose with the authored timeline. Isolated groups let overlapping
 parts fade as one object. Built-in coordinate planes, graphs with Dijkstra traces,
 identity-based collections, and molecular/backbone helpers compose these same
 primitives. Host-side preparation supplies larger static models and images.
+Collections support custom content and complete reorder schedules; sampled-state
+data keeps numeric traces and projected trajectories aligned. Peptide torsions
+and RNA docking/emergence provide explicit schematic motion. See
+[helpers and assets](docs/helpers-and-assets.md),
+[sampled state](docs/sampled-state.md), and the
+[proof index](demo/expansion/README.md) for examples, limits and reviewed scope.
 Internal dependencies are allowed; the public API requires no
 framework.
 

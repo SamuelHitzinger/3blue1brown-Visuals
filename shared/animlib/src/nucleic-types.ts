@@ -20,6 +20,17 @@ export interface NucleicDuplexResult {
 export interface NucleicTranscriptProps {
   id:string;bases:{id:string;base:RNABase;templateId:string}[];duplex:NucleicDuplexResult;
   start:number;secondsPerBase:number;approachFraction:number;radius:number;incomingOffset?:Vec3;
+  /** World-space rotation about the free nucleotide's backbone anchor, easing to zero at incorporation. */
+  incomingRotation?:{axis:Vec3;angle:number};
+  /** Deliberate post-incorporation exit motion. Absent keeps formed anchors fixed.
+   * The entire schedule is preflighted at every call: desired adjacent links must
+   * remain nonzero and outside the antipodal frame tolerance. Unsupported folds
+   * throw even before motion starts; reduce distance, extend duration, or use an
+   * oblique direction. See helpers-and-assets.md for the analytic sufficient bound.
+   * Nonterminal frames follow their outgoing links; the terminal base translates
+   * with its docked orientation because it has no outgoing link.
+   */
+  emergence?:{direction:Vec3;distance:number;delay:number;duration:number};
 }
 export interface NucleicTranscriptResult {
   parts:NucleicPart[];anchors:NucleicAnchor[];incorporated:number;incomingId?:string;

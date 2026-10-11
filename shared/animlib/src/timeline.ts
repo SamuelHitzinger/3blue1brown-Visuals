@@ -2,6 +2,7 @@ import type { CameraState, ColorValue, CompiledScene, ElementState, Frame, Track
 import { paletteResolver } from "./palette.js";
 import { applyBindings } from "./bindings.js";
 import { applyReactiveProperties } from "./reactive.js";
+import {normalizeFocus} from './depth-focus.js';
 
 export function easeAt(progress: number, ease: Track["ease"]): number {
   const t = Math.max(0, Math.min(1, progress));
@@ -51,6 +52,14 @@ export function evaluateScene(scene: CompiledScene, requestedTime: number, optio
       }
       for (const [key, target] of Object.entries(track.action.properties ?? {})) {
         const k = key as keyof CameraState;
+        if(k==='focus'){
+          const from=normalizeFocus(track.cameraFrom?.focus),to=normalizeFocus(target);
+          if(t===1){targetCamera.focus=to;continue;}
+          if(!from&&!to){delete targetCamera.focus;continue;}
+          const start=from??{...to!,aperture:0},end=to??{...from!,aperture:0};
+          targetCamera.focus={distance:start.distance+(end.distance-start.distance)*t,aperture:start.aperture+(end.aperture-start.aperture)*t,samples:start.samples};
+          continue;
+        }
         (targetCamera as unknown as Record<string, unknown>)[k] = interpolate(track.cameraFrom?.[k], target, t);
       }
       continue;

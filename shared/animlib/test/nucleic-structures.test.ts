@@ -52,12 +52,37 @@ describe('explicit transcript incorporation',()=>{
     for(let k=0;k<=120;k++){const r=api.nucleicTranscript(p,k/20);for(let i=1;i<r.incorporated;i++)expect(distance(r.anchors[i-1].backbone,r.anchors[i].backbone)).toBeCloseTo(end.linkLengths[i-1],12);}
     expect(api.nucleicTranscript(p,2.8)).toEqual(first);
   });
+  it('rotates a free nucleotide into its final frame without changing base reach or any formed anchor',()=>{
+    const plain=tx(),p={...plain,incomingRotation:{axis:[0,0,1] as Vec3,angle:1.8}};
+    const start=api.nucleicTranscript(p,2),unrotated=api.nucleicTranscript(plain,2),end=api.nucleicTranscript(plain,8);
+    expect(distance(start.anchors[0].tip,unrotated.anchors[0].tip)).toBeGreaterThan(.2);
+    for(let j=0;j<=30;j++){
+      const r=api.nucleicTranscript(p,2+j/40),a=r.anchors[0];
+      expect(distance(a.tip,a.backbone)).toBeCloseTo(distance(end.anchors[0].tip,end.anchors[0].backbone),12);
+      expect(Math.hypot(...a.tangent)).toBeCloseTo(1,12);expect(Math.hypot(...a.normal)).toBeCloseTo(1,12);
+    }
+    expect(api.nucleicTranscript(p,2.75).anchors[0]).toEqual(end.anchors[0]);
+    expect(api.nucleicTranscript(p,3.4).anchors[0]).toEqual(end.anchors[0]);
+    expect(api.nucleicTranscript(p,2)).toEqual(start);
+    expect(()=>api.nucleicTranscript({...plain,incomingRotation:{axis:[0,0,0],angle:1}},2)).toThrow(/rotation/i);
+    expect(()=>api.nucleicTranscript({...plain,incomingRotation:{axis:[1,0,0],angle:NaN}},2)).toThrow(/rotation/i);
+  });
   it('rejects skipped templates, RNA alphabet errors and references not complementary to the template',()=>{
     const p=tx();p.bases[1].templateId='t7';expect(()=>api.nucleicTranscript(p,3)).toThrow(/consecutive|complement/i);
     const wrong=tx();wrong.bases[0].base='T' as never;expect(()=>api.nucleicTranscript(wrong,3)).toThrow(/RNA/i);
     expect(()=>api.nucleicTranscript({...tx(),secondsPerBase:0},3)).toThrow(/duration|seconds/i);
     const sparse=tx();sparse.duplex.anchors=Array(2);expect(()=>api.nucleicTranscript(sparse,3)).toThrow(/snapshot/i);
     const zero=tx();zero.duplex.anchors[4].tip=[...zero.duplex.anchors[4].backbone];expect(()=>api.nucleicTranscript(zero,3)).toThrow(/reach/i);
+  });
+  it('emerges formed RNA continuously while preserving every formed link and leaving future targets fixed',()=>{
+    const plain=tx(),p={...plain,emergence:{direction:[-.4,1,1] as Vec3,distance:3,delay:.1,duration:1.2}},rest=api.nucleicTranscript(plain,8);
+    expect(distance(api.nucleicTranscript(p,6).anchors[0].backbone,rest.anchors[0].backbone)).toBeGreaterThan(1);
+    const first=api.nucleicTranscript(p,3.5);expect(first.anchors[2]).toEqual(api.nucleicTranscript(plain,3.5).anchors[2]);
+    for(let k=0;k<=140;k++){const r=api.nucleicTranscript(p,k/20);for(let i=1;i<r.incorporated;i++)expect(distance(r.anchors[i-1].backbone,r.anchors[i].backbone)).toBeCloseTo(rest.linkLengths[i-1],11);}
+    for(const time of [2.75,3.75,4.75]){const a=api.nucleicTranscript(p,time-1e-6),b=api.nucleicTranscript(p,time+1e-6);for(let i=0;i<a.incorporated;i++)expect(distance(a.anchors[i].backbone,b.anchors[i].backbone)).toBeLessThan(1e-4);}
+    api.nucleicTranscript(p,8);expect(api.nucleicTranscript(p,3.5)).toEqual(first);
+    expect(()=>api.nucleicTranscript({...p,emergence:{...p.emergence,duration:0}},3)).toThrow(/duration/i);
+    expect(()=>api.nucleicTranscript({...p,emergence:{...p.emergence,delay:-1}},3)).toThrow(/delay/i);
   });
   it('supports straight templates and scales base reach with helix radius',()=>{
     const p=props();p.axis=p.axis.map((_,i)=>[i*.65,0,0]);p.twistPerBase=0;p.radius=1.7;

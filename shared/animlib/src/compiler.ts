@@ -1,4 +1,9 @@
+import { createSampledState } from './diagrams/sampled-state.js';
 import { createNucleicBuilders } from './nucleic-structures.js';
+import { createNucleicProcessingBuilders } from './nucleic-processing.js';
+import { createNucleicTranscriptionCycleBuilders } from './nucleic-transcription-cycle.js';
+import { createNucleicTranslationBuilders } from './nucleic-translation.js';
+import { createPeptideBuilders } from './peptide-motion.js';
 import { validateImageGeometry } from "./image-validation.js";
 import { validateSurfaceAppearance } from "./appearance-validation.js";
 import { parse } from "acorn";
@@ -20,6 +25,7 @@ import { validatePathStroke } from './path-stroke.js';
 import { Color, enforceScenePalette, paletteResolver, validateColor } from "./palette.js";
 import type { CameraState, CompileInput, CompiledScene, ControlValue, Diagnostic, ElementState, Geometry, ReactiveUpdate } from "./types.js";
 import { mergeReactiveUpdates, validateReactiveBindings } from './reactive.js';
+import {normalizeFocus} from './depth-focus.js';
 
 export class SceneCompileError extends Error {
   constructor(public diagnostic: Diagnostic) { super(diagnostic.message); this.name = "SceneCompileError"; }
@@ -130,6 +136,7 @@ function camera(c: CameraState) {
   for (const key of ["yaw", "pitch", "height", "distance", "perspective"] as const) number(c[key], `camera ${key}`);
   vec(c.target, "camera target");
   check(c.height > 0 && c.distance > 0 && c.perspective >= 0 && c.perspective <= 1, "Invalid camera range");
+  normalizeFocus(c.focus);
 }
 
 /** Validate the VM boundary: scene code may only return bounded plain animation data. */
@@ -266,8 +273,10 @@ export function validateCompiledScene(scene: CompiledScene, catalog: AssetDescri
     if (a.type === "camera") {
       check(a.view === undefined || typeof a.view === "string" && viewIds.has(a.view), "Camera references unknown view");
       camera(track.cameraFrom!);
-      check(Object.keys(a.properties ?? {}).every(key => ["yaw", "pitch", "height", "distance", "perspective", "target"].includes(key)), "Unknown camera property");
+      check(Object.keys(a.properties ?? {}).every(key => ["yaw", "pitch", "height", "distance", "perspective", "target", "focus"].includes(key)), "Unknown camera property");
       camera({ ...track.cameraFrom!, ...a.properties });
+      const before=normalizeFocus(track.cameraFrom?.focus),after=normalizeFocus((a.properties as Partial<CameraState>)?.focus);
+      if(track.duration>0&&before&&after)check(before.samples===after.samples,'Focus samples cannot change during an animation; use a zero-duration camera change.');
     } else {
       check(track.from && typeof track.from === "object", "Missing animation starting states");
       for (const id of a.ids) {
@@ -353,7 +362,7 @@ export async function createSceneProgram(source: string, input: CompileInput = {
       const palette = Object.freeze({ ...__input.palette, colors: __tokens(Object.fromEntries(Object.keys(__input.palette.colors).map(name => [name, name]))) });
       const __buildScene = ${buildScene.toString()};
       const __meshBuilders = Object.freeze({ ...(${createSurfaceBuilders.toString()})(), ...(${createSolidBuilders.toString()})(), ...(${createMoleculeBuilders.toString()})() });
-      const __domainFactories = Object.freeze({createAssetBuilders:${createAssetBuilders.toString()},createCoordinateBuilders:${createCoordinateBuilders.toString()},createGraphAlgorithms:${createGraphAlgorithms.toString()},createGraphBuilders:${createGraphBuilders.toString()},createCollectionBuilders:${createCollectionBuilders.toString()},createMolecularBackboneBuilders:${createMolecularBackboneBuilders.toString()},createNucleicBuilders:${createNucleicBuilders.toString()}});
+      const __domainFactories = Object.freeze({createNucleicTranslationBuilders:${createNucleicTranslationBuilders.toString()},createNucleicTranscriptionCycleBuilders:${createNucleicTranscriptionCycleBuilders.toString()},createNucleicProcessingBuilders:${createNucleicProcessingBuilders.toString()},createPeptideBuilders:${createPeptideBuilders.toString()},createSampledState:${createSampledState.toString()},createAssetBuilders:${createAssetBuilders.toString()},createCoordinateBuilders:${createCoordinateBuilders.toString()},createGraphAlgorithms:${createGraphAlgorithms.toString()},createGraphBuilders:${createGraphBuilders.toString()},createCollectionBuilders:${createCollectionBuilders.toString()},createMolecularBackboneBuilders:${createMolecularBackboneBuilders.toString()},createNucleicBuilders:${createNucleicBuilders.toString()}});
       const scene = (options, builder) => __buildScene(options, builder, __input, update => { globalThis.__animlibUpdate = update; }, __meshBuilders, __domainFactories);
       let __seed = ${JSON.stringify(input.seed ?? 1)} >>> 0;
       Math.random = () => { __seed = (__seed * 1664525 + 1013904223) >>> 0; return __seed / 4294967296; };

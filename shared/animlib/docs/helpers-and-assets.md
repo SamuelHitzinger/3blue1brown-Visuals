@@ -8,15 +8,29 @@ absolute-time evaluator, and WebGPU/WebGL2 renderers. There is no second scene f
 | --- | --- | --- |
 | Coordinate maps | `s.plane`, its paths/vectors/components/labels and `map` | Explicit sampled map, no symbolic algebra |
 | Graphs | `s.graph`, `s.dijkstra` | Authored positions; bounded nonnegative-weight search, no automatic layout |
-| Collections | `s.collection(...).swap` | Stable item IDs; values can repeat; no general algorithm simulator |
+| Collections | `s.collection(...).swap` / `.reorder` | Stable IDs, custom content, vertical/horizontal lanes; no general algorithm simulator |
+| Sampled trajectories | `s.sampledState` | Explicit aligned vectors and 3×N projection; gaps stay disconnected; no manifold inference |
+| Peptide poses | `s.peptidePose(spec,phi,psi)` | Explicit original templates and torsions; no deposited conformation or folding dynamics |
 | Ordered molecular geometry | `s.molecularBackbone`, `s.molecularBackboneGeometry`, `s.articulatedChainPose` | Explicit adjacency and schematic kinematics, no energy/collision solver |
 | Nucleic mechanism | `s.nucleicDuplex`, `s.nucleicTranscript` return geometry/data | Explicit paired DNA and ordered complementary RNA; schematic, not atomistic dynamics |
+| Advancing transcription | `s.nucleicTranscriptionCycle(props,time)` | Exact strand links, advancing opening, complementary arrivals and absolute event times; straight authored exit rail |
+| RNA processing | `s.nucleicSplice`, `s.nucleicThread` | Explicit cut/join graph and rigid fragments; polyline arc transport with conservative swept-radius aperture clearance |
+| Translation | `s.nucleicTranslationCycle(props,time)` | Standard-code mapping, persistent carriers/product, A/P-site transfer, advance, stop and release; schematic kinematics |
+| Optical focus | `s.camera.animate({focus:{distance,aperture,samples}})` | Bounded aperture accumulation; 8/16/32 samples, WebGL float-color extension required |
 | Deposited structures | Use prepared geometry / compact selected coordinates | `importPDBStructure`, `structureBackboneProps`; first-model heavy atoms, explicit bonds/templates; no mmCIF or biological assembly reconstruction |
 | Models | `s.model(id,{asset,shading})` | Immutable `createAssetRegistry` / native package decoding; selected static glTF/GLB triangle subset |
 | Images | `s.image(id,{asset,width})`; models with UV0 | RGBA8, encoded sRGB, top-left, straight alpha; host `colorPolicy:'source'` required |
 | Export | Same scene source | Native frame/video tools and scoped `withOfflineScene` sampling |
 
 ## Scene helpers
+
+Detailed biological contracts: [RNA processing](nucleic-processing.md),
+[moving transcription](nucleic-transcription-cycle.md), and
+[translation](nucleic-translation.md). These helpers return persistent identities
+and absolute-time poses; authors choose geometry, materials and choreography.
+The [optical focus guide](../../../docs/animlib-expansion/depth-focus.md)
+documents camera-space distance, animated focus, backend requirements and fixed
+resource limits. Disable focus with a complete focus object whose aperture is zero.
 
 This complete source uses a coordinate map shared by the grid and vector. The
 callback captures the original data coordinates, avoiding cumulative deformation.
@@ -66,6 +80,30 @@ export default scene({}, s => {
 ```
 
 Collection swaps track IDs independently of equal values, with separated arcs.
+An item may wrap an existing unparented `handle`, authored about its local origin.
+Both `s.collection` and the standalone collection factory preflight all custom
+handles and generated wrapper/cell/label IDs before creating any item. A rejected
+later handle or ID leaves earlier caller-owned handles available for reuse.
+`s.validateGroup(children,newIds?)` exposes this same read-only builder check;
+it reserves neither membership nor IDs. This covers ownership, view, identity,
+ID syntax/collisions and the element budget, not rollback of arbitrary custom
+constructor or binding callbacks.
+Set `orientation:'vertical'` for a stack and declare the full content `width` and
+`height` so lane clearance is meaningful. `reorder(ids,{start,duration,clearance})`
+requires every existing ID once, lifts translating entries into separate lanes,
+moves them, then settles them. Schedules cannot overlap; stationary entries also
+reserve a reorder interval. `slots` describes the final scheduled order, not the
+currently displayed order. Callers animate insertion/removal visibility themselves.
+See [identity transport](identity-transport.md) for complete examples.
+
+`s.sampledState({times,values,projection})` captures copied dense arrays with
+strictly increasing times, nullable aligned vectors and an explicit 3×N matrix.
+`at(time)` returns interpolated values/position or null across missing intervals;
+`prefix(run,time)` repeats the current endpoint to preserve topology. Each call
+returns fresh arrays. Use the same knots for `countTo` numeric slots, markers and
+paths; retained numeric-slot updates are unsupported. Limits and gap examples
+are in [sampled state](sampled-state.md).
+
 Path reveals use `strokeStart` / `strokeEnd`; `dashArray` / `dashOffset` use the
 shared arc-length stroke engine. Retained `points` updates keep the vertex count
 fixed and can follow absolute time. `s.attach(label,line,{anchor:'midpoint'})`
@@ -79,6 +117,17 @@ variant returns meshes, anchors, segment/bond identity and vertex ownership.
 `s.articulatedChainPose(spec,time)` integrates fixed link lengths and authored
 bend/twist key states. Transform static geometry when the intended motion is
 rigid; rebuild positions only for an actual conformational change.
+
+`s.peptidePose(spec,phi,psi)` returns fresh atoms, residue anchors, explicit bonds,
+CA center and schematic provenance. Component templates require N/CA/C/O and
+their backbone bonds, connected side chains and explicit link lengths/angles.
+Absolute dense phi/psi arrays are in radians; omega is trans. Bounds are 2–96
+residues, 1–8 components, 24 atoms/32 bonds per component, and aggregate
+1,536 atoms/2,048 edges. Unsupported cyclic/cross-linked backbone templates are
+rejected. Inputs are validated each call. The
+[peptide proof](../demo/expansion/peptide-motion-proof.mjs) uses original ALA/SER/VAL
+geometry; its moving pose is not 1CRN or a physical folding simulation. The
+host equivalent is `createPeptideBuilders().peptidePose` from `animlib/core`.
 
 `importPDB` remains the simpler coordinate importer. The newer host-only
 `importPDBStructure(text,{source,accession,residueTemplates,polymerLinks})`
@@ -97,6 +146,24 @@ schematic backbone link lengths. Transcript input uses a fully-open template
 snapshot and sequential complementary RNA 5′→3′ sites. Incoming bases do not
 acquire a backbone edge before incorporation. These factories return bounded
 parts/anchors/state; create meshes and bind fixed-topology vertices explicitly.
+Optional transcript `incomingRotation:{axis,angle}` rotates the incoming whole
+nucleotide frame about its backbone anchor and settles exactly at incorporation.
+Optional `emergence:{direction,distance,delay,duration}` transports incorporated
+RNA while preserving the declared links; future target sites stay fixed and
+unformed edges stay hidden. Omit both for the original fixed-anchor behavior.
+Emergence validates its entire schedule independently of the requested time.
+For each baseline forward link `L` and normalized exit direction `d`, let
+`h=min(1,secondsPerBase/duration)` and `span=distance*h*(3-h*h)/2`.
+Every desired link lies on `L-lambda*d` for `0<=lambda<=span`. Its minimum
+length must exceed `1e-7*max(1,|L|,span)`, and the cosine between `L` and
+`L-span*d` must exceed `-1+1e-6`. These bounds exclude a collapsed link and
+an ill-conditioned antipodal frame rotation. Unsupported folding exit geometry
+throws even before emergence starts. Reduce distance, lengthen duration, or
+choose an oblique direction that satisfies the bounds; no bend plane is inferred
+for a collinear fold. This analytic preflight does not sample a time grid.
+Nonterminal nucleotide frames rotate with their outgoing links. The terminal
+nucleotide has no outgoing link, so its exit translation preserves its docked
+orientation instead of snapping to the previously bent incoming link.
 See the [types](../src/nucleic-types.ts) and the original transcription proof
 sources for the full contract. A protein envelope must not be labelled as a
 deposited polymerase merely because it provides useful visual context.
@@ -165,6 +232,10 @@ Run `node tools/benchmark-asset-reuse.mjs` for CPU/source/lease comparisons, and
 `node tools/prove-image-rendering.mjs <output-directory>` for actual native image
 uploads/draws. CPU wall time is not GPU FPS; queue-completion wall time is not
 timestamp-query timing. No broad performance guarantee follows from either.
+From repository root, the [motion benchmark](../tools/benchmark-motion-peptide.mjs)
+separates peptide pose, dynamic mesh construction, full-frame serialization,
+render preparation and optional native queue wall time. Reproduction and reviewed
+artifact identities live in the [proof index](../demo/expansion/README.md).
 
 ## Style and evidence
 

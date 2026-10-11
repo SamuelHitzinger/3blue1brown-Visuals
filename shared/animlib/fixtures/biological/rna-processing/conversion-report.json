@@ -1,0 +1,52 @@
+{
+  "innerRadius": 1.15,
+  "outerRadius": 3.6,
+  "halfThickness": 0.2,
+  "packages": [
+    "schematic-pore-membrane.json"
+  ],
+  "catalog": [
+    {
+      "id": "schematic-pore-membrane",
+      "kind": "model",
+      "parts": [
+        {
+          "id": "annulus",
+          "vertexCount": 768,
+          "triangleCount": 1536,
+          "bounds": {
+            "min": [
+              -3.6,
+              -3.6,
+              -0.28575000000000006
+            ],
+            "max": [
+              3.6,
+              3.6,
+              0.28575000000000006
+            ]
+          }
+        }
+      ],
+      "bounds": {
+        "min": [
+          -3.6,
+          -3.6,
+          -0.28575000000000006
+        ],
+        "max": [
+          3.6,
+          3.6,
+          0.28575000000000006
+        ]
+      },
+      "hash": "b1da46fdd3961c71c8b89dd8703d9dfc2bc1f6208b9c74bbba080ac83b84753f"
+    }
+  ],
+  "stats": {
+    "decodedBytes": 393216,
+    "pinnedBytes": 0,
+    "leases": 0,
+    "models": 1
+  }
+}

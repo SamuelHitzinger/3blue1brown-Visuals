@@ -1,0 +1,6871 @@
+{
+  "atoms": [
+    {
+      "id": "illustrative-0/N",
+      "residueId": "illustrative-0",
+      "name": "N",
+      "position": [
+        0,
+        0,
+        0
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-0/CA",
+      "residueId": "illustrative-0",
+      "name": "CA",
+      "position": [
+        1.4687824890023709,
+        0,
+        0
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-0/C",
+      "residueId": "illustrative-0",
+      "name": "C",
+      "position": [
+        1.9705606661786175,
+        1.4198791008074183,
+        0
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-0/O",
+      "residueId": "illustrative-0",
+      "name": "O",
+      "position": [
+        2.8664958987820275,
+        1.7819302280431324,
+        0.7241022305221976
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-0/CB",
+      "residueId": "illustrative-0",
+      "name": "CB",
+      "position": [
+        1.9776965083325626,
+        -0.7208366884032057,
+        -1.248337690523317
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-0/CG1",
+      "residueId": "illustrative-0",
+      "name": "CG1",
+      "position": [
+        1.4677462566048605,
+        -2.1632278688022213,
+        -1.2489884362394301
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-0/CG2",
+      "residueId": "illustrative-0",
+      "name": "CG2",
+      "position": [
+        1.4685108354369265,
+        0.00023051950740431756,
+        -2.49708827898917
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-1/N",
+      "residueId": "illustrative-1",
+      "name": "N",
+      "position": [
+        1.3678574274621433,
+        2.251241182042053,
+        -0.8452726754875547
+      ],
+      "value": 0.014084507042253521
+    },
+    {
+      "id": "illustrative-1/CA",
+      "residueId": "illustrative-1",
+      "name": "CA",
+      "position": [
+        1.769758723012729,
+        3.65996808803,
+        -0.9357262712170047
+      ],
+      "value": 0.014084507042253521
+    },
+    {
+      "id": "illustrative-1/C",
+      "residueId": "illustrative-1",
+      "name": "C",
+      "position": [
+        1.580076973683664,
+        4.324181007070248,
+        0.4019239192855415
+      ],
+      "value": 0.014084507042253521
+    },
+    {
+      "id": "illustrative-1/O",
+      "residueId": "illustrative-1",
+      "name": "O",
+      "position": [
+        2.4179121509368953,
+        5.0493525683753555,
+        0.880518134076485
+      ],
+      "value": 0.014084507042253521
+    },
+    {
+      "id": "illustrative-1/CB",
+      "residueId": "illustrative-1",
+      "name": "CB",
+      "position": [
+        0.9096994704483549,
+        4.369075719045297,
+        -1.9828812023109106
+      ],
+      "value": 0.014084507042253521
+    },
+    {
+      "id": "illustrative-2/N",
+      "residueId": "illustrative-2",
+      "name": "N",
+      "position": [
+        0.43406057538692644,
+        4.0641005414547795,
+        1.0247437698364168
+      ],
+      "value": 0.028169014084507043
+    },
+    {
+      "id": "illustrative-2/CA",
+      "residueId": "illustrative-2",
+      "name": "CA",
+      "position": [
+        0.13480562922544237,
+        4.654343254486828,
+        2.3362303374040967
+      ],
+      "value": 0.028169014084507043
+    },
+    {
+      "id": "illustrative-2/C",
+      "residueId": "illustrative-2",
+      "name": "C",
+      "position": [
+        1.1806183067577218,
+        4.221981666514789,
+        3.3310158925661435
+      ],
+      "value": 0.028169014084507043
+    },
+    {
+      "id": "illustrative-2/O",
+      "residueId": "illustrative-2",
+      "name": "O",
+      "position": [
+        1.6911580841744067,
+        4.998919908402841,
+        4.100693814795451
+      ],
+      "value": 0.028169014084507043
+    },
+    {
+      "id": "illustrative-2/CB",
+      "residueId": "illustrative-2",
+      "name": "CB",
+      "position": [
+        -1.2416462968832724,
+        4.182722724187395,
+        2.805171880148703
+      ],
+      "value": 0.028169014084507043
+    },
+    {
+      "id": "illustrative-2/OG",
+      "residueId": "illustrative-2",
+      "name": "OG",
+      "position": [
+        -2.2329790153259914,
+        4.591449803254984,
+        1.8616049158150385
+      ],
+      "value": 0.028169014084507043
+    },
+    {
+      "id": "illustrative-3/N",
+      "residueId": "illustrative-3",
+      "name": "N",
+      "position": [
+        1.5074961606073123,
+        2.9329441620278027,
+        3.3102028993011214
+      ],
+      "value": 0.04225352112676056
+    },
+    {
+      "id": "illustrative-3/CA",
+      "residueId": "illustrative-3",
+      "name": "CA",
+      "position": [
+        2.514028589077367,
+        2.393341813559375,
+        4.232124683383444
+      ],
+      "value": 0.04225352112676056
+    },
+    {
+      "id": "illustrative-3/C",
+      "residueId": "illustrative-3",
+      "name": "C",
+      "position": [
+        3.8289711082600015,
+        3.090526142116969,
+        4.00557185674179
+      ],
+      "value": 0.04225352112676056
+    },
+    {
+      "id": "illustrative-3/O",
+      "residueId": "illustrative-3",
+      "name": "O",
+      "position": [
+        4.509217692399572,
+        3.4861213991432716,
+        4.920811157353788
+      ],
+      "value": 0.04225352112676056
+    },
+    {
+      "id": "illustrative-3/CB",
+      "residueId": "illustrative-3",
+      "name": "CB",
+      "position": [
+        2.68281390605949,
+        0.8940587371058561,
+        3.9816635617870655
+      ],
+      "value": 0.04225352112676056
+    },
+    {
+      "id": "illustrative-4/N",
+      "residueId": "illustrative-4",
+      "name": "N",
+      "position": [
+        4.19623563393138,
+        3.2444610291373515,
+        2.7365876886997302
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-4/CA",
+      "residueId": "illustrative-4",
+      "name": "CA",
+      "position": [
+        5.459040220557588,
+        3.9096337044546203,
+        2.3899006713381334
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-4/C",
+      "residueId": "illustrative-4",
+      "name": "C",
+      "position": [
+        5.447819111251854,
+        5.317488463334149,
+        2.9243696270373514
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-4/O",
+      "residueId": "illustrative-4",
+      "name": "O",
+      "position": [
+        6.398150798815837,
+        5.791284000902454,
+        3.49925437391463
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-4/CB",
+      "residueId": "illustrative-4",
+      "name": "CB",
+      "position": [
+        5.616335552031468,
+        3.9424120368519846,
+        0.8696606377836389
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-4/CG1",
+      "residueId": "illustrative-4",
+      "name": "CG1",
+      "position": [
+        5.627285270992193,
+        2.512347220845336,
+        0.3262117205204338
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-4/CG2",
+      "residueId": "illustrative-4",
+      "name": "CG2",
+      "position": [
+        4.448642276051855,
+        4.713178922568066,
+        0.25241123833838097
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-5/N",
+      "residueId": "illustrative-5",
+      "name": "N",
+      "position": [
+        4.328549821091562,
+        6.00778738120355,
+        2.725312700274155
+      ],
+      "value": 0.07042253521126761
+    },
+    {
+      "id": "illustrative-5/CA",
+      "residueId": "illustrative-5",
+      "name": "CA",
+      "position": [
+        4.198345637435746,
+        7.390242464097128,
+        3.200794365893591
+      ],
+      "value": 0.07042253521126761
+    },
+    {
+      "id": "illustrative-5/C",
+      "residueId": "illustrative-5",
+      "name": "C",
+      "position": [
+        4.369293801125454,
+        7.426216302182619,
+        4.69610323308609
+      ],
+      "value": 0.07042253521126761
+    },
+    {
+      "id": "illustrative-5/O",
+      "residueId": "illustrative-5",
+      "name": "O",
+      "position": [
+        5.057164521291655,
+        8.254626200706918,
+        5.2415066730871525
+      ],
+      "value": 0.07042253521126761
+    },
+    {
+      "id": "illustrative-5/CB",
+      "residueId": "illustrative-5",
+      "name": "CB",
+      "position": [
+        2.814259647401658,
+        7.927297250502953,
+        2.8334428603978994
+      ],
+      "value": 0.07042253521126761
+    },
+    {
+      "id": "illustrative-6/N",
+      "residueId": "illustrative-6",
+      "name": "N",
+      "position": [
+        3.7170043571114584,
+        6.490560131708839,
+        5.380183646401843
+      ],
+      "value": 0.08450704225352113
+    },
+    {
+      "id": "illustrative-6/CA",
+      "residueId": "illustrative-6",
+      "name": "CA",
+      "position": [
+        3.8062215403166006,
+        6.423824366774213,
+        6.844944252063918
+      ],
+      "value": 0.08450704225352113
+    },
+    {
+      "id": "illustrative-6/C",
+      "residueId": "illustrative-6",
+      "name": "C",
+      "position": [
+        5.2425551165654944,
+        6.217854106484623,
+        7.250876647440662
+      ],
+      "value": 0.08450704225352113
+    },
+    {
+      "id": "illustrative-6/O",
+      "residueId": "illustrative-6",
+      "name": "O",
+      "position": [
+        5.750637465815508,
+        6.847423312955279,
+        8.146523308040976
+      ],
+      "value": 0.08450704225352113
+    },
+    {
+      "id": "illustrative-6/CB",
+      "residueId": "illustrative-6",
+      "name": "CB",
+      "position": [
+        2.959512402797544,
+        5.257429696258811,
+        7.354413690828406
+      ],
+      "value": 0.08450704225352113
+    },
+    {
+      "id": "illustrative-6/OG",
+      "residueId": "illustrative-6",
+      "name": "OG",
+      "position": [
+        1.5981047991810846,
+        5.451940301842413,
+        6.968600314789172
+      ],
+      "value": 0.08450704225352113
+    },
+    {
+      "id": "illustrative-7/N",
+      "residueId": "illustrative-7",
+      "name": "N",
+      "position": [
+        5.91701645803202,
+        5.3007658536942595,
+        6.563162291431501
+      ],
+      "value": 0.09859154929577464
+    },
+    {
+      "id": "illustrative-7/CA",
+      "residueId": "illustrative-7",
+      "name": "CA",
+      "position": [
+        7.323535448513726,
+        5.011282221743576,
+        6.866677622587873
+      ],
+      "value": 0.09859154929577464
+    },
+    {
+      "id": "illustrative-7/C",
+      "residueId": "illustrative-7",
+      "name": "C",
+      "position": [
+        8.145092315910972,
+        6.259382249628428,
+        6.682947837233795
+      ],
+      "value": 0.09859154929577464
+    },
+    {
+      "id": "illustrative-7/O",
+      "residueId": "illustrative-7",
+      "name": "O",
+      "position": [
+        8.976842415967958,
+        6.601888368115643,
+        7.487792747669349
+      ],
+      "value": 0.09859154929577464
+    },
+    {
+      "id": "illustrative-7/CB",
+      "residueId": "illustrative-7",
+      "name": "CB",
+      "position": [
+        7.834721858563051,
+        3.9216741536567716,
+        5.923008341461786
+      ],
+      "value": 0.09859154929577464
+    },
+    {
+      "id": "illustrative-8/N",
+      "residueId": "illustrative-8",
+      "name": "N",
+      "position": [
+        7.899550813778282,
+        6.962016842902389,
+        5.580716464487965
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-8/CA",
+      "residueId": "illustrative-8",
+      "name": "CA",
+      "position": [
+        8.637665439999058,
+        8.198542694559913,
+        5.291730968759202
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-8/C",
+      "residueId": "illustrative-8",
+      "name": "C",
+      "position": [
+        8.40533210761936,
+        9.192101960909156,
+        6.3992955072475475
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-8/O",
+      "residueId": "illustrative-8",
+      "name": "O",
+      "position": [
+        9.307237096344778,
+        9.831459391162488,
+        6.884985189752806
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-8/CB",
+      "residueId": "illustrative-8",
+      "name": "CB",
+      "position": [
+        8.147734380563572,
+        8.786192997297785,
+        3.968258007685758
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-8/CG1",
+      "residueId": "illustrative-8",
+      "name": "CG1",
+      "position": [
+        8.383125649514055,
+        7.776932865827095,
+        2.8428572179554297
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-8/CG2",
+      "residueId": "illustrative-8",
+      "name": "CG2",
+      "position": [
+        6.653834798873016,
+        9.096868709208508,
+        4.069897772805265
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-9/N",
+      "residueId": "illustrative-9",
+      "name": "N",
+      "position": [
+        7.147312910109114,
+        9.32323958588577,
+        6.810501808282891
+      ],
+      "value": 0.1267605633802817
+    },
+    {
+      "id": "illustrative-9/CA",
+      "residueId": "illustrative-9",
+      "name": "CA",
+      "position": [
+        6.796739577680365,
+        10.260775107390987,
+        7.883974436953852
+      ],
+      "value": 0.1267605633802817
+    },
+    {
+      "id": "illustrative-9/C",
+      "residueId": "illustrative-9",
+      "name": "C",
+      "position": [
+        7.537364617607787,
+        9.88696619186036,
+        9.140241703462982
+      ],
+      "value": 0.1267605633802817
+    },
+    {
+      "id": "illustrative-9/O",
+      "residueId": "illustrative-9",
+      "name": "O",
+      "position": [
+        8.09114295713705,
+        10.711805724036347,
+        9.825707455217152
+      ],
+      "value": 0.1267605633802817
+    },
+    {
+      "id": "illustrative-9/CB",
+      "residueId": "illustrative-9",
+      "name": "CB",
+      "position": [
+        5.290736432791274,
+        10.198714947874565,
+        8.143150176916068
+      ],
+      "value": 0.1267605633802817
+    },
+    {
+      "id": "illustrative-10/N",
+      "residueId": "illustrative-10",
+      "name": "N",
+      "position": [
+        7.544946776967244,
+        8.593461123447707,
+        9.449575097797034
+      ],
+      "value": 0.14084507042253522
+    },
+    {
+      "id": "illustrative-10/CA",
+      "residueId": "illustrative-10",
+      "name": "CA",
+      "position": [
+        8.234964100752206,
+        8.10706596248295,
+        10.651753470696292
+      ],
+      "value": 0.14084507042253522
+    },
+    {
+      "id": "illustrative-10/C",
+      "residueId": "illustrative-10",
+      "name": "C",
+      "position": [
+        9.698282186135156,
+        8.45566655109669,
+        10.565516526123028
+      ],
+      "value": 0.14084507042253522
+    },
+    {
+      "id": "illustrative-10/O",
+      "residueId": "illustrative-10",
+      "name": "O",
+      "position": [
+        10.301147748217858,
+        8.921054860132937,
+        11.501815001966651
+      ],
+      "value": 0.14084507042253522
+    },
+    {
+      "id": "illustrative-10/CB",
+      "residueId": "illustrative-10",
+      "name": "CB",
+      "position": [
+        8.076690006001911,
+        6.5898407932129945,
+        10.751398323371815
+      ],
+      "value": 0.14084507042253522
+    },
+    {
+      "id": "illustrative-10/OG",
+      "residueId": "illustrative-10",
+      "name": "OG",
+      "position": [
+        6.689501212174616,
+        6.259170020880235,
+        10.831903544350515
+      ],
+      "value": 0.14084507042253522
+    },
+    {
+      "id": "illustrative-11/N",
+      "residueId": "illustrative-11",
+      "name": "N",
+      "position": [
+        10.285864868568773,
+        8.219846837402336,
+        9.395885963108695
+      ],
+      "value": 0.15492957746478872
+    },
+    {
+      "id": "illustrative-11/CA",
+      "residueId": "illustrative-11",
+      "name": "CA",
+      "position": [
+        11.708155299607657,
+        8.518459073002372,
+        9.190608924633445
+      ],
+      "value": 0.15492957746478872
+    },
+    {
+      "id": "illustrative-11/C",
+      "residueId": "illustrative-11",
+      "name": "C",
+      "position": [
+        11.951098021609125,
+        9.987418741369044,
+        9.413324722318725
+      ],
+      "value": 0.15492957746478872
+    },
+    {
+      "id": "illustrative-11/O",
+      "residueId": "illustrative-11",
+      "name": "O",
+      "position": [
+        12.88499972560255,
+        10.389914889407928,
+        10.063492745288205
+      ],
+      "value": 0.15492957746478872
+    },
+    {
+      "id": "illustrative-11/CB",
+      "residueId": "illustrative-11",
+      "name": "CB",
+      "position": [
+        12.105605526926372,
+        8.147605712863331,
+        7.761073999534416
+      ],
+      "value": 0.15492957746478872
+    },
+    {
+      "id": "illustrative-12/N",
+      "residueId": "illustrative-12",
+      "name": "N",
+      "position": [
+        11.075090578549478,
+        10.815111773794024,
+        8.850798986214823
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-12/CA",
+      "residueId": "illustrative-12",
+      "name": "CA",
+      "position": [
+        11.207324091305392,
+        12.270526514954039,
+        8.997782758510818
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-12/C",
+      "residueId": "illustrative-12",
+      "name": "C",
+      "position": [
+        10.571183110131932,
+        12.70399606731308,
+        10.29210373850354
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-12/O",
+      "residueId": "illustrative-12",
+      "name": "O",
+      "position": [
+        9.83703669524094,
+        11.97844857437355,
+        10.918773409855095
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-12/CB",
+      "residueId": "illustrative-12",
+      "name": "CB",
+      "position": [
+        10.509573442046328,
+        12.965586463690112,
+        7.828602832613369
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-12/CG1",
+      "residueId": "illustrative-12",
+      "name": "CG1",
+      "position": [
+        11.155212986520503,
+        12.525112416184292,
+        6.5134320482340105
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-12/CG2",
+      "residueId": "illustrative-12",
+      "name": "CG2",
+      "position": [
+        9.027919477005689,
+        12.587134526134305,
+        7.82075051832976
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-13/N",
+      "residueId": "illustrative-13",
+      "name": "N",
+      "position": [
+        10.86635841619863,
+        13.933784320722948,
+        10.70367680669865
+      ],
+      "value": 0.18309859154929578
+    },
+    {
+      "id": "illustrative-13/CA",
+      "residueId": "illustrative-13",
+      "name": "CA",
+      "position": [
+        10.306659466629899,
+        14.46829051639779,
+        11.950776727569817
+      ],
+      "value": 0.18309859154929578
+    },
+    {
+      "id": "illustrative-13/C",
+      "residueId": "illustrative-13",
+      "name": "C",
+      "position": [
+        9.758631534844987,
+        15.848819402706862,
+        11.705274426053549
+      ],
+      "value": 0.18309859154929578
+    },
+    {
+      "id": "illustrative-13/O",
+      "residueId": "illustrative-13",
+      "name": "O",
+      "position": [
+        9.881786221703072,
+        16.738597121112747,
+        12.511514176334634
+      ],
+      "value": 0.18309859154929578
+    },
+    {
+      "id": "illustrative-13/CB",
+      "residueId": "illustrative-13",
+      "name": "CB",
+      "position": [
+        11.404367282608376,
+        14.53773733679979,
+        13.013454331491069
+      ],
+      "value": 0.18309859154929578
+    },
+    {
+      "id": "illustrative-14/N",
+      "residueId": "illustrative-14",
+      "name": "N",
+      "position": [
+        9.130658774413375,
+        16.02933007465451,
+        10.546841817107776
+      ],
+      "value": 0.19718309859154928
+    },
+    {
+      "id": "illustrative-14/CA",
+      "residueId": "illustrative-14",
+      "name": "CA",
+      "position": [
+        8.553421021749564,
+        17.333345524688898,
+        10.194311984368406
+      ],
+      "value": 0.19718309859154928
+    },
+    {
+      "id": "illustrative-14/C",
+      "residueId": "illustrative-14",
+      "name": "C",
+      "position": [
+        7.269694472748967,
+        17.53597833274366,
+        10.956706299989175
+      ],
+      "value": 0.19718309859154928
+    },
+    {
+      "id": "illustrative-14/O",
+      "residueId": "illustrative-14",
+      "name": "O",
+      "position": [
+        6.254748227544566,
+        17.90059454644937,
+        10.41483257295639
+      ],
+      "value": 0.19718309859154928
+    },
+    {
+      "id": "illustrative-14/CB",
+      "residueId": "illustrative-14",
+      "name": "CB",
+      "position": [
+        8.267585410563097,
+        17.375022554108952,
+        8.693141431567566
+      ],
+      "value": 0.19718309859154928
+    },
+    {
+      "id": "illustrative-14/OG",
+      "residueId": "illustrative-14",
+      "name": "OG",
+      "position": [
+        9.484242093163326,
+        17.18170643234338,
+        7.970305078200001
+      ],
+      "value": 0.19718309859154928
+    },
+    {
+      "id": "illustrative-15/N",
+      "residueId": "illustrative-15",
+      "name": "N",
+      "position": [
+        7.321909241322737,
+        17.289005002938843,
+        12.26253086412783
+      ],
+      "value": 0.2112676056338028
+    },
+    {
+      "id": "illustrative-15/CA",
+      "residueId": "illustrative-15",
+      "name": "CA",
+      "position": [
+        6.134923581530705,
+        17.45082060321822,
+        13.11052777152449
+      ],
+      "value": 0.2112676056338028
+    },
+    {
+      "id": "illustrative-15/C",
+      "residueId": "illustrative-15",
+      "name": "C",
+      "position": [
+        6.0726498098542265,
+        16.32571521339892,
+        14.1088893488905
+      ],
+      "value": 0.2112676056338028
+    },
+    {
+      "id": "illustrative-15/O",
+      "residueId": "illustrative-15",
+      "name": "O",
+      "position": [
+        6.994844855163912,
+        15.564461866196535,
+        14.27303452786154
+      ],
+      "value": 0.2112676056338028
+    },
+    {
+      "id": "illustrative-15/CB",
+      "residueId": "illustrative-15",
+      "name": "CB",
+      "position": [
+        4.8786723187589605,
+        17.42793791071621,
+        12.238531127512454
+      ],
+      "value": 0.2112676056338028
+    },
+    {
+      "id": "illustrative-16/N",
+      "residueId": "illustrative-16",
+      "name": "N",
+      "position": [
+        4.94067323758952,
+        16.22076202834869,
+        14.799189188664245
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-16/CA",
+      "residueId": "illustrative-16",
+      "name": "CA",
+      "position": [
+        4.761509893550593,
+        15.162679919240986,
+        15.80202753383209
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-16/C",
+      "residueId": "illustrative-16",
+      "name": "C",
+      "position": [
+        3.4824978543286775,
+        14.418281141138536,
+        15.523035306906367
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-16/O",
+      "residueId": "illustrative-16",
+      "name": "O",
+      "position": [
+        2.4208979809492637,
+        14.98505171638394,
+        15.423627943613672
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-16/CB",
+      "residueId": "illustrative-16",
+      "name": "CB",
+      "position": [
+        4.694133515057116,
+        15.788156953773324,
+        17.19529165197112
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-16/CG1",
+      "residueId": "illustrative-16",
+      "name": "CG1",
+      "position": [
+        5.9931255469295674,
+        16.54492984921536,
+        17.478940177185258
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-16/CG2",
+      "residueId": "illustrative-16",
+      "name": "CG2",
+      "position": [
+        3.514044586147831,
+        16.758449397174953,
+        17.262438462345322
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-17/N",
+      "residueId": "illustrative-17",
+      "name": "N",
+      "position": [
+        3.592156152534647,
+        13.099235156446277,
+        15.392679072295978
+      ],
+      "value": 0.23943661971830985
+    },
+    {
+      "id": "illustrative-17/CA",
+      "residueId": "illustrative-17",
+      "name": "CA",
+      "position": [
+        2.4150632872044593,
+        12.26617211711642,
+        15.119409317490817
+      ],
+      "value": 0.23943661971830985
+    },
+    {
+      "id": "illustrative-17/C",
+      "residueId": "illustrative-17",
+      "name": "C",
+      "position": [
+        2.316384781177811,
+        11.179059709028465,
+        16.156190473101564
+      ],
+      "value": 0.23943661971830985
+    },
+    {
+      "id": "illustrative-17/O",
+      "residueId": "illustrative-17",
+      "name": "O",
+      "position": [
+        3.2954110627950133,
+        10.689795642711122,
+        16.66513272258908
+      ],
+      "value": 0.23943661971830985
+    },
+    {
+      "id": "illustrative-17/CB",
+      "residueId": "illustrative-17",
+      "name": "CB",
+      "position": [
+        2.5475168104123402,
+        11.636214558824477,
+        13.732081476300902
+      ],
+      "value": 0.23943661971830985
+    },
+    {
+      "id": "illustrative-18/N",
+      "residueId": "illustrative-18",
+      "name": "N",
+      "position": [
+        1.0858779348071876,
+        10.79003545340179,
+        16.477769436295883
+      ],
+      "value": 0.2535211267605634
+    },
+    {
+      "id": "illustrative-18/CA",
+      "residueId": "illustrative-18",
+      "name": "CA",
+      "position": [
+        0.8622588779450107,
+        9.736732761145886,
+        17.477011627105764
+      ],
+      "value": 0.2535211267605634
+    },
+    {
+      "id": "illustrative-18/C",
+      "residueId": "illustrative-18",
+      "name": "C",
+      "position": [
+        -0.3813396086972185,
+        8.963994184510138,
+        17.121207051249698
+      ],
+      "value": 0.2535211267605634
+    },
+    {
+      "id": "illustrative-18/O",
+      "residueId": "illustrative-18",
+      "name": "O",
+      "position": [
+        -1.4757227282389023,
+        9.472795740259595,
+        17.132807246469824
+      ],
+      "value": 0.2535211267605634
+    },
+    {
+      "id": "illustrative-18/CB",
+      "residueId": "illustrative-18",
+      "name": "CB",
+      "position": [
+        0.6913539317864682,
+        10.371612154262989,
+        18.85711004952853
+      ],
+      "value": 0.2535211267605634
+    },
+    {
+      "id": "illustrative-18/OG",
+      "residueId": "illustrative-18",
+      "name": "OG",
+      "position": [
+        1.8696917714732755,
+        11.10519950759743,
+        19.19398766913244
+      ],
+      "value": 0.2535211267605634
+    },
+    {
+      "id": "illustrative-19/N",
+      "residueId": "illustrative-19",
+      "name": "N",
+      "position": [
+        -0.2009288919398944,
+        7.687663927712045,
+        16.7935898220617
+      ],
+      "value": 0.2676056338028169
+    },
+    {
+      "id": "illustrative-19/CA",
+      "residueId": "illustrative-19",
+      "name": "CA",
+      "position": [
+        -1.336917460040645,
+        6.833213491837184,
+        16.427991099720295
+      ],
+      "value": 0.2676056338028169
+    },
+    {
+      "id": "illustrative-19/C",
+      "residueId": "illustrative-19",
+      "name": "C",
+      "position": [
+        -0.874190457366804,
+        5.405778673931085,
+        16.306419879335433
+      ],
+      "value": 0.2676056338028169
+    },
+    {
+      "id": "illustrative-19/O",
+      "residueId": "illustrative-19",
+      "name": "O",
+      "position": [
+        -0.003014216237086642,
+        5.079077496550006,
+        15.537516570987163
+      ],
+      "value": 0.2676056338028169
+    },
+    {
+      "id": "illustrative-19/CB",
+      "residueId": "illustrative-19",
+      "name": "CB",
+      "position": [
+        -1.9137034749185244,
+        7.297259452721109,
+        15.089690595637371
+      ],
+      "value": 0.2676056338028169
+    },
+    {
+      "id": "illustrative-20/N",
+      "residueId": "illustrative-20",
+      "name": "N",
+      "position": [
+        -1.4827793895080776,
+        4.526255173635593,
+        17.096962682795883
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-20/CA",
+      "residueId": "illustrative-20",
+      "name": "CA",
+      "position": [
+        -1.1174124593241839,
+        3.103926374883617,
+        17.06850579314224
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-20/C",
+      "residueId": "illustrative-20",
+      "name": "C",
+      "position": [
+        -1.3515892948420902,
+        2.553253596138514,
+        15.686565598902284
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-20/O",
+      "residueId": "illustrative-20",
+      "name": "O",
+      "position": [
+        -0.5432366166112466,
+        1.8467652113684196,
+        15.133804249148191
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-20/CB",
+      "residueId": "illustrative-20",
+      "name": "CB",
+      "position": [
+        -1.975739702279986,
+        2.337765462017374,
+        18.07509299731079
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-20/CG1",
+      "residueId": "illustrative-20",
+      "name": "CG1",
+      "position": [
+        -1.738512281968628,
+        2.897219060622506,
+        19.47911465742155
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-20/CG2",
+      "residueId": "illustrative-20",
+      "name": "CG2",
+      "position": [
+        -3.452275655857347,
+        2.4916340426790207,
+        17.70800712496133
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-21/N",
+      "residueId": "illustrative-21",
+      "name": "N",
+      "position": [
+        -2.502029376067612,
+        2.891625790259443,
+        15.111333578100588
+      ],
+      "value": 0.29577464788732394
+    },
+    {
+      "id": "illustrative-21/CA",
+      "residueId": "illustrative-21",
+      "name": "CA",
+      "position": [
+        -2.842804059976063,
+        2.4159911366709657,
+        13.765279236287872
+      ],
+      "value": 0.29577464788732394
+    },
+    {
+      "id": "illustrative-21/C",
+      "residueId": "illustrative-21",
+      "name": "C",
+      "position": [
+        -1.8072439256301909,
+        2.897507693968138,
+        12.784349568471551
+      ],
+      "value": 0.29577464788732394
+    },
+    {
+      "id": "illustrative-21/O",
+      "residueId": "illustrative-21",
+      "name": "O",
+      "position": [
+        -1.3346999084841986,
+        2.1704948989195776,
+        11.944677878050106
+      ],
+      "value": 0.29577464788732394
+    },
+    {
+      "id": "illustrative-21/CB",
+      "residueId": "illustrative-21",
+      "name": "CB",
+      "position": [
+        -4.21510905071411,
+        2.9596337572525497,
+        13.364903520887157
+      ],
+      "value": 0.29577464788732394
+    },
+    {
+      "id": "illustrative-22/N",
+      "residueId": "illustrative-22",
+      "name": "N",
+      "position": [
+        -1.444236934975596,
+        4.171921592726397,
+        12.898345793793567
+      ],
+      "value": 0.30985915492957744
+    },
+    {
+      "id": "illustrative-22/CA",
+      "residueId": "illustrative-22",
+      "name": "CA",
+      "position": [
+        -0.4416939072032424,
+        4.756501785744809,
+        11.997729074319851
+      ],
+      "value": 0.30985915492957744
+    },
+    {
+      "id": "illustrative-22/C",
+      "residueId": "illustrative-22",
+      "name": "C",
+      "position": [
+        0.8578822652583944,
+        4.0075110955605595,
+        12.14046560779073
+      ],
+      "value": 0.30985915492957744
+    },
+    {
+      "id": "illustrative-22/O",
+      "residueId": "illustrative-22",
+      "name": "O",
+      "position": [
+        1.5080800242435086,
+        3.666484895129508,
+        11.182534501275082
+      ],
+      "value": 0.30985915492957744
+    },
+    {
+      "id": "illustrative-22/CB",
+      "residueId": "illustrative-22",
+      "name": "CB",
+      "position": [
+        -0.226397679766549,
+        6.225965149770363,
+        12.360050694207805
+      ],
+      "value": 0.30985915492957744
+    },
+    {
+      "id": "illustrative-22/OG",
+      "residueId": "illustrative-22",
+      "name": "OG",
+      "position": [
+        -1.4585574780903892,
+        6.935841078462557,
+        12.225978335915915
+      ],
+      "value": 0.30985915492957744
+    },
+    {
+      "id": "illustrative-23/N",
+      "residueId": "illustrative-23",
+      "name": "N",
+      "position": [
+        1.24565011101451,
+        3.7446624921268876,
+        13.385233340932391
+      ],
+      "value": 0.323943661971831
+    },
+    {
+      "id": "illustrative-23/CA",
+      "residueId": "illustrative-23",
+      "name": "CA",
+      "position": [
+        2.4944430058274154,
+        3.020727511873406,
+        13.65103862724212
+      ],
+      "value": 0.323943661971831
+    },
+    {
+      "id": "illustrative-23/C",
+      "residueId": "illustrative-23",
+      "name": "C",
+      "position": [
+        2.433444891980063,
+        1.6599984404915693,
+        13.009819768814367
+      ],
+      "value": 0.323943661971831
+    },
+    {
+      "id": "illustrative-23/O",
+      "residueId": "illustrative-23",
+      "name": "O",
+      "position": [
+        3.3583728663682537,
+        1.2077336284785403,
+        12.379852482355
+      ],
+      "value": 0.323943661971831
+    },
+    {
+      "id": "illustrative-23/CB",
+      "residueId": "illustrative-23",
+      "name": "CB",
+      "position": [
+        2.6813249094852223,
+        2.864227740334486,
+        15.160890267501353
+      ],
+      "value": 0.323943661971831
+    },
+    {
+      "id": "illustrative-24/N",
+      "residueId": "illustrative-24",
+      "name": "N",
+      "position": [
+        1.299403706855953,
+        0.9860416780646852,
+        13.179032276689457
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-24/CA",
+      "residueId": "illustrative-24",
+      "name": "CA",
+      "position": [
+        1.1212061899630992,
+        -0.35220766330914555,
+        12.60053738018152
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-24/C",
+      "residueId": "illustrative-24",
+      "name": "C",
+      "position": [
+        1.2621782930832752,
+        -0.2744503104119472,
+        11.103233583281138
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-24/O",
+      "residueId": "illustrative-24",
+      "name": "O",
+      "position": [
+        1.9162933974000191,
+        -1.0753152924566247,
+        10.479652224644374
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-24/CB",
+      "residueId": "illustrative-24",
+      "name": "CB",
+      "position": [
+        -0.269353316168671,
+        -0.878943704544673,
+        12.95527587931869
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-24/CG1",
+      "residueId": "illustrative-24",
+      "name": "CG1",
+      "position": [
+        -0.4131735449960219,
+        -0.957628007266601,
+        14.476350013700447
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-24/CG2",
+      "residueId": "illustrative-24",
+      "name": "CG2",
+      "position": [
+        -1.3318187290700287,
+        0.06524824514351613,
+        12.391135109180276
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-25/N",
+      "residueId": "illustrative-25",
+      "name": "N",
+      "position": [
+        0.6231070203614104,
+        0.7291036781356481,
+        10.508786528908868
+      ],
+      "value": 0.352112676056338
+    },
+    {
+      "id": "illustrative-25/CA",
+      "residueId": "illustrative-25",
+      "name": "CA",
+      "position": [
+        0.6857512811375605,
+        0.908769736544959,
+        9.053446773371531
+      ],
+      "value": 0.352112676056338
+    },
+    {
+      "id": "illustrative-25/C",
+      "residueId": "illustrative-25",
+      "name": "C",
+      "position": [
+        2.117269717497929,
+        1.108392074800793,
+        8.632291352618529
+      ],
+      "value": 0.352112676056338
+    },
+    {
+      "id": "illustrative-25/O",
+      "residueId": "illustrative-25",
+      "name": "O",
+      "position": [
+        2.5888725069169594,
+        0.5382803274815302,
+        7.678636590883042
+      ],
+      "value": 0.352112676056338
+    },
+    {
+      "id": "illustrative-25/CB",
+      "residueId": "illustrative-25",
+      "name": "CB",
+      "position": [
+        -0.13780153754398272,
+        2.134471578652527,
+        8.65534534270869
+      ],
+      "value": 0.352112676056338
+    },
+    {
+      "id": "illustrative-26/N",
+      "residueId": "illustrative-26",
+      "name": "N",
+      "position": [
+        2.831181280684293,
+        1.9505365606874152,
+        9.373926670574434
+      ],
+      "value": 0.36619718309859156
+    },
+    {
+      "id": "illustrative-26/CA",
+      "residueId": "illustrative-26",
+      "name": "CA",
+      "position": [
+        4.2397752894907885,
+        2.2264962071876435,
+        9.061442764016169
+      ],
+      "value": 0.36619718309859156
+    },
+    {
+      "id": "illustrative-26/C",
+      "residueId": "illustrative-26",
+      "name": "C",
+      "position": [
+        5.028687356172953,
+        0.944561606898844,
+        9.128676919217764
+      ],
+      "value": 0.36619718309859156
+    },
+    {
+      "id": "illustrative-26/O",
+      "residueId": "illustrative-26",
+      "name": "O",
+      "position": [
+        5.833312767173206,
+        0.643537603464074,
+        8.28094435683221
+      ],
+      "value": 0.36619718309859156
+    },
+    {
+      "id": "illustrative-26/CB",
+      "residueId": "illustrative-26",
+      "name": "CB",
+      "position": [
+        4.8004045541642695,
+        3.2246033027184855,
+        10.074571113951485
+      ],
+      "value": 0.36619718309859156
+    },
+    {
+      "id": "illustrative-26/OG",
+      "residueId": "illustrative-26",
+      "name": "OG",
+      "position": [
+        4.051839068031468,
+        4.439439614648232,
+        10.011806090350005
+      ],
+      "value": 0.36619718309859156
+    },
+    {
+      "id": "illustrative-27/N",
+      "residueId": "illustrative-27",
+      "name": "N",
+      "position": [
+        4.785334096053158,
+        0.16456370951241783,
+        10.17809698328259
+      ],
+      "value": 0.38028169014084506
+    },
+    {
+      "id": "illustrative-27/CA",
+      "residueId": "illustrative-27",
+      "name": "CA",
+      "position": [
+        5.492186522855959,
+        -1.1098132713028477,
+        10.352856696864297
+      ],
+      "value": 0.38028169014084506
+    },
+    {
+      "id": "illustrative-27/C",
+      "residueId": "illustrative-27",
+      "name": "C",
+      "position": [
+        5.209203776609181,
+        -2.007385270544263,
+        9.177802965537767
+      ],
+      "value": 0.38028169014084506
+    },
+    {
+      "id": "illustrative-27/O",
+      "residueId": "illustrative-27",
+      "name": "O",
+      "position": [
+        6.082024873607728,
+        -2.631020553130442,
+        8.624488979678102
+      ],
+      "value": 0.38028169014084506
+    },
+    {
+      "id": "illustrative-27/CB",
+      "residueId": "illustrative-27",
+      "name": "CB",
+      "position": [
+        5.012523310923113,
+        -1.7866177744533474,
+        11.637741075955844
+      ],
+      "value": 0.38028169014084506
+    },
+    {
+      "id": "illustrative-28/N",
+      "residueId": "illustrative-28",
+      "name": "N",
+      "position": [
+        3.939904155853573,
+        -2.0720400352947865,
+        8.785886859534552
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-28/CA",
+      "residueId": "illustrative-28",
+      "name": "CA",
+      "position": [
+        3.540678712793682,
+        -2.9141005308898285,
+        7.650600478319721
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-28/C",
+      "residueId": "illustrative-28",
+      "name": "C",
+      "position": [
+        4.267232039181453,
+        -2.4627445727018795,
+        6.411150574966179
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-28/O",
+      "residueId": "illustrative-28",
+      "name": "O",
+      "position": [
+        4.784044795144265,
+        -3.2461460632193613,
+        5.651353444194346
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-28/CB",
+      "residueId": "illustrative-28",
+      "name": "CB",
+      "position": [
+        2.032800829929214,
+        -2.791121757769697,
+        7.431222923109445
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-28/CG1",
+      "residueId": "illustrative-28",
+      "name": "CG1",
+      "position": [
+        1.2943013176571139,
+        -3.2490980769402404,
+        8.690356816487299
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-28/CG2",
+      "residueId": "illustrative-28",
+      "name": "CG2",
+      "position": [
+        1.6776674174909663,
+        -1.3337084041257983,
+        7.133880400098676
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-29/N",
+      "residueId": "illustrative-29",
+      "name": "N",
+      "position": [
+        4.305608473093371,
+        -1.1496243144588834,
+        6.203442999966972
+      ],
+      "value": 0.4084507042253521
+    },
+    {
+      "id": "illustrative-29/CA",
+      "residueId": "illustrative-29",
+      "name": "CA",
+      "position": [
+        4.985038449383752,
+        -0.5895754495175487,
+        5.029161016712534
+      ],
+      "value": 0.4084507042253521
+    },
+    {
+      "id": "illustrative-29/C",
+      "residueId": "illustrative-29",
+      "name": "C",
+      "position": [
+        6.438374645968233,
+        -0.9815591026867405,
+        5.054235213518977
+      ],
+      "value": 0.4084507042253521
+    },
+    {
+      "id": "illustrative-29/O",
+      "residueId": "illustrative-29",
+      "name": "O",
+      "position": [
+        7.008480014392012,
+        -1.387298804420552,
+        4.070746950583752
+      ],
+      "value": 0.4084507042253521
+    },
+    {
+      "id": "illustrative-29/CB",
+      "residueId": "illustrative-29",
+      "name": "CB",
+      "position": [
+        4.868428887139429,
+        0.9352043018281342,
+        5.051918869849073
+      ],
+      "value": 0.4084507042253521
+    },
+    {
+      "id": "illustrative-30/N",
+      "residueId": "illustrative-30",
+      "name": "N",
+      "position": [
+        7.056527222155282,
+        -0.8540205937583338,
+        6.224927880829076
+      ],
+      "value": 0.4225352112676056
+    },
+    {
+      "id": "illustrative-30/CA",
+      "residueId": "illustrative-30",
+      "name": "CA",
+      "position": [
+        8.475168117005579,
+        -1.2051299595985052,
+        6.373646489878726
+      ],
+      "value": 0.4225352112676056
+    },
+    {
+      "id": "illustrative-30/C",
+      "residueId": "illustrative-30",
+      "name": "C",
+      "position": [
+        8.670406793450132,
+        -2.6592220294144577,
+        6.0304889288101435
+      ],
+      "value": 0.4225352112676056
+    },
+    {
+      "id": "illustrative-30/O",
+      "residueId": "illustrative-30",
+      "name": "O",
+      "position": [
+        9.578129643821363,
+        -3.034570732227105,
+        5.329175462369644
+      ],
+      "value": 0.4225352112676056
+    },
+    {
+      "id": "illustrative-30/CB",
+      "residueId": "illustrative-30",
+      "name": "CB",
+      "position": [
+        8.912572226984741,
+        -0.9582136781673634,
+        7.817482351234702
+      ],
+      "value": 0.4225352112676056
+    },
+    {
+      "id": "illustrative-30/OG",
+      "residueId": "illustrative-30",
+      "name": "OG",
+      "position": [
+        8.726378715966893,
+        0.4199330274565074,
+        8.14330536182929
+      ],
+      "value": 0.4225352112676056
+    },
+    {
+      "id": "illustrative-31/N",
+      "residueId": "illustrative-31",
+      "name": "N",
+      "position": [
+        7.7826088838346825,
+        -3.5043793100231246,
+        6.546651735215836
+      ],
+      "value": 0.43661971830985913
+    },
+    {
+      "id": "illustrative-31/CA",
+      "residueId": "illustrative-31",
+      "name": "CA",
+      "position": [
+        7.86898001501504,
+        -4.945662187763943,
+        6.283095870113629
+      ],
+      "value": 0.43661971830985913
+    },
+    {
+      "id": "illustrative-31/C",
+      "residueId": "illustrative-31",
+      "name": "C",
+      "position": [
+        7.766242923528131,
+        -5.193291487507931,
+        4.801680729128121
+      ],
+      "value": 0.43661971830985913
+    },
+    {
+      "id": "illustrative-31/O",
+      "residueId": "illustrative-31",
+      "name": "O",
+      "position": [
+        8.504686696179295,
+        -5.956526702678547,
+        4.228037285030499
+      ],
+      "value": 0.43661971830985913
+    },
+    {
+      "id": "illustrative-31/CB",
+      "residueId": "illustrative-31",
+      "name": "CB",
+      "position": [
+        6.725020695892033,
+        -5.664296639125432,
+        7.00002724863461
+      ],
+      "value": 0.43661971830985913
+    },
+    {
+      "id": "illustrative-32/N",
+      "residueId": "illustrative-32",
+      "name": "N",
+      "position": [
+        6.813108569682416,
+        -4.5207327627309315,
+        4.162853940987981
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-32/CA",
+      "residueId": "illustrative-32",
+      "name": "CA",
+      "position": [
+        6.61544843486937,
+        -4.679113813486914,
+        2.716075480453293
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-32/C",
+      "residueId": "illustrative-32",
+      "name": "C",
+      "position": [
+        6.146099254065912,
+        -3.3746224366194695,
+        2.1279839959395304
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-32/O",
+      "residueId": "illustrative-32",
+      "name": "O",
+      "position": [
+        4.975173155705171,
+        -3.0871953147998665,
+        2.0614804485139
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-32/CB",
+      "residueId": "illustrative-32",
+      "name": "CB",
+      "position": [
+        5.565494937597968,
+        -5.7605999028252075,
+        2.4612588951702357
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-32/CG1",
+      "residueId": "illustrative-32",
+      "name": "CG1",
+      "position": [
+        6.041696770402961,
+        -7.085926172231966,
+        3.0589913554344657
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-32/CG2",
+      "residueId": "illustrative-32",
+      "name": "CG2",
+      "position": [
+        4.244103438627123,
+        -5.352741066019224,
+        3.1140694922708416
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-33/N",
+      "residueId": "illustrative-33",
+      "name": "N",
+      "position": [
+        7.098450421423008,
+        -2.5580561392170242,
+        1.6862298380869563
+      ],
+      "value": 0.4647887323943662
+    },
+    {
+      "id": "illustrative-33/CA",
+      "residueId": "illustrative-33",
+      "name": "CA",
+      "position": [
+        6.76410774357653,
+        -1.258164158447158,
+        1.0923326987600852
+      ],
+      "value": 0.4647887323943662
+    },
+    {
+      "id": "illustrative-33/C",
+      "residueId": "illustrative-33",
+      "name": "C",
+      "position": [
+        7.926426985480568,
+        -0.3157000710815516,
+        1.2573824607282236
+      ],
+      "value": 0.4647887323943662
+    },
+    {
+      "id": "illustrative-33/O",
+      "residueId": "illustrative-33",
+      "name": "O",
+      "position": [
+        8.725660931837133,
+        -0.4366321519947261,
+        2.153761025173693
+      ],
+      "value": 0.4647887323943662
+    },
+    {
+      "id": "illustrative-33/CB",
+      "residueId": "illustrative-33",
+      "name": "CB",
+      "position": [
+        5.534890888817387,
+        -0.6784274944466955,
+        1.793760046665522
+      ],
+      "value": 0.4647887323943662
+    },
+    {
+      "id": "illustrative-34/N",
+      "residueId": "illustrative-34",
+      "name": "N",
+      "position": [
+        8.019901722072301,
+        0.6581377362599189,
+        0.35638168458457165
+      ],
+      "value": 0.4788732394366197
+    },
+    {
+      "id": "illustrative-34/CA",
+      "residueId": "illustrative-34",
+      "name": "CA",
+      "position": [
+        9.111535440464689,
+        1.6394702517361814,
+        0.41347212982580517
+      ],
+      "value": 0.4788732394366197
+    },
+    {
+      "id": "illustrative-34/C",
+      "residueId": "illustrative-34",
+      "name": "C",
+      "position": [
+        8.72669516980021,
+        2.8639710358236994,
+        -0.375676015862915
+      ],
+      "value": 0.4788732394366197
+    },
+    {
+      "id": "illustrative-34/O",
+      "residueId": "illustrative-34",
+      "name": "O",
+      "position": [
+        8.50964162840206,
+        2.8181736342352437,
+        -1.562047946656234
+      ],
+      "value": 0.4788732394366197
+    },
+    {
+      "id": "illustrative-34/CB",
+      "residueId": "illustrative-34",
+      "name": "CB",
+      "position": [
+        10.37938425594899,
+        1.0265088087922787,
+        -0.18133006463818768
+      ],
+      "value": 0.4788732394366197
+    },
+    {
+      "id": "illustrative-34/OG",
+      "residueId": "illustrative-34",
+      "name": "OG",
+      "position": [
+        10.743606935931929,
+        -0.13499740459331422,
+        0.5659062806052092
+      ],
+      "value": 0.4788732394366197
+    },
+    {
+      "id": "illustrative-35/N",
+      "residueId": "illustrative-35",
+      "name": "N",
+      "position": [
+        8.640494268690142,
+        3.998326979959595,
+        0.3133130962799212
+      ],
+      "value": 0.49295774647887325
+    },
+    {
+      "id": "illustrative-35/CA",
+      "residueId": "illustrative-35",
+      "name": "CA",
+      "position": [
+        8.273755820975468,
+        5.257268596502474,
+        -0.3460706441203363
+      ],
+      "value": 0.49295774647887325
+    },
+    {
+      "id": "illustrative-35/C",
+      "residueId": "illustrative-35",
+      "name": "C",
+      "position": [
+        9.440126088100806,
+        6.207994702706169,
+        -0.29952742819439876
+      ],
+      "value": 0.49295774647887325
+    },
+    {
+      "id": "illustrative-35/O",
+      "residueId": "illustrative-35",
+      "name": "O",
+      "position": [
+        10.155957732886257,
+        6.29525767036446,
+        0.6683900428738856
+      ],
+      "value": 0.49295774647887325
+    },
+    {
+      "id": "illustrative-35/CB",
+      "residueId": "illustrative-35",
+      "name": "CB",
+      "position": [
+        7.078828953593476,
+        5.881555109148195,
+        0.37606863035329474
+      ],
+      "value": 0.49295774647887325
+    },
+    {
+      "id": "illustrative-36/N",
+      "residueId": "illustrative-36",
+      "name": "N",
+      "position": [
+        9.634578865117021,
+        6.945996349521647,
+        -1.388766468446043
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-36/CA",
+      "residueId": "illustrative-36",
+      "name": "CA",
+      "position": [
+        10.74063981063764,
+        7.90962105652966,
+        -1.4621054678785257
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-36/C",
+      "residueId": "illustrative-36",
+      "name": "C",
+      "position": [
+        10.202699219980493,
+        9.262641151208165,
+        -1.8465460280690567
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-36/O",
+      "residueId": "illustrative-36",
+      "name": "O",
+      "position": [
+        10.154247038470086,
+        9.628941798254715,
+        -2.9961464900036194
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-36/CB",
+      "residueId": "illustrative-36",
+      "name": "CB",
+      "position": [
+        11.751157000400402,
+        7.445596981316609,
+        -2.511144393189042
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-36/CG1",
+      "residueId": "illustrative-36",
+      "name": "CG1",
+      "position": [
+        12.297548259286131,
+        6.070837874177688,
+        -2.121226466502074
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-36/CG2",
+      "residueId": "illustrative-36",
+      "name": "CG2",
+      "position": [
+        11.06504348209695,
+        7.353235333160624,
+        -3.8747072138728447
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-37/N",
+      "residueId": "illustrative-37",
+      "name": "N",
+      "position": [
+        9.784164900549749,
+        10.029994555082991,
+        -0.8441001307656852
+      ],
+      "value": 0.5211267605633803
+    },
+    {
+      "id": "illustrative-37/CA",
+      "residueId": "illustrative-37",
+      "name": "CA",
+      "position": [
+        9.23936724310077,
+        11.369727113576086,
+        -1.094160491782089
+      ],
+      "value": 0.5211267605633803
+    },
+    {
+      "id": "illustrative-37/C",
+      "residueId": "illustrative-37",
+      "name": "C",
+      "position": [
+        9.533741460497744,
+        12.260415413508767,
+        0.08333013344383944
+      ],
+      "value": 0.5211267605633803
+    },
+    {
+      "id": "illustrative-37/O",
+      "residueId": "illustrative-37",
+      "name": "O",
+      "position": [
+        10.003737973830383,
+        11.83068983810986,
+        1.1086755422223842
+      ],
+      "value": 0.5211267605633803
+    },
+    {
+      "id": "illustrative-37/CB",
+      "residueId": "illustrative-37",
+      "name": "CB",
+      "position": [
+        7.726212276695113,
+        11.275169656173722,
+        -1.2953816012400592
+      ],
+      "value": 0.5211267605633803
+    },
+    {
+      "id": "illustrative-38/N",
+      "residueId": "illustrative-38",
+      "name": "N",
+      "position": [
+        9.244930234373449,
+        13.549128851243154,
+        -0.07385049852905742
+      ],
+      "value": 0.5352112676056338
+    },
+    {
+      "id": "illustrative-38/CA",
+      "residueId": "illustrative-38",
+      "name": "CA",
+      "position": [
+        9.487934081304138,
+        14.516004520194194,
+        1.0050552300530848
+      ],
+      "value": 0.5352112676056338
+    },
+    {
+      "id": "illustrative-38/C",
+      "residueId": "illustrative-38",
+      "name": "C",
+      "position": [
+        8.612950336643316,
+        15.72552936631209,
+        0.8008198432984686
+      ],
+      "value": 0.5352112676056338
+    },
+    {
+      "id": "illustrative-38/O",
+      "residueId": "illustrative-38",
+      "name": "O",
+      "position": [
+        8.58946565213116,
+        16.32881143497491,
+        -0.2442577687587768
+      ],
+      "value": 0.5352112676056338
+    },
+    {
+      "id": "illustrative-38/CB",
+      "residueId": "illustrative-38",
+      "name": "CB",
+      "position": [
+        10.956636849766397,
+        14.939777073265063,
+        0.9882921403887676
+      ],
+      "value": 0.5352112676056338
+    },
+    {
+      "id": "illustrative-38/OG",
+      "residueId": "illustrative-38",
+      "name": "OG",
+      "position": [
+        11.786237403702614,
+        13.793095649714365,
+        1.1806502277999043
+      ],
+      "value": 0.5352112676056338
+    },
+    {
+      "id": "illustrative-39/N",
+      "residueId": "illustrative-39",
+      "name": "N",
+      "position": [
+        7.868028657839269,
+        16.088601897177462,
+        1.8410938599780995
+      ],
+      "value": 0.5492957746478874
+    },
+    {
+      "id": "illustrative-39/CA",
+      "residueId": "illustrative-39",
+      "name": "CA",
+      "position": [
+        6.975459796849745,
+        17.2510950491729,
+        1.7626814887884847
+      ],
+      "value": 0.5492957746478874
+    },
+    {
+      "id": "illustrative-39/C",
+      "residueId": "illustrative-39",
+      "name": "C",
+      "position": [
+        6.429385115196652,
+        17.55937782744561,
+        3.1313414796839343
+      ],
+      "value": 0.5492957746478874
+    },
+    {
+      "id": "illustrative-39/O",
+      "residueId": "illustrative-39",
+      "name": "O",
+      "position": [
+        5.9663406658782385,
+        16.701736333296584,
+        3.8433350930466084
+      ],
+      "value": 0.5492957746478874
+    },
+    {
+      "id": "illustrative-39/CB",
+      "residueId": "illustrative-39",
+      "name": "CB",
+      "position": [
+        5.8189669924747465,
+        16.942363778421495,
+        0.8106949364207141
+      ],
+      "value": 0.5492957746478874
+    },
+    {
+      "id": "illustrative-40/N",
+      "residueId": "illustrative-40",
+      "name": "N",
+      "position": [
+        6.4877153079956695,
+        18.83330140401315,
+        3.508987225950723
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-40/CA",
+      "residueId": "illustrative-40",
+      "name": "CA",
+      "position": [
+        5.985872153681254,
+        19.256562175562326,
+        4.8228843938201695
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-40/C",
+      "residueId": "illustrative-40",
+      "name": "C",
+      "position": [
+        4.520566164214177,
+        18.926223948923326,
+        4.930555249918326
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-40/O",
+      "residueId": "illustrative-40",
+      "name": "O",
+      "position": [
+        4.051053628619513,
+        18.413596832460254,
+        5.917913552859172
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-40/CB",
+      "residueId": "illustrative-40",
+      "name": "CB",
+      "position": [
+        6.181769392699712,
+        20.764411644851148,
+        4.980872525369236
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-40/CG1",
+      "residueId": "illustrative-40",
+      "name": "CG1",
+      "position": [
+        7.670231993250798,
+        21.10050888184953,
+        4.8710557049693115
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-40/CG2",
+      "residueId": "illustrative-40",
+      "name": "CG2",
+      "position": [
+        5.411496697271189,
+        21.49694128924192,
+        3.881478922165176
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-41/N",
+      "residueId": "illustrative-41",
+      "name": "N",
+      "position": [
+        3.7745281743074792,
+        19.23288780747228,
+        3.8730654885135927
+      ],
+      "value": 0.5774647887323944
+    },
+    {
+      "id": "illustrative-41/CA",
+      "residueId": "illustrative-41",
+      "name": "CA",
+      "position": [
+        2.3327081070158204,
+        18.958658534579335,
+        3.859981167985495
+      ],
+      "value": 0.5774647887323944
+    },
+    {
+      "id": "illustrative-41/C",
+      "residueId": "illustrative-41",
+      "name": "C",
+      "position": [
+        2.0998754495832768,
+        17.481606293043743,
+        4.034828614085177
+      ],
+      "value": 0.5774647887323944
+    },
+    {
+      "id": "illustrative-41/O",
+      "residueId": "illustrative-41",
+      "name": "O",
+      "position": [
+        1.2628616026570674,
+        17.051060273102483,
+        4.790429001040166
+      ],
+      "value": 0.5774647887323944
+    },
+    {
+      "id": "illustrative-41/CB",
+      "residueId": "illustrative-41",
+      "name": "CB",
+      "position": [
+        1.7395787223510042,
+        19.413193411148562,
+        2.5255657232947
+      ],
+      "value": 0.5774647887323944
+    },
+    {
+      "id": "illustrative-42/N",
+      "residueId": "illustrative-42",
+      "name": "N",
+      "position": [
+        2.871666570433157,
+        16.67952126955164,
+        3.306887626870583
+      ],
+      "value": 0.5915492957746479
+    },
+    {
+      "id": "illustrative-42/CA",
+      "residueId": "illustrative-42",
+      "name": "CA",
+      "position": [
+        2.737660427921807,
+        15.219111072719329,
+        3.391630831656804
+      ],
+      "value": 0.5915492957746479
+    },
+    {
+      "id": "illustrative-42/C",
+      "residueId": "illustrative-42",
+      "name": "C",
+      "position": [
+        3.0030951807374873,
+        14.772524909401369,
+        4.805973149036378
+      ],
+      "value": 0.5915492957746479
+    },
+    {
+      "id": "illustrative-42/O",
+      "residueId": "illustrative-42",
+      "name": "O",
+      "position": [
+        2.297677863091735,
+        13.969168895434658,
+        5.36605664530188
+      ],
+      "value": 0.5915492957746479
+    },
+    {
+      "id": "illustrative-42/CB",
+      "residueId": "illustrative-42",
+      "name": "CB",
+      "position": [
+        3.745563013523328,
+        14.559448009311671,
+        2.4503928061216085
+      ],
+      "value": 0.5915492957746479
+    },
+    {
+      "id": "illustrative-42/OG",
+      "residueId": "illustrative-42",
+      "name": "OG",
+      "position": [
+        3.494829631933168,
+        14.983682914908092,
+        1.1097681322363475
+      ],
+      "value": 0.5915492957746479
+    },
+    {
+      "id": "illustrative-43/N",
+      "residueId": "illustrative-43",
+      "name": "N",
+      "position": [
+        4.061256340707204,
+        15.316567271910737,
+        5.400290292762495
+      ],
+      "value": 0.6056338028169014
+    },
+    {
+      "id": "illustrative-43/CA",
+      "residueId": "illustrative-43",
+      "name": "CA",
+      "position": [
+        4.42107845440398,
+        14.959910362847642,
+        6.777803231254307
+      ],
+      "value": 0.6056338028169014
+    },
+    {
+      "id": "illustrative-43/C",
+      "residueId": "illustrative-43",
+      "name": "C",
+      "position": [
+        3.2843898123517645,
+        15.308913799631155,
+        7.701167477986216
+      ],
+      "value": 0.6056338028169014
+    },
+    {
+      "id": "illustrative-43/O",
+      "residueId": "illustrative-43",
+      "name": "O",
+      "position": [
+        2.901961226873363,
+        14.551411812417916,
+        8.559557317381454
+      ],
+      "value": 0.6056338028169014
+    },
+    {
+      "id": "illustrative-43/CB",
+      "residueId": "illustrative-43",
+      "name": "CB",
+      "position": [
+        5.672028965382225,
+        15.734773994652166,
+        7.194670321811921
+      ],
+      "value": 0.6056338028169014
+    },
+    {
+      "id": "illustrative-44/N",
+      "residueId": "illustrative-44",
+      "name": "N",
+      "position": [
+        2.7268029006574928,
+        16.501866321204098,
+        7.5144561575474125
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-44/CA",
+      "residueId": "illustrative-44",
+      "name": "CA",
+      "position": [
+        1.6094715360031824,
+        16.9543441695798,
+        8.353596442773327
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-44/C",
+      "residueId": "illustrative-44",
+      "name": "C",
+      "position": [
+        0.4533130811948358,
+        16.000639377857294,
+        8.206685593545965
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-44/O",
+      "residueId": "illustrative-44",
+      "name": "O",
+      "position": [
+        -0.17092783195313033,
+        15.60019699968403,
+        9.159614858557347
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-44/CB",
+      "residueId": "illustrative-44",
+      "name": "CB",
+      "position": [
+        1.1762474780286891,
+        18.352756896132377,
+        7.913477411364889
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-44/CG1",
+      "residueId": "illustrative-44",
+      "name": "CG1",
+      "position": [
+        2.350672397788766,
+        19.321869886414742,
+        8.062098136408585
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-44/CG2",
+      "residueId": "illustrative-44",
+      "name": "CG2",
+      "position": [
+        0.7309072867578021,
+        18.31227954006241,
+        6.451075381249916
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-45/N",
+      "residueId": "illustrative-45",
+      "name": "N",
+      "position": [
+        0.16092619701519012,
+        15.625805310525799,
+        6.964546578810719
+      ],
+      "value": 0.6338028169014085
+    },
+    {
+      "id": "illustrative-45/CA",
+      "residueId": "illustrative-45",
+      "name": "CA",
+      "position": [
+        -0.9449989370017156,
+        14.699235846784436,
+        6.695071854927876
+      ],
+      "value": 0.6338028169014085
+    },
+    {
+      "id": "illustrative-45/C",
+      "residueId": "illustrative-45",
+      "name": "C",
+      "position": [
+        -0.6923105082011299,
+        13.394786186397948,
+        7.402903502615281
+      ],
+      "value": 0.6338028169014085
+    },
+    {
+      "id": "illustrative-45/O",
+      "residueId": "illustrative-45",
+      "name": "O",
+      "position": [
+        -1.5567971013378465,
+        12.826547311151083,
+        8.024724627172056
+      ],
+      "value": 0.6338028169014085
+    },
+    {
+      "id": "illustrative-45/CB",
+      "residueId": "illustrative-45",
+      "name": "CB",
+      "position": [
+        -1.0459646207530393,
+        14.45035176074822,
+        5.189438552153742
+      ],
+      "value": 0.6338028169014085
+    },
+    {
+      "id": "illustrative-46/N",
+      "residueId": "illustrative-46",
+      "name": "N",
+      "position": [
+        0.5404926691470299,
+        12.905986189579231,
+        7.302052676985026
+      ],
+      "value": 0.647887323943662
+    },
+    {
+      "id": "illustrative-46/CA",
+      "residueId": "illustrative-46",
+      "name": "CA",
+      "position": [
+        0.907675060165563,
+        11.639749112256029,
+        7.949939824363262
+      ],
+      "value": 0.647887323943662
+    },
+    {
+      "id": "illustrative-46/C",
+      "residueId": "illustrative-46",
+      "name": "C",
+      "position": [
+        0.6979615388722757,
+        11.75832773600848,
+        9.437292623458266
+      ],
+      "value": 0.647887323943662
+    },
+    {
+      "id": "illustrative-46/O",
+      "residueId": "illustrative-46",
+      "name": "O",
+      "position": [
+        0.156642769654471,
+        10.890530558641919,
+        10.078065632445965
+      ],
+      "value": 0.647887323943662
+    },
+    {
+      "id": "illustrative-46/CB",
+      "residueId": "illustrative-46",
+      "name": "CB",
+      "position": [
+        2.377010689184166,
+        11.328774065408938,
+        7.664809451489804
+      ],
+      "value": 0.647887323943662
+    },
+    {
+      "id": "illustrative-46/OG",
+      "residueId": "illustrative-46",
+      "name": "OG",
+      "position": [
+        2.5761934180869903,
+        11.217568126241046,
+        6.2548177920816315
+      ],
+      "value": 0.647887323943662
+    },
+    {
+      "id": "illustrative-47/N",
+      "residueId": "illustrative-47",
+      "name": "N",
+      "position": [
+        1.145056773431817,
+        12.876503241261751,
+        10.001818433927316
+      ],
+      "value": 0.6619718309859155
+    },
+    {
+      "id": "illustrative-47/CA",
+      "residueId": "illustrative-47",
+      "name": "CA",
+      "position": [
+        0.998078512677417,
+        13.106319214869528,
+        11.443969608090525
+      ],
+      "value": 0.6619718309859155
+    },
+    {
+      "id": "illustrative-47/C",
+      "residueId": "illustrative-47",
+      "name": "C",
+      "position": [
+        -0.4622063949607662,
+        13.090443647700246,
+        11.809731764267452
+      ],
+      "value": 0.6619718309859155
+    },
+    {
+      "id": "illustrative-47/O",
+      "residueId": "illustrative-47",
+      "name": "O",
+      "position": [
+        -0.8734097755257855,
+        12.49341076596806,
+        12.77480042397124
+      ],
+      "value": 0.6619718309859155
+    },
+    {
+      "id": "illustrative-47/CB",
+      "residueId": "illustrative-47",
+      "name": "CB",
+      "position": [
+        1.5993064578683343,
+        14.464807666852705,
+        11.807429487237943
+      ],
+      "value": 0.6619718309859155
+    },
+    {
+      "id": "illustrative-48/N",
+      "residueId": "illustrative-48",
+      "name": "N",
+      "position": [
+        -1.2720672827287405,
+        13.773647818607357,
+        11.00583040009471
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-48/CA",
+      "residueId": "illustrative-48",
+      "name": "CA",
+      "position": [
+        -2.717501068564789,
+        13.832039671647959,
+        11.260061716541276
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-48/C",
+      "residueId": "illustrative-48",
+      "name": "C",
+      "position": [
+        -3.2887900940521777,
+        12.438979594024493,
+        11.230898906502244
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-48/O",
+      "residueId": "illustrative-48",
+      "name": "O",
+      "position": [
+        -4.067865150462598,
+        12.04923419709002,
+        12.067107960535676
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-48/CB",
+      "residueId": "illustrative-48",
+      "name": "CB",
+      "position": [
+        -3.389960643828619,
+        14.681789951572725,
+        10.181790608978911
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-48/CG1",
+      "residueId": "illustrative-48",
+      "name": "CG1",
+      "position": [
+        -2.8095108732695904,
+        16.096986764264134,
+        10.210739619429182
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-48/CG2",
+      "residueId": "illustrative-48",
+      "name": "CG2",
+      "position": [
+        -3.139264069412415,
+        14.05617587182579,
+        8.809076417751044
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-49/N",
+      "residueId": "illustrative-49",
+      "name": "N",
+      "position": [
+        -2.8838923630071984,
+        11.663631938752708,
+        10.229003781821437
+      ],
+      "value": 0.6901408450704225
+    },
+    {
+      "id": "illustrative-49/CA",
+      "residueId": "illustrative-49",
+      "name": "CA",
+      "position": [
+        -3.371570615824586,
+        10.285827185575284,
+        10.09468332972765
+      ],
+      "value": 0.6901408450704225
+    },
+    {
+      "id": "illustrative-49/C",
+      "residueId": "illustrative-49",
+      "name": "C",
+      "position": [
+        -2.995084282681807,
+        9.497092649729886,
+        11.320498108934299
+      ],
+      "value": 0.6901408450704225
+    },
+    {
+      "id": "illustrative-49/O",
+      "residueId": "illustrative-49",
+      "name": "O",
+      "position": [
+        -3.7782913676530145,
+        8.765734324291865,
+        11.876011980825359
+      ],
+      "value": 0.6901408450704225
+    },
+    {
+      "id": "illustrative-49/CB",
+      "residueId": "illustrative-49",
+      "name": "CB",
+      "position": [
+        -2.740855038575268,
+        9.640051314120807,
+        8.860082023855075
+      ],
+      "value": 0.6901408450704225
+    },
+    {
+      "id": "illustrative-50/N",
+      "residueId": "illustrative-50",
+      "name": "N",
+      "position": [
+        -1.7478332443346833,
+        9.65439079502446,
+        11.754689473229938
+      ],
+      "value": 0.704225352112676
+    },
+    {
+      "id": "illustrative-50/CA",
+      "residueId": "illustrative-50",
+      "name": "CA",
+      "position": [
+        -1.2639005196831044,
+        8.937263353948596,
+        12.941902323256118
+      ],
+      "value": 0.704225352112676
+    },
+    {
+      "id": "illustrative-50/C",
+      "residueId": "illustrative-50",
+      "name": "C",
+      "position": [
+        -2.1013702321454386,
+        9.319722676831518,
+        14.134642172111764
+      ],
+      "value": 0.704225352112676
+    },
+    {
+      "id": "illustrative-50/O",
+      "residueId": "illustrative-50",
+      "name": "O",
+      "position": [
+        -2.516115597101845,
+        8.497681058081621,
+        14.914976625593237
+      ],
+      "value": 0.704225352112676
+    },
+    {
+      "id": "illustrative-50/CB",
+      "residueId": "illustrative-50",
+      "name": "CB",
+      "position": [
+        0.19566128755955003,
+        9.309743677132536,
+        13.202458919179813
+      ],
+      "value": 0.704225352112676
+    },
+    {
+      "id": "illustrative-50/OG",
+      "residueId": "illustrative-50",
+      "name": "OG",
+      "position": [
+        0.9894630449677326,
+        8.94836810577558,
+        12.071351733117362
+      ],
+      "value": 0.704225352112676
+    },
+    {
+      "id": "illustrative-51/N",
+      "residueId": "illustrative-51",
+      "name": "N",
+      "position": [
+        -2.356222323507115,
+        10.617387896348095,
+        14.276117928287771
+      ],
+      "value": 0.7183098591549296
+    },
+    {
+      "id": "illustrative-51/CA",
+      "residueId": "illustrative-51",
+      "name": "CA",
+      "position": [
+        -3.1614979970159696,
+        11.111554642033894,
+        15.399304607835374
+      ],
+      "value": 0.7183098591549296
+    },
+    {
+      "id": "illustrative-51/C",
+      "residueId": "illustrative-51",
+      "name": "C",
+      "position": [
+        -4.531873294506848,
+        10.490376794053914,
+        15.347578161932464
+      ],
+      "value": 0.7183098591549296
+    },
+    {
+      "id": "illustrative-51/O",
+      "residueId": "illustrative-51",
+      "name": "O",
+      "position": [
+        -5.0682161215662855,
+        10.041500160746066,
+        16.33131600299181
+      ],
+      "value": 0.7183098591549296
+    },
+    {
+      "id": "illustrative-51/CB",
+      "residueId": "illustrative-51",
+      "name": "CB",
+      "position": [
+        -3.2881083429417357,
+        12.632798139746747,
+        15.305192754326232
+      ],
+      "value": 0.7183098591549296
+    },
+    {
+      "id": "illustrative-52/N",
+      "residueId": "illustrative-52",
+      "name": "N",
+      "position": [
+        -5.1161636012393865,
+        10.465812334564331,
+        14.15304836959224
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-52/CA",
+      "residueId": "illustrative-52",
+      "name": "CA",
+      "position": [
+        -6.453785955132128,
+        9.885213163355697,
+        13.976999965003358
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-52/C",
+      "residueId": "illustrative-52",
+      "name": "C",
+      "position": [
+        -6.3533197676338595,
+        8.382644628945938,
+        13.98268719378997
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-52/O",
+      "residueId": "illustrative-52",
+      "name": "O",
+      "position": [
+        -5.379898747569564,
+        7.808016339054507,
+        14.40737395618484
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-52/CB",
+      "residueId": "illustrative-52",
+      "name": "CB",
+      "position": [
+        -7.039934858437332,
+        10.35219563155231,
+        12.644595057495469
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-52/CG1",
+      "residueId": "illustrative-52",
+      "name": "CG1",
+      "position": [
+        -7.141713266518598,
+        11.878675974197924,
+        12.638198248527916
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-52/CG2",
+      "residueId": "illustrative-52",
+      "name": "CG2",
+      "position": [
+        -6.132762750001916,
+        9.897177659568227,
+        11.500661750502296
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-53/N",
+      "residueId": "illustrative-53",
+      "name": "N",
+      "position": [
+        -7.400902963559798,
+        7.726403082551688,
+        13.491956635948213
+      ],
+      "value": 0.7464788732394366
+    },
+    {
+      "id": "illustrative-53/CA",
+      "residueId": "illustrative-53",
+      "name": "CA",
+      "position": [
+        -7.419623830856996,
+        6.2595571125423275,
+        13.44472921388285
+      ],
+      "value": 0.7464788732394366
+    },
+    {
+      "id": "illustrative-53/C",
+      "residueId": "illustrative-53",
+      "name": "C",
+      "position": [
+        -7.493417177054522,
+        5.803190307093328,
+        12.011987129297754
+      ],
+      "value": 0.7464788732394366
+    },
+    {
+      "id": "illustrative-53/O",
+      "residueId": "illustrative-53",
+      "name": "O",
+      "position": [
+        -8.373932141182175,
+        6.16511082669892,
+        11.26996224060756
+      ],
+      "value": 0.7464788732394366
+    },
+    {
+      "id": "illustrative-53/CB",
+      "residueId": "illustrative-53",
+      "name": "CB",
+      "position": [
+        -8.63919314752307,
+        5.740613859013038,
+        14.207892093917696
+      ],
+      "value": 0.7464788732394366
+    },
+    {
+      "id": "illustrative-54/N",
+      "residueId": "illustrative-54",
+      "name": "N",
+      "position": [
+        -6.530322729056807,
+        4.977358196799177,
+        11.612799942826188
+      ],
+      "value": 0.7605633802816901
+    },
+    {
+      "id": "illustrative-54/CA",
+      "residueId": "illustrative-54",
+      "name": "CA",
+      "position": [
+        -6.495842021078962,
+        4.464226337933125,
+        10.236775315069105
+      ],
+      "value": 0.7605633802816901
+    },
+    {
+      "id": "illustrative-54/C",
+      "residueId": "illustrative-54",
+      "name": "C",
+      "position": [
+        -5.4817998150319704,
+        3.3539085087740634,
+        10.141006204146738
+      ],
+      "value": 0.7605633802816901
+    },
+    {
+      "id": "illustrative-54/O",
+      "residueId": "illustrative-54",
+      "name": "O",
+      "position": [
+        -4.336121955789903,
+        3.5021744558448256,
+        10.49047358714796
+      ],
+      "value": 0.7605633802816901
+    },
+    {
+      "id": "illustrative-54/CB",
+      "residueId": "illustrative-54",
+      "name": "CB",
+      "position": [
+        -6.108455115741358,
+        5.593105573006964,
+        9.281518774556528
+      ],
+      "value": 0.7605633802816901
+    },
+    {
+      "id": "illustrative-54/OG",
+      "residueId": "illustrative-54",
+      "name": "OG",
+      "position": [
+        -7.068979956441071,
+        6.646252554039522,
+        9.37311826549835
+      ],
+      "value": 0.7605633802816901
+    },
+    {
+      "id": "illustrative-55/N",
+      "residueId": "illustrative-55",
+      "name": "N",
+      "position": [
+        -5.924747698811462,
+        2.2006683676001217,
+        9.648325426116605
+      ],
+      "value": 0.7746478873239436
+    },
+    {
+      "id": "illustrative-55/CA",
+      "residueId": "illustrative-55",
+      "name": "CA",
+      "position": [
+        -5.030109754617278,
+        1.0457811190817452,
+        9.506634240725067
+      ],
+      "value": 0.7746478873239436
+    },
+    {
+      "id": "illustrative-55/C",
+      "residueId": "illustrative-55",
+      "name": "C",
+      "position": [
+        -4.868187990222778,
+        0.7107615501156412,
+        8.047864474577873
+      ],
+      "value": 0.7746478873239436
+    },
+    {
+      "id": "illustrative-55/O",
+      "residueId": "illustrative-55",
+      "name": "O",
+      "position": [
+        -5.743580568827459,
+        0.9177796107550789,
+        7.243050610449692
+      ],
+      "value": 0.7746478873239436
+    },
+    {
+      "id": "illustrative-55/CB",
+      "residueId": "illustrative-55",
+      "name": "CB",
+      "position": [
+        -5.627684911955915,
+        -0.15498294249753397,
+        10.241575462695462
+      ],
+      "value": 0.7746478873239436
+    },
+    {
+      "id": "illustrative-56/N",
+      "residueId": "illustrative-56",
+      "name": "N",
+      "position": [
+        -3.7028354400210617,
+        0.17303123397543896,
+        7.699009861820475
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-56/CA",
+      "residueId": "illustrative-56",
+      "name": "CA",
+      "position": [
+        -3.427381461442221,
+        -0.19626889258930652,
+        6.30435416158319
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-56/C",
+      "residueId": "illustrative-56",
+      "name": "C",
+      "position": [
+        -2.880374008686281,
+        -1.5984847189668185,
+        6.255245884420488
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-56/O",
+      "residueId": "illustrative-56",
+      "name": "O",
+      "position": [
+        -1.949497898258178,
+        -1.946587085579333,
+        6.941102581838406
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-56/CB",
+      "residueId": "illustrative-56",
+      "name": "CB",
+      "position": [
+        -2.4021332908688446,
+        0.7721458580597471,
+        5.714451576861547
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-56/CG1",
+      "residueId": "illustrative-56",
+      "name": "CG1",
+      "position": [
+        -2.9572495356482866,
+        2.196881954816276,
+        5.764601446063178
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-56/CG2",
+      "residueId": "illustrative-56",
+      "name": "CG2",
+      "position": [
+        -1.1075050934454205,
+        0.7008465352543185,
+        6.525278461593215
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-57/N",
+      "residueId": "illustrative-57",
+      "name": "N",
+      "position": [
+        -3.483919831444866,
+        -2.4305300091436695,
+        5.411247617286496
+      ],
+      "value": 0.8028169014084507
+    },
+    {
+      "id": "illustrative-57/CA",
+      "residueId": "illustrative-57",
+      "name": "CA",
+      "position": [
+        -3.0400685910449328,
+        -3.822912208142312,
+        5.2752847977101665
+      ],
+      "value": 0.8028169014084507
+    },
+    {
+      "id": "illustrative-57/C",
+      "residueId": "illustrative-57",
+      "name": "C",
+      "position": [
+        -3.1952222393759038,
+        -4.262964881807079,
+        3.843940328405143
+      ],
+      "value": 0.8028169014084507
+    },
+    {
+      "id": "illustrative-57/O",
+      "residueId": "illustrative-57",
+      "name": "O",
+      "position": [
+        -3.4509041216503973,
+        -5.4054196436521265,
+        3.550141260649392
+      ],
+      "value": 0.8028169014084507
+    },
+    {
+      "id": "illustrative-57/CB",
+      "residueId": "illustrative-57",
+      "name": "CB",
+      "position": [
+        -3.889013237072272,
+        -4.718921651399503,
+        6.178351276755566
+      ],
+      "value": 0.8028169014084507
+    },
+    {
+      "id": "illustrative-58/N",
+      "residueId": "illustrative-58",
+      "name": "N",
+      "position": [
+        -3.0336997529536514,
+        -3.317538995583857,
+        2.9225390151658956
+      ],
+      "value": 0.8169014084507042
+    },
+    {
+      "id": "illustrative-58/CA",
+      "residueId": "illustrative-58",
+      "name": "CA",
+      "position": [
+        -3.160781842002689,
+        -3.6257814868344105,
+        1.4918840220838512
+      ],
+      "value": 0.8169014084507042
+    },
+    {
+      "id": "illustrative-58/C",
+      "residueId": "illustrative-58",
+      "name": "C",
+      "position": [
+        -2.7048244810006516,
+        -2.4403931701586625,
+        0.6811951646072639
+      ],
+      "value": 0.8169014084507042
+    },
+    {
+      "id": "illustrative-58/O",
+      "residueId": "illustrative-58",
+      "name": "O",
+      "position": [
+        -2.7553600850925166,
+        -1.3138351081804178,
+        1.1113126900708195
+      ],
+      "value": 0.8169014084507042
+    },
+    {
+      "id": "illustrative-58/CB",
+      "residueId": "illustrative-58",
+      "name": "CB",
+      "position": [
+        -4.621604486770744,
+        -3.9360664663018796,
+        1.1652765634278428
+      ],
+      "value": 0.8169014084507042
+    },
+    {
+      "id": "illustrative-58/OG",
+      "residueId": "illustrative-58",
+      "name": "OG",
+      "position": [
+        -5.054328754503786,
+        -5.058987282019564,
+        1.934637044439725
+      ],
+      "value": 0.8169014084507042
+    },
+    {
+      "id": "illustrative-59/N",
+      "residueId": "illustrative-59",
+      "name": "N",
+      "position": [
+        -2.24332930635291,
+        -2.7097634241404047,
+        -0.536738277764142
+      ],
+      "value": 0.8309859154929577
+    },
+    {
+      "id": "illustrative-59/CA",
+      "residueId": "illustrative-59",
+      "name": "CA",
+      "position": [
+        -1.7703628965895954,
+        -1.6373713693496095,
+        -1.4201951562008754
+      ],
+      "value": 0.8309859154929577
+    },
+    {
+      "id": "illustrative-59/C",
+      "residueId": "illustrative-59",
+      "name": "C",
+      "position": [
+        -2.836001900770779,
+        -0.581243362042206,
+        -1.5445862529426766
+      ],
+      "value": 0.8309859154929577
+    },
+    {
+      "id": "illustrative-59/O",
+      "residueId": "illustrative-59",
+      "name": "O",
+      "position": [
+        -2.6444952413120264,
+        0.5629842465401993,
+        -1.2114760922739571
+      ],
+      "value": 0.8309859154929577
+    },
+    {
+      "id": "illustrative-59/CB",
+      "residueId": "illustrative-59",
+      "name": "CB",
+      "position": [
+        -1.4617906621920893,
+        -2.214670979924029,
+        -2.8024315092858147
+      ],
+      "value": 0.8309859154929577
+    },
+    {
+      "id": "illustrative-60/N",
+      "residueId": "illustrative-60",
+      "name": "N",
+      "position": [
+        -4.001076032086576,
+        -0.9844740564334176,
+        -2.043492331918992
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-60/CA",
+      "residueId": "illustrative-60",
+      "name": "CA",
+      "position": [
+        -5.117354704266259,
+        -0.04499175384075649,
+        -2.212657721854275
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-60/C",
+      "residueId": "illustrative-60",
+      "name": "C",
+      "position": [
+        -5.49166702576126,
+        0.5356778762633074,
+        -0.8745429783992031
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-60/O",
+      "residueId": "illustrative-60",
+      "name": "O",
+      "position": [
+        -5.700190249610919,
+        1.7155868980148836,
+        -0.7247505703653396
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-60/CB",
+      "residueId": "illustrative-60",
+      "name": "CB",
+      "position": [
+        -6.319000896280537,
+        -0.7833333869486494,
+        -2.8024407853930255
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-60/CG1",
+      "residueId": "illustrative-60",
+      "name": "CG1",
+      "position": [
+        -5.939012322132353,
+        -1.3738337667574358,
+        -4.161653787450653
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-60/CG2",
+      "residueId": "illustrative-60",
+      "name": "CG2",
+      "position": [
+        -6.740007243136734,
+        -1.9094496326009087,
+        -1.8573472147954582
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-61/N",
+      "residueId": "illustrative-61",
+      "name": "N",
+      "position": [
+        -5.578832179148703,
+        -0.3288442269621116,
+        0.13238490832836258
+      ],
+      "value": 0.8591549295774648
+    },
+    {
+      "id": "illustrative-61/CA",
+      "residueId": "illustrative-61",
+      "name": "CA",
+      "position": [
+        -5.936078979175185,
+        0.11836826422264096,
+        1.4839002473457072
+      ],
+      "value": 0.8591549295774648
+    },
+    {
+      "id": "illustrative-61/C",
+      "residueId": "illustrative-61",
+      "name": "C",
+      "position": [
+        -4.919286663806951,
+        1.1172249588654721,
+        1.9685492863164917
+      ],
+      "value": 0.8591549295774648
+    },
+    {
+      "id": "illustrative-61/O",
+      "residueId": "illustrative-61",
+      "name": "O",
+      "position": [
+        -5.241409061892936,
+        2.1430947027276206,
+        2.516930931960786
+      ],
+      "value": 0.8591549295774648
+    },
+    {
+      "id": "illustrative-61/CB",
+      "residueId": "illustrative-61",
+      "name": "CB",
+      "position": [
+        -5.959462539118769,
+        -1.0838546741718602,
+        2.428983426501096
+      ],
+      "value": 0.8591549295774648
+    },
+    {
+      "id": "illustrative-62/N",
+      "residueId": "illustrative-62",
+      "name": "N",
+      "position": [
+        -3.6448294649279513,
+        0.8016196443501343,
+        1.7562944072791222
+      ],
+      "value": 0.8732394366197183
+    },
+    {
+      "id": "illustrative-62/CA",
+      "residueId": "illustrative-62",
+      "name": "CA",
+      "position": [
+        -2.562131767760407,
+        1.6973257268528146,
+        2.1845622093793953
+      ],
+      "value": 0.8732394366197183
+    },
+    {
+      "id": "illustrative-62/C",
+      "residueId": "illustrative-62",
+      "name": "C",
+      "position": [
+        -2.712583981510285,
+        3.029884461549572,
+        1.4976048963233803
+      ],
+      "value": 0.8732394366197183
+    },
+    {
+      "id": "illustrative-62/O",
+      "residueId": "illustrative-62",
+      "name": "O",
+      "position": [
+        -2.5965287152509324,
+        4.07319710337981,
+        2.0931868861204865
+      ],
+      "value": 0.8732394366197183
+    },
+    {
+      "id": "illustrative-62/CB",
+      "residueId": "illustrative-62",
+      "name": "CB",
+      "position": [
+        -1.2135975263034477,
+        1.0807469933913776,
+        1.8127584102309808
+      ],
+      "value": 0.8732394366197183
+    },
+    {
+      "id": "illustrative-62/OG",
+      "residueId": "illustrative-62",
+      "name": "OG",
+      "position": [
+        -1.0713804077512739,
+        -0.183047816744905,
+        2.46292298098466
+      ],
+      "value": 0.8732394366197183
+    },
+    {
+      "id": "illustrative-63/N",
+      "residueId": "illustrative-63",
+      "name": "N",
+      "position": [
+        -2.980930097770929,
+        2.9876446450012155,
+        0.19564246991246792
+      ],
+      "value": 0.8873239436619719
+    },
+    {
+      "id": "illustrative-63/CA",
+      "residueId": "illustrative-63",
+      "name": "CA",
+      "position": [
+        -3.1494152045753503,
+        4.221062503784162,
+        -0.5818606840492354
+      ],
+      "value": 0.8873239436619719
+    },
+    {
+      "id": "illustrative-63/C",
+      "residueId": "illustrative-63",
+      "name": "C",
+      "position": [
+        -4.292555008711269,
+        5.020523944125118,
+        -0.015681566094453148
+      ],
+      "value": 0.8873239436619719
+    },
+    {
+      "id": "illustrative-63/O",
+      "residueId": "illustrative-63",
+      "name": "O",
+      "position": [
+        -4.212767776365485,
+        6.211309943534772,
+        0.1647531898827536
+      ],
+      "value": 0.8873239436619719
+    },
+    {
+      "id": "illustrative-63/CB",
+      "residueId": "illustrative-63",
+      "name": "CB",
+      "position": [
+        -3.447901609916868,
+        3.8677892871476005,
+        -2.03965796084514
+      ],
+      "value": 0.8873239436619719
+    },
+    {
+      "id": "illustrative-64/N",
+      "residueId": "illustrative-64",
+      "name": "N",
+      "position": [
+        -5.395627823719938,
+        4.336171746959392,
+        0.27378766374404534
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-64/CA",
+      "residueId": "illustrative-64",
+      "name": "CA",
+      "position": [
+        -6.577376716429765,
+        5.006736455284278,
+        0.8315820044541835
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-64/C",
+      "residueId": "illustrative-64",
+      "name": "C",
+      "position": [
+        -6.214515910172324,
+        5.65610976099735,
+        2.14096519707179
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-64/O",
+      "residueId": "illustrative-64",
+      "name": "O",
+      "position": [
+        -6.5608030939600015,
+        6.77984638798685,
+        2.4155670534141342
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-64/CB",
+      "residueId": "illustrative-64",
+      "name": "CB",
+      "position": [
+        -7.68476456330309,
+        3.9783320940745224,
+        1.0618484293667556
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-64/CG1",
+      "residueId": "illustrative-64",
+      "name": "CG1",
+      "position": [
+        -8.05336532634899,
+        3.31801823092498,
+        -0.26806174790632076
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-64/CG2",
+      "residueId": "illustrative-64",
+      "name": "CG2",
+      "position": [
+        -7.194643665364941,
+        2.9115819988541816,
+        2.0418544190176835
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-65/N",
+      "residueId": "illustrative-65",
+      "name": "N",
+      "position": [
+        -5.4898126709963355,
+        4.917837086705058,
+        2.9768232433458794
+      ],
+      "value": 0.9154929577464789
+    },
+    {
+      "id": "illustrative-65/CA",
+      "residueId": "illustrative-65",
+      "name": "CA",
+      "position": [
+        -5.074986247853315,
+        5.442418979246126,
+        4.2833265447884745
+      ],
+      "value": 0.9154929577464789
+    },
+    {
+      "id": "illustrative-65/C",
+      "residueId": "illustrative-65",
+      "name": "C",
+      "position": [
+        -4.232926229732469,
+        6.674740949539801,
+        4.086391308190668
+      ],
+      "value": 0.9154929577464789
+    },
+    {
+      "id": "illustrative-65/O",
+      "residueId": "illustrative-65",
+      "name": "O",
+      "position": [
+        -4.397143946527962,
+        7.67345191591571,
+        4.744040870747335
+      ],
+      "value": 0.9154929577464789
+    },
+    {
+      "id": "illustrative-65/CB",
+      "residueId": "illustrative-65",
+      "name": "CB",
+      "position": [
+        -4.259156271206214,
+        4.381081485843695,
+        5.022956975680982
+      ],
+      "value": 0.9154929577464789
+    },
+    {
+      "id": "illustrative-66/N",
+      "residueId": "illustrative-66",
+      "name": "N",
+      "position": [
+        -3.2972393877031174,
+        6.597104857528471,
+        3.144391960595168
+      ],
+      "value": 0.9295774647887324
+    },
+    {
+      "id": "illustrative-66/CA",
+      "residueId": "illustrative-66",
+      "name": "CA",
+      "position": [
+        -2.4134262325630376,
+        7.735554621137702,
+        2.860238054165178
+      ],
+      "value": 0.9295774647887324
+    },
+    {
+      "id": "illustrative-66/C",
+      "residueId": "illustrative-66",
+      "name": "C",
+      "position": [
+        -3.2422490793392402,
+        8.919675856741309,
+        2.434599019237247
+      ],
+      "value": 0.9295774647887324
+    },
+    {
+      "id": "illustrative-66/O",
+      "residueId": "illustrative-66",
+      "name": "O",
+      "position": [
+        -3.043189681049888,
+        10.028509076025857,
+        2.8676720474481323
+      ],
+      "value": 0.9295774647887324
+    },
+    {
+      "id": "illustrative-66/CB",
+      "residueId": "illustrative-66",
+      "name": "CB",
+      "position": [
+        -1.4446038554394176,
+        7.360991369598272,
+        1.7386153135876035
+      ],
+      "value": 0.9295774647887324
+    },
+    {
+      "id": "illustrative-66/OG",
+      "residueId": "illustrative-66",
+      "name": "OG",
+      "position": [
+        -0.6597064029342317,
+        6.237720018481097,
+        2.1414980022331545
+      ],
+      "value": 0.9295774647887324
+    },
+    {
+      "id": "illustrative-67/N",
+      "residueId": "illustrative-67",
+      "name": "N",
+      "position": [
+        -4.206335136858875,
+        8.669888107086537,
+        1.5530979393634592
+      ],
+      "value": 0.9436619718309859
+    },
+    {
+      "id": "illustrative-67/CA",
+      "residueId": "illustrative-67",
+      "name": "CA",
+      "position": [
+        -5.07947386888881,
+        9.743198598374327,
+        1.0633517357837674
+      ],
+      "value": 0.9436619718309859
+    },
+    {
+      "id": "illustrative-67/C",
+      "residueId": "illustrative-67",
+      "name": "C",
+      "position": [
+        -5.8170767950032705,
+        10.359815908590935,
+        2.2218814143542476
+      ],
+      "value": 0.9436619718309859
+    },
+    {
+      "id": "illustrative-67/O",
+      "residueId": "illustrative-67",
+      "name": "O",
+      "position": [
+        -5.924441310415008,
+        11.555377414916663,
+        2.348370723873116
+      ],
+      "value": 0.9436619718309859
+    },
+    {
+      "id": "illustrative-67/CB",
+      "residueId": "illustrative-67",
+      "name": "CB",
+      "position": [
+        -6.086671332106142,
+        9.166322523369772,
+        0.06744196869846086
+      ],
+      "value": 0.9436619718309859
+    },
+    {
+      "id": "illustrative-68/N",
+      "residueId": "illustrative-68",
+      "name": "N",
+      "position": [
+        -6.3433218409920045,
+        9.508354950231414,
+        3.0976555792859384
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-68/CA",
+      "residueId": "illustrative-68",
+      "name": "CA",
+      "position": [
+        -7.085971618239039,
+        9.990898820003897,
+        4.269382818066332
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-68/C",
+      "residueId": "illustrative-68",
+      "name": "C",
+      "position": [
+        -6.184663816899413,
+        10.850934184673337,
+        5.1154451200052815
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-68/O",
+      "residueId": "illustrative-68",
+      "name": "O",
+      "position": [
+        -6.551293602173783,
+        11.907386001513423,
+        5.571073432607723
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-68/CB",
+      "residueId": "illustrative-68",
+      "name": "CB",
+      "position": [
+        -7.570835213361595,
+        8.796906938615734,
+        5.091718930190802
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-68/CG1",
+      "residueId": "illustrative-68",
+      "name": "CG1",
+      "position": [
+        -8.486136704630823,
+        7.922639080032452,
+        4.232404731816001
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-68/CG2",
+      "residueId": "illustrative-68",
+      "name": "CG2",
+      "position": [
+        -6.367871217220751,
+        7.974070053258899,
+        5.554755736595122
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-69/N",
+      "residueId": "illustrative-69",
+      "name": "N",
+      "position": [
+        -4.960672191878158,
+        10.377256659764553,
+        5.33079159495697
+      ],
+      "value": 0.971830985915493
+    },
+    {
+      "id": "illustrative-69/CA",
+      "residueId": "illustrative-69",
+      "name": "CA",
+      "position": [
+        -3.991935828977362,
+        11.125961232545448,
+        6.14024160693468
+      ],
+      "value": 0.971830985915493
+    },
+    {
+      "id": "illustrative-69/C",
+      "residueId": "illustrative-69",
+      "name": "C",
+      "position": [
+        -3.7402170558380927,
+        12.46924412737324,
+        5.508818829619572
+      ],
+      "value": 0.971830985915493
+    },
+    {
+      "id": "illustrative-69/O",
+      "residueId": "illustrative-69",
+      "name": "O",
+      "position": [
+        -3.711515268790731,
+        13.486102593940686,
+        6.158487257658362
+      ],
+      "value": 0.971830985915493
+    },
+    {
+      "id": "illustrative-69/CB",
+      "residueId": "illustrative-69",
+      "name": "CB",
+      "position": [
+        -2.6792385125519442,
+        10.344820318859892,
+        6.215830153791989
+      ],
+      "value": 0.971830985915493
+    },
+    {
+      "id": "illustrative-70/N",
+      "residueId": "illustrative-70",
+      "name": "N",
+      "position": [
+        -3.5513572678792875,
+        12.468442264632538,
+        4.192296388675894
+      ],
+      "value": 0.9859154929577465
+    },
+    {
+      "id": "illustrative-70/CA",
+      "residueId": "illustrative-70",
+      "name": "CA",
+      "position": [
+        -3.296887176221255,
+        13.718378419117366,
+        3.463707628013728
+      ],
+      "value": 0.9859154929577465
+    },
+    {
+      "id": "illustrative-70/C",
+      "residueId": "illustrative-70",
+      "name": "C",
+      "position": [
+        -4.463329830588284,
+        14.6537448755078,
+        3.6501483057983903
+      ],
+      "value": 0.9859154929577465
+    },
+    {
+      "id": "illustrative-70/O",
+      "residueId": "illustrative-70",
+      "name": "O",
+      "position": [
+        -4.310700364994096,
+        15.823524288445384,
+        3.9051156984191575
+      ],
+      "value": 0.9859154929577465
+    },
+    {
+      "id": "illustrative-70/CB",
+      "residueId": "illustrative-70",
+      "name": "CB",
+      "position": [
+        -3.1193622893878574,
+        13.414014374405525,
+        1.9761594967448812
+      ],
+      "value": 0.9859154929577465
+    },
+    {
+      "id": "illustrative-70/OG",
+      "residueId": "illustrative-70",
+      "name": "OG",
+      "position": [
+        -2.0144142509739127,
+        12.526343060394842,
+        1.799392784132682
+      ],
+      "value": 0.9859154929577465
+    },
+    {
+      "id": "illustrative-71/N",
+      "residueId": "illustrative-71",
+      "name": "N",
+      "position": [
+        -5.671207629146712,
+        14.113201416697262,
+        3.5169417260555473
+      ],
+      "value": 1
+    },
+    {
+      "id": "illustrative-71/CA",
+      "residueId": "illustrative-71",
+      "name": "CA",
+      "position": [
+        -6.884081296280416,
+        14.924306311136606,
+        3.675889257619206
+      ],
+      "value": 1
+    },
+    {
+      "id": "illustrative-71/C",
+      "residueId": "illustrative-71",
+      "name": "C",
+      "position": [
+        -6.916691388052182,
+        15.514673291224167,
+        5.060399788722863
+      ],
+      "value": 1
+    },
+    {
+      "id": "illustrative-71/O",
+      "residueId": "illustrative-71",
+      "name": "O",
+      "position": [
+        -7.201918601440486,
+        16.671065605368703,
+        5.256094072058354
+      ],
+      "value": 1
+    },
+    {
+      "id": "illustrative-71/CB",
+      "residueId": "illustrative-71",
+      "name": "CB",
+      "position": [
+        -8.117039578020496,
+        14.043403648160481,
+        3.468782102141362
+      ],
+      "value": 1
+    }
+  ],
+  "anchors": [
+    {
+      "id": "illustrative-0",
+      "position": [
+        1.4687824890023709,
+        0,
+        0
+      ],
+      "value": 0
+    },
+    {
+      "id": "illustrative-1",
+      "position": [
+        1.769758723012729,
+        3.65996808803,
+        -0.9357262712170047
+      ],
+      "value": 0.014084507042253521
+    },
+    {
+      "id": "illustrative-2",
+      "position": [
+        0.13480562922544237,
+        4.654343254486828,
+        2.3362303374040967
+      ],
+      "value": 0.028169014084507043
+    },
+    {
+      "id": "illustrative-3",
+      "position": [
+        2.514028589077367,
+        2.393341813559375,
+        4.232124683383444
+      ],
+      "value": 0.04225352112676056
+    },
+    {
+      "id": "illustrative-4",
+      "position": [
+        5.459040220557588,
+        3.9096337044546203,
+        2.3899006713381334
+      ],
+      "value": 0.056338028169014086
+    },
+    {
+      "id": "illustrative-5",
+      "position": [
+        4.198345637435746,
+        7.390242464097128,
+        3.200794365893591
+      ],
+      "value": 0.07042253521126761
+    },
+    {
+      "id": "illustrative-6",
+      "position": [
+        3.8062215403166006,
+        6.423824366774213,
+        6.844944252063918
+      ],
+      "value": 0.08450704225352113
+    },
+    {
+      "id": "illustrative-7",
+      "position": [
+        7.323535448513726,
+        5.011282221743576,
+        6.866677622587873
+      ],
+      "value": 0.09859154929577464
+    },
+    {
+      "id": "illustrative-8",
+      "position": [
+        8.637665439999058,
+        8.198542694559913,
+        5.291730968759202
+      ],
+      "value": 0.11267605633802817
+    },
+    {
+      "id": "illustrative-9",
+      "position": [
+        6.796739577680365,
+        10.260775107390987,
+        7.883974436953852
+      ],
+      "value": 0.1267605633802817
+    },
+    {
+      "id": "illustrative-10",
+      "position": [
+        8.234964100752206,
+        8.10706596248295,
+        10.651753470696292
+      ],
+      "value": 0.14084507042253522
+    },
+    {
+      "id": "illustrative-11",
+      "position": [
+        11.708155299607657,
+        8.518459073002372,
+        9.190608924633445
+      ],
+      "value": 0.15492957746478872
+    },
+    {
+      "id": "illustrative-12",
+      "position": [
+        11.207324091305392,
+        12.270526514954039,
+        8.997782758510818
+      ],
+      "value": 0.16901408450704225
+    },
+    {
+      "id": "illustrative-13",
+      "position": [
+        10.306659466629899,
+        14.46829051639779,
+        11.950776727569817
+      ],
+      "value": 0.18309859154929578
+    },
+    {
+      "id": "illustrative-14",
+      "position": [
+        8.553421021749564,
+        17.333345524688898,
+        10.194311984368406
+      ],
+      "value": 0.19718309859154928
+    },
+    {
+      "id": "illustrative-15",
+      "position": [
+        6.134923581530705,
+        17.45082060321822,
+        13.11052777152449
+      ],
+      "value": 0.2112676056338028
+    },
+    {
+      "id": "illustrative-16",
+      "position": [
+        4.761509893550593,
+        15.162679919240986,
+        15.80202753383209
+      ],
+      "value": 0.22535211267605634
+    },
+    {
+      "id": "illustrative-17",
+      "position": [
+        2.4150632872044593,
+        12.26617211711642,
+        15.119409317490817
+      ],
+      "value": 0.23943661971830985
+    },
+    {
+      "id": "illustrative-18",
+      "position": [
+        0.8622588779450107,
+        9.736732761145886,
+        17.477011627105764
+      ],
+      "value": 0.2535211267605634
+    },
+    {
+      "id": "illustrative-19",
+      "position": [
+        -1.336917460040645,
+        6.833213491837184,
+        16.427991099720295
+      ],
+      "value": 0.2676056338028169
+    },
+    {
+      "id": "illustrative-20",
+      "position": [
+        -1.1174124593241839,
+        3.103926374883617,
+        17.06850579314224
+      ],
+      "value": 0.28169014084507044
+    },
+    {
+      "id": "illustrative-21",
+      "position": [
+        -2.842804059976063,
+        2.4159911366709657,
+        13.765279236287872
+      ],
+      "value": 0.29577464788732394
+    },
+    {
+      "id": "illustrative-22",
+      "position": [
+        -0.4416939072032424,
+        4.756501785744809,
+        11.997729074319851
+      ],
+      "value": 0.30985915492957744
+    },
+    {
+      "id": "illustrative-23",
+      "position": [
+        2.4944430058274154,
+        3.020727511873406,
+        13.65103862724212
+      ],
+      "value": 0.323943661971831
+    },
+    {
+      "id": "illustrative-24",
+      "position": [
+        1.1212061899630992,
+        -0.35220766330914555,
+        12.60053738018152
+      ],
+      "value": 0.3380281690140845
+    },
+    {
+      "id": "illustrative-25",
+      "position": [
+        0.6857512811375605,
+        0.908769736544959,
+        9.053446773371531
+      ],
+      "value": 0.352112676056338
+    },
+    {
+      "id": "illustrative-26",
+      "position": [
+        4.2397752894907885,
+        2.2264962071876435,
+        9.061442764016169
+      ],
+      "value": 0.36619718309859156
+    },
+    {
+      "id": "illustrative-27",
+      "position": [
+        5.492186522855959,
+        -1.1098132713028477,
+        10.352856696864297
+      ],
+      "value": 0.38028169014084506
+    },
+    {
+      "id": "illustrative-28",
+      "position": [
+        3.540678712793682,
+        -2.9141005308898285,
+        7.650600478319721
+      ],
+      "value": 0.39436619718309857
+    },
+    {
+      "id": "illustrative-29",
+      "position": [
+        4.985038449383752,
+        -0.5895754495175487,
+        5.029161016712534
+      ],
+      "value": 0.4084507042253521
+    },
+    {
+      "id": "illustrative-30",
+      "position": [
+        8.475168117005579,
+        -1.2051299595985052,
+        6.373646489878726
+      ],
+      "value": 0.4225352112676056
+    },
+    {
+      "id": "illustrative-31",
+      "position": [
+        7.86898001501504,
+        -4.945662187763943,
+        6.283095870113629
+      ],
+      "value": 0.43661971830985913
+    },
+    {
+      "id": "illustrative-32",
+      "position": [
+        6.61544843486937,
+        -4.679113813486914,
+        2.716075480453293
+      ],
+      "value": 0.4507042253521127
+    },
+    {
+      "id": "illustrative-33",
+      "position": [
+        6.76410774357653,
+        -1.258164158447158,
+        1.0923326987600852
+      ],
+      "value": 0.4647887323943662
+    },
+    {
+      "id": "illustrative-34",
+      "position": [
+        9.111535440464689,
+        1.6394702517361814,
+        0.41347212982580517
+      ],
+      "value": 0.4788732394366197
+    },
+    {
+      "id": "illustrative-35",
+      "position": [
+        8.273755820975468,
+        5.257268596502474,
+        -0.3460706441203363
+      ],
+      "value": 0.49295774647887325
+    },
+    {
+      "id": "illustrative-36",
+      "position": [
+        10.74063981063764,
+        7.90962105652966,
+        -1.4621054678785257
+      ],
+      "value": 0.5070422535211268
+    },
+    {
+      "id": "illustrative-37",
+      "position": [
+        9.23936724310077,
+        11.369727113576086,
+        -1.094160491782089
+      ],
+      "value": 0.5211267605633803
+    },
+    {
+      "id": "illustrative-38",
+      "position": [
+        9.487934081304138,
+        14.516004520194194,
+        1.0050552300530848
+      ],
+      "value": 0.5352112676056338
+    },
+    {
+      "id": "illustrative-39",
+      "position": [
+        6.975459796849745,
+        17.2510950491729,
+        1.7626814887884847
+      ],
+      "value": 0.5492957746478874
+    },
+    {
+      "id": "illustrative-40",
+      "position": [
+        5.985872153681254,
+        19.256562175562326,
+        4.8228843938201695
+      ],
+      "value": 0.5633802816901409
+    },
+    {
+      "id": "illustrative-41",
+      "position": [
+        2.3327081070158204,
+        18.958658534579335,
+        3.859981167985495
+      ],
+      "value": 0.5774647887323944
+    },
+    {
+      "id": "illustrative-42",
+      "position": [
+        2.737660427921807,
+        15.219111072719329,
+        3.391630831656804
+      ],
+      "value": 0.5915492957746479
+    },
+    {
+      "id": "illustrative-43",
+      "position": [
+        4.42107845440398,
+        14.959910362847642,
+        6.777803231254307
+      ],
+      "value": 0.6056338028169014
+    },
+    {
+      "id": "illustrative-44",
+      "position": [
+        1.6094715360031824,
+        16.9543441695798,
+        8.353596442773327
+      ],
+      "value": 0.6197183098591549
+    },
+    {
+      "id": "illustrative-45",
+      "position": [
+        -0.9449989370017156,
+        14.699235846784436,
+        6.695071854927876
+      ],
+      "value": 0.6338028169014085
+    },
+    {
+      "id": "illustrative-46",
+      "position": [
+        0.907675060165563,
+        11.639749112256029,
+        7.949939824363262
+      ],
+      "value": 0.647887323943662
+    },
+    {
+      "id": "illustrative-47",
+      "position": [
+        0.998078512677417,
+        13.106319214869528,
+        11.443969608090525
+      ],
+      "value": 0.6619718309859155
+    },
+    {
+      "id": "illustrative-48",
+      "position": [
+        -2.717501068564789,
+        13.832039671647959,
+        11.260061716541276
+      ],
+      "value": 0.676056338028169
+    },
+    {
+      "id": "illustrative-49",
+      "position": [
+        -3.371570615824586,
+        10.285827185575284,
+        10.09468332972765
+      ],
+      "value": 0.6901408450704225
+    },
+    {
+      "id": "illustrative-50",
+      "position": [
+        -1.2639005196831044,
+        8.937263353948596,
+        12.941902323256118
+      ],
+      "value": 0.704225352112676
+    },
+    {
+      "id": "illustrative-51",
+      "position": [
+        -3.1614979970159696,
+        11.111554642033894,
+        15.399304607835374
+      ],
+      "value": 0.7183098591549296
+    },
+    {
+      "id": "illustrative-52",
+      "position": [
+        -6.453785955132128,
+        9.885213163355697,
+        13.976999965003358
+      ],
+      "value": 0.7323943661971831
+    },
+    {
+      "id": "illustrative-53",
+      "position": [
+        -7.419623830856996,
+        6.2595571125423275,
+        13.44472921388285
+      ],
+      "value": 0.7464788732394366
+    },
+    {
+      "id": "illustrative-54",
+      "position": [
+        -6.495842021078962,
+        4.464226337933125,
+        10.236775315069105
+      ],
+      "value": 0.7605633802816901
+    },
+    {
+      "id": "illustrative-55",
+      "position": [
+        -5.030109754617278,
+        1.0457811190817452,
+        9.506634240725067
+      ],
+      "value": 0.7746478873239436
+    },
+    {
+      "id": "illustrative-56",
+      "position": [
+        -3.427381461442221,
+        -0.19626889258930652,
+        6.30435416158319
+      ],
+      "value": 0.7887323943661971
+    },
+    {
+      "id": "illustrative-57",
+      "position": [
+        -3.0400685910449328,
+        -3.822912208142312,
+        5.2752847977101665
+      ],
+      "value": 0.8028169014084507
+    },
+    {
+      "id": "illustrative-58",
+      "position": [
+        -3.160781842002689,
+        -3.6257814868344105,
+        1.4918840220838512
+      ],
+      "value": 0.8169014084507042
+    },
+    {
+      "id": "illustrative-59",
+      "position": [
+        -1.7703628965895954,
+        -1.6373713693496095,
+        -1.4201951562008754
+      ],
+      "value": 0.8309859154929577
+    },
+    {
+      "id": "illustrative-60",
+      "position": [
+        -5.117354704266259,
+        -0.04499175384075649,
+        -2.212657721854275
+      ],
+      "value": 0.8450704225352113
+    },
+    {
+      "id": "illustrative-61",
+      "position": [
+        -5.936078979175185,
+        0.11836826422264096,
+        1.4839002473457072
+      ],
+      "value": 0.8591549295774648
+    },
+    {
+      "id": "illustrative-62",
+      "position": [
+        -2.562131767760407,
+        1.6973257268528146,
+        2.1845622093793953
+      ],
+      "value": 0.8732394366197183
+    },
+    {
+      "id": "illustrative-63",
+      "position": [
+        -3.1494152045753503,
+        4.221062503784162,
+        -0.5818606840492354
+      ],
+      "value": 0.8873239436619719
+    },
+    {
+      "id": "illustrative-64",
+      "position": [
+        -6.577376716429765,
+        5.006736455284278,
+        0.8315820044541835
+      ],
+      "value": 0.9014084507042254
+    },
+    {
+      "id": "illustrative-65",
+      "position": [
+        -5.074986247853315,
+        5.442418979246126,
+        4.2833265447884745
+      ],
+      "value": 0.9154929577464789
+    },
+    {
+      "id": "illustrative-66",
+      "position": [
+        -2.4134262325630376,
+        7.735554621137702,
+        2.860238054165178
+      ],
+      "value": 0.9295774647887324
+    },
+    {
+      "id": "illustrative-67",
+      "position": [
+        -5.07947386888881,
+        9.743198598374327,
+        1.0633517357837674
+      ],
+      "value": 0.9436619718309859
+    },
+    {
+      "id": "illustrative-68",
+      "position": [
+        -7.085971618239039,
+        9.990898820003897,
+        4.269382818066332
+      ],
+      "value": 0.9577464788732394
+    },
+    {
+      "id": "illustrative-69",
+      "position": [
+        -3.991935828977362,
+        11.125961232545448,
+        6.14024160693468
+      ],
+      "value": 0.971830985915493
+    },
+    {
+      "id": "illustrative-70",
+      "position": [
+        -3.296887176221255,
+        13.718378419117366,
+        3.463707628013728
+      ],
+      "value": 0.9859154929577465
+    },
+    {
+      "id": "illustrative-71",
+      "position": [
+        -6.884081296280416,
+        14.924306311136606,
+        3.675889257619206
+      ],
+      "value": 1
+    }
+  ],
+  "bonds": [
+    [
+      "illustrative-0/N",
+      "illustrative-0/CA"
+    ],
+    [
+      "illustrative-0/CA",
+      "illustrative-0/C"
+    ],
+    [
+      "illustrative-0/CA",
+      "illustrative-0/CB"
+    ],
+    [
+      "illustrative-0/C",
+      "illustrative-0/O"
+    ],
+    [
+      "illustrative-0/CB",
+      "illustrative-0/CG1"
+    ],
+    [
+      "illustrative-0/CB",
+      "illustrative-0/CG2"
+    ],
+    [
+      "illustrative-1/N",
+      "illustrative-1/CA"
+    ],
+    [
+      "illustrative-1/CA",
+      "illustrative-1/C"
+    ],
+    [
+      "illustrative-1/CA",
+      "illustrative-1/CB"
+    ],
+    [
+      "illustrative-1/C",
+      "illustrative-1/O"
+    ],
+    [
+      "illustrative-0/C",
+      "illustrative-1/N"
+    ],
+    [
+      "illustrative-2/N",
+      "illustrative-2/CA"
+    ],
+    [
+      "illustrative-2/CA",
+      "illustrative-2/C"
+    ],
+    [
+      "illustrative-2/CA",
+      "illustrative-2/CB"
+    ],
+    [
+      "illustrative-2/C",
+      "illustrative-2/O"
+    ],
+    [
+      "illustrative-2/CB",
+      "illustrative-2/OG"
+    ],
+    [
+      "illustrative-1/C",
+      "illustrative-2/N"
+    ],
+    [
+      "illustrative-3/N",
+      "illustrative-3/CA"
+    ],
+    [
+      "illustrative-3/CA",
+      "illustrative-3/C"
+    ],
+    [
+      "illustrative-3/CA",
+      "illustrative-3/CB"
+    ],
+    [
+      "illustrative-3/C",
+      "illustrative-3/O"
+    ],
+    [
+      "illustrative-2/C",
+      "illustrative-3/N"
+    ],
+    [
+      "illustrative-4/N",
+      "illustrative-4/CA"
+    ],
+    [
+      "illustrative-4/CA",
+      "illustrative-4/C"
+    ],
+    [
+      "illustrative-4/CA",
+      "illustrative-4/CB"
+    ],
+    [
+      "illustrative-4/C",
+      "illustrative-4/O"
+    ],
+    [
+      "illustrative-4/CB",
+      "illustrative-4/CG1"
+    ],
+    [
+      "illustrative-4/CB",
+      "illustrative-4/CG2"
+    ],
+    [
+      "illustrative-3/C",
+      "illustrative-4/N"
+    ],
+    [
+      "illustrative-5/N",
+      "illustrative-5/CA"
+    ],
+    [
+      "illustrative-5/CA",
+      "illustrative-5/C"
+    ],
+    [
+      "illustrative-5/CA",
+      "illustrative-5/CB"
+    ],
+    [
+      "illustrative-5/C",
+      "illustrative-5/O"
+    ],
+    [
+      "illustrative-4/C",
+      "illustrative-5/N"
+    ],
+    [
+      "illustrative-6/N",
+      "illustrative-6/CA"
+    ],
+    [
+      "illustrative-6/CA",
+      "illustrative-6/C"
+    ],
+    [
+      "illustrative-6/CA",
+      "illustrative-6/CB"
+    ],
+    [
+      "illustrative-6/C",
+      "illustrative-6/O"
+    ],
+    [
+      "illustrative-6/CB",
+      "illustrative-6/OG"
+    ],
+    [
+      "illustrative-5/C",
+      "illustrative-6/N"
+    ],
+    [
+      "illustrative-7/N",
+      "illustrative-7/CA"
+    ],
+    [
+      "illustrative-7/CA",
+      "illustrative-7/C"
+    ],
+    [
+      "illustrative-7/CA",
+      "illustrative-7/CB"
+    ],
+    [
+      "illustrative-7/C",
+      "illustrative-7/O"
+    ],
+    [
+      "illustrative-6/C",
+      "illustrative-7/N"
+    ],
+    [
+      "illustrative-8/N",
+      "illustrative-8/CA"
+    ],
+    [
+      "illustrative-8/CA",
+      "illustrative-8/C"
+    ],
+    [
+      "illustrative-8/CA",
+      "illustrative-8/CB"
+    ],
+    [
+      "illustrative-8/C",
+      "illustrative-8/O"
+    ],
+    [
+      "illustrative-8/CB",
+      "illustrative-8/CG1"
+    ],
+    [
+      "illustrative-8/CB",
+      "illustrative-8/CG2"
+    ],
+    [
+      "illustrative-7/C",
+      "illustrative-8/N"
+    ],
+    [
+      "illustrative-9/N",
+      "illustrative-9/CA"
+    ],
+    [
+      "illustrative-9/CA",
+      "illustrative-9/C"
+    ],
+    [
+      "illustrative-9/CA",
+      "illustrative-9/CB"
+    ],
+    [
+      "illustrative-9/C",
+      "illustrative-9/O"
+    ],
+    [
+      "illustrative-8/C",
+      "illustrative-9/N"
+    ],
+    [
+      "illustrative-10/N",
+      "illustrative-10/CA"
+    ],
+    [
+      "illustrative-10/CA",
+      "illustrative-10/C"
+    ],
+    [
+      "illustrative-10/CA",
+      "illustrative-10/CB"
+    ],
+    [
+      "illustrative-10/C",
+      "illustrative-10/O"
+    ],
+    [
+      "illustrative-10/CB",
+      "illustrative-10/OG"
+    ],
+    [
+      "illustrative-9/C",
+      "illustrative-10/N"
+    ],
+    [
+      "illustrative-11/N",
+      "illustrative-11/CA"
+    ],
+    [
+      "illustrative-11/CA",
+      "illustrative-11/C"
+    ],
+    [
+      "illustrative-11/CA",
+      "illustrative-11/CB"
+    ],
+    [
+      "illustrative-11/C",
+      "illustrative-11/O"
+    ],
+    [
+      "illustrative-10/C",
+      "illustrative-11/N"
+    ],
+    [
+      "illustrative-12/N",
+      "illustrative-12/CA"
+    ],
+    [
+      "illustrative-12/CA",
+      "illustrative-12/C"
+    ],
+    [
+      "illustrative-12/CA",
+      "illustrative-12/CB"
+    ],
+    [
+      "illustrative-12/C",
+      "illustrative-12/O"
+    ],
+    [
+      "illustrative-12/CB",
+      "illustrative-12/CG1"
+    ],
+    [
+      "illustrative-12/CB",
+      "illustrative-12/CG2"
+    ],
+    [
+      "illustrative-11/C",
+      "illustrative-12/N"
+    ],
+    [
+      "illustrative-13/N",
+      "illustrative-13/CA"
+    ],
+    [
+      "illustrative-13/CA",
+      "illustrative-13/C"
+    ],
+    [
+      "illustrative-13/CA",
+      "illustrative-13/CB"
+    ],
+    [
+      "illustrative-13/C",
+      "illustrative-13/O"
+    ],
+    [
+      "illustrative-12/C",
+      "illustrative-13/N"
+    ],
+    [
+      "illustrative-14/N",
+      "illustrative-14/CA"
+    ],
+    [
+      "illustrative-14/CA",
+      "illustrative-14/C"
+    ],
+    [
+      "illustrative-14/CA",
+      "illustrative-14/CB"
+    ],
+    [
+      "illustrative-14/C",
+      "illustrative-14/O"
+    ],
+    [
+      "illustrative-14/CB",
+      "illustrative-14/OG"
+    ],
+    [
+      "illustrative-13/C",
+      "illustrative-14/N"
+    ],
+    [
+      "illustrative-15/N",
+      "illustrative-15/CA"
+    ],
+    [
+      "illustrative-15/CA",
+      "illustrative-15/C"
+    ],
+    [
+      "illustrative-15/CA",
+      "illustrative-15/CB"
+    ],
+    [
+      "illustrative-15/C",
+      "illustrative-15/O"
+    ],
+    [
+      "illustrative-14/C",
+      "illustrative-15/N"
+    ],
+    [
+      "illustrative-16/N",
+      "illustrative-16/CA"
+    ],
+    [
+      "illustrative-16/CA",
+      "illustrative-16/C"
+    ],
+    [
+      "illustrative-16/CA",
+      "illustrative-16/CB"
+    ],
+    [
+      "illustrative-16/C",
+      "illustrative-16/O"
+    ],
+    [
+      "illustrative-16/CB",
+      "illustrative-16/CG1"
+    ],
+    [
+      "illustrative-16/CB",
+      "illustrative-16/CG2"
+    ],
+    [
+      "illustrative-15/C",
+      "illustrative-16/N"
+    ],
+    [
+      "illustrative-17/N",
+      "illustrative-17/CA"
+    ],
+    [
+      "illustrative-17/CA",
+      "illustrative-17/C"
+    ],
+    [
+      "illustrative-17/CA",
+      "illustrative-17/CB"
+    ],
+    [
+      "illustrative-17/C",
+      "illustrative-17/O"
+    ],
+    [
+      "illustrative-16/C",
+      "illustrative-17/N"
+    ],
+    [
+      "illustrative-18/N",
+      "illustrative-18/CA"
+    ],
+    [
+      "illustrative-18/CA",
+      "illustrative-18/C"
+    ],
+    [
+      "illustrative-18/CA",
+      "illustrative-18/CB"
+    ],
+    [
+      "illustrative-18/C",
+      "illustrative-18/O"
+    ],
+    [
+      "illustrative-18/CB",
+      "illustrative-18/OG"
+    ],
+    [
+      "illustrative-17/C",
+      "illustrative-18/N"
+    ],
+    [
+      "illustrative-19/N",
+      "illustrative-19/CA"
+    ],
+    [
+      "illustrative-19/CA",
+      "illustrative-19/C"
+    ],
+    [
+      "illustrative-19/CA",
+      "illustrative-19/CB"
+    ],
+    [
+      "illustrative-19/C",
+      "illustrative-19/O"
+    ],
+    [
+      "illustrative-18/C",
+      "illustrative-19/N"
+    ],
+    [
+      "illustrative-20/N",
+      "illustrative-20/CA"
+    ],
+    [
+      "illustrative-20/CA",
+      "illustrative-20/C"
+    ],
+    [
+      "illustrative-20/CA",
+      "illustrative-20/CB"
+    ],
+    [
+      "illustrative-20/C",
+      "illustrative-20/O"
+    ],
+    [
+      "illustrative-20/CB",
+      "illustrative-20/CG1"
+    ],
+    [
+      "illustrative-20/CB",
+      "illustrative-20/CG2"
+    ],
+    [
+      "illustrative-19/C",
+      "illustrative-20/N"
+    ],
+    [
+      "illustrative-21/N",
+      "illustrative-21/CA"
+    ],
+    [
+      "illustrative-21/CA",
+      "illustrative-21/C"
+    ],
+    [
+      "illustrative-21/CA",
+      "illustrative-21/CB"
+    ],
+    [
+      "illustrative-21/C",
+      "illustrative-21/O"
+    ],
+    [
+      "illustrative-20/C",
+      "illustrative-21/N"
+    ],
+    [
+      "illustrative-22/N",
+      "illustrative-22/CA"
+    ],
+    [
+      "illustrative-22/CA",
+      "illustrative-22/C"
+    ],
+    [
+      "illustrative-22/CA",
+      "illustrative-22/CB"
+    ],
+    [
+      "illustrative-22/C",
+      "illustrative-22/O"
+    ],
+    [
+      "illustrative-22/CB",
+      "illustrative-22/OG"
+    ],
+    [
+      "illustrative-21/C",
+      "illustrative-22/N"
+    ],
+    [
+      "illustrative-23/N",
+      "illustrative-23/CA"
+    ],
+    [
+      "illustrative-23/CA",
+      "illustrative-23/C"
+    ],
+    [
+      "illustrative-23/CA",
+      "illustrative-23/CB"
+    ],
+    [
+      "illustrative-23/C",
+      "illustrative-23/O"
+    ],
+    [
+      "illustrative-22/C",
+      "illustrative-23/N"
+    ],
+    [
+      "illustrative-24/N",
+      "illustrative-24/CA"
+    ],
+    [
+      "illustrative-24/CA",
+      "illustrative-24/C"
+    ],
+    [
+      "illustrative-24/CA",
+      "illustrative-24/CB"
+    ],
+    [
+      "illustrative-24/C",
+      "illustrative-24/O"
+    ],
+    [
+      "illustrative-24/CB",
+      "illustrative-24/CG1"
+    ],
+    [
+      "illustrative-24/CB",
+      "illustrative-24/CG2"
+    ],
+    [
+      "illustrative-23/C",
+      "illustrative-24/N"
+    ],
+    [
+      "illustrative-25/N",
+      "illustrative-25/CA"
+    ],
+    [
+      "illustrative-25/CA",
+      "illustrative-25/C"
+    ],
+    [
+      "illustrative-25/CA",
+      "illustrative-25/CB"
+    ],
+    [
+      "illustrative-25/C",
+      "illustrative-25/O"
+    ],
+    [
+      "illustrative-24/C",
+      "illustrative-25/N"
+    ],
+    [
+      "illustrative-26/N",
+      "illustrative-26/CA"
+    ],
+    [
+      "illustrative-26/CA",
+      "illustrative-26/C"
+    ],
+    [
+      "illustrative-26/CA",
+      "illustrative-26/CB"
+    ],
+    [
+      "illustrative-26/C",
+      "illustrative-26/O"
+    ],
+    [
+      "illustrative-26/CB",
+      "illustrative-26/OG"
+    ],
+    [
+      "illustrative-25/C",
+      "illustrative-26/N"
+    ],
+    [
+      "illustrative-27/N",
+      "illustrative-27/CA"
+    ],
+    [
+      "illustrative-27/CA",
+      "illustrative-27/C"
+    ],
+    [
+      "illustrative-27/CA",
+      "illustrative-27/CB"
+    ],
+    [
+      "illustrative-27/C",
+      "illustrative-27/O"
+    ],
+    [
+      "illustrative-26/C",
+      "illustrative-27/N"
+    ],
+    [
+      "illustrative-28/N",
+      "illustrative-28/CA"
+    ],
+    [
+      "illustrative-28/CA",
+      "illustrative-28/C"
+    ],
+    [
+      "illustrative-28/CA",
+      "illustrative-28/CB"
+    ],
+    [
+      "illustrative-28/C",
+      "illustrative-28/O"
+    ],
+    [
+      "illustrative-28/CB",
+      "illustrative-28/CG1"
+    ],
+    [
+      "illustrative-28/CB",
+      "illustrative-28/CG2"
+    ],
+    [
+      "illustrative-27/C",
+      "illustrative-28/N"
+    ],
+    [
+      "illustrative-29/N",
+      "illustrative-29/CA"
+    ],
+    [
+      "illustrative-29/CA",
+      "illustrative-29/C"
+    ],
+    [
+      "illustrative-29/CA",
+      "illustrative-29/CB"
+    ],
+    [
+      "illustrative-29/C",
+      "illustrative-29/O"
+    ],
+    [
+      "illustrative-28/C",
+      "illustrative-29/N"
+    ],
+    [
+      "illustrative-30/N",
+      "illustrative-30/CA"
+    ],
+    [
+      "illustrative-30/CA",
+      "illustrative-30/C"
+    ],
+    [
+      "illustrative-30/CA",
+      "illustrative-30/CB"
+    ],
+    [
+      "illustrative-30/C",
+      "illustrative-30/O"
+    ],
+    [
+      "illustrative-30/CB",
+      "illustrative-30/OG"
+    ],
+    [
+      "illustrative-29/C",
+      "illustrative-30/N"
+    ],
+    [
+      "illustrative-31/N",
+      "illustrative-31/CA"
+    ],
+    [
+      "illustrative-31/CA",
+      "illustrative-31/C"
+    ],
+    [
+      "illustrative-31/CA",
+      "illustrative-31/CB"
+    ],
+    [
+      "illustrative-31/C",
+      "illustrative-31/O"
+    ],
+    [
+      "illustrative-30/C",
+      "illustrative-31/N"
+    ],
+    [
+      "illustrative-32/N",
+      "illustrative-32/CA"
+    ],
+    [
+      "illustrative-32/CA",
+      "illustrative-32/C"
+    ],
+    [
+      "illustrative-32/CA",
+      "illustrative-32/CB"
+    ],
+    [
+      "illustrative-32/C",
+      "illustrative-32/O"
+    ],
+    [
+      "illustrative-32/CB",
+      "illustrative-32/CG1"
+    ],
+    [
+      "illustrative-32/CB",
+      "illustrative-32/CG2"
+    ],
+    [
+      "illustrative-31/C",
+      "illustrative-32/N"
+    ],
+    [
+      "illustrative-33/N",
+      "illustrative-33/CA"
+    ],
+    [
+      "illustrative-33/CA",
+      "illustrative-33/C"
+    ],
+    [
+      "illustrative-33/CA",
+      "illustrative-33/CB"
+    ],
+    [
+      "illustrative-33/C",
+      "illustrative-33/O"
+    ],
+    [
+      "illustrative-32/C",
+      "illustrative-33/N"
+    ],
+    [
+      "illustrative-34/N",
+      "illustrative-34/CA"
+    ],
+    [
+      "illustrative-34/CA",
+      "illustrative-34/C"
+    ],
+    [
+      "illustrative-34/CA",
+      "illustrative-34/CB"
+    ],
+    [
+      "illustrative-34/C",
+      "illustrative-34/O"
+    ],
+    [
+      "illustrative-34/CB",
+      "illustrative-34/OG"
+    ],
+    [
+      "illustrative-33/C",
+      "illustrative-34/N"
+    ],
+    [
+      "illustrative-35/N",
+      "illustrative-35/CA"
+    ],
+    [
+      "illustrative-35/CA",
+      "illustrative-35/C"
+    ],
+    [
+      "illustrative-35/CA",
+      "illustrative-35/CB"
+    ],
+    [
+      "illustrative-35/C",
+      "illustrative-35/O"
+    ],
+    [
+      "illustrative-34/C",
+      "illustrative-35/N"
+    ],
+    [
+      "illustrative-36/N",
+      "illustrative-36/CA"
+    ],
+    [
+      "illustrative-36/CA",
+      "illustrative-36/C"
+    ],
+    [
+      "illustrative-36/CA",
+      "illustrative-36/CB"
+    ],
+    [
+      "illustrative-36/C",
+      "illustrative-36/O"
+    ],
+    [
+      "illustrative-36/CB",
+      "illustrative-36/CG1"
+    ],
+    [
+      "illustrative-36/CB",
+      "illustrative-36/CG2"
+    ],
+    [
+      "illustrative-35/C",
+      "illustrative-36/N"
+    ],
+    [
+      "illustrative-37/N",
+      "illustrative-37/CA"
+    ],
+    [
+      "illustrative-37/CA",
+      "illustrative-37/C"
+    ],
+    [
+      "illustrative-37/CA",
+      "illustrative-37/CB"
+    ],
+    [
+      "illustrative-37/C",
+      "illustrative-37/O"
+    ],
+    [
+      "illustrative-36/C",
+      "illustrative-37/N"
+    ],
+    [
+      "illustrative-38/N",
+      "illustrative-38/CA"
+    ],
+    [
+      "illustrative-38/CA",
+      "illustrative-38/C"
+    ],
+    [
+      "illustrative-38/CA",
+      "illustrative-38/CB"
+    ],
+    [
+      "illustrative-38/C",
+      "illustrative-38/O"
+    ],
+    [
+      "illustrative-38/CB",
+      "illustrative-38/OG"
+    ],
+    [
+      "illustrative-37/C",
+      "illustrative-38/N"
+    ],
+    [
+      "illustrative-39/N",
+      "illustrative-39/CA"
+    ],
+    [
+      "illustrative-39/CA",
+      "illustrative-39/C"
+    ],
+    [
+      "illustrative-39/CA",
+      "illustrative-39/CB"
+    ],
+    [
+      "illustrative-39/C",
+      "illustrative-39/O"
+    ],
+    [
+      "illustrative-38/C",
+      "illustrative-39/N"
+    ],
+    [
+      "illustrative-40/N",
+      "illustrative-40/CA"
+    ],
+    [
+      "illustrative-40/CA",
+      "illustrative-40/C"
+    ],
+    [
+      "illustrative-40/CA",
+      "illustrative-40/CB"
+    ],
+    [
+      "illustrative-40/C",
+      "illustrative-40/O"
+    ],
+    [
+      "illustrative-40/CB",
+      "illustrative-40/CG1"
+    ],
+    [
+      "illustrative-40/CB",
+      "illustrative-40/CG2"
+    ],
+    [
+      "illustrative-39/C",
+      "illustrative-40/N"
+    ],
+    [
+      "illustrative-41/N",
+      "illustrative-41/CA"
+    ],
+    [
+      "illustrative-41/CA",
+      "illustrative-41/C"
+    ],
+    [
+      "illustrative-41/CA",
+      "illustrative-41/CB"
+    ],
+    [
+      "illustrative-41/C",
+      "illustrative-41/O"
+    ],
+    [
+      "illustrative-40/C",
+      "illustrative-41/N"
+    ],
+    [
+      "illustrative-42/N",
+      "illustrative-42/CA"
+    ],
+    [
+      "illustrative-42/CA",
+      "illustrative-42/C"
+    ],
+    [
+      "illustrative-42/CA",
+      "illustrative-42/CB"
+    ],
+    [
+      "illustrative-42/C",
+      "illustrative-42/O"
+    ],
+    [
+      "illustrative-42/CB",
+      "illustrative-42/OG"
+    ],
+    [
+      "illustrative-41/C",
+      "illustrative-42/N"
+    ],
+    [
+      "illustrative-43/N",
+      "illustrative-43/CA"
+    ],
+    [
+      "illustrative-43/CA",
+      "illustrative-43/C"
+    ],
+    [
+      "illustrative-43/CA",
+      "illustrative-43/CB"
+    ],
+    [
+      "illustrative-43/C",
+      "illustrative-43/O"
+    ],
+    [
+      "illustrative-42/C",
+      "illustrative-43/N"
+    ],
+    [
+      "illustrative-44/N",
+      "illustrative-44/CA"
+    ],
+    [
+      "illustrative-44/CA",
+      "illustrative-44/C"
+    ],
+    [
+      "illustrative-44/CA",
+      "illustrative-44/CB"
+    ],
+    [
+      "illustrative-44/C",
+      "illustrative-44/O"
+    ],
+    [
+      "illustrative-44/CB",
+      "illustrative-44/CG1"
+    ],
+    [
+      "illustrative-44/CB",
+      "illustrative-44/CG2"
+    ],
+    [
+      "illustrative-43/C",
+      "illustrative-44/N"
+    ],
+    [
+      "illustrative-45/N",
+      "illustrative-45/CA"
+    ],
+    [
+      "illustrative-45/CA",
+      "illustrative-45/C"
+    ],
+    [
+      "illustrative-45/CA",
+      "illustrative-45/CB"
+    ],
+    [
+      "illustrative-45/C",
+      "illustrative-45/O"
+    ],
+    [
+      "illustrative-44/C",
+      "illustrative-45/N"
+    ],
+    [
+      "illustrative-46/N",
+      "illustrative-46/CA"
+    ],
+    [
+      "illustrative-46/CA",
+      "illustrative-46/C"
+    ],
+    [
+      "illustrative-46/CA",
+      "illustrative-46/CB"
+    ],
+    [
+      "illustrative-46/C",
+      "illustrative-46/O"
+    ],
+    [
+      "illustrative-46/CB",
+      "illustrative-46/OG"
+    ],
+    [
+      "illustrative-45/C",
+      "illustrative-46/N"
+    ],
+    [
+      "illustrative-47/N",
+      "illustrative-47/CA"
+    ],
+    [
+      "illustrative-47/CA",
+      "illustrative-47/C"
+    ],
+    [
+      "illustrative-47/CA",
+      "illustrative-47/CB"
+    ],
+    [
+      "illustrative-47/C",
+      "illustrative-47/O"
+    ],
+    [
+      "illustrative-46/C",
+      "illustrative-47/N"
+    ],
+    [
+      "illustrative-48/N",
+      "illustrative-48/CA"
+    ],
+    [
+      "illustrative-48/CA",
+      "illustrative-48/C"
+    ],
+    [
+      "illustrative-48/CA",
+      "illustrative-48/CB"
+    ],
+    [
+      "illustrative-48/C",
+      "illustrative-48/O"
+    ],
+    [
+      "illustrative-48/CB",
+      "illustrative-48/CG1"
+    ],
+    [
+      "illustrative-48/CB",
+      "illustrative-48/CG2"
+    ],
+    [
+      "illustrative-47/C",
+      "illustrative-48/N"
+    ],
+    [
+      "illustrative-49/N",
+      "illustrative-49/CA"
+    ],
+    [
+      "illustrative-49/CA",
+      "illustrative-49/C"
+    ],
+    [
+      "illustrative-49/CA",
+      "illustrative-49/CB"
+    ],
+    [
+      "illustrative-49/C",
+      "illustrative-49/O"
+    ],
+    [
+      "illustrative-48/C",
+      "illustrative-49/N"
+    ],
+    [
+      "illustrative-50/N",
+      "illustrative-50/CA"
+    ],
+    [
+      "illustrative-50/CA",
+      "illustrative-50/C"
+    ],
+    [
+      "illustrative-50/CA",
+      "illustrative-50/CB"
+    ],
+    [
+      "illustrative-50/C",
+      "illustrative-50/O"
+    ],
+    [
+      "illustrative-50/CB",
+      "illustrative-50/OG"
+    ],
+    [
+      "illustrative-49/C",
+      "illustrative-50/N"
+    ],
+    [
+      "illustrative-51/N",
+      "illustrative-51/CA"
+    ],
+    [
+      "illustrative-51/CA",
+      "illustrative-51/C"
+    ],
+    [
+      "illustrative-51/CA",
+      "illustrative-51/CB"
+    ],
+    [
+      "illustrative-51/C",
+      "illustrative-51/O"
+    ],
+    [
+      "illustrative-50/C",
+      "illustrative-51/N"
+    ],
+    [
+      "illustrative-52/N",
+      "illustrative-52/CA"
+    ],
+    [
+      "illustrative-52/CA",
+      "illustrative-52/C"
+    ],
+    [
+      "illustrative-52/CA",
+      "illustrative-52/CB"
+    ],
+    [
+      "illustrative-52/C",
+      "illustrative-52/O"
+    ],
+    [
+      "illustrative-52/CB",
+      "illustrative-52/CG1"
+    ],
+    [
+      "illustrative-52/CB",
+      "illustrative-52/CG2"
+    ],
+    [
+      "illustrative-51/C",
+      "illustrative-52/N"
+    ],
+    [
+      "illustrative-53/N",
+      "illustrative-53/CA"
+    ],
+    [
+      "illustrative-53/CA",
+      "illustrative-53/C"
+    ],
+    [
+      "illustrative-53/CA",
+      "illustrative-53/CB"
+    ],
+    [
+      "illustrative-53/C",
+      "illustrative-53/O"
+    ],
+    [
+      "illustrative-52/C",
+      "illustrative-53/N"
+    ],
+    [
+      "illustrative-54/N",
+      "illustrative-54/CA"
+    ],
+    [
+      "illustrative-54/CA",
+      "illustrative-54/C"
+    ],
+    [
+      "illustrative-54/CA",
+      "illustrative-54/CB"
+    ],
+    [
+      "illustrative-54/C",
+      "illustrative-54/O"
+    ],
+    [
+      "illustrative-54/CB",
+      "illustrative-54/OG"
+    ],
+    [
+      "illustrative-53/C",
+      "illustrative-54/N"
+    ],
+    [
+      "illustrative-55/N",
+      "illustrative-55/CA"
+    ],
+    [
+      "illustrative-55/CA",
+      "illustrative-55/C"
+    ],
+    [
+      "illustrative-55/CA",
+      "illustrative-55/CB"
+    ],
+    [
+      "illustrative-55/C",
+      "illustrative-55/O"
+    ],
+    [
+      "illustrative-54/C",
+      "illustrative-55/N"
+    ],
+    [
+      "illustrative-56/N",
+      "illustrative-56/CA"
+    ],
+    [
+      "illustrative-56/CA",
+      "illustrative-56/C"
+    ],
+    [
+      "illustrative-56/CA",
+      "illustrative-56/CB"
+    ],
+    [
+      "illustrative-56/C",
+      "illustrative-56/O"
+    ],
+    [
+      "illustrative-56/CB",
+      "illustrative-56/CG1"
+    ],
+    [
+      "illustrative-56/CB",
+      "illustrative-56/CG2"
+    ],
+    [
+      "illustrative-55/C",
+      "illustrative-56/N"
+    ],
+    [
+      "illustrative-57/N",
+      "illustrative-57/CA"
+    ],
+    [
+      "illustrative-57/CA",
+      "illustrative-57/C"
+    ],
+    [
+      "illustrative-57/CA",
+      "illustrative-57/CB"
+    ],
+    [
+      "illustrative-57/C",
+      "illustrative-57/O"
+    ],
+    [
+      "illustrative-56/C",
+      "illustrative-57/N"
+    ],
+    [
+      "illustrative-58/N",
+      "illustrative-58/CA"
+    ],
+    [
+      "illustrative-58/CA",
+      "illustrative-58/C"
+    ],
+    [
+      "illustrative-58/CA",
+      "illustrative-58/CB"
+    ],
+    [
+      "illustrative-58/C",
+      "illustrative-58/O"
+    ],
+    [
+      "illustrative-58/CB",
+      "illustrative-58/OG"
+    ],
+    [
+      "illustrative-57/C",
+      "illustrative-58/N"
+    ],
+    [
+      "illustrative-59/N",
+      "illustrative-59/CA"
+    ],
+    [
+      "illustrative-59/CA",
+      "illustrative-59/C"
+    ],
+    [
+      "illustrative-59/CA",
+      "illustrative-59/CB"
+    ],
+    [
+      "illustrative-59/C",
+      "illustrative-59/O"
+    ],
+    [
+      "illustrative-58/C",
+      "illustrative-59/N"
+    ],
+    [
+      "illustrative-60/N",
+      "illustrative-60/CA"
+    ],
+    [
+      "illustrative-60/CA",
+      "illustrative-60/C"
+    ],
+    [
+      "illustrative-60/CA",
+      "illustrative-60/CB"
+    ],
+    [
+      "illustrative-60/C",
+      "illustrative-60/O"
+    ],
+    [
+      "illustrative-60/CB",
+      "illustrative-60/CG1"
+    ],
+    [
+      "illustrative-60/CB",
+      "illustrative-60/CG2"
+    ],
+    [
+      "illustrative-59/C",
+      "illustrative-60/N"
+    ],
+    [
+      "illustrative-61/N",
+      "illustrative-61/CA"
+    ],
+    [
+      "illustrative-61/CA",
+      "illustrative-61/C"
+    ],
+    [
+      "illustrative-61/CA",
+      "illustrative-61/CB"
+    ],
+    [
+      "illustrative-61/C",
+      "illustrative-61/O"
+    ],
+    [
+      "illustrative-60/C",
+      "illustrative-61/N"
+    ],
+    [
+      "illustrative-62/N",
+      "illustrative-62/CA"
+    ],
+    [
+      "illustrative-62/CA",
+      "illustrative-62/C"
+    ],
+    [
+      "illustrative-62/CA",
+      "illustrative-62/CB"
+    ],
+    [
+      "illustrative-62/C",
+      "illustrative-62/O"
+    ],
+    [
+      "illustrative-62/CB",
+      "illustrative-62/OG"
+    ],
+    [
+      "illustrative-61/C",
+      "illustrative-62/N"
+    ],
+    [
+      "illustrative-63/N",
+      "illustrative-63/CA"
+    ],
+    [
+      "illustrative-63/CA",
+      "illustrative-63/C"
+    ],
+    [
+      "illustrative-63/CA",
+      "illustrative-63/CB"
+    ],
+    [
+      "illustrative-63/C",
+      "illustrative-63/O"
+    ],
+    [
+      "illustrative-62/C",
+      "illustrative-63/N"
+    ],
+    [
+      "illustrative-64/N",
+      "illustrative-64/CA"
+    ],
+    [
+      "illustrative-64/CA",
+      "illustrative-64/C"
+    ],
+    [
+      "illustrative-64/CA",
+      "illustrative-64/CB"
+    ],
+    [
+      "illustrative-64/C",
+      "illustrative-64/O"
+    ],
+    [
+      "illustrative-64/CB",
+      "illustrative-64/CG1"
+    ],
+    [
+      "illustrative-64/CB",
+      "illustrative-64/CG2"
+    ],
+    [
+      "illustrative-63/C",
+      "illustrative-64/N"
+    ],
+    [
+      "illustrative-65/N",
+      "illustrative-65/CA"
+    ],
+    [
+      "illustrative-65/CA",
+      "illustrative-65/C"
+    ],
+    [
+      "illustrative-65/CA",
+      "illustrative-65/CB"
+    ],
+    [
+      "illustrative-65/C",
+      "illustrative-65/O"
+    ],
+    [
+      "illustrative-64/C",
+      "illustrative-65/N"
+    ],
+    [
+      "illustrative-66/N",
+      "illustrative-66/CA"
+    ],
+    [
+      "illustrative-66/CA",
+      "illustrative-66/C"
+    ],
+    [
+      "illustrative-66/CA",
+      "illustrative-66/CB"
+    ],
+    [
+      "illustrative-66/C",
+      "illustrative-66/O"
+    ],
+    [
+      "illustrative-66/CB",
+      "illustrative-66/OG"
+    ],
+    [
+      "illustrative-65/C",
+      "illustrative-66/N"
+    ],
+    [
+      "illustrative-67/N",
+      "illustrative-67/CA"
+    ],
+    [
+      "illustrative-67/CA",
+      "illustrative-67/C"
+    ],
+    [
+      "illustrative-67/CA",
+      "illustrative-67/CB"
+    ],
+    [
+      "illustrative-67/C",
+      "illustrative-67/O"
+    ],
+    [
+      "illustrative-66/C",
+      "illustrative-67/N"
+    ],
+    [
+      "illustrative-68/N",
+      "illustrative-68/CA"
+    ],
+    [
+      "illustrative-68/CA",
+      "illustrative-68/C"
+    ],
+    [
+      "illustrative-68/CA",
+      "illustrative-68/CB"
+    ],
+    [
+      "illustrative-68/C",
+      "illustrative-68/O"
+    ],
+    [
+      "illustrative-68/CB",
+      "illustrative-68/CG1"
+    ],
+    [
+      "illustrative-68/CB",
+      "illustrative-68/CG2"
+    ],
+    [
+      "illustrative-67/C",
+      "illustrative-68/N"
+    ],
+    [
+      "illustrative-69/N",
+      "illustrative-69/CA"
+    ],
+    [
+      "illustrative-69/CA",
+      "illustrative-69/C"
+    ],
+    [
+      "illustrative-69/CA",
+      "illustrative-69/CB"
+    ],
+    [
+      "illustrative-69/C",
+      "illustrative-69/O"
+    ],
+    [
+      "illustrative-68/C",
+      "illustrative-69/N"
+    ],
+    [
+      "illustrative-70/N",
+      "illustrative-70/CA"
+    ],
+    [
+      "illustrative-70/CA",
+      "illustrative-70/C"
+    ],
+    [
+      "illustrative-70/CA",
+      "illustrative-70/CB"
+    ],
+    [
+      "illustrative-70/C",
+      "illustrative-70/O"
+    ],
+    [
+      "illustrative-70/CB",
+      "illustrative-70/OG"
+    ],
+    [
+      "illustrative-69/C",
+      "illustrative-70/N"
+    ],
+    [
+      "illustrative-71/N",
+      "illustrative-71/CA"
+    ],
+    [
+      "illustrative-71/CA",
+      "illustrative-71/C"
+    ],
+    [
+      "illustrative-71/CA",
+      "illustrative-71/CB"
+    ],
+    [
+      "illustrative-71/C",
+      "illustrative-71/O"
+    ],
+    [
+      "illustrative-70/C",
+      "illustrative-71/N"
+    ]
+  ],
+  "center": [
+    1.6698868069942696,
+    6.894212913913172,
+    6.712172673609794
+  ],
+  "provenance": {
+    "kind": "schematic",
+    "description": "Original idealized peptide: template side chains, explicit peptide geometry, prescribed phi/psi torsions and trans omega. Carbonyl oxygens follow peptide planes. No deposited conformation, energetic dynamics, or collision avoidance is claimed."
+  }
+}

@@ -1688,11 +1688,14 @@ These are public `SceneContext` methods, available in the sandbox without import
 | `s.plane(id,{xRange,yRange,...})` | `toWorld`, grid/axes/ticks, `path`, `vector`, `components`, sampled `curve`, upright `label`; one `map(dependencies,(point,...values)=>Vec2)` applies from original coordinates |
 | `s.graph(id,data,options)` | Authored positions, connected edges, labels/weights/cost handles and state actions; IDs remain stable |
 | `s.dijkstra(data,source)` | Immutable distances, predecessors and pop/relax/stale/frontier events; nonnegative weights, at most 256 nodes / 2,048 edges; no self-loops or parallel/opposite overlapping edges |
-| `s.collection(id,items,options)` | Identity-indexed items and slots; `swap(a,b,{start,duration,clearance})` handles equal values on separated arcs |
+| `s.collection(id,items,options)` | Identity-indexed items and slots; optional custom `handle` content and vertical layout; `swap` and complete `reorder` schedules preserve identity through separated lanes |
+| `s.validateGroup(children,newIds?)` | Read-only builder preflight: dense distinct unparented handles from the current scene/view; optional planned element IDs check syntax, duplicates, existing IDs and total scene budget. Reserves nothing. Used by collections before wrapping any custom content. |
+| `s.sampledState({times,values,projection})` | Copied aligned samples; `at(time)` interpolates an explicit 3×N projection; fixed-topology `prefix` paths never bridge null gaps |
 | `s.molecularBackbone(id,props)` | Batched explicit segments/bonds in sticks, beads or backbone form; no bond inference |
 | `s.molecularBackboneGeometry(props)` | Pure meshes, anchors and residue ownership for fixed-topology retained motion |
 | `s.articulatedChainPose(spec,time)` | Fixed link lengths with authored bend/twist interpolation; no physics/collision solver |
-| `s.nucleicDuplex(props,opening)` / `s.nucleicTranscript(props,time)` | Pure bounded parts and anchors for explicit antiparallel complementary DNA / sequential RNA; schematic geometry |
+| `s.peptidePose(spec,phi,psi)` | Pure idealized atom/bond/anchor pose from explicit component templates, absolute torsions and trans omega; 2–96 residues; schematic, no folding physics |
+| `s.nucleicDuplex(props,opening)` / `s.nucleicTranscript(props,time)` | Pure bounded parts and anchors for explicit antiparallel complementary DNA / sequential RNA; optional incoming rotation and fixed-link emergence |
 | `s.model(id,{asset,shading,...})` / `s.modelInfo(asset)` | Instantiate or inspect a host-catalog model; geometry references carry ID/hash/part |
 | `s.image(id,{asset,width,height,...})` | Image card, preserved aspect ratio when only one size is supplied; unlit, untinted source colors by default |
 
@@ -1738,7 +1741,9 @@ Registry/individual model decoded caps are 256 MiB / 32 MiB. A renderer/device
 owns its GPU resources; each player/sequence must be disposed. Shared registries
 keep decoded memory while host references remain, even after leases reach zero.
 
-See [helpers and assets](helpers-and-assets.md) for runnable graph, collection,
+See [sampled state](sampled-state.md) for interpolation/gap semantics,
+[identity transport](identity-transport.md) for custom collection content and
+reordering, and [helpers and assets](helpers-and-assets.md) for runnable graph, collection,
 catalog and host examples, and [static import](assets-import.md) for precise
 format rejection, provenance and derivative policies. Keep original/licensed
 asset metadata separate from stylistic reference footage. Artist palettes and

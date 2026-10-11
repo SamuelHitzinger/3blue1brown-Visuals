@@ -1,0 +1,35 @@
+{
+  "palette": {
+    "colors": {
+      "BLACK": "#0C1029",
+      "RED": "#F38C9A",
+      "GREEN": "#AED49E",
+      "PURPLE": "#B9A1D4",
+      "YELLOW": "#F5D378",
+      "BLUE": "#7BCEE9",
+      "GREY_B": "#BDC6DF",
+      "GREY_C": "#8793B2",
+      "GREY_A": "#E0E5F1",
+      "GREY": "#D6DAE8",
+      "WHITE": "#E5E9F3",
+      "BLUE_D": "#50A2ED",
+      "PURPLE_E": "#A349DC",
+      "PURPLE_D": "#9A58E4",
+      "PURPLE_B": "#797CED",
+      "BLUE_E": "#658FED",
+      "PURPLE_C": "#8B69EA",
+      "BLUE_C": "#3BB6EA",
+      "BLUE_A": "#31CAE5"
+    },
+    "background": "BLACK",
+    "foreground": "WHITE"
+  },
+  "captions": [],
+  "scenes": [
+    {
+      "id": "neural-trajectory",
+      "duration": 9.5,
+      "file": "neural-trajectory.js"
+    }
+  ]
+}
