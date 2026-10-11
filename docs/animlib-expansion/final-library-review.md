@@ -1,5 +1,15 @@
 # Final independent library closure review
 
+**Integration follow-up (2026-10-11):** the pending-checkpoint statements in
+this original review are now historical. Checkpoint
+`d272ffd53cbd1bf8dbb1df77ea01210ecf28a1fb` includes the audited source inputs,
+tools and fixtures; `6e80d0a62df5ea085e724396438359b3fa99d196` records the final
+review and reproduction closure. The [capability audit](current-capability-audit.md)
+reports all 740 prerequisite paths tracked and the final navigation scan of
+231 local links, including 20 anchors, without failures. The original scan of
+229 links below preceded those final navigation updates. This follow-up changes
+integration status only; it adds no test, visual, clean-clone or push claim.
+
 Reviewed 2026-10-11. **Accept the current library expansion within its documented representative scope.** No unresolved material runtime/API, reuse, correctness, or current visual-direction blocker was found. This is acceptance of the local implementation and evidence set; root still owns inclusion of the new files in the final checkpoint. It is not a claim of a completed push, a clean-clone installation test, exhaustive creator-channel coverage, or guaranteed performance for every valid maximum-size scene.
 
 The governing user direction is [unified-3b1b-direction.md](unified-3b1b-direction.md): keep 3Blue1Brown artistic and graphing language across current explanatory scenes, while extracting motion and staging techniques from other channels. This review covers public additions in `ab5f34d` and `63c9472`, the current proof generators and portability repairs, and their public navigation. It is a code/evidence closure audit, not a repeat of every visual inspection.

@@ -64,6 +64,8 @@ and RNA docking/emergence provide explicit schematic motion. See
 [helpers and assets](docs/helpers-and-assets.md),
 [sampled state](docs/sampled-state.md), and the
 [proof index](demo/expansion/README.md) for examples, limits and reviewed scope.
+The [capability showcase](docs/showcase.md) presents the reviewed operations as
+one chaptered film, with separate rendering supplements and reuse links.
 Internal dependencies are allowed; the public API requires no
 framework.
 
@@ -167,7 +169,7 @@ Use Node.js 22.16 or newer. From the repository root:
 
 ```sh
 npm ci
-npm run build        # library JS and declarations; required by consumers in tests
+npm run build --workspace animlib # library JS and declarations; required by consumers in tests
 npm run dev          # demo at http://localhost:5173
 npm run typecheck
 npm test

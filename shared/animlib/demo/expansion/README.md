@@ -1,5 +1,8 @@
 # Expansion proof index
 
+Watch the [capability showcase](../../docs/showcase.md) for the current reviewed
+operations, then use the commands below to author or regenerate individual scenes.
+
 **Current direction:** 3Blue1Brown art and graphing with motion techniques drawn
 from all reference channels. The [unified contract](../../../../docs/animlib-expansion/unified-3b1b-direction.md)
 supersedes historical source-art targets below. Start with the current examples

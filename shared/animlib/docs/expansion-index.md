@@ -14,6 +14,7 @@ its stated representative operation and exact artifact identity.
 
 | Need | Start here |
 | --- | --- |
+| Watch what the library can animate | [Capability showcase](showcase.md): complete reviewed films with chapter navigation |
 | Choose a public helper or understand budgets | [Helpers and assets](helpers-and-assets.md), [complete API reference](reference.md) |
 | Author a scene without copying an existing film | [Reusable explanatory motion](explanatory-motion.md), the [current visual contract](../../../docs/animlib-expansion/unified-3b1b-direction.md), then [proof entry points](../demo/expansion/README.md) |
 | Select prepared geometry and inspect provenance | [Biological fixture catalog](../fixtures/biological/README.md), [Suzanne](../fixtures/suzanne/README.md), [asset import contract](assets-import.md) |
