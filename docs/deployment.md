@@ -47,8 +47,9 @@ On the inspected `team-11` VM (Ubuntu 26.04), Docker Engine 29.9.0 and Compose
 
 SSH uploads `release.tar.gz`, its checksum, and `scripts/deploy-release.sh`. The
 archive contains the saved Docker image, Compose file, revision, and validation
-scripts. The VM loads the image, verifies its revision label, and repeats the
-isolated container lifecycle test **before stopping production**.
+scripts. The VM streams the saved image directly from the upload into Docker,
+avoiding a second saved-image file on disk. It verifies the image's revision label
+and repeats the isolated container lifecycle test **before stopping production**.
 
 The first Docker activation stops the old `3yellow3white` systemd service, starts
 the `3yellow3white` Compose project on `0.0.0.0:8080`, waits for Docker health, and

@@ -350,8 +350,7 @@ export async function createSceneProgram(source: string, input: CompileInput = {
     vm = QuickJS.newContext();
     vm.runtime.setMemoryLimit(32 * 1024 * 1024);
     vm.runtime.setMaxStackSize(512 * 1024);
-    let deadline = Date.now() + (limits.executionLimitMs ?? 200);
-    vm.runtime.setInterruptHandler(() => Date.now() > deadline);
+    let deadline = 0;
     const execute = (code: string, file: string): string | undefined => {
       const result = vm!.evalCode(code, file);
       if (result.error) {
@@ -380,6 +379,11 @@ export async function createSceneProgram(source: string, input: CompileInput = {
       const math = Object.freeze(Math);
       globalThis.Date = undefined;
       globalThis.Promise = undefined;`, "runtime.js");
+    // Install the trusted library before starting the authored-code budget.
+    // Runtime parsing/setup grew with the domain helpers and can exceed a short
+    // scene deadline under CPU contention without executing any authored code.
+    deadline = Date.now() + (limits.executionLimitMs ?? 200);
+    vm.runtime.setInterruptHandler(() => Date.now() > deadline);
     execute(rewritten, "scene.js");
     const json = execute("JSON.stringify(globalThis.__animlibResult)", "result.js");
     check(json && json.length <= 8 * 1024 * 1024, "Invalid or oversized compiled scene");

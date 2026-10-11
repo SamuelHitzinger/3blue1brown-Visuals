@@ -87,11 +87,17 @@ else
     echo 'Found unmanaged production Compose containers without docker-current; resolve before deployment' >&2; exit 1;
   }
 fi
-tar --extract --gzip --file "$archive" --directory "$release" --no-same-owner
+# Extract only the small recovery files. Keeping a second copy of the saved
+# image alongside the upload and Docker's layers can fill the VM's disk.
+tar --extract --gzip --file "$archive" --directory "$release" --no-same-owner \
+  --exclude='./image.tar.gz' --exclude='image.tar.gz'
 [[ $(cat "$release/REVISION") == "$revision" ]] || { echo 'Archive revision mismatch' >&2; exit 1; }
 image_tag=$(cat "$release/IMAGE_TAG")
 [[ "$image_tag" == "3yellow3white:$revision" ]] || { echo 'Invalid image tag' >&2; exit 1; }
-sudo -n docker image load --input "$release/image.tar.gz"
+# Both spellings occur in release archives; pipefail rejects a missing or
+# truncated image before any candidate validation or production activation.
+tar --extract --gzip --file "$archive" --to-stdout --wildcards --no-anchored 'image.tar.gz' \
+  | sudo -n docker image load
 # Resolve on the VM: image IDs can differ between classic and containerd stores.
 image_id=$(sudo -n docker image inspect --format '{{.Id}}' "$image_tag")
 [[ "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]]
@@ -100,8 +106,6 @@ image_id=$(sudo -n docker image inspect --format '{{.Id}}' "$image_tag")
 bash "$release/scripts/smoke-container.sh" "$image_id" "$revision"
 python3 "$release/scripts/container-config.py" "$release" "$base" "$revision" "$image_id" "${archive%/*}/deployment.env"
 compose "$release" config --quiet
-# The archive is no longer needed; preserve the image and small recovery files.
-rm -- "$release/image.tar.gz"
 if [[ "$mode" == --check ]]; then
   echo 'Container lifecycle verified; production was not changed.'
   exit 0
