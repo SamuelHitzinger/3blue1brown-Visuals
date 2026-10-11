@@ -351,7 +351,11 @@ export interface CompiledScene {
 
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 export type BehaviorSpec =
-  | { type: "drag"; plane?: "screen" | "xy" | "xz" | "yz"; axis?: "x" | "y" | "z" }
+  | { type: "drag"; plane?: "screen" | "xy" | "xz" | "yz"; axis?: "x" | "y" | "z";
+      /** World-space limits on the target origin during a gesture; choose a fixed plane or axis. */
+      bounds?: { min: Vec3; max: Vec3 };
+      /** Ordered world-space polyline on the selected fixed plane. Mutually exclusive with bounds/axis. */
+      path?: { points: Vec3[]; closed?: boolean } }
   | { type: "spring"; stiffness?: number; damping?: number }
   | { type: "custom"; name: string; options?: JsonValue };
 export interface BehaviorDeclaration { target: string; behavior: BehaviorSpec; }

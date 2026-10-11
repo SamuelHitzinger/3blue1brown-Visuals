@@ -9,7 +9,7 @@ import { reviewGeneratedScene } from '../src/agents/visual-gate.js';
 import { sourceHash } from '../src/agents/visual-edits.js';
 import { validateSceneQuality } from '../src/agents/scene-quality.js';
 import { validateScenePlan } from '../src/agents/scene-plan.js';
-import type { ReviewInput } from '../src/agents/review.js';
+import type { SceneVerificationInput } from '../src/agents/visual-gate.js';
 import { atomicWrite } from '../src/narration/service.js';
 
 const original = resolve(process.argv[2] ?? '');
@@ -18,7 +18,7 @@ if (!process.argv[2] || !Number.isInteger(index) || index < 0 || index > 99) thr
 const config = agentConfig(), videoId = randomUUID();
 const directory = resolve('../data/visual-speed', videoId);
 await mkdir(directory, { recursive: true });
-const input: ReviewInput = JSON.parse(await readFile(join(original, `scene-${index}.input.json`), 'utf8'));
+const input: SceneVerificationInput = JSON.parse(await readFile(join(original, `scene-${index}.input.json`), 'utf8'));
 const source = await readFile(join(original, `scene-${index}.visual/0/candidate.js`), 'utf8');
 const author = await readFile(join(original, `scene-${index}.prompt.md`), 'utf8');
 const split = author.lastIndexOf('\n\nGenerate this scene using the authoritative narration packet and lesson plan:');

@@ -87,11 +87,22 @@ else
     echo 'Found unmanaged production Compose containers without docker-current; resolve before deployment' >&2; exit 1;
   }
 fi
-tar --extract --gzip --file "$archive" --directory "$release" --no-same-owner
+# Extract only the small recovery files. Keeping a second copy of the saved
+# image alongside the upload and Docker's layers can fill the VM's disk.
+tar --extract --gzip --file "$archive" --directory "$release" --no-same-owner \
+  --exclude='./image.tar.gz' --exclude='image.tar.gz'
 [[ $(cat "$release/REVISION") == "$revision" ]] || { echo 'Archive revision mismatch' >&2; exit 1; }
 image_tag=$(cat "$release/IMAGE_TAG")
 [[ "$image_tag" == "3yellow3white:$revision" ]] || { echo 'Invalid image tag' >&2; exit 1; }
-sudo -n docker image load --input "$release/image.tar.gz"
+# The deployment lock covers retention, image loading, activation and rollback.
+# Check mode reports candidates but never removes images.
+retention_args=(--base "$base" --lock-fd 9 --protect-image "$image_tag" --archive "$archive")
+if [[ "$mode" == deploy ]]; then retention_args+=(--apply); fi
+python3 "$release/scripts/cleanup-images.py" "${retention_args[@]}"
+# Both spellings occur in release archives; pipefail rejects a missing or
+# truncated image before any candidate validation or production activation.
+tar --extract --gzip --file "$archive" --to-stdout --wildcards --no-anchored 'image.tar.gz' \
+  | sudo -n docker image load
 # Resolve on the VM: image IDs can differ between classic and containerd stores.
 image_id=$(sudo -n docker image inspect --format '{{.Id}}' "$image_tag")
 [[ "$image_id" =~ ^sha256:[0-9a-f]{64}$ ]]
@@ -100,8 +111,6 @@ image_id=$(sudo -n docker image inspect --format '{{.Id}}' "$image_tag")
 bash "$release/scripts/smoke-container.sh" "$image_id" "$revision"
 python3 "$release/scripts/container-config.py" "$release" "$base" "$revision" "$image_id" "${archive%/*}/deployment.env"
 compose "$release" config --quiet
-# The archive is no longer needed; preserve the image and small recovery files.
-rm -- "$release/image.tar.gz"
 if [[ "$mode" == --check ]]; then
   echo 'Container lifecycle verified; production was not changed.'
   exit 0
@@ -136,4 +145,8 @@ if [[ "$legacy_enabled" == true ]]; then sudo -n systemctl disable "$service"; f
 ln -sfn "$release" "$base/docker-current.next"
 mv -Tf "$base/docker-current.next" "$base/docker-current"
 complete=true
+# Cleanup failure must not roll back a healthy deployment. Retry next deployment
+# or through the VM's optional hourly retention timer.
+python3 "$release/scripts/cleanup-images.py" --base "$base" --lock-fd 9 --apply \
+  || echo 'WARNING: deployment succeeded, but image retention needs attention.' >&2
 printf 'Deployed and verified Docker revision %s\n' "$revision"

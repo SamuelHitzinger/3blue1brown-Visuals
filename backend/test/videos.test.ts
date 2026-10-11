@@ -461,6 +461,93 @@ test('deleting an active video closes its subscription, removes assets, and keep
   expect(service.list()).toHaveLength(1)
 })
 
+test('archiving is idempotent and durable, retaining assets until permanent deletion', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aha-archive-'))
+  const path = join(dir, 'videos.sqlite')
+  try {
+    const service = new VideoService(path, fixture); services.push(service)
+    const video = service.create(SHARED_OWNER, 'archive', input, [{ name: 'notes.txt', mimeType: 'text/plain', bytes: new TextEncoder().encode('Vectors have direction.') }])
+    await waitFor(() => service.get(video.id, SHARED_OWNER)?.status === 'complete')
+    const original = service.get(video.id, SHARED_OWNER)!
+    const response = await service.handle(api(`/${video.id}/archive`, { method: 'POST' }))
+    expect(response.status).toBe(200)
+    const archived = await response.json()
+    expect(archived.archivedAt).toBeString()
+    expect(Number.isFinite(Date.parse(archived.archivedAt))).toBe(true)
+    expect(archived.revision).toBe(original.revision + 1)
+    expect(archived.scenes).toEqual(original.scenes)
+    expect(archived.status).toBe('complete')
+    expect(await (await service.handle(api(`/${video.id}/archive`, { method: 'POST' }))).json()).toEqual(archived)
+    expect(service.create(SHARED_OWNER, 'archive', input)).toEqual(archived)
+    await service.close(); services.splice(services.indexOf(service), 1)
+
+    const reopened = new VideoService(path, fixture); services.push(reopened)
+    expect(reopened.get(video.id, SHARED_OWNER)).toEqual(archived)
+    expect(await (await reopened.handle(api())).json()).toEqual([archived])
+    for (const scene of archived.scenes) expect((await reopened.handle(new Request(`http://localhost${scene.audio.url}`))).status).toBe(200)
+    const db = new Database(path)
+    try {
+      expect(db.query('SELECT COUNT(*) AS count FROM video_uploads WHERE video = ?').get(video.id)).toEqual({ count: 1 })
+      expect((await reopened.handle(api(`/${video.id}`, { method: 'DELETE' }))).status).toBe(204)
+      expect(reopened.list()).toEqual([])
+      for (const table of ['videos', 'video_audio', 'video_uploads']) {
+        expect(db.query(`SELECT COUNT(*) AS count FROM ${table}`).get()).toEqual({ count: 0 })
+      }
+    } finally { db.close() }
+    expect((await reopened.handle(api(`/${video.id}/archive`, { method: 'POST' }))).status).toBe(404)
+    expect((await reopened.handle(new Request(`http://localhost${archived.scenes[0].audio.url}`))).status).toBe(404)
+  } finally { await Promise.all(services.splice(0).map(service => service.close())); await rm(dir, { recursive: true, force: true }) }
+})
+
+test('archiving during generation survives later scene and thumbnail updates without cancelling the job', async () => {
+  let release!: () => void, pending = false, cancelled = false
+  const gate = new Promise<void>(resolve => { release = resolve })
+  const service = new VideoService(':memory:', async (request, index, context) => {
+    if (index === 1) {
+      pending = true
+      await gate
+      cancelled = context!.signal.aborted
+    }
+    return fixture(request, index)
+  }, 'pi', async () => { await gate; return thumbnail }); services.push(service)
+  try {
+    const video = service.create(SHARED_OWNER, 'archive-active', input)
+    await waitFor(() => pending)
+    const events = await service.handle(api(`/${video.id}/events`))
+    const text = events.text()
+    const archived = await (await service.handle(api(`/${video.id}/archive`, { method: 'POST' }))).json()
+    expect(archived.status).toBe('generating')
+    release()
+    const snapshots = (await text).split('\n').filter(line => line.startsWith('data: ')).map(line => JSON.parse(line.slice(6)))
+    const archiveIndex = snapshots.findIndex(snapshot => snapshot.archivedAt)
+    expect(archiveIndex).toBeGreaterThan(0)
+    for (const snapshot of snapshots.slice(archiveIndex)) expect(snapshot.archivedAt).toBe(archived.archivedAt)
+    for (let index = 1; index < snapshots.length; index++) expect(snapshots[index].revision).toBeGreaterThan(snapshots[index - 1].revision)
+    const completed = service.get(video.id, SHARED_OWNER)!
+    expect(completed.status).toBe('complete')
+    expect(completed.archivedAt).toBe(archived.archivedAt)
+    expect(completed.thumbnail).toEqual(thumbnail)
+    expect(completed.scenes).toHaveLength(2)
+    expect(cancelled).toBe(false)
+  } finally { release() }
+})
+
+test('archive writes retain shared-library access and origin protection, including legacy owners', async () => {
+  const service = new VideoService(':memory:', fixture); services.push(service)
+  const video = service.create('legacy-session-owner', 'archive-legacy', input)
+  const forbiddenHeaders: Record<string, string>[] = [{ origin: 'https://evil.test' }, { 'sec-fetch-site': 'cross-site' }]
+  for (const headers of forbiddenHeaders) {
+    expect((await service.handle(api(`/${video.id}/archive`, { method: 'POST', headers }))).status).toBe(403)
+    expect(service.get(video.id, 'legacy-session-owner')?.archivedAt).toBeUndefined()
+  }
+  expect((await service.handle(api(`/${video.id}/archive`, { method: 'DELETE' }))).status).toBe(405)
+  const archived = await (await service.handle(api(`/${video.id}/archive`, { method: 'POST', headers: { 'x-user-id': 'another-user', origin: 'http://localhost' } }))).json()
+  expect(archived.archivedAt).toBeString()
+  expect(service.get(video.id, 'legacy-session-owner')?.archivedAt).toBe(archived.archivedAt)
+  expect(service.get(video.id, 'another-user')).toBeUndefined()
+  expect((await service.handle(api('/missing/archive', { method: 'POST' }))).status).toBe(404)
+})
+
 test('uploaded photos are passed to the script agent as images', async () => {
   let image: string | undefined
   const service = new VideoService(':memory:', async (_request, _index, context) => { image = context?.images?.[0]?.data; return null }); services.push(service)
@@ -472,3 +559,44 @@ test('uploaded photos are passed to the script agent as images', async () => {
   await waitFor(() => Boolean(image))
   expect(image).toBe(Buffer.from([137, 80, 78, 71]).toString('base64'))
 })
+
+test('real generation retries without duplicating published scenes or exposing provider errors', async () => {
+  const indices: number[] = []; let failures = 0;
+  const service = new VideoService(':memory:', async (request, index) => {
+    indices.push(index);
+    if (index === 1 && failures++ < 4) throw new AgentError('QUOTA', 'private provider detail');
+    return fixture(request, index);
+  }, 'pi', undefined, { delay: () => 1 }); services.push(service);
+  const video = service.create(SHARED_OWNER, 'recover', input);
+  await waitFor(() => service.get(video.id, SHARED_OWNER)?.status === 'complete');
+  const result = service.get(video.id, SHARED_OWNER)!;
+  expect(indices).toEqual([0, 1, 1, 1, 1, 1, 2]);
+  expect(result.scenes.map(scene => scene.index)).toEqual([0, 1]);
+  expect(result.recovery).toBeUndefined(); expect(result.error).toBeUndefined();
+});
+
+test('deletion cancels backoff and shutdown preserves the retry for restart', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aha-retry-resume-'));
+  let calls = 0;
+  const service = new VideoService(join(dir, 'db'), async () => { calls++; throw new AgentError('QUOTA', 'private detail'); }, 'pi');
+  services.push(service);
+  try {
+    const deleted = service.create(SHARED_OWNER, 'deleted', input);
+    await waitFor(() => !!service.get(deleted.id, SHARED_OWNER)?.recovery);
+    expect(service.get(deleted.id, SHARED_OWNER)?.recovery?.message).toContain('narration');
+    service.delete(deleted.id);
+    const resumed = service.create(SHARED_OWNER, 'resumed', input);
+    await waitFor(() => !!service.get(resumed.id, SHARED_OWNER)?.recovery);
+    await service.close(); services.splice(services.indexOf(service), 1);
+    expect(calls).toBe(2);
+    let waited = 0;
+    const reopened = new VideoService(join(dir, 'db'), fixture, 'pi', undefined, { wait: async ms => { waited = ms; } });
+    services.push(reopened);
+    await waitFor(() => reopened.get(resumed.id, SHARED_OWNER)?.status === 'complete');
+    expect(waited).toBeGreaterThan(0); expect(calls).toBe(2);
+    expect(reopened.get(deleted.id, SHARED_OWNER)).toBeUndefined();
+  } finally {
+    await Promise.all(services.splice(0).map(service => service.close()));
+    await rm(dir, { recursive: true, force: true });
+  }
+});

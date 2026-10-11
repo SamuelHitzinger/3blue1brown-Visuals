@@ -53,6 +53,8 @@ export interface VideoManifest {
   provider: 'simulated' | 'pi'
   narrationMode?: 'speech' | 'subtitles'
   createdAt: string
+  /** Archived videos retain their scenes and assets until permanently deleted. */
+  archivedAt?: string
   scenes: VideoScene[]
   progress?: VideoProgress
   tokenUsage?: VideoTokenUsage
@@ -60,4 +62,6 @@ export interface VideoManifest {
   thumbnailStatus?: 'generating' | 'complete' | 'failed'
   error?: string
   errorCode?: string
+  /** Durable automatic recovery; published scenes remain playable while waiting. */
+  recovery?: { attempt: number; code: string; nextRetryAt: string; message: string }
 }

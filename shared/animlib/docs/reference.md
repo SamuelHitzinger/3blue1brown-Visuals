@@ -409,6 +409,12 @@ Builders are synchronous and describe a finite animation. Ordinary variables,
 loops, conditionals, and helper functions are supported. There are no sleeps,
 timers, DOM operations, network requests, or per-frame mutation loops in scene code.
 
+Scene options are `mode: '2d' | '3d'`, `end: 'hold' | 'advance'`, an optional
+registered `audio` ID, `orbit`, a palette-token `background`, and `lighting`
+(`'studio'` or the lighting object documented below). Set `orbit: false` explicitly
+when viewer rotation is unwanted; 3D mode otherwise enables whole-scene orbit by
+default. The application may impose stricter controls/orbit rules than the library.
+
 ### Local timing
 
 The cursor starts at zero. A `play` occupies a duration and advances the cursor by
@@ -561,8 +567,9 @@ animation or reactive binding targets.
   Sample coverage is averaged with normalized full-coverage opacity at every quality,
   including on dark receiver colors.
 
-Only opaque world-space **mesh and sphere fills** cast, including generated solids
-and surfaces, final morphed/deformed triangles, and group transforms. Unlit meshes
+Only opaque world-space **mesh, sphere, and imported-model fills** cast, including generated solids
+and surfaces, final morphed/deformed triangles, and group transforms. Alpha-masked
+model primitives do not cast. Unlit meshes
 can still cast. Strokes, labels, billboards, screen objects, viewport-offset geometry,
 translucent fills/textures and members of translucent isolated groups do not cast.
 `castShadow: false` on an element or `s.group(id, children, {castShadow: false})`
@@ -951,7 +958,7 @@ scenes can retrieve them and preserve their relationships.
 | A chain bending while each link keeps its length | Nested groups with origins at joints and fixed local offsets; `rotateTo` on joints | Segment lengths throughout interpolation. The author supplies the hierarchy and joint angles. |
 | Independent translation or style changes | `moveTo` or `animate` | Interpolated properties, without inferring relationships to other objects. |
 | An intentional change of shape | `morphTo` | Object identity and supported geometric correspondence, not physical constraints such as length or rigidity. |
-| Viewer dragging or spring return | `s.behavior` with `drag` or `spring` | Live presentation behavior. A spring returns toward an authored target; it is not a distance constraint between objects. |
+| Viewer dragging, bounded handles, path-following, or spring return | `s.behavior` with `drag` or `spring` | Live presentation behavior. A spring returns toward an authored target; it is not a distance constraint between objects. |
 
 For a semantic connection, prefer `connect` even if its sources are initially
 still. Animate the sources instead of independently moving or replacing the
@@ -1015,6 +1022,48 @@ s.connect(bond, atom, otherAtom, { endpoints: 'surface' });
 axis or a plane. The grab point is preserved, and the held object stays at its
 world position while the authored target moves. After release, a drag on its own
 retains its local offset from the authored timeline.
+
+Use `bounds` to clamp the dragged target's origin to a world-space box, or `path`
+to keep it on an ordered world-space polyline. Both are built in: no host custom
+behavior registration is needed.
+
+```js
+// A handle inside a rectangle. Use axis: 'x' instead for a bounded rail.
+s.behavior(handle, {
+  type: 'drag', plane: 'xy',
+  bounds: { min: [-3, -2, 0], max: [3, 2, 0] },
+});
+// A vehicle following a closed road centerline; omit a repeated closing point.
+s.behavior(plow, {
+  type: 'drag', plane: 'xy',
+  path: { points: [[-8,-8,0], [8,-8,0], [8,8,0], [-8,8,0]], closed: true },
+});
+```
+
+Choose **one** constraint: `bounds` or `path`. Bounds require a fixed world plane
+(`xy`, `xz`, `yz`) or an axis; min/max are finite Vec3 values with min <= max on
+every coordinate. Path dragging requires a fixed world plane, no axis, and 2–256
+finite Vec3 points on that plane (at least 3 when closed). Adjacent points must be
+distinct; closing is implicit. Curves can be sampled into polyline points.
+
+Bounds constrain the target **origin**, not its full geometry: inset the bounds
+by the object's footprint when needed. The constraints are world-space even for
+transformed children; attached labels, parts and connections follow normally.
+The initial path position is projected to its nearest segment. During a gesture,
+only the current segment and a neighbor at a reached endpoint are eligible:
+large pointer jumps cannot select a distant parallel road or cross a block.
+Corners are visited before entering the next segment; a fast pointer jump may
+require further pointer movement to follow successive segments. Closed paths wrap
+between the first and last segments; open paths stop at endpoints. At crossings,
+movement follows the ordered segments rather than switching branches.
+
+These constraints apply during the drag gesture. After release, ordinary local
+offset/timeline and spring behavior resumes; animated targets can leave the
+constraint. Authored/offline frames remain deterministic and do not simulate user
+input. This is constrained translation, not collision detection, automatic vehicle
+heading, swept-area history, or persistent snow clearing. Bounds with a starting
+position outside the fixed coordinates of their plane/axis cannot capture a drag;
+place the authored target on the intended plane/rail.
 
 `spring` is independent of dragging. It restores the position toward the current
 authored target when the object is not held. Defaults are stiffness 65 and damping
@@ -1159,9 +1208,11 @@ GPU handles are rebuilt after recovery;
 geometry unused by the current frame is released. See [performance](performance.md)
 for measurements and remaining limits.
 
-Common animatable properties include position, rotation, scale, opacity, fill,
-stroke, stroke width, and geometry. Elements expose actions such as `moveTo`,
-`rotateTo`, `scaleTo`, `fadeIn`, `fadeOut`, `animate`, and `morphTo`.
+`animate` accepts position, rotation, uniform scalar scale, opacity, fill,
+stroke, stroke width, and viewport offset. Geometry changes use `morphTo`,
+fixed-topology `s.deform`, or the supported reactive properties below; construction
+parameters are not ordinary animation properties. Elements also expose `moveTo`,
+`rotateTo`, `scaleTo`, `fadeIn`, `fadeOut`, and `countTo` for named formula numbers.
 
 ```js
 s.play(dot.animate({ scale: 1.5, fill: Color.WHITE }), { duration: 0.6 });
@@ -1680,8 +1731,9 @@ export default scene({}, s => {
 
 Left-button dragging rotates only the view where the drag started, even when the
 pointer leaves it. Set `orbitHitTest: "geometry"` alongside `orbit: true` to require
-a hit on a visible sphere, circle, rectangle, or triangle mesh before starting
-orbit. Standalone text, paths, lines and empty space do not start rotation;
+a hit on a visible sphere, circle, rectangle, triangle mesh, or imported model before starting
+orbit. Imported models use primitive bounding boxes, so gaps inside those boxes may
+also start orbit. Standalone text, paths, lines and space outside pickable geometry do not start rotation;
 billboard labels stay upright and may sit over pickable model surfaces. Keep
 explanatory text outside the model view. Omit this option for legacy region-wide
 orbit. Pan gestures remain available across the region. The setting is saved in
@@ -3056,7 +3108,7 @@ per reactive-update JSON string length, 100 scenes, 2,000 object IDs per
 builder, 100 controls, 32 view regions, 10,000 animation tracks, and a 24-hour visual timeline.
 SVG path data is limited to 20,000 characters and 20,000 normalized control
 points per path. Point arrays are limited to 20,000 entries; added scene geometry
-has a 100,000-point budget, including SVG path control points.
+has a 100,000-point budget, including mesh vertices and SVG path control points.
 The VM boundary validates finite numbers, geometry sizes, mesh indices, object
 lifetimes, and group references. The library intentionally does not expose
 arbitrary browser callbacks in the animation data.
@@ -3391,8 +3443,9 @@ infinite scenes, branching navigation, playback-rate controls,
 in-player video recording, or mobile-browser support guarantees. Native Node
 frame/video export is provided by `tools/render-frames.mjs` and
 `tools/render-video.mjs`; use `withOfflineScene` to sample retained time bindings.
-The initial control surface
-is sliders, toggles, selects, and requested orbit rotation.
+Available interaction includes object/group dragging with world bounds or ordered open/closed paths, spring return, live
+attachments/connections, host-registered custom behaviors, sliders, toggles, selects,
+and camera orbit/pan. Application prompts define which interactions to prefer.
 
 Useful follow-up work should be driven by the three application demos: reusable
 additional domain helpers, accessible descriptions of visual objects, measured

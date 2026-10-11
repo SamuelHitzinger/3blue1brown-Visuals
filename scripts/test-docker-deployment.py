@@ -5,6 +5,7 @@ Run as deploy: python3 scripts/test-docker-deployment.py ARCHIVE SHA LEGACY_RELE
 Requires passwordless sudo, systemd, Docker, and an existing legacy Bun release.
 Production is only read to obtain the legacy release path; it is never stopped.
 """
+import fcntl
 import json
 import os
 import socket
@@ -60,6 +61,10 @@ def main():
             assert source.count(old) == 1, old
             source = source.replace(old, new)
         source = source.replace('--wait-timeout 60', '--wait-timeout 15')
+        # The test shares the VM's Docker daemon. Retention is tested separately;
+        # sandbox activation must never delete production's rollback images.
+        source = source.replace('retention_args+=(--apply)', ':')
+        source = source.replace('--lock-fd 9 --apply', '--lock-fd 9')
         healthy, failing, blocked = root / 'healthy.sh', root / 'failing.sh', root / 'blocked.sh'
         healthy.write_text(source)
         trigger = 'compose "$release" up --detach --wait --wait-timeout 15\n'
@@ -153,4 +158,8 @@ WantedBy=multi-user.target
 
 
 if __name__ == '__main__':
-    main()
+    # Image loading in this sandbox shares Docker with the real deployment and
+    # hourly retention. Hold its lock for the whole test, including smoke jobs.
+    with Path('/srv/apps/3yellow3white-actions/deploy.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        main()

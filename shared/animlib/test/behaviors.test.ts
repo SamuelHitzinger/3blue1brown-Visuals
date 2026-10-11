@@ -12,6 +12,55 @@ const at = (frame: Frame, id: string) => frame.elements.find(e=>e.id===id)!;
 const ray = (x: number, y = 0) => ({origin:[x,y,10] as Vec3,direction:[0,0,-1] as Vec3});
 
 describe('declarative behaviors and bindings',()=>{
+  it('clamps bounded dragging in world space and updates attached geometry',async()=>{
+    const scene=await compile(`const a=s.sphere('a'),label=s.text('label',{text:'A'});
+      const g=s.group('g',[a]);s.play(g.scaleTo(2),{duration:0});
+      s.attach(label,a,{offset:[0,1,0]});
+      s.behavior(a,{type:'drag',plane:'xy',bounds:{min:[-2,-1,0],max:[2,1,0]}});s.wait(1);`);
+    const runtime=new BehaviorRuntime();runtime.evaluate(scene,raw(scene),0,0);
+    runtime.input('a',{type:'start',ray:ray(0.2)});
+    runtime.input('a',{type:'move',ray:ray(20,20)});
+    let frame=runtime.evaluate(scene,raw(scene),0,0),space=new SpatialFrame(frame);
+    expect(space.world('a')).toEqual([2,1,0]);expect(space.world('label')).toEqual([2,2,0]);
+    runtime.input('a',{type:'move',ray:ray(-20,-20)});
+    frame=runtime.evaluate(scene,raw(scene),0,0);expect(new SpatialFrame(frame).world('a')).toEqual([-2,-1,0]);
+    runtime.input('a',{type:'end'});expect(runtime.heldTarget).toBeUndefined();
+    expect(new SpatialFrame(runtime.evaluate(scene,raw(scene),0,0)).world('a')).toEqual([-2,-1,0]);
+  });
+
+  it('keeps open-path movement on adjacent segments and clamps endpoints',async()=>{
+    const scene=await compile(`const a=s.sphere('a');s.behavior(a,{type:'drag',plane:'xy',path:{points:[[0,0,0],[4,0,0],[4,4,0],[0,4,0]]}});s.wait(1);`);
+    const runtime=new BehaviorRuntime();runtime.evaluate(scene,raw(scene),0,0);
+    runtime.input('a',{type:'start',ray:ray(0)});
+    const move=(x:number,y:number)=>{runtime.input('a',{type:'move',ray:ray(x,y)});return at(runtime.evaluate(scene,raw(scene),0,0),'a').position;};
+    expect(move(2,0)).toEqual([2,0,0]);
+    expect(move(2,4)).toEqual([2,0,0]); // Cannot jump to the opposite parallel road.
+    expect(move(8,8)).toEqual([4,0,0]); // Visit the corner before changing segments.
+    expect(move(8,8)).toEqual([4,4,0]);
+    expect(move(-8,4)).toEqual([0,4,0]);
+    expect(move(-8,8)).toEqual([0,4,0]);
+    runtime.input('a',{type:'cancel'});expect(runtime.heldTarget).toBeUndefined();
+    runtime.reset();expect(at(runtime.evaluate(scene,raw(scene),0,0),'a').position).toEqual([0,0,0]);
+  });
+
+  it('traverses a closed path through its closing segment and preserves the grab offset',async()=>{
+    const scene=await compile(`const a=s.sphere('a');s.behavior(a,{type:'drag',plane:'xy',path:{points:[[0,0,0],[4,0,0],[4,4,0],[0,4,0]],closed:true}});s.wait(1);`);
+    const runtime=new BehaviorRuntime();runtime.evaluate(scene,raw(scene),0,0);
+    runtime.input('a',{type:'start',ray:ray(0.2,0.2)});
+    for(const [x,y] of [[4,0],[4,4],[0,4],[0,0],[2,0]]) {
+      runtime.input('a',{type:'move',ray:ray(x+0.2,y+0.2)});
+      const p=at(runtime.evaluate(scene,raw(scene),0,0),'a').position;
+      expect(p[0]).toBeCloseTo(x);expect(p[1]).toBeCloseTo(y);
+    }
+  });
+
+  it('combines axis dragging with bounds without moving the fixed coordinates',async()=>{
+    const scene=await compile(`const a=s.sphere('a',{position:[0,2,0]});s.behavior(a,{type:'drag',axis:'x',bounds:{min:[-1,1,-1],max:[1,3,1]}});s.wait(1);`);
+    const runtime=new BehaviorRuntime();runtime.evaluate(scene,raw(scene),0,0);
+    runtime.input('a',{type:'start',ray:ray(0,2)});runtime.input('a',{type:'move',ray:ray(50,20)});
+    expect(at(runtime.evaluate(scene,raw(scene),0,0),'a').position).toEqual([1,2,0]);
+  });
+
   it('keeps highly damped springs bounded and converges after release',async()=>{
     const scene=await compile(`const a=s.sphere('a');s.behavior(a,{type:'drag'});s.behavior(a,{type:'spring',stiffness:1000,damping:1000});s.wait(1);`);
     const runtime=new BehaviorRuntime();runtime.evaluate(scene,raw(scene),0,0);
@@ -41,6 +90,17 @@ describe('declarative behaviors and bindings',()=>{
   });
   it.each([
     `s.behavior(a,{type:'drag',plane:'wrong'});`,
+    `s.behavior(a,{type:'drag',bounds:{min:[0,0,0],max:[1,1,1]}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',bounds:{min:[2,0,0],max:[1,1,1]}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',bounds:{min:[0,0],max:[1,1,1]}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',path:{points:[[0,0,0]]}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',path:{points:[[0,0,0],[0,0,0]]}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',path:{points:[[0,0,0],[1,1,1]]}});`,
+    `s.behavior(a,{type:'drag',plane:'screen',path:{points:[[0,0,0],[1,0,0]]}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',path:{points:[[0,0,0],[1,0,0]],closed:true}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',path:{points:[[0,0,0],[1,0,0],[0,0,0]],closed:true}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',path:{points:Array.from({length:257},(_,i)=>[i,0,0])}});`,
+    `s.behavior(a,{type:'drag',plane:'xy',bounds:{min:[0,0,0],max:[1,1,1]},path:{points:[[0,0,0],[1,0,0]]}});`,
     `s.behavior(a,{type:'drag',plane:'xy',axis:'x'});`,
     `s.behavior(a,{type:'spring',stiffness:-1});`,
     `s.behavior(a,{type:'spring',damping:0});`,

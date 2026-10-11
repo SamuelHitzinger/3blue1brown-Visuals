@@ -6,6 +6,8 @@ const get=(f:Frame,id:string)=>{const e=f.elements.find(e=>e.id===id);if(!e)thro
 it('transports the displayed trace sample into the same projected point and growing path on any seek',async()=>{
  const source=await readFile(new URL('../demo/expansion/neural-trajectory.js',import.meta.url),'utf8');
  const palette=JSON.parse(await readFile(new URL('../demo/expansion/neural-trajectory-manifest.json',import.meta.url),'utf8')).palette as ColorPalette;
+ // The dense trajectory checks numerical/seek parity, not compilation speed.
+ // Use a test-only budget for slower CI CPUs; production limits stay unchanged.
  await withOfflineScene(source,{palette},s=>{
   for(const t of[0,.7,1.4,2.4,2.73,4,5.87,8.5,9.5,4]){
    const f=s.sample(t),values=Array.from({length:5},(_,r)=>get(f,`entry-${r}`).geometry.numbers!.r);
@@ -33,5 +35,5 @@ it('transports the displayed trace sample into the same projected point and grow
   const frame=s.sample(4);s.sample(9.5);s.sample(0);expect(s.sample(4)).toEqual(frame);
   expect(get(s.sample(8.5),'trajectory-7').opacity).toBeGreaterThan(0);
   expect(s.scene.duration).toBeCloseTo(9.5,12);
- });
+ },{executionLimitMs:2000});
 });

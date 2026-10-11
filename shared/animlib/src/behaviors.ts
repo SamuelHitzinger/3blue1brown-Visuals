@@ -4,6 +4,32 @@ import type { Behavior, BehaviorContext, BehaviorFactory, BehaviorInput, Behavio
 
 function drag(spec: Extract<BehaviorSpec, { type: 'drag' }>): Behavior {
   let held: Vec3 | undefined, origin: Vec3 = [0,0,0], normal: Vec3 = [0,0,1], grab: Vec3 = [0,0,0];
+  const points = spec.path?.points;
+  const segments = points ? points.length - (spec.path?.closed ? 0 : 1) : 0;
+  let segment = 0, pathT = 0;
+  const projectSegment = (position: Vec3, index: number) => {
+    const a=points![index], direction=sub(points![(index+1)%points!.length],a);
+    const t=Math.max(0,Math.min(1,dot(sub(position,a),direction)/dot(direction,direction)));
+    const positionOnPath=add(a,mul(direction,t));
+    return {index,t,position:positionOnPath,distance:Math.hypot(...sub(position,positionOnPath))};
+  };
+  const constrain = (position: Vec3, initial = false): Vec3 => {
+    if (spec.bounds) return position.map((v,i)=>Math.max(spec.bounds!.min[i],Math.min(spec.bounds!.max[i],v))) as Vec3;
+    if (!points) return position;
+    let best=projectSegment(position,segment);
+    if (initial) {
+      for(let i=0;i<segments;i++){const candidate=projectSegment(position,i);if(candidate.distance<best.distance-1e-9)best=candidate;}
+    } else {
+      // Only enter a neighboring segment after reaching the shared endpoint.
+      // A distant pointer event cannot select an unrelated road across the block.
+      const neighbor=pathT<=1e-9?segment-1:pathT>=1-1e-9?segment+1:undefined;
+      if(neighbor!==undefined&&(spec.path?.closed||neighbor>=0&&neighbor<segments)) {
+        const candidate=projectSegment(position,(neighbor+segments)%segments);
+        if(candidate.distance<best.distance-1e-9)best=candidate;
+      }
+    }
+    segment=best.index;pathT=best.t;return best.position;
+  };
   const axis: Vec3 | undefined = spec.axis ? spec.axis === 'x' ? [1,0,0] : spec.axis === 'y' ? [0,1,0] : [0,0,1] : undefined;
   const point = (event: BehaviorInput): Vec3 | undefined => {
     if (!event.ray) return;
@@ -17,11 +43,16 @@ function drag(spec: Extract<BehaviorSpec, { type: 'drag' }>): Behavior {
     input(event, context) {
       if (event.type === 'start') {
         origin = context.worldPosition();
+        if (spec.bounds) {
+          const movable=spec.axis?[spec.axis==='x'?0:spec.axis==='y'?1:2]:spec.plane==='xy'?[0,1]:spec.plane==='xz'?[0,2]:[1,2];
+          if(origin.some((v,i)=>!movable.includes(i)&&(v<spec.bounds!.min[i]||v>spec.bounds!.max[i])))return false;
+        }
+        if(points)origin=constrain(origin,true);
         normal = spec.plane === 'xy' ? [0,0,1] : spec.plane === 'xz' ? [0,1,0] : spec.plane === 'yz' ? [1,0,0] : event.normal ?? [0,0,1];
         const p = point(event); if (!p) return false;
-        grab = sub(origin, p); held = origin; return true;
+        grab = sub(origin, p); held = constrain(origin,true); context.setWorldPosition(held); return true;
       }
-      if (event.type === 'move' && held) { const p = point(event); if (p) { held = add(p, grab); context.setWorldPosition(held); } }
+      if (event.type === 'move' && held) { const p = point(event); if (p) { held = constrain(add(p, grab)); context.setWorldPosition(held); } }
       if (event.type === 'end' || event.type === 'cancel') held = undefined;
     },
     update(context) { if (held) context.setWorldPosition(held); },

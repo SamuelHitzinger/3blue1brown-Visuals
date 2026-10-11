@@ -1,0 +1,11 @@
+[Unit]
+Description=Remove obsolete 3yellow3white Docker images
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=deploy
+ExecStart=/usr/bin/python3 /usr/local/lib/3yellow3white/cleanup-images.py --apply
+TimeoutStartSec=15min
+Nice=10

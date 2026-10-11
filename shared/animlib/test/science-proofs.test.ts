@@ -7,7 +7,9 @@ const get=(f:Frame,id:string)=>{const e=f.elements.find(e=>e.id===id);if(!e)thro
 async function proof(name:string,check:Parameters<typeof withOfflineScene>[2]){
  const source=await readFile(new URL(`../demo/expansion/${name}.js`,import.meta.url),'utf8');
  const palette=JSON.parse(await readFile(new URL(`../demo/expansion/${name}-palette.json`,import.meta.url),'utf8')) as ColorPalette;
- return withOfflineScene(source,{palette},check);
+ // These fixtures check numerical invariants, not compilation speed. Allow
+ // slower CI CPUs to build their dense timelines without changing VM defaults.
+ return withOfflineScene(source,{palette},check,{executionLimitMs:2000});
 }
 describe('original science proofs: scientific invariants',()=>{
  it('derives every rate from actual event times and preserves selected state through layout',async()=>{

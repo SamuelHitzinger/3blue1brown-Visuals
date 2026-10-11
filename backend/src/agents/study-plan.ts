@@ -1,5 +1,6 @@
 import type { PlanDocument, StudyPlan, VideoSegment } from '../../../shared/study-plan.js';
 import type { AgentRunner } from './runtime.js';
+import { runWithValidationRecovery } from './recovery.js';
 import { loadPrompt } from './prompts.js';
 
 const record = (v: unknown): Record<string, unknown> => {
@@ -93,7 +94,7 @@ export async function generateStudyPlan(runner: AgentRunner, document: PlanDocum
   // Retain the source prompt and delimiter contract, adding course grouping requirements.
   const prompt = format.replace('{max_topics}', String(MAX_TOPICS)) + '\n\n' + COURSE_CLASSIFICATION + '\n\nSOURCE MATERIAL:\n<<<\n' + sourceMaterial(document) + '\n>>>';
   signal.throwIfAborted();
-  const output = await runner.run({ systemPrompt: system, prompt,
+  const output = await runWithValidationRecovery(runner, { systemPrompt: system, prompt,
     signal, validate: async output => { parseTopicPlan(output, document); } });
   signal.throwIfAborted();
   return parseTopicPlan(output, document);

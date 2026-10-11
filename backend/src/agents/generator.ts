@@ -19,11 +19,11 @@ import { parsePlannedLesson, scenePlanningContext, validateStory } from './plann
 import { authorReviewedLesson } from './editorial.js';
 import type { LessonPlan } from './planning.js';
 import { validateSceneQuality } from './scene-quality.js';
-import { animationQualityPolicy } from './quality-policy.js';
 import { validateScenePlan, validateViewingMode } from './scene-plan.js';
 import { instructionSnapshot, loadPrompt } from './prompts.js';
 import { buildAuthoringReference } from './authoring-reference.js';
 import { validationMessage } from './runtime.js';
+import { runWithValidationRecovery } from './recovery.js';
 import { logEvent, logStage } from '../logging.js';
 import { buildSubtitlePackage } from '../narration/subtitles.js';
 import { silence, wav, hash } from '../narration/audio.js';
@@ -144,7 +144,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       const narrationId = await saved(join(directory, "narration-id"));
       const job = narrationId ? await narration.get(owner, narrationId) : await narration.submit(owner, markdown);
       if (!narrationId) await atomicWrite(join(directory, "narration-id"), job.id);
-      if (job.status === 'interrupted') await narration.retry(owner, job.id);
+      if (job.status === 'interrupted' || job.status === 'failed') await narration.retry(owner, job.id);
       return await logStage({ videoId, narrationId: job.id, stage: 'narration', sceneIndex: index }, async () => {
         // Poll only local durable state; the speech service owns its work and retry policy.
         while (true) {
@@ -152,7 +152,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
           const ready = await narration.scenePackage(owner, job.id, index);
           if (ready) return ready;
           const status = await narration.get(owner, job.id);
-          if (status.status === "failed" || status.status === "interrupted") throw new AgentError("NARRATION", status.error?.message ?? "Narration failed.");
+          if (status.status === "failed" || status.status === "interrupted") throw new AgentError(status.error?.code ?? "NARRATION", "Narration is waiting for recovery.");
           await new Promise<void>((resolve, reject) => {
             const abort = () => { clearTimeout(timer); reject(signal.reason); };
             const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); }, 200);
@@ -192,6 +192,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
         return verified;
       } catch (error) {
         diagnostics.push(validationMessage(error));
+        if (diagnostics.length > 20) diagnostics.shift();
         logEvent('scene.validation_failed', { videoId, sceneIndex: index, attempt: diagnostics.length }, 'warn');
         await atomicWrite(join(directory, `scene-${index}.diagnostics.json`), JSON.stringify(diagnostics.slice(-20), null, 2));
         throw error;
@@ -207,9 +208,9 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       const modelCatalog=await bundledModelCatalog();
       const sceneInput=()=>({...packet,modelAssets:modelMetadata(),modelAssetContext:modelAssetContext(),modelCatalog});
       const scenePrompt=()=>`Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify(sceneInput())}`;
-      const [reference, craft, viewingMode, quality] = await Promise.all([
+      const [reference, craft] = await Promise.all([
         readFile(new URL("../../../shared/animlib/docs/reference.md", import.meta.url), "utf8").then(buildAuthoringReference),
-        loadPrompt('scene-craft'), loadPrompt('viewing-mode'), animationQualityPolicy(),
+        loadPrompt('scene-craft'),
       ]);
       const reviewDirectory = join(directory, 'scene-inspection', `${index}-${crypto.randomUUID()}`);
       let inspectionNumber = 0;
@@ -248,16 +249,22 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
         systemPrompt: `Use publish_model when imported or custom mesh assets help the explanation. Existing model assets are listed in the input. Geometry/image bytes belong in assets, never scene code.\n${instructions.replace("Return animlib SceneSource { id, source }.", "Return only JavaScript with one default-exported scene, without a JSON wrapper.")}\nFor video delivery, end your timeline at exactly durationSec using a final s.wait() as needed. Validate your complete output using inspect_scene or validate_output before finishing. The host output/timing contract and viewing-mode policy take priority over illustrative API examples; implement the approved plan within those constraints.
 Before final submission, call inspect_scene on your complete candidate. Reuse the returned candidateId for later tool calls; send source again only when revising it. Inspect relevant reveal/settled timestamps and specific object bounds as needed. Reports are advisory: distinguish intentional entrances, exits and overlaps from defects. Four inspections are available.
 ${options.preview ? 'Then call preview_scene to see up to six actual rendered frames. Choose important reveals, settled layouts and at least one transition midpoint using local narration times. Two preview batches are available: review once, repair concrete defects if needed, and use the second to verify. Optional focusObjectId crops one object. Avoid cosmetic iteration. If rendering is unavailable, use analytical feedback and finish; never claim you saw unavailable frames.' : 'Visual preview is unavailable for this run; use analytical feedback.'}
-Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned controls during repairs. Inspection and preview never submit the scene.\n\n${viewingMode}\n\n${craft}\n\n${quality}\n\n${reference}`,
+Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned interactions during repairs. Inspection and preview never submit the scene.\n\n${craft}\n\n${reference}`,
         prompt: scenePrompt(), validate, signal,
         logContext: { videoId, sceneIndex: index, stage: 'scene' as const }, sceneTools,
       };
       await atomicWrite(join(directory, `scene-${index}.instructions.json`), JSON.stringify(instructionSnapshot(task.systemPrompt)));
       await atomicWrite(join(directory, `scene-${index}.prompt.md`), `${task.systemPrompt}\n\n${task.prompt}`);
       await atomicWrite(join(directory, `scene-${index}.input.json`), JSON.stringify(sceneInput()));
-      source = assemble(await logStage({ videoId, sceneIndex: index, stage: 'scene' }, () => runner.run(task)));
+      const pendingPath = join(directory, `scene-${index}.candidate.js`);
+      source = await saved(pendingPath);
+      if (!source) {
+        source = assemble(await logStage({ videoId, sceneIndex: index, stage: 'scene' }, () => runWithValidationRecovery(runner, task,
+          { diagnosticsPath: join(directory, `scene-${index}.author-retries.json`) })));
+        await atomicWrite(pendingPath, source);
+      }
       context.onProgress?.({ stage: 'validating', ...progress });
-      source = await (options.visualGate ?? reviewGeneratedScene)({ runner, source, input: packet, task:{...task,prompt:scenePrompt()},
+      source = await (options.visualGate ?? reviewGeneratedScene)({ runner, source, input: packet, task: { ...task, prompt: scenePrompt() },
         directory, index, videoId, signal, validate: validateSource, models: await modelStore.forRendering(assets) });
       const finalFrame = await validateSource(source);
       signal.throwIfAborted();

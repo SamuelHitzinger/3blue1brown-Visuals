@@ -26,7 +26,12 @@ function review(verdict: 'pass' | 'revise' = 'pass'): EditorialReview {
 function payload(task: AgentTask) { return JSON.parse(task.prompt.slice(task.prompt.indexOf('\n') + 1)); }
 async function rejected(root: string, images?: AgentTask['images']) {
   let calls = 0;
-  await expect(authorReviewedLesson({ async run() { return JSON.stringify(calls++ % 2 ? review('revise') : lesson(`wrong-${calls}`)); } }, request, root, signal(), images)).rejects.toMatchObject({ code: 'EDITORIAL' });
+  await expect(authorReviewedLesson({ async run() {
+    if (calls === 6) throw new Error('Legacy audit captured');
+    return JSON.stringify(calls++ % 2 ? review('revise') : lesson(`wrong-${calls}`));
+  } }, request, root, signal(), images)).rejects.toThrow('Legacy audit captured');
+  // Exercise migration from pre-checkpoint audits; current jobs resume their checkpoint.
+  await rm(join(root, 'editorial-state.json'), { force: true });
   return (await readdir(join(root, 'editorial')))[0];
 }
 
@@ -75,7 +80,7 @@ test('restart repairs latest rejected draft and still requires a fresh passing r
   expect(JSON.parse(await readFile(join(root, 'editorial', firstRun, 'lesson-review-2.json'), 'utf8')).verdict).toBe('revise');
 });
 
-test('interrupted unreviewed repair cannot replace latest validated rejected pair', async () => {
+test('interrupted review resumes its checkpoint draft and still requires a passing review', async () => {
   const root = await directory(); let calls = 0;
   await expect(authorReviewedLesson({ async run() {
     const outputs = [lesson('five'), review('revise'), lesson('six')];
@@ -84,10 +89,12 @@ test('interrupted unreviewed repair cannot replace latest validated rejected pai
   } }, request, root, signal())).rejects.toThrow('Process interrupted');
   calls = 0;
   await authorReviewedLesson({ async run(task) {
-    if (calls++ === 0) { expect(payload(task).draft).toEqual(lesson('five')); return JSON.stringify(lesson()); }
+    calls++;
+    expect(task.logContext?.stage).toBe('review');
+    expect(payload(task).draft).toEqual(lesson('six'));
     return JSON.stringify(review());
   } }, request, root, signal());
-  expect(calls).toBe(2);
+  expect(calls).toBe(1);
 });
 
 test.each(['documents', 'images'] as const)('changed %s cannot reuse rejected editorial context', async changed => {

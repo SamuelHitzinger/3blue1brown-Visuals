@@ -20,7 +20,7 @@ assert(example, 'Storyline guidance must ship a parseable script example');
 const exampleStory = parseStoryline(example);
 assert(exampleStory.beats.length > 0 && exampleStory.beats.every(beat => beat.context.trim() && beat.blocks.some(block => block.kind === 'speech')),
   'Shipped guidance example must contain scene context and spoken narration');
-for (const prompt of ['scene-craft.md', 'scene-review.md', 'story-review.md', 'viewing-mode.md', 'topics-system.md', 'topics-format.md']) {
+for (const prompt of ['scene-craft.md', 'scene-verify.md', 'scene-repair.md', 'story-review.md', 'topics-system.md', 'topics-format.md']) {
   assert((await Bun.file(new URL(`../backend/prompts/${prompt}`, import.meta.url)).text()).trim().length > 100, `${prompt} is missing from the release`);
 }
 assert.equal(parseStoryline("Narration: A working release.").beats.length, 1);

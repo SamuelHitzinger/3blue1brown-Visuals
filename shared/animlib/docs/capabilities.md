@@ -417,7 +417,8 @@ and immutable data; do not accumulate state by frame count. Avoid shared propert
 ownership between bindings, animation tracks, attachments or behaviors. See
 [reactive controls](reactive-controls.md) for exact combinations.
 
-Orbit, object dragging, spring return, attached labels and live connectors are
+Orbit, object dragging (including world-space box bounds and ordered open/closed
+polyline constraints), spring return, attached labels and live connectors are
 scene-authored behaviors, not extra slider/toggle/select plan types. Custom
 behaviors require host registration. Viewer drag affects presentation; later
 narration and canonical handoffs must not depend on the viewer's drag position.
@@ -502,3 +503,9 @@ caps do not repair nonmanifold/self-intersecting meshes, and inspection can miss
 collisions between sampled frames. Escalate missing scientific data or unsupported
 model preparation as prerequisites; do not silently replace them with a claim of
 simulation or measured structure.
+
+Constrained dragging uses built-in `drag.bounds` or `drag.path`, with no custom host
+behavior. Constraints apply to the target origin during a gesture; path movement
+visits adjacent corners rather than jumping between distant segments. See the
+[reference](reference.md#behaviors-and-live-bindings) for the complete API. This does
+not add collision detection, automatic heading, or persistent swept-area state.

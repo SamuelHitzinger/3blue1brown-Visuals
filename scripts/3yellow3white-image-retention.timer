@@ -1,0 +1,10 @@
+[Unit]
+Description=Bound 3yellow3white Docker image retention
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

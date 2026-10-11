@@ -74,8 +74,8 @@ common label, formatting, pause, and table variations), generates
 ElevenLabs narration with word timings and explicit pauses, and provides a
 validated scene-agent handoff. See [narration setup and contracts](docs/narration.md).
 The storyline writer receives `backend/prompts/guidance.md`; its **Output contract**
-specifies the Markdown handoff. `buildStorylineMessages` also loads the shared
-viewing-mode policy and animation capabilities.
+specifies the Markdown handoff. `buildStorylineMessages` loads only that guidance;
+scene authors receive scene craft and the selected animlib API reference.
 
 ## Automatic deployment
 
@@ -118,8 +118,9 @@ only until submission or navigation. Condensed notes and references are
 model-authored, and the extracted original material is retained in the saved plan.
 
 Instruction ownership and prompt assembly are documented in
-[instruction architecture](docs/instruction-architecture.md). Teaching guidance,
-viewing-mode rules, scene craft, and API semantics each have one canonical source.
+[instruction architecture](docs/instruction-architecture.md). Teaching and visual
+cohesion belong to guidance, interaction rules to scene craft, and API semantics
+to the animlib reference.
 The course planner loads `topics-system.md` and `topics-format.md`, appends grouping
 and duration requirements, and validates up to 40 lessons and their 2–5 minute
 estimates. Existing saved plans remain readable; completed generation artifacts

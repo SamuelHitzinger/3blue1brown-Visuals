@@ -1,6 +1,8 @@
 /** Video responses never expose operator instructions or arbitrary error text. */
 export function videoFailureMessage(code?: string, hasScenes = false): string {
-  const message = code === 'DOCUMENT'
+  const message = code === 'RECOVERY_EXHAUSTED'
+    ? 'Generation stopped after 50 unsuccessful attempts. Your progress is saved.'
+    : code === 'DOCUMENT'
     ? 'Your source material is too large. Please split it into smaller videos.'
     : code === 'LIMIT'
       ? 'Video creation is busy right now. Please try again later.'

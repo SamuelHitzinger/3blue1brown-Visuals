@@ -46,7 +46,7 @@ if(command==='serve'||command==='serve-archive'){
   let manifest:any;
   try{manifest=await readJson(manifestPath);}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
   if(!manifest){
-    const files=['backend/prompts/scene-craft.md','backend/prompts/viewing-mode.md','backend/prompts/scene-verify.md','backend/prompts/scene-repair.md','backend/prompts/animation-quality.md','shared/animlib/docs/reference.md'];
+    const files=['backend/prompts/scene-craft.md','backend/prompts/scene-verify.md','backend/prompts/scene-repair.md','shared/animlib/docs/reference.md'];
     const promptFiles=[];
     for(const path of files){try{promptFiles.push({path,sha256:hash(await readFile(join(repo,path)))});}catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}}
     const runtimeFiles=[];

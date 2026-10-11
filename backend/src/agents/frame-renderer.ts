@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import type { Frame } from 'animlib/core';
 import { atomicWrite } from '../narration/service.js';
+import { AgentError } from './config.js';
 
 export interface FrameEvidence {
   backend: string;
@@ -31,7 +32,14 @@ export const renderSceneFrames: FrameRenderer = async input => {
     child.on('error',reject);
     child.on('close',code=>{
       if(signal.aborted){reject(signal.reason);return;}
-      if(code!==0){reject(new Error(`Automatic frame rendering failed (${code}): ${stderr}. Check Node, native WebGPU and the animlib build.`));return;}
+      if(code!==0){
+        let diagnostic: { code?: string; message?: string } | undefined;
+        try { diagnostic = JSON.parse(stderr.trim().split('\n').at(-1)!); } catch { /* Older or crashed workers may have plain stderr. */ }
+        const sourceFailure = diagnostic?.code === 'SCENE_COMPILE' || stderr.trim() === 'interrupted';
+        reject(new AgentError(sourceFailure ? 'RENDER_SOURCE' : 'RENDER', sourceFailure
+          ? `Scene rendering could not compile the candidate: ${diagnostic?.message ?? 'execution limit exceeded'}`
+          : 'The scene renderer is temporarily unavailable.'));return;
+      }
       try {const result=JSON.parse(stdout) as FrameEvidence;if(!result.frames?.length||!result.sheets?.length)throw new Error('No rendered evidence.');resolve(result);}catch(error){reject(error);}
     });
   });

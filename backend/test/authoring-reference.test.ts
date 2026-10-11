@@ -1,6 +1,7 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { buildAuthoringReference } from '../src/agents/authoring-reference.js';
+import { compileSource, evaluateScene } from 'animlib/core';
 
 const reference = readFileSync(new URL('../../shared/animlib/docs/reference.md', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
 function between(start: string, end?: string): string {
@@ -112,6 +113,19 @@ test('retains model authoring and agent publication while excluding host loading
   expect(output).not.toContain('### Registering and delivering models');
   expect(output).toContain("assembly.part('Panel')");
   expect(output).toContain('publish_model');
+});
+
+test('injected molecular example compiles and keeps the batched group at its final pose', async () => {
+  const section = between('### Molecular display beads', '### Curved paths and organic shapes');
+  const example = /```js\n([\s\S]*?)\n```/.exec(section)?.[1];
+  expect(example).toBeDefined();
+  expect(buildAuthoringReference(reference)).toContain(section);
+  const compiled = await compileSource(`export default scene({ mode: '3d', orbit: false }, s => {\n${example}\n});`);
+  const frame = evaluateScene(compiled, compiled.duration);
+  expect(compiled.duration).toBe(2);
+  expect(frame.elements.find(element => element.id === 'protein')?.rotation).toEqual([0, 0.8, 0]);
+  expect(frame.elements.find(element => element.id === 'protein/batch-0')?.geometry.kind).toBe('mesh');
+  expect(frame.elements.find(element => element.id === 'protein')?.persistent).toBe(true);
 });
 
 test('includes callable molecular authoring guidance without relying on a linked document', () => {
