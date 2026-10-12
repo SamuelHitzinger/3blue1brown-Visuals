@@ -9,10 +9,8 @@ interface Rotation {
 }
 interface SceneInteraction {
   time: number;
-  paused: boolean;
   offsets: Map<string, Orbit>;
   handoffs: Map<string, Orbit>;
-  inspections: Map<string, { time: number; orbit: Orbit }>;
   compiled?: CompiledScene;
   rotations: Rotation[];
 }
@@ -54,16 +52,14 @@ function capture(orbit: Orbit, rotation: Rotation): Orbit {
 export class ViewInteraction {
   private scenes = new Map<string, SceneInteraction>();
   private offsets = new Map<string, Orbit>();
-  private current?: SceneInteraction;
 
-  sync(id: string, time: number, compiled: CompiledScene, paused = false): void {
+  sync(id: string, time: number, compiled: CompiledScene): void {
     let state = this.scenes.get(id);
     if (!state) {
-      state = { time, paused, offsets: new Map(), handoffs: new Map(), inspections: new Map(), rotations: [] };
+      state = { time, offsets: new Map(), handoffs: new Map(), rotations: [] };
       this.scenes.set(id, state);
     }
     const before = state.time;
-    this.current = state;
     this.offsets = state.offsets;
     const ids = new Set(['', ...(compiled.views ?? []).map(view => view.id)]);
     for (const view of this.offsets.keys()) if (!ids.has(view)) this.offsets.delete(view);
@@ -72,14 +68,11 @@ export class ViewInteraction {
       state.rotations = rotationsIn(compiled);
       const keys = new Set(state.rotations.map(rotation => rotation.key));
       for (const key of state.handoffs.keys()) if (!keys.has(key)) state.handoffs.delete(key);
-      for (const key of state.inspections.keys()) if (!keys.has(key)) state.inspections.delete(key);
     }
     const backward = time < before;
     for (const rotation of backward ? [...state.rotations].reverse() : state.rotations) {
       const { start, duration, view, key } = rotation, end = start + duration;
       const inside = time >= start && time < end;
-      const inspection = state.inspections.get(key);
-      if (inspection && time < inspection.time) state.inspections.delete(key);
       const crossed = duration === 0
         ? before < start && time >= start || time < start && before >= start
         : backward ? before >= start && time < end : time > before && before < end && time >= start;
@@ -95,30 +88,13 @@ export class ViewInteraction {
       const handoff = state.handoffs.get(key);
       if (inside && handoff) {
         const remaining = 1 - easeAt((time - start) / duration, rotation.ease);
-        const inspected = state.inspections.get(key);
-        const from = inspected?.orbit ?? handoff;
-        const atInspection = inspected ? 1 - easeAt((inspected.time - start) / duration, rotation.ease) : 1;
-        const weight = atInspection > 0 ? remaining / atInspection : 0;
-        this.offsets.set(view, { yaw: from.yaw * weight, pitch: from.pitch * weight });
+        this.offsets.set(view, { yaw: handoff.yaw * remaining, pitch: handoff.pitch * remaining });
       } else this.offsets.delete(view);
     }
     state.time = time;
-    state.paused = paused;
   }
 
   get(view = ''): Orbit { return { ...(this.offsets.get(view) ?? { yaw: 0, pitch: 0 }) }; }
-  set(orbit: Orbit, view = ''): void {
-    this.offsets.set(view, { ...orbit });
-    const state = this.current;
-    if (state?.paused) {
-      // Rebase only the remaining camera motion. Paused redraws retain the
-      // inspected pose; resuming still arrives at the authored destination.
-      for (const rotation of state.rotations) {
-        if (rotation.view === view && state.time >= rotation.start && state.time < rotation.start + rotation.duration) {
-          state.inspections.set(rotation.key, { time: state.time, orbit: { ...orbit } });
-        }
-      }
-    }
-  }
-  reset(): void { this.scenes.clear(); this.offsets = new Map(); this.current = undefined; }
+  set(orbit: Orbit, view = ''): void { this.offsets.set(view, { ...orbit }); }
+  reset(): void { this.scenes.clear(); this.offsets = new Map(); }
 }

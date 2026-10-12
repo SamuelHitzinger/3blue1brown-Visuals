@@ -14,7 +14,6 @@ import { createPiGenerator as createProductionGenerator } from "../src/agents/ge
 import { NarrationService } from "../src/narration/service.js";
 import { settingsFromEnv } from "../src/narration/elevenlabs.js";
 import { VideoService } from "../src/videos.js";
-import type { GenerationProgressUpdate, Generator } from '../src/videos.js';
 import { parseStoryline } from '../src/narration/markdown.js';
 import type { LessonPlan } from '../src/agents/planning.js';
 
@@ -255,24 +254,6 @@ test("Pi executes the validation tool and returns its result to the model", asyn
   expect(contexts[1].messages.some(message => message.role === "toolResult" && message.toolName === "validate_output")).toBe(true);
 });
 
-test('Pi exposes molecular database selection and returns published asset evidence to planning', async () => {
-  const call = message('', 'toolUse');
-  call.content = [{ type: 'toolCall', id: 'model-1', name: 'publish_model', arguments: { pdbId: '4YLN', pdbChains: ['A', '1', '2', '3'] } }];
-  const { runner, contexts } = await fakeRuntime([call, message('Prepared')]);
-  const selected: unknown[] = [];
-  expect(await runner.run({ systemPrompt: 'Prepare the cited molecular model', prompt: 'Use the deposited structure',
-    publishModel: async input => { selected.push(input); return { id: 'model-prepared', context: { accession: '4YLN', sourceHash: 'verified-source' } }; },
-  })).toBe('Prepared');
-  const definition = contexts[0].messages.flatMap(m => m.role === 'system' ? m.toolsAdded ?? [] : []).find(tool => tool.name === 'publish_model');
-  expect(JSON.stringify(definition)).toContain('"pdbId"');
-  expect(JSON.stringify(definition)).toContain('"pdbChains"');
-  expect(selected).toEqual([{ pdbId: '4YLN', pdbChains: ['A', '1', '2', '3'] }]);
-  const result = contexts[1].messages.find(m => m.role === 'toolResult' && m.toolName === 'publish_model');
-  expect(result?.role === 'toolResult' && result.isError).toBe(false);
-  expect(JSON.stringify(result)).toContain('model-prepared');
-  expect(JSON.stringify(result)).toContain('verified-source');
-});
-
 test('Pi includes uploaded image attachments in the script conversation', async () => {
   const { runner, contexts } = await fakeRuntime([message('Narration: One dot.')]);
   const image = { type: 'image' as const, mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGOQi7rzHwAEQgJUZSSrPwAAAABJRU5ErkJggg==' };
@@ -347,11 +328,7 @@ test("the video pipeline preserves narration audio IDs and reuses completed scri
     const source = `export default scene({audio:${JSON.stringify(packet.audioAssetId)},end:${JSON.stringify(packet.endMode)}},s=>{const dot=s.circle('dot');s.behavior(dot,{type:'drag',plane:'xy'});s.wait(${packet.scene.durationSec});});`;
     await task.validate!(source); return source;
   } };
-  const productionGenerate = createPiGenerator(runner, narration, settings.dataDir);
-  const progressUpdates: GenerationProgressUpdate[] = [];
-  const generate: Generator = (request, index, context) => productionGenerate(request, index, { ...context!, onProgress: update => {
-    progressUpdates.push(update); context?.onProgress?.(update);
-  } });
+  const generate = createPiGenerator(runner, narration, settings.dataDir);
   const service = new VideoService(join(settings.agentDir, "videos.sqlite"), generate, "pi");
   try {
     const request = { title: "Counting", topic: "Dots", documents: [], videoMode: 'interactive' as const };
@@ -359,9 +336,6 @@ test("the video pipeline preserves narration audio IDs and reuses completed scri
     for (let i = 0; i < 200 && service.get(created.id, "user:demo")?.status !== "complete"; i++) await Bun.sleep(10);
     const video = service.get(created.id, "user:demo")!;
     expect(video.status).toBe("complete");
-    expect(progressUpdates.map(update => update.stage)).toEqual(expect.arrayContaining(['script', 'narration', 'scene', 'validating']));
-    expect(progressUpdates.filter(update => update.totalScenes !== undefined).every(update => update.totalScenes === 2)).toBe(true);
-    expect(progressUpdates.some(update => update.sceneIndex === 1 && update.stage === 'validating')).toBe(true);
     expect(video.provider).toBe("pi");
     expect(video.scenes).toHaveLength(2);
     for (const scene of video.scenes) {

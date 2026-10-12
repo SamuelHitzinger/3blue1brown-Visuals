@@ -20,7 +20,6 @@ export interface LessonPlaybackState {
   generationError?: string
   insertionError?: string
   wantsPlay?: boolean
-  spatialNavigation?: boolean
 }
 
 export function sequenceTime(state: PlayerState): number {
@@ -85,7 +84,6 @@ export class LessonPlayback {
       this.update({
         time, duration, sceneId: state.scene ?? undefined, sceneTime: state.time,
         playing: state.status === 'playing', ended, error: state.error ?? '',
-        spatialNavigation: state.orbitAvailable ?? Boolean(state.orbitEnabled || state.views?.some(view => view.orbitEnabled)),
         buffering: waitingForInsertion || !this.complete && (atEdge || !duration), waitingForInsertion, wantsPlay: this.wantsPlay,
       })
     })
@@ -249,22 +247,6 @@ export class LessonPlayback {
     this.update({ wantsPlay: this.wantsPlay })
     // Stop immediately, even if a prior seek is still queued.
     if (!this.wantsPlay) this.player.pause()
-    // Play a prepared scene immediately while later scenes download/compile.
-    // Mid-timeline insertions still finish restoring their position first.
-    if (!this.changingTimeline || Number.isFinite(this.extendingBoundary)) {
-      return this.syncPlayback().catch(error => {
-        this.wantsPlay = false
-        this.update({ playing: false, error: error instanceof Error ? error.message : String(error) })
-      })
-    }
-    return this.run(() => this.syncPlayback())
-  }
-
-  pause() {
-    if (!this.state.ready || this.state.error || this.disposed) return Promise.resolve()
-    this.wantsPlay = false
-    this.update({ wantsPlay: false })
-    this.player.pause()
     return this.run(() => this.syncPlayback())
   }
 

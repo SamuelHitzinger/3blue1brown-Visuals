@@ -1,4 +1,0 @@
-# The first two baseline jobs started before the ignored output-root revision.
-# Keep their live absolute paths stable; future jobs use data/dimensional-prompt-eval.
-*
-!.gitignore

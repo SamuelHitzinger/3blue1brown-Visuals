@@ -36,16 +36,6 @@ reconnections receive current state regardless of Last-Event-ID, and clients
 ignore revisions already applied. Heartbeats keep idle connections alive;
 terminal manifests close the stream. Disconnecting a viewer does not cancel work.
 
-New jobs include an optional `progress` snapshot with an estimated percentage,
-current stage, published scene count, and the total scene count once the story is
-known. Source reading, story writing, narration, animation and validation advance
-the estimate; it never reaches 100% until the job completes. Stage weights describe
-work completed, not elapsed time or a remaining-time promise. Progress persists
-with the job and uses the same SSE stream for whole videos and inserted scenes.
-The player shows progress before the first scene, keeps a compact indicator while
-later scenes generate, and shows an individual estimate for each pending insertion.
-Older jobs without progress metadata show their status without an invented percentage.
-
 Scene order is contiguous and published scenes are immutable. Audio bytes and
 scene metadata commit in the same SQLite transaction before notification. Audio
 URLs address the same stored scenes. There are no browser sessions or separate
@@ -113,24 +103,11 @@ resumption. Only a terminal manifest turns the available edge into the lesson en
 Seeking is limited to prepared content. Generation failures and connection messages
 are separate from playback errors so available content remains usable.
 
-Opening a lesson starts the player-code download alongside the manifest request;
-hovering, focusing, or pressing a library card can start that download earlier.
-The browser reuses up to 32 recently fetched manifests for immediate startup while
-SSE checks the current state. Model, audio, and renderer preparation run concurrently,
-and all must finish before publishing a playable scene. Play can start the prepared
-first scene while later scenes continue loading; mid-timeline insertions still wait
-for position restoration. Fingerprinted static assets use immutable browser caching,
-while app HTML revalidates to pick up new deployment asset references.
-
 ## Development
 
 Run `npm run backend:dev` on port 8080 and optionally `npm run app:dev` for Vite,
 which proxies `/api`. Run `npm test`, `npm run app:test`, `npm run backend:test`,
 `npm run backend:typecheck`, and `npm run app:build` for validation.
-`npm run test:scene-insertion` builds and tests the service-to-player insertion
-flow, including pending and nested scenes, failure recovery, audio, and preserved
-playback state. It uses the production service, compiler, and player with simulated
-generation and browser devices, without paid provider calls.
 
 Tests cover idempotency, shared ownership, durable uploads and extraction, deletion, early scene delivery, atomic publication, snapshot reconnection,
 restart recovery, append continuity, control propagation, buffering, pause intent,
@@ -203,23 +180,6 @@ Generation or preparation failures leave the original lesson available.
 The Pi pipeline interprets the request and authors the actual explanation/toy.
 `VIDEO_GENERATOR=simulated` exercises the complete flow with the existing diagnostic
 slider scenes and test tone; it does not interpret the request or generate speech.
-
-Insertion prompts summarize dense captured mesh buffers as counts and bounds while
-retaining scene source, labels, controls, camera state and scientific metadata.
-Previously saved requests are compacted only for prompts; their stored identity
-and recovery digest remain intact.
-
-Planning can call `publish_model` before editorial review. The `pdbId` option imports
-a four-character RCSB accession, optionally selecting author chain IDs with
-`pdbChains` (use `""` for a blank chain). Downloads are bounded and cached by hash.
-Prepared models include protein CA traces and nucleotide heavy-atom geometry,
-CCD connectivity, chain ranges, gaps and deposited accuracy limits. These are
-static structural representations, not molecular dynamics. Detailed coordinates
-and mappings stay in host assets; prompts receive compact evidence and asset IDs.
-
-Restarted planning can repair the latest valid rejected draft for the same request
-and image identity. It creates a fresh audit and still requires editorial approval;
-rendered-scene verification and repair remain mandatory before publication.
 
 ## Generation token usage
 

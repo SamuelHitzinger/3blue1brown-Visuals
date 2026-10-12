@@ -44,24 +44,6 @@ beforeEach(() => {
 });
 
 describe('player bounds', () => {
-  it('reports paused inspection availability without changing classic or playing-camera locks', async () => {
-    const player = createPlayer({ canvas: new Canvas() as unknown as HTMLCanvasElement });
-    try {
-      const result = await player.submit({type:'load', scenes:[{id:'a',source:`export default scene({orbit:false},s=>{
-        let camera;s.view('model',{rect:[0,0,1,1],orbit:true,orbitHitTest:'geometry'},v=>{v.sphere('ball');camera=v.camera;});
-        s.play(camera.animate({yaw:1}),{duration:4});
-      });`}]});
-      expect(result.ok).toBe(true);
-      await player.seek({scene:'a',time:2});
-      expect(player.getState()).toMatchObject({orbitAvailable:true,orbitEnabled:false,views:[{orbitEnabled:true}]});
-      await player.play();
-      expect(player.getState()).toMatchObject({orbitAvailable:true,orbitEnabled:false,views:[{orbitEnabled:false}]});
-      player.pause();
-      expect(player.getState().views[0].orbitEnabled).toBe(true);
-      await player.submit({type:'load', scenes:[{id:'classic',source:'export default scene({mode:"3d",orbit:false},s=>{s.sphere("ball");s.wait(4);});'}]});
-      expect(player.getState()).toMatchObject({orbitAvailable:false,orbitEnabled:false});
-    } finally {player.dispose();}
-  });
   it('measures displayed animation and uses the effective camera and display palette', async () => {
     const player = createPlayer({ canvas: new Canvas() as unknown as HTMLCanvasElement });
     expect(player.getBounds('r')).toBeUndefined();
@@ -525,17 +507,15 @@ describe("player navigation and live source updates", () => {
     expect(() => player.pause()).toThrow("disposed");
   });
 
-  it("allows paused orbit but locks playing camera animations and flat 2D state", async () => {
+  it("locks viewer orbit during camera animations and follows evaluated 2D/3D state", async () => {
     const player = createPlayer({ canvas: {} as HTMLCanvasElement });
     await player.submit({ type: "load", scenes: [{ id: "a", source: `export default scene({mode:"2d",orbit:true},s=>{
       s.play(s.camera.to3D(),{duration:1});s.wait(1);
       s.play(s.camera.to2D(),{duration:1});s.wait(1);
     });` }] });
-    for (const [time, paused, playing] of [[0.5, true, false], [1.5, true, true], [2.5, true, false], [3.5, false, false]] as const) {
+    for (const [time, enabled] of [[0.5, false], [1.5, true], [2.5, false], [3.5, false]] as const) {
       await player.seek({ scene: "a", time });
-      expect(player.getState().orbitEnabled).toBe(paused);
-      await player.play();
-      expect(player.getState().orbitEnabled).toBe(playing);
+      expect(player.getState().orbitEnabled).toBe(enabled);
     }
     player.dispose();
   });

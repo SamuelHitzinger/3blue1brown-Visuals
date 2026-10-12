@@ -5,7 +5,6 @@ import { ViewInteraction } from '../src/interaction.js';
 import { CanvasRenderer } from '../src/renderer.js';
 import { interactionSource } from '../demo/interaction.js';
 import { project } from '../src/geometry.js';
-import { getScreenBounds } from '../src/bounds.js';
 import type { Vec3 } from '../src/types.js';
 
 const source = `export default scene({orbit:true,mode:"3d"}, s => {
@@ -194,73 +193,6 @@ it('isolates viewer state by scene and preserves it across unchanged recompilati
   expect(interaction.get('left').yaw).toBe(1);
   interaction.reset();interaction.sync('one',1,scene);
   expect(interaction.get('left').yaw).toBe(0);
-});
-
-it('keeps paused inspection during a camera move and blends it back on resume',async()=>{
-  const scene=await compileSource(source),interaction=new ViewInteraction();
-  interaction.sync('scene',1,scene);
-  interaction.set({yaw:0.4,pitch:0.2},'left');
-  interaction.sync('scene',3,scene,true);
-  interaction.set({yaw:0.8,pitch:-0.2},'left');
-  interaction.sync('scene',3,scene,true);
-  expect(interaction.get('left')).toEqual({yaw:0.8,pitch:-0.2});
-  interaction.sync('scene',3,scene,false);
-  expect(interaction.get('left')).toEqual({yaw:0.8,pitch:-0.2});
-  interaction.sync('scene',3.5,scene,false);
-  expect(interaction.get('left').yaw).toBeCloseTo(0.4);
-  expect(interaction.get('left').pitch).toBeCloseTo(-0.1);
-  interaction.sync('scene',4,scene,false);
-  expect(interaction.get('left')).toEqual({yaw:0,pitch:0});
-  interaction.sync('scene',1,scene,true);
-  expect(interaction.get('left')).toEqual({yaw:0,pitch:0});
-});
-
-it('permits model rotation during a paused camera move but keeps playing camera moves locked',async()=>{
-  const {renderer,send}=orbitHarness();
-  try {
-    const scene=await compileSource(source),frame=evaluateScene(scene,3);
-    Object.assign(renderer,{lastFrame:frame,lastOptions:scene.options});
-    renderer.syncInteraction('scene',3,scene,frame,true);
-    send('pointerdown',200,200);send('pointermove',220,200);send('pointerup',220,200);
-    const pausedYaw=renderer.getOrbit('left').yaw;
-    expect(pausedYaw).not.toBe(0);
-    renderer.syncInteraction('scene',3,scene,frame,true);
-    expect(renderer.getOrbit('left').yaw).toBe(pausedYaw);
-    renderer.syncInteraction('scene',3,scene,frame,false);
-    send('pointerdown',200,200);send('pointermove',240,200);send('pointerup',240,200);
-    expect(renderer.getOrbit('left').yaw).toBe(pausedYaw);
-  } finally {renderer.dispose();}
-});
-
-it('keeps explanation pixels fixed while an attached coordinate label follows the navigated point',async()=>{
-  const {renderer}=orbitHarness();
-  try {
-    const scene=await compileSource(`export default scene({orbit:false},s=>{
-      s.text('explanation',{text:'Compare height',space:'screen',position:[0,140],fontSize:24});
-      s.latex('number',{tex:'3',space:'screen',position:[-220,100],fontSize:24});
-      s.view('model',{rect:[0,0,1,1],orbit:true,orbitHitTest:'geometry'},v=>{
-        const point=v.sphere('point',{position:[1,0,0],radius:.2});
-        const label=v.text('coordinate',{text:'(1, 0, 0)',billboard:true,fontSize:.25});
-        v.attach(label,point,{offset:[0,.5,0]});
-      });s.wait(1);
-    });`);
-    const frame=evaluateScene(scene,0);
-    renderer.syncInteraction('scene',0,scene,frame,true);
-    Object.assign(renderer,{lastFrame:frame,lastOptions:scene.options});
-    const before=renderer.interactionSnapshot('model')!;
-    const bounds=(id:string,camera=before.camera)=>getScreenBounds(frame,id,{width:800,height:400,camera});
-    const explanation=bounds('explanation'),number=bounds('number'),point=bounds('point'),coordinate=bounds('coordinate');
-    renderer.setOrbit({yaw:.6,pitch:.2},'model');
-    renderer.setPan([.5,-.25,0],'model');
-    const after=renderer.interactionSnapshot('model')!;
-    expect(bounds('explanation',after.camera)).toEqual(explanation);
-    expect(bounds('number',after.camera)).toEqual(number);
-    expect(bounds('point',after.camera)).not.toEqual(point);
-    expect(bounds('coordinate',after.camera)).not.toEqual(coordinate);
-    const expected=project([1,.5,0],after.camera,800,400),label=bounds('coordinate',after.camera)!;
-    expect((label.left+label.right)/2).toBeCloseTo(expected.x,1);
-    expect((label.top+label.bottom)/2).toBeCloseTo(expected.y,1);
-  } finally {renderer.dispose();}
 });
 
 it('routes captured pointer drags to one region and blocks a locked region without rotating the main camera',async()=>{

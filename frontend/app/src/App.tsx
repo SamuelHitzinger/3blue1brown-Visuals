@@ -16,7 +16,6 @@ import type { Lesson } from './data'
 import { archiveVideo, deleteVideo, listVideos, mergeVideoLessons } from './videos'
 import { applyLocalLibrary, libraryViewLessons, loadLocalLibrary, localLibraryKey } from './libraryArchive'
 import type { LibraryView, LocalLibraryState } from './libraryArchive'
-import { preloadLessonRuntime } from './lessonRuntime'
 
 // Five colours keep neighbours distinct in the one-, two-, and three-column grids.
 const libraryColors = ['sage', 'lavender', 'butter', 'blue', 'peach'] as const
@@ -28,7 +27,7 @@ function readLocal<T,>(key: string, fallback: T): T {
 function VideoThumbnail({ lesson, color, onOpen }: { lesson: Lesson, color: string, onOpen: () => void }) {
   const progress = Math.max(0, Math.min(lesson.progress ?? 0, 1))
   const barFill = progress === 0 ? 1 : progress
-  return <button className={`video-thumbnail ${color}`} aria-label={`Play ${lesson.title}`} onPointerEnter={preloadLessonRuntime} onFocus={preloadLessonRuntime} onPointerDown={preloadLessonRuntime} onClick={onOpen}>
+  return <button className={`video-thumbnail ${color}`} aria-label={`Play ${lesson.title}`} onClick={onOpen}>
       <span className="thumbnail-art"><ThumbnailArtwork drawing={lesson.thumbnail} fallback={lesson.artwork}/></span>
       <span className="thumbnail-bottom">
         <h4 className="thumbnail-title">{lesson.title}</h4>

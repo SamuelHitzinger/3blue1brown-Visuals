@@ -43,10 +43,6 @@ Choose revealing cases: start small, vary one factor, test boundaries, and demon
 
 Check facts, calculations, signs, units, assumptions, and boundary cases. Distinguish illustration from proof, observation from mechanism, and analogy from the target; establish finite approximations before limits when needed. Close the loop by answering the opening question and stating the mental model with its qualifications. A changed case can test understanding when useful; introduce no essential new concept in the closing summary.
 
-Use the shortest visible argument that earns the claim. Establish the setting and starting conditions, guide a reachable observation with a spoken attention cue or hint, allow time to notice, then explain why it supports the conclusion. Teach unfamiliar prerequisites instead of making the viewer guess. Reuse established intuition in later calculations; do not force a quiz or a context tour.
-
-Reveal only equations vital to the current inference or calculation. Give planned annotations reveal and exit cues; remove completed notation rather than dimming a growing formula catalogue. Worked examples may need any number of equations, staged in readable steps after the intuition is established. A requested equation may be the opening question to unpack.
-
 ## Make visuals do reasoning
 
 Plan speech and visual evidence together: establish the objects, perform one explanatory operation, let its result settle, then interpret it. In existing scene fields specify the encoding, what changes or stays fixed, the speech cue, and the observation supporting the inference. Use motion to reveal transformations and mechanisms; use a static comparison or source excerpt when it supplies the needed evidence. A caption or decorative animation cannot replace the operation being explained.
@@ -90,10 +86,6 @@ Record 2D/3D and its explanatory reason in each scene's `view` field. Use 3D onl
 Once you choose 3D, fully commit to making it excellent: accurate geometry and proportions, meaningful scale, convincing depth, thoughtful framing, readable labels, and polished motion with stable landmarks. Do not settle for a token extrusion, a tilted flat diagram, or a crude placeholder for the actual spatial structure. Establish orientation before changing it; distinguish object motion from viewpoint changes. Expose decisive relationships without clutter or occlusion, using sections or companion 2D views when useful. Explain projection limits. Put concrete quality requirements and speech-linked reveals in `visualDescription`; leave camera choreography and implementation downstream. Quality means precise, polished explanation, not more effects.
 
 Then actively look for further explanatory opportunities unlocked by 3D: relationships that would be difficult or impossible to communicate faithfully in 2D, such as hidden structure, depth ordering, spatial constraints, intersecting surfaces, or changes revealed by rotation, sections, and projection. Use those opportunities to deepen the lesson's argument within its scope and timing. Name the spatial insight and how the viewer will discover it in `visualDescription`; do not stop at a 3D rendition of an otherwise flat explanation.
-
-Prefer 3D when spatial form or arrangement contributes to understanding, and budget substantial construction and explanation effort for it. Specify defining volumes, passages, contacts, and their operation as observable scene acceptance conditions. Use recognizable shapes rather than generic circles for proteins. A purposeful 2D simplification should map the same parts and preserve identity; for example, orient within cell/nucleus/DNA before flattening the selected opening strands when that helps pairing become clear.
-
-Molecular claims must match the named structure, connectivity, conformation, and available source data. Preserve element colors (C gray, H white, N blue, O red, S yellow, P orange); molecule identity tints must leave elements recognizable. Do not substitute an unrelated protein or invent atomic geometry. Distinguish residue/base beads and schematic envelopes from atoms and exact surfaces. Keep preparation details in metadata; explain only simplifications relevant to the learner. Use supplied prepared-asset evidence for planning, leaving acquisition and implementation to the scene author.
 
 ## 3Blue1Brown reference lessons
 

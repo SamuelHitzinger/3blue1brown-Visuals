@@ -4,7 +4,7 @@ import { parseModelGLB, MODEL_LIMITS } from './models.js';
 import type { Vec2, Vec3 } from './types.js';
 /** Convenient host-side exporter for agent-generated geometry. Never runs in the scene VM. */
 export interface GeneratedModel {
-  parts: { name:string; vertices:Vec3[]; triangles:[number,number,number][]; normals?:Vec3[]; vertexColors?:[number,number,number,number][]; uv?:Vec2[]; position?:Vec3;
+  parts: { name:string; vertices:Vec3[]; triangles:[number,number,number][]; uv?:Vec2[]; position?:Vec3;
     baseColor?:[number,number,number,number]; metalness?:number; roughness?:number; unlit?:boolean;
     texture?:{bytes:Uint8Array;mime:'image/png'|'image/jpeg'} }[];
 }
@@ -18,16 +18,12 @@ export async function createModelGLB(model:GeneratedModel):Promise<Uint8Array<Ar
     vertices+=p.vertices.length;triangles+=p.triangles.length;
     if(vertices>MODEL_LIMITS.vertices||triangles>MODEL_LIMITS.triangles)throw new Error('Generated geometry budget exceeded');
     if(p.vertices.some(v=>!Array.isArray(v)||v.length!==3||!v.every(Number.isFinite))||p.triangles.some(v=>!Array.isArray(v)||v.length!==3||!v.every(i=>Number.isInteger(i)&&i>=0&&i<p.vertices.length)))throw new Error('Invalid generated vertices/triangles');
-    if(p.normals!==undefined && (!Array.isArray(p.normals)||p.normals.length!==p.vertices.length||p.normals.some(v=>!Array.isArray(v)||v.length!==3||!v.every(n=>Number.isFinite(n)&&Math.abs(n)<=1e6)||Math.hypot(...v)===0)))throw new Error('Normals must match vertices and contain bounded nonzero vectors');
-    if(p.vertexColors!==undefined && (!Array.isArray(p.vertexColors)||p.vertexColors.length!==p.vertices.length||Array.from(p.vertexColors).some(v=>!Array.isArray(v)||v.length!==4||Array.from(v).some(c=>!Number.isFinite(c)||c<0||c>1))))throw new Error('Vertex colors must match vertices and contain four finite RGBA components in [0,1]');
     if(p.uv && (p.uv.length!==p.vertices.length||p.uv.some(v=>v.length!==2||!v.every(Number.isFinite))))throw new Error('UVs must match vertices');
     const material=doc.createMaterial(p.name).setBaseColorFactor(p.baseColor??[1,1,1,1]).setMetallicFactor(p.metalness??0).setRoughnessFactor(p.roughness??0.6).setDoubleSided(true);
     if(p.unlit)material.setExtension('KHR_materials_unlit',unlit.createUnlit());
-    if((p.baseColor?.[3]??1)<1||p.vertexColors?.some(color=>color[3]<1))material.setAlphaMode('BLEND');
+    if((p.baseColor?.[3]??1)<1)material.setAlphaMode('BLEND');
     if(p.texture)material.setBaseColorTexture(doc.createTexture().setImage(p.texture.bytes).setMimeType(p.texture.mime));
     const primitive=doc.createPrimitive().setAttribute('POSITION',doc.createAccessor().setType('VEC3').setArray(new Float32Array(p.vertices.flat())).setBuffer(buffer)).setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(p.triangles.flat())).setBuffer(buffer)).setMaterial(material);
-    if(p.normals)primitive.setAttribute('NORMAL',doc.createAccessor().setType('VEC3').setArray(new Float32Array(p.normals.flat())).setBuffer(buffer));
-    if(p.vertexColors)primitive.setAttribute('COLOR_0',doc.createAccessor().setType('VEC4').setArray(new Float32Array(p.vertexColors.flat())).setBuffer(buffer));
     if(p.uv)primitive.setAttribute('TEXCOORD_0',doc.createAccessor().setType('VEC2').setArray(new Float32Array(p.uv.flat())).setBuffer(buffer));
     scene.addChild(doc.createNode(p.name).setTranslation(p.position??[0,0,0]).setMesh(doc.createMesh(p.name).addPrimitive(primitive)));
   }

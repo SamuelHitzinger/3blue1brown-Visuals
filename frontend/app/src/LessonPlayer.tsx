@@ -9,12 +9,10 @@ import { lessonScenes } from './lessonScenes'
 import { useSceneRequests } from './useSceneRequests'
 import { insertedSceneId } from '../../../shared/video/scene-requests'
 import { watchVideo } from './videos'
-import { loadLessonRuntime } from './lessonRuntime'
 import type { Player } from 'animlib'
 import CanvasQuestion, { useCanvasQuestion } from './CanvasQuestion'
 import type { VideoManifest } from '../../../shared/video/contract'
 import GenerationProgress from './GenerationProgress'
-import GenerationEstimate from './GenerationEstimate'
 import { captionAt } from './captions'
 
 const loadingState: LessonPlaybackState = { time: 0, duration: 0, playing: false, ended: false, ready: false, error: '' }
@@ -37,17 +35,10 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
   const [attempt, setAttempt] = useState(0)
   const [isFullscreen, setFullscreen] = useState(false)
   const [captionsEnabled, setCaptionsEnabled] = useState(false)
-  const [navigationMode, setNavigationMode] = useState<'orbit' | 'pan'>('orbit')
   useEffect(() => { setCaptionsEnabled(manifest?.narrationMode === 'subtitles') }, [manifest?.id, manifest?.narrationMode])
   const [cursorHidden, setCursorHidden] = useState(false)
   const cursorTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const state = useSyncExternalStore(playback?.subscribe ?? subscribeLoading, playback?.getState ?? getLoadingState)
-  useEffect(() => {
-    if (!state.spatialNavigation) {
-      renderer.current?.setNavigationMode('orbit')
-      setNavigationMode('orbit')
-    }
-  }, [state.spatialNavigation])
   const { draft, openQuestion, closeQuestion, changeQuestion } = useCanvasQuestion({
     lesson, time: state.time, disabled: menuOpen || overlayOpen || !state.ready || Boolean(startupError || state.error),
     getScene: () => {
@@ -61,7 +52,7 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
   })
   const { requests, connection: requestConnection, submit: submitRequest } = useSceneRequests(lesson.videoId ?? lesson.id, playback, state.ready)
   const latestRequest = requests.at(-1)
-  const pendingRequests = requests.filter(request => request.video.status === 'queued' || request.video.status === 'generating')
+  const pendingRequests = requests.filter(request => request.video.status === 'queued' || request.video.status === 'generating').length
   const submitQuestion = async () => {
     if (!draft) return
     const local = !lesson.videoId ? lessonScenes(lesson, { background: 'BLACK', ink: 'WHITE', accent: 'BLUE' }).find(scene => scene.id === draft.context.scene?.id) : undefined
@@ -111,13 +102,9 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
     setStartupError('')
     setConnection('')
     setManifest(undefined)
-    setNavigationMode('orbit')
-    // Download player code alongside the manifest, before the first scene arrives.
-    const runtime = loadLessonRuntime()
-    // A queued video may have no scenes yet; attach a rejection handler immediately.
-    void runtime.catch(() => {})
+    // Load the renderer only when opening a lesson, keeping the workspace light.
     let rendererPromise: Promise<LessonPlayback | undefined> | undefined
-    const loadRenderer = () => rendererPromise ??= runtime.then(({ createPlayer, THREE_BLUE_ONE_BROWN_PALETTE }) => {
+    const loadRenderer = () => rendererPromise ??= import('animlib').then(({ createPlayer, THREE_BLUE_ONE_BROWN_PALETTE }) => {
       if (!active || !host || !screen.current) return
       // Own the canvas imperatively: renderer recovery can replace a context-locked surface.
       const canvas = document.createElement('canvas')
@@ -145,7 +132,7 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
         if (next.scenes.length) void loadRenderer().then(current => { if (active) return current?.acceptManifest(next) }).catch(failed)
       }, message => { if (active) setConnection(message) })
     } else {
-      void Promise.all([loadRenderer(), runtime]).then(([current, { Color }]) => {
+      void Promise.all([loadRenderer(), import('animlib')]).then(([current, { Color }]) => {
         if (!active || !current) return
         return current.load(lessonScenes(lesson, {
           background: Color.BLACK,
@@ -180,45 +167,30 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
     const action = document.fullscreenElement ? document.exitFullscreen?.() : screen.current?.requestFullscreen?.()
     void action?.catch(() => {})
   }
-  const inspect = (mode: 'orbit' | 'pan') => {
-    void playback?.pause()
-    renderer.current?.setNavigationMode(mode)
-    setNavigationMode(mode)
-  }
 
   const captionScene = manifest?.scenes.find(scene => scene.id === state.sceneId)
     ?? requests.flatMap(request => request.video.scenes.map(scene => ({ ...scene, id: insertedSceneId(request.id, scene.id) }))).find(scene => scene.id === state.sceneId)
   const caption = captionsEnabled && captionScene ? captionAt([captionScene], state.sceneTime ?? 0) : ''
-  return <div className={`player-page ${captionsEnabled ? 'has-captions' : ''} ${state.spatialNavigation ? 'has-spatial-navigation' : ''} ${state.playing ? 'is-playing' : ''} ${cursorHidden && autoHideControls ? 'is-player-idle' : ''}`} ref={screen} tabIndex={-1} onContextMenu={openQuestion} onPointerMove={revealCursor} onPointerDown={revealCursor} onKeyDown={revealCursor} onFocusCapture={revealCursor}>
+  return <div className={`player-page ${captionsEnabled ? 'has-captions' : ''} ${state.playing ? 'is-playing' : ''} ${cursorHidden && autoHideControls ? 'is-player-idle' : ''}`} ref={screen} tabIndex={-1} onContextMenu={openQuestion} onPointerMove={revealCursor} onPointerDown={revealCursor} onKeyDown={revealCursor} onFocusCapture={revealCursor}>
     <div className="player-menu-anchor"><button className={`icon-button player-menu-toggle ${menuOpen ? 'is-open' : ''}`} aria-label="Open video menu" aria-expanded={menuOpen} aria-controls="navigation-drawer" onClick={onMenu}><MenuGlyph/></button>{menuContent}</div>
     <h1 className="player-title">{manifest?.title || lesson.title}</h1>
     {(connection || manifest?.recovery || (state.ready && state.generationError)) && <p className="player-notice" role="status">{state.generationError || connection || manifest?.recovery?.message}</p>}
     <div className="player-stage">
       <div ref={canvasHost} className="lesson-canvas-host"/>
       {captionsEnabled && <div className="lesson-subtitles" aria-label="Subtitles">{caption}</div>}
-      {generating && !state.ready && !error && <GenerationProgress video={manifest}/>}
+      {generating && !state.ready && !error && <GenerationProgress usage={manifest.tokenUsage} queued={manifest.status === 'queued'}/>}
       {!generating && !state.ready && !error && <p className="player-status" role="status">{manifest?.error || state.generationError || 'Loading your lesson…'}</p>}
       {state.ready && state.buffering && <p className="player-status" role="status">{state.waitingForInsertion ? 'Waiting for your requested scenes…' : 'Preparing the next scene…'}</p>}
       {error && <div className="player-status player-error" role="alert"><strong>This lesson couldn’t play.</strong><p>{error}</p><button className="secondary-button" onClick={() => setAttempt(old => old + 1)}>Try again</button></div>}
     </div>
-    {generating && state.ready && !error && <div className="player-generation-status"><GenerationEstimate video={manifest}/></div>}
     {draft && <CanvasQuestion key={draft.id} draft={draft} screen={screen} onChange={changeQuestion} onClose={closeQuestion} onSubmit={submitQuestion}/>}
     {(latestRequest || requestConnection || state.insertionError) && <div className="scene-request-status" role="status">
-      <span>{state.insertionError ? 'The added scenes could not play. Your lesson is still available.' : requestConnection || latestRequest?.video.recovery?.message || (pendingRequests.length ? `Creating your follow-up scene${pendingRequests.length > 1 ? `s (${pendingRequests.length} requests)` : ''}… Playback will wait at the insertion point.`
+      <span>{state.insertionError ? 'The added scenes could not play. Your lesson is still available.' : requestConnection || latestRequest?.video.recovery?.message || (pendingRequests ? `Creating your follow-up scenes${pendingRequests > 1 ? ` (${pendingRequests} requests)` : ''}… Playback will wait at the insertion point.`
         : latestRequest?.video.status === 'failed' ? 'Could not finish the added scenes. Right-click to try a new request.'
         : `${latestRequest?.video.scenes.length ?? 0} scene${latestRequest?.video.scenes.length === 1 ? '' : 's'} added after your selected scene.`)}</span>
-      {!state.insertionError && pendingRequests.map(request => <div className="scene-request-progress" key={request.id}>
-        {pendingRequests.length > 1 && <p className="scene-request-progress-question" title={request.question}>{request.question}</p>}
-        <GenerationEstimate video={request.video} subject="scene"/>
-      </div>)}
       {!!latestRequest?.video.scenes.length && !state.insertionError && <button disabled={!state.ready || !playback?.hasScene(insertedSceneId(latestRequest.id, latestRequest.video.scenes[0].id))} onClick={() => { closeQuestion(); void playback?.playScene(insertedSceneId(latestRequest.id, latestRequest.video.scenes[0].id)) }}>Play added scenes <ArrowRight size={14}/></button>}
     </div>}
     <div className="player-controls">
-      {state.spatialNavigation && <div className="spatial-navigation" role="group" aria-label="Explore 3D view">
-        <button disabled={!enabled} aria-pressed={navigationMode === 'orbit'} title="Pause and drag the model to rotate" onClick={() => inspect('orbit')}>Rotate</button>
-        <button disabled={!enabled} aria-pressed={navigationMode === 'pan'} title="Pause and drag to move around the 3D space" onClick={() => inspect('pan')}>Move</button>
-        <button disabled={!enabled} title="Restore the authored view at this moment" onClick={() => renderer.current?.resetView()}>Reset view</button>
-      </div>}
       <div className="player-control-row">
         <button className="icon-button" disabled={!enabled} aria-label={state.ended ? 'Replay lesson' : playbackRequested ? 'Pause lesson' : 'Play lesson'} onClick={() => { void playback?.toggle() }}>{state.ended ? <RotateCcw size={19}/> : playbackRequested ? <Pause size={19} fill="currentColor"/> : <Play size={19} fill="currentColor"/>}</button>
         <div className="player-timeline">
@@ -230,6 +202,6 @@ export default function LessonPlayer({ lesson, menuOpen, onMenu, menuContent, on
       </div>
     </div>
     {state.ended && <div className="lesson-complete"><button onClick={onHome}>Back to your library <ArrowRight size={16}/></button></div>}
-    {enabled && !playbackRequested && !state.ended && !state.buffering && !state.spatialNavigation && <button className="paused-indicator" onClick={() => { void playback?.toggle() }} aria-label="Resume lesson"><Play size={24} fill="currentColor"/></button>}
+    {enabled && !playbackRequested && !state.ended && !state.buffering && <button className="paused-indicator" onClick={() => { void playback?.toggle() }} aria-label="Resume lesson"><Play size={24} fill="currentColor"/></button>}
   </div>
 }

@@ -53,7 +53,6 @@ test('contextual requests persist, are idempotent, use authoritative scene conte
     expect(service.get(parent.id, SHARED_OWNER)?.scenes).toHaveLength(2)
     const saved = service.sceneRequests(parent.id)
     expect(saved[0].video.scenes).toHaveLength(1)
-    expect(saved[0].video.progress).toMatchObject({ stage: 'complete', percent: 100, completedScenes: 1, totalScenes: 1 })
     expect(received).toHaveLength(1)
     expect(received[0].topic).toContain("Create one follow-up scene")
     expect(received[0].topic).not.toMatch(/short|concise|brief|minutes|seconds|word.count/i)

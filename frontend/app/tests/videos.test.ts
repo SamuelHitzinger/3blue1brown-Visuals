@@ -3,17 +3,6 @@ import assert from 'node:assert/strict'
 import { mergeVideoLessons, videoLesson } from '../src/videos.ts'
 import type { VideoManifest } from '../../../shared/video/contract.ts'
 
-class VideoEvents {
-  static latest: VideoEvents
-  listeners = new Map<string, (event: { data?: string }) => void>()
-  closed = false
-  onerror?: () => void
-  constructor(_url: string) { VideoEvents.latest = this }
-  addEventListener(type: string, listener: (event: { data?: string }) => void) { this.listeners.set(type, listener) }
-  emit(type: string, data?: VideoManifest) { this.listeners.get(type)?.({ data: JSON.stringify(data) }) }
-  close() { this.closed = true }
-}
-
 const manifest = (id = 'video-1'): VideoManifest => ({
   schemaVersion: 1, id, title: 'Convergent sequences', revision: 2,
   status: 'complete', provider: 'simulated', createdAt: '2026-10-10T00:00:00Z',
@@ -137,52 +126,4 @@ test('generated thumbnails arrive through refresh and replace stale browser-loca
   assert.deepEqual(updated.thumbnail, video.thumbnail)
   assert.equal(updated.artwork, previous.artwork)
   assert.equal(mergeVideoLessons([manifest()], [updated])[0].thumbnail, undefined)
-})
-
-test('opening a listed lesson reuses its manifest immediately and still checks live updates', async () => {
-  const { listVideos, watchVideo } = await import('../src/videos.ts')
-  const originalFetch = globalThis.fetch, originalEvents = globalThis.EventSource
-  const video = { ...manifest('cached-lesson'), status: 'generating' as const }
-  globalThis.fetch = async () => Response.json([video])
-  globalThis.EventSource = VideoEvents as unknown as typeof EventSource
-  let close: (() => void) | undefined
-  try {
-    await listVideos()
-    const received: VideoManifest[] = []
-    close = watchVideo(video.id, next => received.push(next), () => {})
-    assert.deepEqual(received, [video], 'available scene sources should not wait for a second network round trip')
-    assert.equal(VideoEvents.latest.closed, false)
-    const finished = { ...video, revision: 3, status: 'complete' as const }
-    VideoEvents.latest.emit('manifest', finished)
-    assert.deepEqual(received, [video, finished])
-    assert.equal(VideoEvents.latest.closed, true)
-    // A slow list response must not replace a newer live snapshot.
-    await listVideos()
-    close()
-    const reopened: VideoManifest[] = []
-    close = watchVideo(video.id, next => reopened.push(next), () => {})
-    assert.deepEqual(reopened, [finished])
-    assert.equal(VideoEvents.latest.closed, false, 'cached completion still gets authoritative revalidation')
-  } finally { close?.(); globalThis.fetch = originalFetch; globalThis.EventSource = originalEvents }
-})
-
-test('deleted lessons are removed from the startup cache', async () => {
-  const { listVideos, watchVideo, deleteVideo } = await import('../src/videos.ts')
-  const originalFetch = globalThis.fetch, originalEvents = globalThis.EventSource
-  const video = manifest('deleted-cached-lesson')
-  globalThis.fetch = async (_url, options) => options?.method === 'DELETE' ? new Response(null, { status: 204 }) : Response.json([video])
-  globalThis.EventSource = VideoEvents as unknown as typeof EventSource
-  const stops: (() => void)[] = []
-  try {
-    await listVideos()
-    stops.push(watchVideo(video.id, () => {}, () => {}))
-    VideoEvents.latest.emit('deleted')
-    const received: VideoManifest[] = []
-    stops.push(watchVideo(video.id, next => received.push(next), () => {}))
-    assert.deepEqual(received, [])
-    await listVideos()
-    await deleteVideo(video.id)
-    stops.push(watchVideo(video.id, next => received.push(next), () => {}))
-    assert.deepEqual(received, [])
-  } finally { stops.forEach(stop => stop()); globalThis.fetch = originalFetch; globalThis.EventSource = originalEvents }
 })

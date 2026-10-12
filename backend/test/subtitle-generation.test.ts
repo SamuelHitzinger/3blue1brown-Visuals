@@ -5,7 +5,6 @@ import {tmpdir} from 'node:os';
 import {createPiGenerator} from '../src/agents/generator.js';
 import type {NarrationService} from '../src/narration/service.js';
 import type {AgentTask} from '../src/agents/runtime.js';
-import type {GenerationProgressUpdate} from '../src/videos.js';
 
 test('subtitle resume bypasses unavailable speech and still verifies generated scenes',async()=>{
  const root=await mkdtemp(join(tmpdir(),'subtitle-resume-'));
@@ -21,10 +20,7 @@ test('subtitle resume bypasses unavailable speech and still verifies generated s
    await task.validate!(source);return source;
   }};
   const generator=createPiGenerator(runner,narration,root,{visualGate:async options=>{reviews++;await options.validate(options.source);return options.source;}});
-  const progress:GenerationProgressUpdate[]=[];
-  const result=await generator({title:'Dots',topic:'Dots',documents:[],narrationMode:'subtitles'},1,{videoId:id,owner:'shared-user',signal:new AbortController().signal,onProgress:update=>progress.push(update)});
-  expect(progress.map(update=>update.stage)).toEqual(['narration','scene','validating']);
-  expect(progress.every(update=>update.totalScenes===2&&update.sceneIndex===1)).toBe(true);
+  const result=await generator({title:'Dots',topic:'Dots',documents:[],narrationMode:'subtitles'},1,{videoId:id,owner:'shared-user',signal:new AbortController().signal});
   expect(reviews).toBe(1);expect(result?.scene.captions.map(c=>c.text).join(' ')).toBe('Another dot appears.');
   expect(result?.audio.slice(44).every(byte=>byte===0)).toBe(true);
   expect(await generator({title:'Dots',topic:'Dots',documents:[],narrationMode:'subtitles'},2,{videoId:id,owner:'shared-user',signal:new AbortController().signal})).toBeNull();

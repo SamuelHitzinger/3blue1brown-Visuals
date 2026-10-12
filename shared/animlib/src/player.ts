@@ -62,13 +62,9 @@ export class Player {
       executionLimitMs: options.executionLimitMs,
       prepare: async scenes => {
         this.behaviors.validate(scenes);
-        const prepared = await Promise.allSettled([
-          this.models.prepare(scenes),
-          this.audio.prepare(scenes),
-          this.renderer.prepare(scenes),
-        ]);
-        // Drain every resource before rollback or a queued submission can reuse it.
-        for (const result of prepared) if (result.status === 'rejected') throw result.reason;
+        await this.models.prepare(scenes);
+        await this.audio.prepare(scenes);
+        await this.renderer.prepare(scenes);
       },
     });
     this.renderer.onCanvasChange = canvas => { this.input.setCanvas(canvas); this.overlay?.setCanvas(canvas); options.onCanvasChange?.(canvas); };
@@ -231,8 +227,8 @@ export class Player {
       this.presentationAt = now;
       const frame = this.behaviors.evaluate(scene, evaluateScene(snapshot, time, { bindings: false }), this.time, dt);
       this.input.sync();
-      this.renderer.syncInteraction(this.sceneId!, this.time, scene, frame, this.status !== 'playing');
-      this.renderer.setOrbitEnabled(scene.options.orbit && frame.camera.perspective > 0 && (!frame.cameraAnimated || this.status !== 'playing'));
+      this.renderer.syncInteraction(this.sceneId!, this.time, scene, frame);
+      this.renderer.setOrbitEnabled(scene.options.orbit && frame.camera.perspective > 0 && !frame.cameraAnimated);
       this.renderer.render(frame, this.displayPalette ? { ...scene.options, background: this.displayPalette.background } : scene.options);
     } else {
       this.renderer.setOrbitEnabled(false);
@@ -482,9 +478,8 @@ export class Player {
       status: this.status,
       scenes: this.sequence.sources.map((source, index) => ({ id: source.id, duration: this.sequence.compiled[index].duration })),
       controls: scene?.controls.map(control => ({ ...control, ...(control.position ? { position: [...control.position] as [number,number] } : {}), options: control.options?.slice() })) ?? [],
-      orbitAvailable: Boolean(frame && (scene?.options.orbit && frame.camera.perspective > 0 || frame.views?.some(view => view.orbit && view.camera.perspective > 0))),
-      orbitEnabled: Boolean(scene?.options.orbit && frame && frame.camera.perspective > 0 && (!frame.cameraAnimated || this.status !== 'playing')),
-      views: (frame?.views ?? []).map(view => ({ id: view.id, rect: [...view.rect] as typeof view.rect, orbitEnabled: view.orbit && view.camera.perspective > 0 && (!view.cameraAnimated || this.status !== 'playing') })),
+      orbitEnabled: Boolean(scene?.options.orbit && frame && frame.camera.perspective > 0 && !frame.cameraAnimated),
+      views: (frame?.views ?? []).map(view => ({ id: view.id, rect: [...view.rect] as typeof view.rect, orbitEnabled: view.orbit && view.camera.perspective > 0 && !view.cameraAnimated })),
       ...(this.error ? { error: this.error } : {}),
     };
   }

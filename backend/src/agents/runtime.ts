@@ -48,7 +48,7 @@ export interface AgentRunMetrics {
 }
 export interface AgentTask {
   /** Host-owned asset publication, scoped to this generation job. */
-  publishModel?: (input: { fixtureId?: string; url?: string; generated?: string; pdbId?: string; pdbChains?: string[]; license?: string; attribution?: string }, signal: AbortSignal) => Promise<unknown>;
+  publishModel?: (input: { url?: string; generated?: string; license?: string; attribution?: string }, signal: AbortSignal) => Promise<unknown>;
   systemPrompt: string;
   prompt: string;
   validate?: (output: string) => Promise<void>;
@@ -191,8 +191,8 @@ export class PiAgentRunner implements AgentRunner {
       });
       const modelTools = task.publishModel ? [defineTool({
         name: 'publish_model', label: 'Publish 3D model',
-        description: 'Prepare and publish a model before making claims that depend on its geometry. Provide exactly one of fixtureId (from modelCatalog), pdbId (RCSB PDB accession, with optional pdbChains author-chain IDs), url (self-contained static GLB from public HTTPS), or generated (JSON geometry). pdbId downloads deposited coordinates and prepares molecular geometry; use returned chain mappings, gaps, source warnings, and representation limits as evidence. Research a suitable accession first. Reuse an existing matching modelAssets entry instead of republishing. Generated JSON: {parts:[{name,vertices:[[x,y,z]],triangles:[[a,b,c]],normals?:[[x,y,z]],vertexColors?:[[r,g,b,a]],uv?:[[u,v]],position?:[x,y,z],baseColor?:[r,g,b,a],metalness?:number,roughness?:number,unlit?:boolean,texture?:{base64:string,mime:"image/png"|"image/jpeg"}}]}. Vertex colors are linear RGBA, one per vertex, each component 0–1. Returns a stable asset ID, bounds, named part IDs, materials and prepared scientific context when applicable. Use returned asset ID with s.model; fixtureId is only a selection key. Preserve element colors, attribution and representation limits; never put binary data in scene source.',
-        parameters: Type.Object({ fixtureId: Type.Optional(Type.String({maxLength:64})), pdbId: Type.Optional(Type.String({pattern:'^[1-9][A-Za-z0-9]{3}$'})), pdbChains: Type.Optional(Type.Array(Type.String({pattern:'^[A-Za-z0-9]?$',maxLength:1}),{minItems:1,maxItems:32})), url: Type.Optional(Type.String({maxLength:4096})), generated: Type.Optional(Type.String({maxLength:1000000})), license: Type.Optional(Type.String({maxLength:2000})), attribution: Type.Optional(Type.String({maxLength:2000})) }),
+        description: 'Publish a self-contained static GLB from a public HTTPS URL, or generate a GLB from JSON geometry. Provide exactly one of url or generated. Generated JSON: {parts:[{name,vertices:[[x,y,z]],triangles:[[a,b,c]],uv?:[[u,v]],position?:[x,y,z],baseColor?:[r,g,b,a],metalness?:number,roughness?:number,unlit?:boolean,texture?:{base64:string,mime:"image/png"|"image/jpeg"}}]}. Returns a stable asset ID, bounds, named part IDs and material inventory. Use that ID with s.model; never put binary data in scene source. Preserve source attribution/license for downloaded assets.',
+        parameters: Type.Object({ url: Type.Optional(Type.String({maxLength:4096})), generated: Type.Optional(Type.String({maxLength:1000000})), license: Type.Optional(Type.String({maxLength:2000})), attribution: Type.Optional(Type.String({maxLength:2000})) }),
         async execute(_id, input) {
           try {const result=await task.publishModel!(input,signal);return {content:[{type:'text' as const,text:JSON.stringify(result)}],details:{}};}
           catch(error){return {content:[{type:'text' as const,text:validationMessage(error)}],details:{},isError:true};}

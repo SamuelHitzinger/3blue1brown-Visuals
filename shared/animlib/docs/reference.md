@@ -321,7 +321,6 @@ type PlayerState = {
   error?: string;
   controls: ControlDefinition[];
   orbitEnabled: boolean;
-  orbitAvailable?: boolean; // A navigable 3D region exists, even during authored camera motion.
   views: { id: string; rect: [number, number, number, number]; orbitEnabled: boolean }[];
 };
 
@@ -1788,20 +1787,15 @@ camera's right axis, keeping the horizon upright. The front of the scene follows
 the pointer. Dragging across a view's shorter dimension turns it 180 degrees;
 both axes use that same scale, independent of canvas size or pixel density.
 Viewer tilt stops just short of the poles to prevent flipping upside down.
-Rotation input is disabled while a camera animation is playing. Pausing permits
-inspection of any orbit-enabled view with positive perspective, including a
-paused camera-animation frame. Between authored rotations, viewer rotation stays
-as an offset to the camera.
+The rotation input is disabled during camera-animation intervals, including when
+paused within one. Between authored rotations, viewer rotation stays as an offset to the camera.
 An authored yaw/pitch animation captures the viewer's current orientation as its
 starting pose and blends to the authored destination using the track's duration
 and easing. Both viewer yaw and tilt fade out, so the exact authored pose is
 reached at the end. In a fully 3D view, user-adjusted yaw takes the shortest route
 to that destination instead of unwinding accumulated viewer turns. Untouched
 authored rotations retain their original path, including intentional full turns.
-Pausing or scrubbing follows that captured path until the viewer rotates while
-paused. That inspection stays stable across redraws and rebases the remaining
-camera motion; resuming blends into the authored destination. Seeking before the
-inspection restores the earlier captured path.
+Pausing or scrubbing within the animation follows that same captured path.
 Seeking backward to before it restores the authored starting pose and clears
 the captured handoff; a subsequent drag supplies a new starting pose. Jumping
 past an animation lands on its authored destination. Zero-duration rotations

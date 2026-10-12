@@ -140,11 +140,6 @@ html, body, #root { min-height: 100%; background: var(--bg); transition: backgro
 .progress-track { height: 8px; top: 8px; }
 .player-controls { width: min(640px, calc(100vw - 48px)); }
 .player-control-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) repeat(2, 36px); align-items: start; gap: 14px; }
-.spatial-navigation { display: flex; justify-content: center; gap: 8px; margin-bottom: 12px; }
-.spatial-navigation button { min-height: 36px; padding: 6px 12px; border: 1px solid #ffffff55; border-radius: 8px; background: #101218cc; color: var(--player-ink); font-size: 12px; }
-.spatial-navigation button[aria-pressed="true"] { border-color: currentColor; background: #343943; }
-.spatial-navigation button:disabled { opacity: .45; }
-.has-spatial-navigation .lesson-subtitles { bottom: 142px; }
 .player-control-row > .icon-button, .player-control-row > .icon-button:hover { width: 36px; height: 36px; border-radius: 8px; background: transparent; color: inherit; box-shadow: none; }
 .player-control-row > .icon-button { opacity: 1; transform: none; }
 .captions-toggle { position: relative; }

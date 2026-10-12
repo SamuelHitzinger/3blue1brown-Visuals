@@ -27,8 +27,6 @@ export class SceneSequence {
   revision = 0;
   private values = new Map<string, Record<string, ControlValue>>();
   private queue: Promise<unknown> = Promise.resolve();
-  private queuedOperations = 0;
-  private appendPrefix?: CompiledScene[];
   private compiler = new SourceCompiler();
   private disposed = false;
   readonly assetGeometry: SceneAssets;
@@ -50,23 +48,6 @@ export class SceneSequence {
    * Canonical compiled scenes keep their time-zero outputs; sampling never mutates them.
    */
   sample(index: number, time: number): Promise<CompiledScene> {
-    const scene = this.compiled[index];
-    // A suffix append preserves the committed prefix. Let its time callbacks
-    // advance while host resources load, without bypassing any queued edits.
-    if (!this.disposed && this.queuedOperations === 1 && this.appendPrefix === this.compiled
-      && scene && this.compiler.canUpdate(scene)) {
-      const bindings = scene.reactiveBindings;
-      return this.sampleScene(scene, time).then(snapshot => {
-        if (this.disposed) throw new Error('Scene sequence is disposed');
-        if (this.compiled[index] !== scene || scene.reactiveBindings !== bindings) return this.sample(index, time);
-        return snapshot;
-      }, error => {
-        // Worker loss needs the usual serialized reconstruction; callback
-        // errors with a live program still surface to the caller directly.
-        if (!this.disposed && !this.compiler.canUpdate(scene)) return this.sample(index, time);
-        throw error;
-      });
-    }
     return this.enqueue(async () => {
       if (this.disposed) throw new Error('Scene sequence is disposed');
       let scene = this.compiled[index];
@@ -94,9 +75,7 @@ export class SceneSequence {
     return { ...base, reactiveBindings: mergeReactiveUpdates(base, updates, [], time), reactiveTime: time };
   }
   private enqueue<T>(work: () => Promise<T>): Promise<T> {
-    this.queuedOperations++;
-    const result = this.queue.then(work).finally(() => { this.queuedOperations--; });
-    this.queue = result.catch(() => undefined); return result;
+    const result = this.queue.then(work); this.queue = result.catch(() => undefined); return result;
   }
   private async reconstruct(sources: SceneSource[], values: Map<string, Record<string, ControlValue>>, prefix: CompiledScene[] = [], outgoing?: Frame) {
     const compiled: CompiledScene[] = prefix.slice();
@@ -129,10 +108,6 @@ export class SceneSequence {
     return { compiled, values: normalized };
   }
   submit(change: Submission): Promise<SubmitResult> {
-    // Register before enqueueing so a Play in this same turn can sample too.
-    let prefix = this.queuedOperations === 0 && change.type === 'insert'
-      && change.after === (this.sources.at(-1)?.id ?? null) ? this.compiled : undefined;
-    if (prefix) this.appendPrefix = prefix;
     return this.enqueue(async () => {
       try {
         if (this.disposed) throw new Error("Scene sequence is disposed");
@@ -153,16 +128,12 @@ export class SceneSequence {
           ids.add(s.id);
         }
         const append = change.type === 'insert' && change.after === (this.sources.at(-1)?.id ?? null);
-        if (append) this.appendPrefix = prefix = this.compiled;
         const candidate = await this.reconstruct(sources, change.type === "load" ? new Map() : this.values, append ? this.compiled : []);
         this.sources = sources; this.compiled = candidate.compiled; this.values = candidate.values; this.revision++;
         return { ok: true, revision: this.revision, diagnostics: [] };
       } catch (error) {
         return { ok: false, revision: this.revision, diagnostics: [error instanceof SceneCompileError ? error.diagnostic : { severity: "error", code: "SUBMISSION", message: error instanceof Error ? error.message : String(error) }] };
-      } finally {
-        if (this.appendPrefix === prefix) this.appendPrefix = undefined;
-        this.compiler.retain(this.compiled); this.assetGeometry.retain(this.compiled);
-      }
+      } finally { this.compiler.retain(this.compiled); this.assetGeometry.retain(this.compiled); }
     });
   }
   setControl(sceneId: string, id: string, value: ControlValue): Promise<void> {

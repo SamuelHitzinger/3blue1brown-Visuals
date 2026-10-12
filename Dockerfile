@@ -40,7 +40,6 @@ COPY --from=build /app/backend/prompts/ backend/prompts/
 COPY --from=build /app/shared/animlib/package.json shared/animlib/package.json
 COPY --from=build /app/shared/animlib/dist/ shared/animlib/dist/
 COPY --from=build /app/shared/animlib/tools/ shared/animlib/tools/
-COPY --from=build /app/shared/animlib/fixtures/biological/1crn/ shared/animlib/fixtures/biological/1crn/
 COPY --from=build /app/shared/animlib/docs/reference.md shared/animlib/docs/reference.md
 COPY --from=build /app/shared/video/ shared/video/
 COPY --from=build /app/frontend/site/ frontend/site/
@@ -49,7 +48,6 @@ ARG APP_REVISION
 LABEL org.opencontainers.image.revision=$APP_REVISION
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=8080 APP_REVISION=$APP_REVISION \
     VIDEO_DB_PATH=/data/videos/videos.sqlite NARRATION_DATA_DIR=/data/narration MODEL_ASSET_DIR=/data/videos/models \
-    MOLECULAR_MODEL_CACHE_DIR=/data/videos/molecular-model-cache \
     SCENE_PREVIEW_CHROMIUM=/usr/bin/chromium SCENE_PREVIEW_NO_SANDBOX=1
 USER app
 RUN node shared/animlib/tools/smoke-frames.mjs

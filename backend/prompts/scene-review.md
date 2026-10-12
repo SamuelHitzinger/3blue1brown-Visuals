@@ -6,8 +6,6 @@ Report concrete problems: colliding labels or geometry, clipped content, small o
 
 Check relationships that the plan requires throughout motion: links stay on their endpoints, labels follow their objects, and fixed-length chains do not stretch between poses. Read the source for bindings re-established on carried objects and for transforms that preserve the required distances. s.connect alone does not enforce fixed length; surface connectors intentionally hide when endpoint surfaces overlap. Treat API choice as evidence to investigate, not a defect by itself: report an actual violated requirement, and do not infer changing world-space lengths solely from 3D screen projections.
 
-Retain only notation needed for the active inference. Preserve prepared molecular identity, topology and element colors. Check planned 3D shape and relationships, fixed-screen explanations and referent-attached upright labels; distinguish source checks from inspected navigation.
-
 Fix only demonstrated problems with the smallest change. Prefer removing clutter over adding effects. Keep the same example values, existing object IDs, inherited state, narration, audio asset, end mode, and measured duration. Retain planned interactions and carry/cleanup declarations. The animlib API and timing contract supplied below still apply.
 
 Return one JSON object, without code fences:

@@ -120,7 +120,6 @@ export class CanvasRenderer {
   private regions:NonNullable<Frame["views"]>=[];
   private viewResources=new Map<string,{uniform:GPUBuffer;bindGroup:GPUBindGroup;transparentBindGroup:GPUBindGroup}>();
   private orbitEnabled=false;
-  private interactionPaused=false;
   private drag:{id:number;x:number;y:number;view:string;pan?:boolean}|null=null;
   private pans = new Map<string, Vec3>();
   private navigationMode: 'orbit' | 'pan' = 'orbit';
@@ -247,11 +246,10 @@ export class CanvasRenderer {
     const height=region?this.size.height*(Math.round((rect[1]+rect[3])*this.canvas.height)-Math.round(rect[1]*this.canvas.height))/this.canvas.height:this.size.height;
     return {frame:structuredClone(this.lastFrame),camera:structuredClone(this.effectiveCamera(region?.camera??this.lastFrame.camera,region?.orbit??this.lastOptions.orbit,view)),width,height,rect:[...rect] as [number,number,number,number]};
   }
-  syncInteraction(scene:string,time:number,compiled:CompiledScene,frame:Frame,paused=false):void {
+  syncInteraction(scene:string,time:number,compiled:CompiledScene,frame:Frame):void {
     if(this.interactionScene!==scene)this.pointerUp();
     this.interactionScene=scene;
-    this.interactionPaused=paused;
-    this.interaction.sync(scene,time,compiled,paused);
+    this.interaction.sync(scene,time,compiled);
     this.regions=frame.views??[];
     if(this.drag&&!this.drag.pan&&!this.canOrbit(this.drag.view))this.pointerUp();
   }
@@ -260,7 +258,7 @@ export class CanvasRenderer {
   private canOrbit(view:string):boolean {
     if(!view)return this.orbitEnabled;
     const region=this.regions.find(v=>v.id===view);
-    return Boolean(region?.orbit&&region.camera.perspective>0&&(!region.cameraAnimated||this.interactionPaused));
+    return Boolean(region?.orbit&&region.camera.perspective>0&&!region.cameraAnimated);
   }
   private hitView(event:PointerEvent,pan=false):string|undefined {
     const bounds=this.canvas.getBoundingClientRect();

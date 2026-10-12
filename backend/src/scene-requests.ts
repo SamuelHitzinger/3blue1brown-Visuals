@@ -1,77 +1,5 @@
-import { getScreenBounds } from 'animlib/core'
-import type { CameraState, Frame } from 'animlib/core'
 import type { SceneRequestInput } from '../../shared/video/scene-requests'
 import type { VideoRequest, VideoScene } from '../../shared/video/contract'
-
-const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
-
-function compactGeometry(value: unknown): unknown {
-  if (!record(value) || value.kind !== 'mesh'
-    || !['vertices', 'triangles', 'normals', 'uv0'].some(key => Array.isArray(value[key]) && value[key].length > 128)) return value
-  const { vertices, triangles, normals, uv0, ...geometry } = value
-  let localBounds: { min: number[]; max: number[] } | undefined
-  if (Array.isArray(vertices)) for (const vertex of vertices) {
-    if (!Array.isArray(vertex) || vertex.length < 2 || vertex.length > 3 || !vertex.every(n => typeof n === 'number' && Number.isFinite(n))) continue
-    const point = [vertex[0], vertex[1], vertex[2] ?? 0]
-    if (!localBounds) localBounds = { min: [...point], max: [...point] }
-    else for (let axis = 0; axis < 3; axis++) {
-      localBounds.min[axis] = Math.min(localBounds.min[axis], point[axis])
-      localBounds.max[axis] = Math.max(localBounds.max[axis], point[axis])
-    }
-  }
-  return { ...geometry, meshSummary: {
-    ...(Array.isArray(vertices) ? { vertexCount: vertices.length } : {}),
-    ...(Array.isArray(triangles) ? { triangleCount: triangles.length } : {}),
-    ...(Array.isArray(normals) ? { normalCount: normals.length } : {}),
-    ...(Array.isArray(uv0) ? { uvCount: uv0.length } : {}),
-    ...(localBounds ? { localBounds } : {}),
-  } }
-}
-
-function compactSelectedMoment(value: unknown): unknown {
-  if (!record(value) || !record(value.scene) || !record(value.scene.frame) || !Array.isArray(value.scene.frame.elements)) return value
-  const scene = value.scene, frame = scene.frame as Record<string, unknown>
-  let changed = false
-  const elements = (frame.elements as unknown[]).map(element => {
-    if (!record(element)) return element
-    const geometry = compactGeometry(element.geometry)
-    const morph = record(element.morph) ? { ...element.morph,
-      from: compactGeometry(element.morph.from), to: compactGeometry(element.morph.to) } : element.morph
-    if (geometry === element.geometry && (!record(morph) || !record(element.morph)
-      || (morph.from === element.morph.from && morph.to === element.morph.to))) return element
-    changed = true
-    let screenBounds
-    if (typeof element.id === 'string' && record(value.surface)
-      && typeof value.surface.width === 'number' && typeof value.surface.height === 'number') {
-      try {
-        screenBounds = getScreenBounds(frame as unknown as Frame, element.id, {
-          width: value.surface.width, height: value.surface.height,
-          ...(element.view === undefined && record(scene.camera) ? { camera: scene.camera as unknown as CameraState } : {}),
-        })
-      } catch { /* Captured optional frame data may be incomplete; local bounds still describe the mesh. */ }
-    }
-    return { ...element, geometry, ...(morph ? { morph } : {}), ...(screenBounds ? { screenBounds } : {}) }
-  })
-  if (!changed) return value
-  return { ...value, scene: { ...scene, frame: { ...frame, elements,
-    meshBufferNote: 'Dense generated mesh buffers are summarized by counts and local bounds; screenBounds use drawing-surface pixels when available. These bounds do not identify an exact surface hit. Use the retained scene source, labels, camera and controls for shape and scientific meaning.',
-  } } }
-}
-
-/** Keep persisted request evidence and digests intact; only remove repeated renderer buffers from model context. */
-export function compactVideoRequestContext(request: VideoRequest): VideoRequest {
-  let changed = false
-  const documents = request.documents.map(document => {
-    if (document.name !== 'Selected video moment') return document
-    try {
-      const parsed: unknown = JSON.parse(document.text), compact = compactSelectedMoment(parsed)
-      if (compact === parsed) return document
-      changed = true
-      return { ...document, text: JSON.stringify(compact) }
-    } catch { return document }
-  })
-  return changed ? { ...request, documents } : request
-}
 
 export function validateSceneRequest(value: unknown, lessonId: string): SceneRequestInput {
   const input = value as SceneRequestInput
@@ -111,7 +39,7 @@ Viewer request: ${input.question}`,
     documents: [
       ...(original?.documents ?? []),
       ...(original ? [{ name: 'Original lesson request', text: original.topic }] : []),
-      { name: 'Selected video moment', text: JSON.stringify(compactSelectedMoment({ ...input.context, selectedScene: selected, nextScene: next })) },
+      { name: 'Selected video moment', text: JSON.stringify({ ...input.context, selectedScene: selected, nextScene: next }) },
     ],
     sceneRequest: true,
   }

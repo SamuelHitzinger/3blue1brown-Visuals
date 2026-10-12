@@ -7,13 +7,10 @@ import { request as httpsRequest } from 'node:https';
 import { parseModelGLB, MODEL_LIMITS } from 'animlib/core';
 import type { ModelAsset } from 'animlib/core';
 import { atomicWrite } from './narration/service.js';
-import type { BundledModelContext } from './bundled-models.js';
 
-export interface ModelProvenance { source?: string; license?: string; attribution?: string; scientific?: BundledModelContext }
+export interface ModelProvenance { source?: string; license?: string; attribution?: string }
 /** Trusted host payload for isolated renderers; no network/filesystem URLs are followed there. */
 export interface RenderModelAssets { assets:Record<string,ModelAsset>; files:Record<string,string> }
-// Jobs and HTTP uploads use different store instances in the same host process.
-const metadataWrites=new Map<string,Promise<void>>();
 export class ModelAssets {
   constructor(readonly directory=resolve(process.env.MODEL_ASSET_DIR??'data/models')){}
   async publish(bytes:Uint8Array,provenance:ModelProvenance={}):Promise<{id:string;asset:ModelAsset}> {
@@ -26,17 +23,12 @@ export class ModelAssets {
     await mkdir(this.directory,{recursive:true,mode:0o700});
     await atomicWrite(join(this.directory,`${sha256}.glb`),bytes);
     const asset:ModelAsset={kind:'model',url:`/api/models/${sha256}.glb`,sha256,metadata};
-    const metadataPath=resolve(this.directory,`${sha256}.json`);
-    const write=(metadataWrites.get(metadataPath)??Promise.resolve()).catch(()=>undefined).then(async()=>{
-      let previous:ModelProvenance={};
-      try { previous=JSON.parse(await readFile(metadataPath,'utf8')).provenance??{}; }
-      catch(error) { if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error; }
-      const supplied=Object.fromEntries(Object.entries(provenance).filter(([,value])=>value!==undefined));
-      await atomicWrite(metadataPath,JSON.stringify({asset,provenance:{...previous,...supplied}}));
-    });
-    metadataWrites.set(metadataPath,write);
-    try { await write; }
-    finally { if(metadataWrites.get(metadataPath)===write)metadataWrites.delete(metadataPath); }
+    const metadataPath=join(this.directory,`${sha256}.json`);
+    let previous:ModelProvenance={};
+    try { previous=JSON.parse(await readFile(metadataPath,'utf8')).provenance??{}; }
+    catch(error) { if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error; }
+    const supplied=Object.fromEntries(Object.entries(provenance).filter(([,value])=>value!==undefined));
+    await atomicWrite(metadataPath,JSON.stringify({asset,provenance:{...previous,...supplied}}));
     return {id:`model-${sha256}`,asset};
   }
   async forRendering(assets:Record<string,ModelAsset>):Promise<RenderModelAssets> {
@@ -49,19 +41,6 @@ export class ModelAssets {
       files[asset.url]=bytes.toString('base64');
     }
     return {assets:structuredClone(assets),files};
-  }
-  /** Restore host-owned scientific context for assets already attached to a saved lesson. */
-  async provenance(assets:Record<string,ModelAsset>):Promise<Record<string,ModelProvenance>> {
-    const result:Record<string,ModelProvenance>={};
-    for(const [id,asset] of Object.entries(assets)){
-      if(!asset.sha256||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.url!==`/api/models/${asset.sha256}.glb`)throw new Error('Invalid published model identity');
-      try{
-        const saved=JSON.parse(await readFile(join(this.directory,`${asset.sha256}.json`),'utf8'));
-        if(saved.asset?.sha256!==asset.sha256)throw new Error('Published model provenance identity mismatch');
-        result[id]=saved.provenance??{};
-      }catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
-    }
-    return result;
   }
   async importURL(url:string,provenance:ModelProvenance={},signal?:AbortSignal){return this.publish(await downloadModel(url,signal),{...provenance,source:url});}
   async handle(request:Request):Promise<Response> {

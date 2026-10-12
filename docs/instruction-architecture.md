@@ -35,10 +35,6 @@ The purpose is an original educational video whose narration and visuals earn it
 
 The standard backend does not load `scenegen/prompts/planning.md` or `scenegen/prompts/visualization.md`. The separately launched legacy `scenegen` wrapper still appends those layers; it is not the production prompt bundle described here. Topic prompts live beside the other active prompts.
 
-Prepared molecular catalogs and published asset evidence reach planning, editorial review and scene authoring. Bundled 1CRN representations and RCSB preparation publish through the existing model tool; provenance, units, common origin, named parts and representation limits travel with the asset. Scientific fidelity belongs in guidance and scene craft, with stage-specific checks. Do not reappend the retired animation-quality/viewing-mode layers.
-
-The merged teaching rules favor setting, guided visual intuition, explanation and essential formalization; retire obsolete notation. Relevant 3D receives explicit shape/operation acceptance conditions. Viewer navigation keeps explanatory overlays fixed and referent labels attached. Molecular element colors and structural identity must survive imported materials and representation changes.
-
 ## Validation and snapshots
 
 All new app jobs normalize to Interactive before persistence and generation, including requests that omit the mode or send Classic. There is no viewing-mode selector. Saved jobs retain their original policy; compatibility plan validation rejects controls in Classic mode. Compiled scene validation rejects Classic controls and main/subview orbit, and rejects unplanned drag/custom input behaviors in either mode. Interactive scenes must implement exactly the planned controls. Authored camera animation and passive supported behavior are still allowed. Existing timing, audio, palette, identity, source-name, carry/cleanup, and view checks remain in force.

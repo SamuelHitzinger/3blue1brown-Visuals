@@ -35,15 +35,6 @@ export interface VideoTokenUsage {
   estimatedOutputTokens: number
 }
 
-/** Approximate completion from observed milestones, not an elapsed-time prediction. */
-export interface VideoProgress {
-  stage: 'queued' | 'sources' | 'script' | 'narration' | 'scene' | 'validating' | 'finalizing' | 'complete' | 'failed'
-  percent: number
-  completedScenes: number
-  totalScenes?: number
-  sceneIndex?: number
-}
-
 export interface VideoManifest {
   schemaVersion: 1
   id: string
@@ -56,7 +47,6 @@ export interface VideoManifest {
   /** Archived videos retain their scenes and assets until permanently deleted. */
   archivedAt?: string
   scenes: VideoScene[]
-  progress?: VideoProgress
   tokenUsage?: VideoTokenUsage
   thumbnail?: import('./thumbnail').ThumbnailArtwork
   thumbnailStatus?: 'generating' | 'complete' | 'failed'

@@ -5,7 +5,6 @@ import { join } from 'node:path';
 import { ModelAssets,publicModelAddress } from '../src/model-assets.js';
 import { createHandler } from '../src/server.js';
 import { createModelGLB } from 'animlib/core';
-import { prepareBundledModel } from '../src/bundled-models.js';
 const generated=()=>createModelGLB({parts:[{name:'Wing',vertices:[[0,0,0],[1,0,0],[0,1,0]],triangles:[[0,1,2]],baseColor:[1,0,0,1]}]});
 test('publishes immutable GLBs, metadata, provenance and serves cacheable bytes',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'animlib-models-'));try{const store=new ModelAssets(dir),bytes=await generated(),a=await store.publish(bytes,{license:'CC0',source:'generated'}),b=await store.publish(bytes);
@@ -29,16 +28,6 @@ test('uploads generated models through HTTP and rejects malformed, oversized and
  expect((await handler(new Request('http://localhost/api/models',{method:'POST',body:bytes,headers:{'content-length':'999999999'}}))).status).toBe(400);
  expect((await handler(new Request('http://localhost/api/models',{method:'POST',body:bytes,headers:{origin:'https://other.test'}}))).status).toBe(403);
  expect((await handler(new Request('http://localhost/api/models/not-a-hash.glb'))).status).toBe(404);
- }finally{await rm(dir,{recursive:true,force:true});}
-});
-test('concurrent publication from separate stores retains the scientific identity of identical model bytes',async()=>{
- const dir=await mkdtemp(join(tmpdir(),'animlib-model-provenance-'));
- try{
-  const prepared=await prepareBundledModel('1crn-beads'),first=new ModelAssets(dir),second=new ModelAssets(dir);
-  const [published]=await Promise.all([first.publish(prepared.bytes,{scientific:prepared.context}),second.publish(prepared.bytes)]);
-  const restored=await new ModelAssets(dir).provenance({protein:published.asset});
-  expect(restored.protein.scientific?.fixtureId).toBe('1crn-beads');
-  expect(restored.protein.scientific?.provenance.sourceHash).toBe('42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811');
  }finally{await rm(dir,{recursive:true,force:true});}
 });
 test('model downloads exclude private, loopback, link-local and reserved networks',()=>{

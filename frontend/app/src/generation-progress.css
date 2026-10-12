@@ -19,20 +19,6 @@
   to { transform: translateY(0); }
 }
 .generation-unit { font-size: 11px; font-weight: 400; opacity: .55; }
-.generation-completion { width: 100%; min-width: 0; text-align: left; font-size: 13px; line-height: 1.5; }
-.generation-progress > .generation-completion { max-width: 340px; margin-bottom: 32px; }
-.generation-completion-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-.generation-completion-heading strong { flex-shrink: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
-.generation-completion-track { height: 6px; margin: 10px 0 8px; border-radius: 4px; overflow: hidden; background: color-mix(in srgb, currentColor 18%, transparent); }
-.generation-completion-track > span { display: block; height: 100%; border-radius: inherit; background: #a5c780; transition: width 400ms ease-out; }
-.generation-completion-track.is-indeterminate > span { width: 30%; animation: generation-progress-pulse 1.8s ease-in-out infinite alternate; }
-.generation-completion-detail { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px 16px; font-size: 10px; opacity: .65; }
-.player-generation-status { position: absolute; z-index: 10; top: 24px; right: 24px; width: min(320px, calc(100% - 100px)); padding: 12px 16px; border: 1px solid #ffffff30; border-radius: 14px; color: #fff; background: #161616ed; pointer-events: none; }
-.scene-request-progress { margin-top: 12px; }
-.scene-request-progress-question { margin: 0 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .7; }
-.scene-request-status:has(.scene-request-progress) { width: 340px; max-height: 35vh; overflow-y: auto; }
-@keyframes generation-progress-pulse { from { opacity: .35; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .generation-digit-track { animation: none; }
-  .generation-completion-track > span { transition: none; animation: none !important; }
 }

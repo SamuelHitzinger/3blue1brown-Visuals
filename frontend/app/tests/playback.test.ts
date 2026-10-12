@@ -42,24 +42,6 @@ class TestPlayer {
 }
 const sources: SceneSource[] = [{ id: 'first', source: '' }, { id: 'second', source: '' }]
 
-test('keeps 3D inspection available during camera motion and pauses without changing scene time', async () => {
-  const player = new TestPlayer(), playback = new LessonPlayback(player)
-  await playback.load(sources, 4)
-  player.emit({ orbitAvailable: true, orbitEnabled: false })
-  assert.equal(playback.getState().spatialNavigation, true)
-  await playback.pause()
-  await playback.pause()
-  assert.equal(playback.getState().time, 4)
-  assert.equal(playback.getState().playing, false)
-  assert.equal(playback.getState().wantsPlay, false)
-  await playback.setSuspended(true)
-  await playback.setSuspended(false)
-  assert.equal(playback.getState().playing, false)
-  player.emit({ orbitAvailable: false })
-  assert.equal(playback.getState().spatialNavigation, false)
-  playback.dispose()
-})
-
 test('sequence progress maps boundaries, clamped seeks, and final frames correctly', () => {
   const player = new TestPlayer()
   player.state.scenes = [{ id: 'first', duration: 10 }, { id: 'second', duration: 20 }]
@@ -195,49 +177,6 @@ class StreamingPlayer extends TestPlayer {
 const manifest = (count: number, complete = false): VideoManifest => ({
   schemaVersion: 1, id: 'video', title: 'Test', revision: count + (complete ? 1 : 0), status: complete ? 'complete' : 'generating', provider: 'simulated', createdAt: '',
   scenes: Array.from({ length: count }, (_, index) => ({ id: index ? 'second' : 'first', index, source: '', duration: 10, audio: { id: `audio-${index}`, url: '/audio' }, captions: [] })),
-})
-
-test('Play starts the prepared first scene while later saved scenes are still loading', async () => {
-  let release!: () => void, started!: () => void
-  const pending = new Promise<void>(resolve => { release = resolve })
-  const preparing = new Promise<void>(resolve => { started = resolve })
-  class SlowLaterScene extends StreamingPlayer {
-    async submit(change: Submission) {
-      if (change.type === 'insert' && change.after === 'first') { started(); await pending }
-      return super.submit(change)
-    }
-  }
-  const player = new SlowLaterScene(), playback = new LessonPlayback(player, false)
-  const loading = playback.acceptManifest(manifest(2, true))
-  let toggled: Promise<void> | undefined
-  try {
-    await preparing
-    assert.equal(playback.getState().ready, true)
-    toggled = playback.toggle()
-    await Promise.resolve()
-    assert.equal(playback.getState().playing, true, 'Play must not wait for the second scene download')
-    assert.equal(player.state.scene, 'first')
-    await playback.toggle()
-    assert.equal(playback.getState().playing, false)
-  } finally { release(); await loading; await toggled; playback.dispose() }
-})
-
-test('Play still waits for an insertion that reconstructs the current timeline', async () => {
-  const player = new StreamingPlayer(), playback = new LessonPlayback(player, false)
-  await playback.acceptManifest(manifest(2, true))
-  await playback.seek(15)
-  let release!: () => void
-  player.submitGate = new Promise(resolve => { release = resolve })
-  const insertion = playback.acceptSceneRequests([addition()])
-  await Promise.resolve()
-  const toggle = playback.toggle()
-  await Promise.resolve()
-  assert.equal(playback.getState().playing, false)
-  release(); await insertion; await toggle
-  assert.equal(playback.getState().playing, true)
-  assert.equal(player.state.scene, 'second')
-  assert.equal(player.state.time, 5)
-  playback.dispose()
 })
 
 test('streaming buffers at the available edge, resumes at the next scene, and ends only on completion', async () => {

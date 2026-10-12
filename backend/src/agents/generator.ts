@@ -1,6 +1,4 @@
 import { ModelAssets } from '../model-assets.js';
-import { bundledModelCatalog, describeBundledModel, prepareBundledModel } from '../bundled-models.js';
-import { prepareMolecularModel } from '../molecular-models.js';
 import { createModelGLB } from 'animlib/core';
 import type { ModelAsset, GeneratedModel } from 'animlib/core';
 import { mkdir, readFile } from "node:fs/promises";
@@ -60,26 +58,15 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     const assetsPath = join(directory, 'model-assets.json');
     const assets: Record<string,ModelAsset> = JSON.parse(await saved(assetsPath) ?? '{}');
     const modelMetadata = () => Object.fromEntries(Object.entries(assets).map(([id,a]) => [id,a.metadata]));
-    const assetProvenance=await modelStore.provenance(assets);
-    const modelAssetContext=()=>Object.fromEntries(Object.entries(assetProvenance).flatMap(([id,p])=>p.scientific?[[id,describeBundledModel(p.scientific)]]:[]));
     let publication: Promise<unknown> = Promise.resolve();
     const publishModel: NonNullable<AgentTask['publishModel']> = (input, toolSignal) => {
       const work = publication.then(async () => {
       toolSignal.throwIfAborted();
-      if ([input.fixtureId,input.url,input.generated,input.pdbId].filter(value=>value!==undefined).length!==1) throw new Error('Provide exactly one of fixtureId, pdbId, url or generated');
-      if (input.pdbChains !== undefined && input.pdbId === undefined) throw new Error('pdbChains requires pdbId');
+      if (Boolean(input.url) === Boolean(input.generated)) throw new Error('Provide exactly one of url or generated');
       if (Object.keys(assets).length >= 16) throw new Error('Lesson model limit reached (16)');
       let published;
       const provenance = { license: input.license, attribution: input.attribution };
-      if (input.fixtureId!==undefined || input.pdbId!==undefined) {
-        const prepared=input.pdbId!==undefined
-          ? await prepareMolecularModel({accession:input.pdbId,chains:input.pdbChains},toolSignal)
-          : await prepareBundledModel(input.fixtureId!);
-        toolSignal.throwIfAborted();
-        const scientific=prepared.context;
-        published=await modelStore.publish(prepared.bytes,{source:scientific.provenance.source,license:scientific.provenance.license,attribution:scientific.provenance.creator,scientific});
-      }
-      else if (input.url!==undefined) published = await modelStore.importURL(input.url, provenance, toolSignal);
+      if (input.url) published = await modelStore.importURL(input.url, provenance, toolSignal);
       else {
         const generated = JSON.parse(input.generated!) as GeneratedModel;
         for (const part of generated.parts ?? []) if (part.texture) {
@@ -91,9 +78,8 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       }
       toolSignal.throwIfAborted();
       assets[published.id] = published.asset;
-      Object.assign(assetProvenance,await modelStore.provenance({[published.id]:published.asset}));
       await atomicWrite(assetsPath, JSON.stringify(assets));
-      return {id:published.id, ...published.asset.metadata, ...(assetProvenance[published.id]?.scientific?{context:describeBundledModel(assetProvenance[published.id].scientific!)}:{})};
+      return {id:published.id, ...published.asset.metadata};
       });
       publication = work.catch(() => undefined);
       return work;
@@ -118,9 +104,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       legacyPlan = !!markdown;
     }
     if (!markdown) {
-      context.onProgress?.({ stage: 'script' });
-      const lesson = await logStage({ videoId, stage: 'script' }, () => authorReviewedLesson(runner, request, directory, signal, context.images, videoId,
-        {publishModel,modelAssets:modelMetadata,modelAssetContext}));
+      const lesson = await logStage({ videoId, stage: 'script' }, () => authorReviewedLesson(runner, request, directory, signal, context.images, videoId));
       markdown = lesson.markdown; plan = lesson.plan; instructionVersion = lesson.instructionVersion;
       signal.throwIfAborted();
       await atomicWrite(join(directory, 'storyline.prompt.md'), await readFile(join(directory, 'editorial', lesson.editorialReview.runId,
@@ -131,8 +115,6 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     } else logEvent('script.reused', { videoId, cached: true });
     const story = parseStoryline(markdown); validateStory(story);
     if (index >= story.beats.length) return null;
-    const progress = { sceneIndex: index, totalScenes: request.sceneRequest ? 1 : story.beats.length };
-    context.onProgress?.({ stage: 'narration', ...progress });
     const pkg: NarrationScenePackage = subtitles ? await (async () => {
       const path = join(directory, 'subtitles.json');
       const cached = await saved(path);
@@ -204,10 +186,6 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     const path = join(directory, subtitles ? `scene-${index}.subtitles.js` : `scene-${index}.js`);
     let source = await saved(path);
     if (!source) {
-      context.onProgress?.({ stage: 'scene', ...progress });
-      const modelCatalog=await bundledModelCatalog();
-      const sceneInput=()=>({...packet,modelAssets:modelMetadata(),modelAssetContext:modelAssetContext(),modelCatalog});
-      const scenePrompt=()=>`Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify(sceneInput())}`;
       const [reference, craft] = await Promise.all([
         readFile(new URL("../../../shared/animlib/docs/reference.md", import.meta.url), "utf8").then(buildAuthoringReference),
         loadPrompt('scene-craft'),
@@ -250,12 +228,12 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
 Before final submission, call inspect_scene on your complete candidate. Reuse the returned candidateId for later tool calls; send source again only when revising it. Inspect relevant reveal/settled timestamps and specific object bounds as needed. Reports are advisory: distinguish intentional entrances, exits and overlaps from defects. Four inspections are available.
 ${options.preview ? 'Then call preview_scene to see up to six actual rendered frames. Choose important reveals, settled layouts and at least one transition midpoint using local narration times. Two preview batches are available: review once, repair concrete defects if needed, and use the second to verify. Optional focusObjectId crops one object. Avoid cosmetic iteration. If rendering is unavailable, use analytical feedback and finish; never claim you saw unavailable frames.' : 'Visual preview is unavailable for this run; use analytical feedback.'}
 Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned interactions during repairs. Inspection and preview never submit the scene.\n\n${craft}\n\n${reference}`,
-        prompt: scenePrompt(), validate, signal,
+        prompt: `Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify({ ...packet, modelAssets: modelMetadata() })}`, validate, signal,
         logContext: { videoId, sceneIndex: index, stage: 'scene' as const }, sceneTools,
       };
       await atomicWrite(join(directory, `scene-${index}.instructions.json`), JSON.stringify(instructionSnapshot(task.systemPrompt)));
       await atomicWrite(join(directory, `scene-${index}.prompt.md`), `${task.systemPrompt}\n\n${task.prompt}`);
-      await atomicWrite(join(directory, `scene-${index}.input.json`), JSON.stringify(sceneInput()));
+      await atomicWrite(join(directory, `scene-${index}.input.json`), JSON.stringify({ ...packet, modelAssets: modelMetadata() }));
       const pendingPath = join(directory, `scene-${index}.candidate.js`);
       source = await saved(pendingPath);
       if (!source) {
@@ -263,15 +241,13 @@ Still samples do not establish continuous motion, occlusion-free visibility, int
           { diagnosticsPath: join(directory, `scene-${index}.author-retries.json`) })));
         await atomicWrite(pendingPath, source);
       }
-      context.onProgress?.({ stage: 'validating', ...progress });
-      source = await (options.visualGate ?? reviewGeneratedScene)({ runner, source, input: packet, task: { ...task, prompt: scenePrompt() },
+      source = await (options.visualGate ?? reviewGeneratedScene)({ runner, source, input: packet, task,
         directory, index, videoId, signal, validate: validateSource, models: await modelStore.forRendering(assets) });
       const finalFrame = await validateSource(source);
       signal.throwIfAborted();
       await atomicWrite(path, source);
       await atomicWrite(join(directory, `scene-${index}.final-frame.json`), JSON.stringify(finalFrame));
     } else {
-      context.onProgress?.({ stage: 'validating', ...progress });
       // New quality policy must not make already published legacy scenes unplayable.
       const finalFrame = await validateSource(source, false);
       await atomicWrite(join(directory, `scene-${index}.final-frame.json`), JSON.stringify(finalFrame));

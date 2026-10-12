@@ -1,7 +1,6 @@
 import { Fragment, useState } from 'react'
 import type { VideoManifest } from '../../../shared/video/contract'
 import GenerationWater from './GenerationWater'
-import GenerationEstimate from './GenerationEstimate'
 import { illustrativeWaterMl } from './generationWaterEstimate'
 import './generation-progress.css'
 
@@ -36,15 +35,15 @@ function RollingNumber({ value }: { value: number }) {
   })}</>
 }
 
-export default function GenerationProgress({ video }: { video: VideoManifest }) {
-  const usage = video.tokenUsage
+export default function GenerationProgress({ usage, queued = false }: {
+  usage?: VideoManifest['tokenUsage']; queued?: boolean
+}) {
   const estimated = Boolean(usage && usage.estimatedOutputTokens > 0)
   const total = usage ? usage.totalTokens + usage.estimatedOutputTokens : undefined
-  const status = video.status === 'queued' ? 'Your video is queued' : 'Generating your video'
+  const status = queued ? 'Your video is queued' : 'Generating your video'
   const description = total === undefined ? 'Waiting for token usage' : `${estimated ? 'Approximately ' : ''}${number.format(total)} tokens used`
 
   return <div className="generation-progress player-status" role="group" aria-label={status}>
-    <GenerationEstimate video={video}/>
     <div className="generation-usage" role="group" aria-live="off" aria-label={description} title={estimated ? 'Estimated while the model is working; reconciled with reported usage after each response' : description}>
       <span className="generation-count" aria-hidden="true" data-value={total}>
         {estimated && <span className="generation-estimate">~</span>}

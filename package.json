@@ -23,7 +23,6 @@
     "app:dev": "npm --prefix frontend/app run dev",
     "app:build": "npm --prefix frontend/app run build",
     "app:test": "npm --prefix frontend/app test",
-    "test:scene-insertion": "npm run build && bun test scripts/scene-insertion-integration.test.ts",
     "backend:dev": "npm run build && npm run dev --workspace @aha/backend",
     "backend:start": "npm run build && npm run start --workspace @aha/backend",
     "backend:test": "npm run build && npm run test --workspace @aha/backend",

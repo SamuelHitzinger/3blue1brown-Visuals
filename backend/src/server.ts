@@ -68,11 +68,6 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     else if (path === "/api/me") response = Response.json({ user: proxyUser(request) });
     else if (path === "/api/hello") response = Response.json({ message: "Hello from the 3yellow3white backend", user: proxyUser(request) });
     else response = await serveFile(page ? "index.html" : path.slice("/static/".length));
-    // Vite fingerprints these files; the app shell must pick up new references on deployment.
-    if (response.ok && page) response.headers.set('Cache-Control', 'no-cache');
-    else if (response.ok && /^\/static\/assets\/[^/]+-[A-Za-z0-9_-]{8}\.[A-Za-z0-9]+$/.test(path)) {
-      response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-    }
     if (path === "/api/me" || path === "/api/hello") {
       response.headers.set("Cache-Control", "private, no-store");
       response.headers.set("Vary", "X-User-Id, X-User-Name");

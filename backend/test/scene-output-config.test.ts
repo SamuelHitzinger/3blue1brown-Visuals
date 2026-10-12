@@ -8,7 +8,6 @@ import type { AgentTask } from '../src/agents/runtime.js';
 import type { PlannedLesson } from '../src/agents/planning.js';
 import type { NarrationService } from '../src/narration/service.js';
 import type { NarrationScenePackage } from '../src/narration/types.js';
-import { parseModelGLB } from 'animlib/core';
 
 test('scene output config preserves text by default and accepts explicit supported modes', () => {
   expect(agentConfig({}).sceneOutputMode).toBe('text');
@@ -106,80 +105,4 @@ test('scene agent publishes generated models, validates references and persists 
     expect(saved[publishedId].kind).toBe('model');expect(saved[publishedId].metadata.parts[0].name).toBe('Panel');
     expect((await readFile(join(root,'assets',`${saved[publishedId].sha256}.glb`))).byteLength).toBeGreaterThan(100);
   }finally{if(prior===undefined)delete process.env.MODEL_ASSET_DIR;else process.env.MODEL_ASSET_DIR=prior;}
-});
-
-test('bundled protein publication preserves scientific identity and is available after a job restart', async () => {
-  const root = await mkdtemp(join(tmpdir(), 'aha-protein-publication-')); roots.push(root);
-  const prior = process.env.MODEL_ASSET_DIR; process.env.MODEL_ASSET_DIR = join(root, 'assets');
-  const videoId=crypto.randomUUID(), signal=new AbortController().signal, stop=new Error('Protein inspected');
-  const narration={available:true,async submit(){return {id:packet.id,status:'complete'};},async get(){return {id:packet.id,status:'complete'};},async scenePackage(){return packet;}} as unknown as NarrationService;
-  let id='', runs=0;
-  const runner={async run(task:AgentTask){
-    if(task.prompt.startsWith('Write'))return JSON.stringify(lesson);
-    if(task.prompt.startsWith('Review'))return JSON.stringify({schemaVersion:1,verdict:'pass',summary:'Correct',issues:[],checks:['One object']});
-    const input=JSON.parse(task.prompt.slice(task.prompt.indexOf('\n')+1));
-    if(runs++===0){
-      const published=await task.publishModel!({fixtureId:'1crn-surface'} as Parameters<NonNullable<AgentTask['publishModel']>>[0],signal) as {id:string;context:{fixtureId:string;units:string;provenance:{sourceHash:string;fidelity:string}}};
-      id=published.id;
-      expect(published.context.fixtureId).toBe('1crn-surface');
-      expect(published.context.units).toBe('angstrom');
-      expect(published.context.provenance.sourceHash).toBe('42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811');
-      expect(published.context.provenance.fidelity).toContain('schematic Gaussian envelope');
-      await task.validate!(`export default scene({audio:${JSON.stringify(input.audioAssetId)},end:${JSON.stringify(input.endMode)}},s=>{const m=s.model('protein',{asset:${JSON.stringify(id)}});m.part('residue-0');s.wait(${input.scene.durationSec});});`);
-    }else{
-      expect(input.modelAssetContext[id].fixtureId).toBe('1crn-surface');
-      expect(input.modelAssetContext[id].provenance.selection).toContain('chain A');
-      expect(input.modelAssets[id].parts).toHaveLength(45);
-    }
-    throw stop;
-  }};
-  try{
-    const request={title:'Counting',topic:'One dot',documents:[]};
-    const context={videoId,owner:'test',signal};
-    await expect(createPiGenerator(runner,narration,root)(request,0,context)).rejects.toBe(stop);
-    const saved=JSON.parse(await readFile(join(root,videoId,'model-assets.json'),'utf8'));
-    const parsed=await parseModelGLB(new Uint8Array(await readFile(join(root,'assets',`${saved[id].sha256}.glb`))));
-    expect(parsed.metadata.parts).toHaveLength(45);
-    expect(parsed.metadata.triangles).toBe(8676);
-    expect(parsed.primitives.every(p=>p.geometry.shading==='smooth'&&p.geometry.normals?.length===p.geometry.vertices?.length)).toBe(true);
-    await expect(createPiGenerator(runner,narration,root)(request,0,context)).rejects.toBe(stop);
-  }finally{if(prior===undefined)delete process.env.MODEL_ASSET_DIR;else process.env.MODEL_ASSET_DIR=prior;}
-});
-
-test('model publication rejects unknown fixture selectors and mixed sources without attaching an asset', async () => {
-  const root=await mkdtemp(join(tmpdir(),'aha-protein-selection-'));roots.push(root);
-  const videoId=crypto.randomUUID(),signal=new AbortController().signal,stop=new Error('Selection checked');
-  const narration={available:true,async submit(){return {id:packet.id,status:'complete'};},async scenePackage(){return packet;}} as unknown as NarrationService;
-  const runner={async run(task:AgentTask){
-    if(task.prompt.startsWith('Write'))return JSON.stringify(lesson);
-    if(task.prompt.startsWith('Review'))return JSON.stringify({schemaVersion:1,verdict:'pass',summary:'Correct',issues:[],checks:['One object']});
-    for(const fixtureId of ['../1crn-surface','1crn-surface.json','1bna'])await expect(task.publishModel!({fixtureId} as Parameters<NonNullable<AgentTask['publishModel']>>[0],signal)).rejects.toThrow('Unknown bundled model');
-    await expect(task.publishModel!({fixtureId:'1crn-surface',generated:'{}'} as Parameters<NonNullable<AgentTask['publishModel']>>[0],signal)).rejects.toThrow('exactly one');
-    await expect(task.publishModel!({fixtureId:'1crn-surface',url:'https://example.test/protein.glb'} as Parameters<NonNullable<AgentTask['publishModel']>>[0],signal)).rejects.toThrow('exactly one');
-    throw stop;
-  }};
-  await expect(createPiGenerator(runner,narration,root)({title:'Counting',topic:'One dot',documents:[]},0,{videoId,owner:'test',signal})).rejects.toBe(stop);
-  await expect(readFile(join(root,videoId,'model-assets.json'))).rejects.toMatchObject({code:'ENOENT'});
-});
-
-test('the same compact protein inventory reaches planning, review, repair and scene authoring', async () => {
-  const root=await mkdtemp(join(tmpdir(),'aha-protein-inventory-'));roots.push(root);
-  const tasks:AgentTask[]=[],stop=new Error('Inventory captured');let drafts=0;
-  const narration={available:true,async submit(){return {id:packet.id,status:'complete'};},async scenePackage(){return packet;}} as unknown as NarrationService;
-  const runner={async run(task:AgentTask){
-    tasks.push(task);
-    if(task.logContext?.stage==='draft'){drafts++;return JSON.stringify(lesson);}
-    if(task.logContext?.stage==='review')return JSON.stringify({schemaVersion:1,verdict:drafts===1?'revise':'pass',summary:'Use the structure accurately',issues:drafts===1?[{severity:'error',sceneId:'beat-1',detail:'Keep the distinction between residue anchors and atoms.'}]:[],checks:['Representation accuracy']});
-    throw stop;
-  }};
-  await expect(createPiGenerator(runner,narration,root)({title:'Counting',topic:'One dot',documents:[]},0,{videoId:crypto.randomUUID(),owner:'test',signal:new AbortController().signal})).rejects.toBe(stop);
-  expect(tasks).toHaveLength(5);
-  for(const task of tasks){
-    expect(task.prompt).toContain('"fixtureId":"1crn-surface"');
-    expect(task.prompt).toContain('"fixtureId":"1crn-sticks"');
-    expect(task.prompt).toContain('"fixtureId":"1crn-beads"');
-    expect(task.prompt).toContain('"units":"angstrom"');
-    expect(task.prompt).toContain('"sourceHash":"42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811"');
-    expect(task.prompt).not.toContain('"vertices":');
-  }
 });

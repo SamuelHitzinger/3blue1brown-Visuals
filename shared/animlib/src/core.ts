@@ -17,7 +17,6 @@ export { createGraphAlgorithms, createGraphBuilders } from './diagrams/graphs.js
 export { createCollectionBuilders } from './diagrams/collections.js';
 export { createCompactQueueBuilders } from './diagrams/compact-queue.js';
 export { createMolecularBackboneBuilders } from './molecular-backbone.js';
-export { createMoleculeBuilders } from './molecules.js';
 export { strokeContours } from './path-stroke.js';
 export { createAssetRegistry } from './asset-registry.js';
 export { decodeModelPackage, decodeImagePackage } from './asset-package.js';
