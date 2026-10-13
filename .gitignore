@@ -20,3 +20,8 @@ data/
 
 # scenegen wrapper output (scene candidates)
 out/
+# Local diagnostics, compiler caches, and generated delivery packages.
+# Existing tracked validation evidence remains versioned.
+*.log
+*.tsbuildinfo
+/exports/

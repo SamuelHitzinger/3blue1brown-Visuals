@@ -19,3 +19,19 @@ frontend/site
 **/secrets
 **/.ssh
 **/__pycache__
+
+# Repository evidence and local tooling are not Docker build inputs.
+# Keep shared/animlib/docs and fixtures: the runtime image uses them.
+docs/
+research/
+scenegen/
+.tmp/
+out/
+exports/
+**/*.log
+**/*.tsbuildinfo
+**/.venv
+**/venv
+**/.pytest_cache
+.idea/
+.vscode/
