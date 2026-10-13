@@ -53,8 +53,8 @@ async function latestRejectedDraft(directory: string, request: VideoRequest, ima
     // Legacy audit prompts did not record images, so they cannot establish image identity.
     if (prior === undefined && images?.length) continue;
     for (const name of await readdir(runDirectory)) {
-      const match = /^lesson-review-([0-2])\.json$/.exec(name);
-      if (match) candidates.push({ runDirectory, attempt: Number(match[1]), modified: (await stat(join(runDirectory, name))).mtimeMs, legacy: prior === undefined });
+      const match = /^lesson-review-(\d+)\.json$/.exec(name);
+      if (match && Number(match[1]) < MAX_REVIEW_ROUNDS) candidates.push({ runDirectory, attempt: Number(match[1]), modified: (await stat(join(runDirectory, name))).mtimeMs, legacy: prior === undefined });
     }
   }
   candidates.sort((a, b) => b.modified - a.modified || b.attempt - a.attempt);

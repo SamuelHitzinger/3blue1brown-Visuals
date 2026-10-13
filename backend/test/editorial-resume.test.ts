@@ -155,3 +155,16 @@ test('malformed rejected audit pair is ignored rather than becoming repair conte
   } }, request, root, signal());
   expect(calls).toBe(2);
 });
+
+test('audit fallback recovers rejected rounds beyond the former three-round cap', async () => {
+  const root = await directory(), run = await rejected(root), runDirectory = join(root, 'editorial', run);
+  for (const name of await readdir(runDirectory)) if (/^lesson-/.test(name)) await rm(join(runDirectory, name));
+  await writeFile(join(runDirectory, 'lesson-draft-12.json'), JSON.stringify(lesson('late-error')));
+  await writeFile(join(runDirectory, 'lesson-review-12.json'), JSON.stringify(review('revise')));
+  let calls = 0;
+  await authorReviewedLesson({ async run(task) {
+    if (calls++ === 0) { expect(payload(task).draft).toEqual(lesson('late-error')); return JSON.stringify(lesson()); }
+    return JSON.stringify(review());
+  } }, request, root, signal());
+  expect(calls).toBe(2);
+});
