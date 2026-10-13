@@ -1,0 +1,8 @@
+{
+  "scope": "Browser WebGPU, exact complex-v3 scene 2, local15s to23.109s, first3renders excluded; test runners idle",
+  "renderMedianMs": 48.5,
+  "renderP95Ms": 61.6,
+  "frameIntervalP95Ms": 64.1,
+  "frames": 147,
+  "elapsedMs": 8157.4
+}

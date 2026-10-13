@@ -30,7 +30,7 @@ Landmarks are retained atom sites in model-local Angstrom coordinates with the c
 
 Keep merged main's newer prompts and deployment opt-in guard. If the other chat later integrates its remaining release work, merge the landmark additions only once; its pre-merge base was 90e8a8d. Do not restore its whole worktree over this branch. Re-run molecular/publication tests and inspect generated examples after resolving overlapping prompt changes.
 
-No push or deployment is part of this coordination change. Full run and asset fingerprints live in audit.json; bulky raw provider logs and render batches remain in local data/molecular-representation-choice.
+The initial coordination commit did not push or deploy. The later user request authorizes the combined main merge; deployment remains opt-in. Full run and asset fingerprints live in audit.json; bulky raw provider logs and render batches remain in local data/molecular-representation-choice.
 
 ## Measured results and comparison
 
@@ -49,9 +49,9 @@ Final protein needed two automatic label repairs in scene 0 and two structural-v
 
 Native proof renders cover 1280x720 and 960x720, including dense sequence-highlight and question-to-answer transition samples. Root tested actual WebGPU playback, scene handoffs, Rotate/Move/Reset, protein-envelope toggle and complex-context toggle. Complex overview and close-up rotate independently. Fixed explanations/captions stay fixed; attached molecular labels move with their anchor. Context toggle hides close-up foreground while retaining the overview.
 
-Limits: a downward protein orbit can clip endpoint label 46 at the viewport edge; pan/reset restores it. Native default views passed. Two browser-automation clicks timed out during complex playback; playback nevertheless progressed through scene 2 to its end, and paused inspection remained usable. This is not proof of smooth interaction on every machine or every camera pose.
+Follow-up renderer fixes restore endpoint 46 inside its viewport after downward orbit and reduce repeated imported geometry work. See [label evidence](label-viewport-validation.md) and [playback comparison](playback-validation.md). The original observations remain recorded in the earlier commit; they motivated these corrections. Performance measurements are local observations, not a guarantee for every machine or camera pose.
 
-Validation: 336 backend tests, 0 failures, 15,722 assertions; backend TypeScript check passed; independent focused molecular/bundled/publication run passed 14 tests. No renderer or frontend production code changed. Independent visual review is recorded separately in review.md. Raw frame manifests remain under data/molecular-representation-choice/proof; final sources, plans, model metadata and production verdicts are retained beside this document.
+Validation: 336 backend tests, 0 failures, 15,722 assertions; backend TypeScript check passed; independent focused molecular/bundled/publication run passed 14 tests. That initial prompt feature changed no renderer or frontend production code; the subsequent label/playback fix does. Independent visual review is recorded separately in review.md. Raw frame manifests remain under data/molecular-representation-choice/proof; final sources, plans, model metadata and production verdicts are retained beside this document.
 
 Local preview: http://127.0.0.1:5241/ (requires the running local gallery). Its selector includes prior protein examples and both final lessons. It uses actual animlib with silent subtitle clocks, not an encoded video.
 

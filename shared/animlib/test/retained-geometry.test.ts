@@ -90,13 +90,40 @@ describe('retained local geometry',()=>{
     const frame=evaluateScene(scene,0),label=frame.elements[1],plain=label.geometry;
     expect(retentionForFrame(frame)).toBe(true);
     label.geometry={...plain,labelOcclusion:'depth'} as Geometry;expect(retentionForFrame(frame)).toBe(true);
-    for(const mode of ['hide','fade','overlay']) {
+    for(const mode of ['hide','fade']) {
       const dependent={...plain,labelOcclusion:mode} as Geometry;
       label.geometry=dependent;expect(retentionForFrame(frame)).toBe(false);
       frame.camera.yaw+=0.4;expect(retentionForFrame(frame)).toBe(false);
       label.geometry=plain;label.morph={from:dependent,to:plain,progress:1};expect(retentionForFrame(frame)).toBe(false);
       label.morph={from:plain,to:dependent,progress:0};expect(retentionForFrame(frame)).toBe(false);
       delete label.morph;label.geometry=dependent;label.space='screen';expect(retentionForFrame(frame)).toBe(true);label.space='world';
+    }
+  });
+  it('retains unrelated opaque meshes while overlay labels keep identical visible geometry',async()=>{
+    const scene=await compileSource(`export default scene({mode:'3d'},s=>{
+      s.sphere('occluder',{radius:2});
+      s.latex('label',{tex:'46',position:[0,-2.8,-2],fontSize:.4,billboard:true,
+        billboardOffset:[0,-1.65,0],labelOcclusion:'overlay'});s.wait(1);
+    });`);
+    const cache=new RetainedGeometry(),frame=evaluateScene(scene,0),label=frame.elements[1];
+    const overlay=label.geometry,plain={...overlay,labelOcclusion:'depth'} as Geometry;
+    let previousMesh;
+    for(const endpoint of ['none','from','to'] as const) for(const yaw of [0,.6,1.2]) {
+      frame.camera.yaw=yaw;
+      label.morph=endpoint==='none'?undefined:{from:endpoint==='from'?overlay:plain,to:endpoint==='to'?overlay:plain,progress:.5};
+      cache.beginFrame();
+      const retained=buildDrawItems(frame,frame.camera,800,600,paletteResolver(),undefined,false,
+        retentionForFrame(frame)?cache:undefined);
+      cache.endFrame();
+      const mesh=retained.find(item=>item.elementId==='occluder')!.mesh;
+      expect(mesh).toBeDefined();
+      if(previousMesh)expect(mesh).toBe(previousMesh);
+      previousMesh=mesh;
+      const reference=buildDrawItems(frame,frame.camera,800,600,paletteResolver());
+      const labels=retained.filter(item=>item.elementId==='label');
+      expect(labels.length).toBeGreaterThan(0);
+      expect(labels.every(item=>!item.mesh)).toBe(true);
+      expect(labels).toEqual(reference.filter(item=>item.elementId==='label'));
     }
   });
   it.each(retainedPrecisionCases)('preserves local detail before narrowing: $name',async({source,retained,orbit})=>{

@@ -1,0 +1,98 @@
+[
+  {
+    "time": 0,
+    "width": 1280,
+    "height": 720,
+    "changedPixels": 0,
+    "maxChannelDelta": 0,
+    "meanAbsoluteChannelDelta": 0
+  },
+  {
+    "time": 5,
+    "width": 1280,
+    "height": 720,
+    "changedPixels": 838,
+    "maxChannelDelta": 2,
+    "meanAbsoluteChannelDelta": 0.00042570891203703705
+  },
+  {
+    "time": 14,
+    "width": 1280,
+    "height": 720,
+    "changedPixels": 749,
+    "maxChannelDelta": 4,
+    "meanAbsoluteChannelDelta": 0.0003974971064814815
+  },
+  {
+    "time": 20,
+    "width": 1280,
+    "height": 720,
+    "changedPixels": 795,
+    "maxChannelDelta": 4,
+    "meanAbsoluteChannelDelta": 0.0004076244212962963
+  },
+  {
+    "time": 23,
+    "width": 1280,
+    "height": 720,
+    "changedPixels": 696,
+    "maxChannelDelta": 3,
+    "meanAbsoluteChannelDelta": 0.0003667534722222222
+  },
+  {
+    "time": 24,
+    "width": 1280,
+    "height": 720,
+    "changedPixels": 817,
+    "maxChannelDelta": 3,
+    "meanAbsoluteChannelDelta": 0.0004228153935185185
+  },
+  {
+    "time": 0,
+    "width": 960,
+    "height": 720,
+    "changedPixels": 0,
+    "maxChannelDelta": 0,
+    "meanAbsoluteChannelDelta": 0
+  },
+  {
+    "time": 5,
+    "width": 960,
+    "height": 720,
+    "changedPixels": 820,
+    "maxChannelDelta": 4,
+    "meanAbsoluteChannelDelta": 0.0005811149691358025
+  },
+  {
+    "time": 14,
+    "width": 960,
+    "height": 720,
+    "changedPixels": 774,
+    "maxChannelDelta": 5,
+    "meanAbsoluteChannelDelta": 0.0005656828703703704
+  },
+  {
+    "time": 20,
+    "width": 960,
+    "height": 720,
+    "changedPixels": 816,
+    "maxChannelDelta": 3,
+    "meanAbsoluteChannelDelta": 0.0005685763888888889
+  },
+  {
+    "time": 23,
+    "width": 960,
+    "height": 720,
+    "changedPixels": 855,
+    "maxChannelDelta": 2,
+    "meanAbsoluteChannelDelta": 0.0005975115740740741
+  },
+  {
+    "time": 24,
+    "width": 960,
+    "height": 720,
+    "changedPixels": 688,
+    "maxChannelDelta": 3,
+    "meanAbsoluteChannelDelta": 0.00045476466049382714
+  }
+]

@@ -1,3 +1,4 @@
+import { ModelPackingCache } from './model-packing-cache.js';
 import type { ModelMaterial } from './models.js';
 import { vec3 } from './geometry.js';
 import type { CameraState, ElementState, Frame, Geometry, Vec3 } from './types.js';
@@ -130,16 +131,18 @@ export function retainedPrecisionSafe(meshes: RetainedMesh[], origin: Vec3, basi
  * handles on the same frame through each backend's resource sweep.
  */
 export class RetainedGeometry {
+  readonly modelPacking=new ModelPackingCache();
   private meshes = new Map<string, RetainedMesh[] | null>();
   private used = new Set<string>();
   private previous = new Map<string,string>();
   private current = new Map<string,string>();
-  beginFrame(): void { this.used.clear(); this.current.clear(); }
+  beginFrame(): void { this.used.clear(); this.current.clear(); this.modelPacking.beginFrame(); }
   endFrame(): void {
+    this.modelPacking.endFrame();
     for (const key of this.meshes.keys()) if (!this.used.has(key)) this.meshes.delete(key);
     this.previous = this.current; this.current = new Map();
   }
-  clear(): void { this.meshes.clear(); this.used.clear(); this.previous.clear(); this.current.clear(); }
+  clear(): void { this.modelPacking.clear(); this.meshes.clear(); this.used.clear(); this.previous.clear(); this.current.clear(); }
   get(key: string, build: () => GeometryDrawItem[], combine = false, slot?: string): RetainedMesh[] | undefined {
     if (slot !== undefined) {
       const previous = this.previous.get(slot); this.current.set(slot,key);
@@ -156,14 +159,14 @@ export class RetainedGeometry {
   }
 }
 
-/** Shadows and occlusion inspection consume final world-space triangles. */
+/** Shadows and hide/fade anchor inspection consume final world-space triangles. */
 export function retentionForFrame(frame: Frame): boolean {
   const lighting = (frame as Frame & { lighting?: { receiver?: unknown } }).lighting;
   if (lighting?.receiver) return false;
   const dependentLabel = (geometry: Geometry): boolean => {
     if (geometry.kind !== 'text' && geometry.kind !== 'latex') return false;
     const mode = (geometry as Geometry & { labelOcclusion?: string }).labelOcclusion;
-    return mode !== undefined && mode !== 'depth';
+    return mode !== undefined && mode !== 'depth' && mode !== 'overlay';
   };
   return !frame.elements.some(element => element.space === 'world' &&
     (dependentLabel(element.geometry) || Boolean(element.morph &&

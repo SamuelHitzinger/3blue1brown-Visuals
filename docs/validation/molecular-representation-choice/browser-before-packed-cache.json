@@ -1,0 +1,1 @@
+{"scope":"Browser WebGPU, exact complex-v3 scene 2, local 15s to23.1s; after expansion/material batching and overlay-retention, before packed geometry cache; warmup first3renders excluded","renderMedianMs":74.1,"renderP95Ms":91.7,"frameIntervalP95Ms":95.9,"frames":102,"elapsedMs":8199.2}
