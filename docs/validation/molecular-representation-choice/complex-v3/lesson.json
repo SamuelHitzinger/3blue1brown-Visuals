@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "markdown": "# Where DNA and RNA sit inside RNA polymerase\n\n## Beat 1 — Find the machinery and DNA\n\nContent needed: One deposited complex from PDB 4YLN: protein author chains A–F, DNA 1 and 2, RNA 3. Show the whole protein residue trace, then identify DNA using unchanged deposited nucleotide geometry and teal labels. Preserve element colors. Reveal the separated DNA paths by reducing foreground protein opacity, not moving molecules.\n\nNotes: Subtitles only; all spoken-labeled blocks are subtitle text, without voice audio. Assume DNA stores a sequence and RNA copies it; do not assume familiarity with protein machinery, transcription bubbles, or molecular representations. Begin with the whole assembly before locating its small RNA. Two scenes, approximately 80–90 seconds including the observation pause. Sources: Zuo and Steitz (2015), https://www.rcsb.org/structure/4YLN and https://pmc.ncbi.nlm.nih.gov/articles/PMC5567806/.\n\nNarration: Here is one E. coli RNA polymerase initiation complex. The grey tangle traces the protein chains: the copying machinery, not DNA. These traces show chain paths, not a solid surface.\n\nNarration: Now follow the DNA labels. Two DNA strands pass through the machinery. In this region, they separate, making an open stretch called a transcription bubble. Where does the tiny RNA fit?\n\n## Beat 2 — Look inside the bubble\n\nContent needed: Continue the same coordinate frame. Make foreground protein faint and show a linked close-up of RNA chain 3 and both DNA strands, retaining whole-complex context. Gold labels identify RNA without recoloring its atoms. Before the pause, both DNA routes and RNA must be visible; withhold the template label and pairing explanation until Reveal.\n\nNarration: Making the protein faint lets us look inside without moving any molecule. The gold label marks RNA, just four building blocks long here.\n\nInvitation (spoken): Does that short RNA lie alongside one DNA strand, or bridge both? Take a few seconds to follow its position.\n\nPause: 5s\n\nReveal (spoken): Alongside one! That DNA strand is the template being copied. The short RNA pairs with it inside the machinery; the other DNA strand follows a separate route.\n\nNarration: This is a static, low-resolution structural model, with some imperfect nucleotide links. It shows an arrangement—not exact atomic contacts, copying chemistry, or movement.",
+  "plan": {
+    "audience": "Learner who knows DNA stores a sequence and RNA is a copy, but is new to transcription-complex spatial organization; subtitles only.",
+    "prerequisites": [
+      "DNA stores a sequence",
+      "RNA can be a copy of that sequence"
+    ],
+    "learningGoal": "Locate protein machinery, separated DNA strands and short template-associated RNA in 4YLN, while distinguishing spatial evidence from chemistry or motion.",
+    "centralQuestion": "Where does the short RNA sit relative to DNA and the protein machinery in 4YLN?",
+    "keyInsight": "The short RNA lies alongside template DNA within the protein machinery, while the other DNA strand takes a separate route through the bubble.",
+    "runningExample": "One deposited 4YLN complex: author chains A/B alpha, C beta, D beta-prime, E omega, F sigma; chain 1 non-template DNA and chain 2 template DNA, each 49 deposited residues; chain 3 four-residue RNA. Coordinates remain fixed throughout.",
+    "misconceptions": [
+      "The large protein assembly is itself DNA or RNA",
+      "RNA bridges both separated DNA strands",
+      "The four-residue RNA is a long transcript already emerging from the enzyme",
+      "Protein traces define an exact molecular surface",
+      "A static low-resolution model demonstrates movement or catalytic chemistry"
+    ],
+    "entities": [
+      {
+        "id": "protein-machinery",
+        "meaning": "Deposited protein traces A–F, including sigma. In beat-1 and beat-2 all chains preserve their common coordinate frame; only visibility changes. Retain substantial protein structure in the overview during the beat-2 close-up.",
+        "color": "GREY"
+      },
+      {
+        "id": "dna",
+        "meaning": "Deposited author chains 1 and 2: non-template and template DNA. Teal identifies labels, not atoms. Across beat-1 and beat-2 both strands remain fixed relative to protein and RNA; preserve importer gaps. Beat-2 identifies the template using its source chain identity.",
+        "color": "TEAL"
+      },
+      {
+        "id": "rna",
+        "meaning": "Four deposited RNA residues of author chain 3. Gold identifies labels only; element colors remain intact. Present at its true position in beat-1; emphasized and enlarged in beat-2 using the same coordinate transform as DNA and protein.",
+        "color": "GOLD"
+      }
+    ],
+    "scenes": [
+      {
+        "id": "beat-1",
+        "purpose": "Establish the protein machinery as the spatial context for two DNA paths and their open region.",
+        "whyNow": "Opens from the familiar DNA-copying setting, explains the unfamiliar protein representation, and prepares locating the much smaller RNA.",
+        "keyPoints": [
+          "The large grey assembly represents protein chains, not nucleic acid",
+          "Two DNA strands occupy the same complex",
+          "Their separated paths define the transcription bubble"
+        ],
+        "visualDescription": "Use prepared asset model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450, deposited PDB 4YLN at 5.50 angstrom resolution. Nodes node-0 through node-5 are chain-A through chain-F-protein-trace-0. Nodes node-6/7 are chain-1-nucleic-atoms-0/bonds-0; node-8/9 are chain-2-nucleic-atoms-0/bonds-0; node-10/11 are chain-3-nucleic-atoms-0/bonds-0. Show this single prepared complex, not three crystal copies. Establish its recognizable protein trace at true proportions with clear depth shading; explain traces before relying on their appearance. On 'Now follow the DNA labels,' identify both actual DNA parts with teal labels. Preserve C grey, N blue, O red, P orange and all supplied element colors using WHITE model tint. RNA remains present but is not emphasized. On 'they separate,' reduce obstructing protein opacity and expose both deposited DNA routes through the bubble. Show paired flanking regions and the separated region in the same coordinate frame. Never pull strands apart or invent a protein envelope. Avoid projection angles that misleadingly overlap the separated routes. Preserve missing geometry: sigma F has a gap between retained ranges 79–171 and 210–613; template chain 2 has unrendered links before residues 13, 23 and 52. Do not bridge these gaps. Enable viewer orbit of the molecular model, with explanatory text outside the rotating view. The default view must expose the bubble without requiring interaction. Provenance: https://files.rcsb.org/download/4YLN.pdb; Zuo and Steitz, Molecular Cell 58 (2015), 534–540, DOI 10.1016/j.molcel.2015.03.010. The importer omits waters, ions and unsupported nonpolymer records and applies no symmetry expansion. Keep credits in metadata.",
+        "endsWith": "The whole complex remains recognizable, with foreground protein subdued enough to expose separated DNA paths. RNA retains its deposited position without a pairing annotation.",
+        "carry": [
+          "protein-machinery",
+          "dna",
+          "rna"
+        ],
+        "cleanup": [],
+        "sourceRefs": [
+          {
+            "document": "request",
+            "location": "topic",
+            "supports": "Specifies PDB 4YLN, distinctions among protein, DNA and RNA, and the learner's starting knowledge."
+          }
+        ],
+        "interactions": [],
+        "view": {
+          "mode": "3d",
+          "rationale": "Protein surrounds the nucleic-acid paths in depth; faithful rotatable geometry distinguishes internal placement from flat crossings."
+        }
+      },
+      {
+        "id": "beat-2",
+        "purpose": "Guide observation of RNA beside one DNA strand, identify that strand as the template, and qualify the structural evidence.",
+        "whyNow": "Builds on the exposed bubble and answers where RNA sits without introducing a biochemical mechanism.",
+        "keyPoints": [
+          "Visibility changes reveal RNA without molecular displacement",
+          "The four-residue RNA lies alongside one DNA strand",
+          "That strand is the template; the other DNA route is separate",
+          "Static low-resolution coordinates do not establish exact chemistry or motion"
+        ],
+        "visualDescription": "Continue the exact end state and prepared asset from beat-1. On 'Making the protein faint,' further reduce protein opacity while retaining the full assembly in a linked overview. Open a coordinate-faithful magnified view containing RNA, adjacent template DNA and enough non-template DNA to distinguish its separate route. Do not independently recenter chain subsets. RNA chain 3 has model-local bounds approximately x -28.70 to -17.68, y -16.18 to -4.43, z -12.96 to 10.68 angstroms. Its retained phosphate landmark [-26.9955,-13.4100,-0.7975] locates a label, not an inferred active site. Use actual node-10/11 RNA geometry and node-6 through node-9 DNA geometry. Keep element colors; use gold RNA and teal DNA identity labels. Make the complete short RNA and neighboring template visible by default, with the overview establishing their internal location. Enlargement is a change of view, never molecular movement. Before and during the five-second observation pause, show only DNA and RNA identity labels: no template label, pairing lines or answer highlight. At Reveal identify author chain 2 as template and chain 1 as the other DNA strand. Explain pairing as the source-supported short RNA–DNA hybrid, not individual hydrogen bonds measured here; add no hydrogen bonds or precise contact distances. Enable rotation in both molecular views, with labels outside the rotating geometry and synchronized anchors. Rotation lets viewers test that RNA-template adjacency persists rather than being merely a projection overlap. The protein-context toggle changes only close-up trace visibility and leaves the overview intact. Final subtitles state static low resolution and imperfect nucleotide links, matching the depositor warning 'ENTRY CONTAINS IMPROPER NUCLEOTIDE LINKAGES.' Zuo and Steitz, https://pmc.ncbi.nlm.nih.gov/articles/PMC5567806/, describes the short TS3-RNA hybrid and notes that individual bases could not be resolved at this resolution. Protein traces cannot establish exact cavity boundaries; these coordinates do not demonstrate catalytic chemistry or trajectories.",
+        "endsWith": "The labeled RNA–template relationship remains linked to the full protein assembly, with the other DNA route visible and the static-model qualification in the final subtitle.",
+        "carry": [
+          "protein-machinery",
+          "dna",
+          "rna"
+        ],
+        "cleanup": [],
+        "sourceRefs": [
+          {
+            "document": "request",
+            "location": "topic",
+            "supports": "Requires guided observation, suitable representations, static deposited evidence and explicit limitations."
+          },
+          {
+            "document": "request",
+            "location": "narrationMode and videoMode",
+            "supports": "Subtitles-only delivery in an interactive player."
+          }
+        ],
+        "interactions": [
+          {
+            "id": "protein-context",
+            "type": "toggle",
+            "label": "Show protein context",
+            "drives": "Toggle close-up protein traces between faint and hidden; default faint. Keep DNA, RNA, labels and every coordinate unchanged. Always retain the whole-complex overview. Orbit remains independently available.",
+            "discover": "Removing obstruction exposes short RNA beside template DNA; restoring context locates that relationship within the machinery."
+          }
+        ],
+        "view": {
+          "mode": "3d",
+          "rationale": "A contextual view and faithful enlargement expose buried RNA; rotation distinguishes spatial adjacency from projected overlap."
+        }
+      }
+    ]
+  },
+  "instructionVersion": 3,
+  "editorialReview": {
+    "runId": "acf20048-7827-4f57-95af-49483b874076",
+    "attempt": 0,
+    "draftSha256": "b55c7080183a5c452b9b90b4438cbdcd9a65dfa142347c9ed09924b340a83171"
+  }
+}

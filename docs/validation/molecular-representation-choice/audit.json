@@ -1,0 +1,405 @@
+{
+  "date": "2026-10-13",
+  "baselineCommit": "7e3df304a8efb13d2ce3fed9baa089e5e5cdf138",
+  "branch": "codex/molecular-representation-choice",
+  "collaboratingChat": {
+    "title": "Add video creation progress estimate",
+    "id": "01a12a2f-e8af-7811-96a3-ba3af6a85763",
+    "worktree": "C:/Users/samue/.codex/worktrees/video-quality-release/3yellow3white",
+    "scope": "Selective landmark integration only; no unrelated release edits or pushes."
+  },
+  "selectionEvidence": [
+    {
+      "case": "protein-v1",
+      "status": "complete",
+      "runId": "c643fb99-40eb-4702-9128-35f6042e8d74",
+      "requestSha256": "90deb2cad753d177ffad9ebb12a950de5ab7280c75b3edc2f8ec6ac5ce6472be",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "duration": 84.434,
+      "elapsedMs": 415117.2757,
+      "resultPath": "data/molecular-representation-choice/protein-v1/result.json",
+      "scenes": [
+        {
+          "id": "beat-1",
+          "duration": 39.334,
+          "sourceSha256": "9a18c1578f2653ca6d122837ab80cd7ebdc2e35fe943a2f06aa4c4ca95f0c220"
+        },
+        {
+          "id": "beat-2",
+          "duration": 45.1,
+          "sourceSha256": "4ab2d87962bdd515dfd51f9a1b5d66a08458076b31d46cfcd287a18e63cd0727"
+        }
+      ],
+      "assets": [
+        {
+          "id": "model-cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "actualFileSha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "parts": 46,
+          "triangles": 7328
+        },
+        {
+          "id": "model-8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "sha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "actualFileSha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "parts": 45,
+          "triangles": 8676
+        }
+      ]
+    },
+    {
+      "case": "complex-v2",
+      "status": "cancelled",
+      "runId": "8e390ebb-d1de-4c52-b1d1-51bba0ca789c",
+      "requestSha256": "e45a22c209b9038f755caf60c804a95086c5fc82756b0813117feeabb102ad52",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "exclusionReason": "Three consecutive production reviews found short RNA occluded by whole-complex protein traces. Preserved as failed iteration; prompt visibility-before-observation refinement tested fresh on same request in complex-v3.",
+      "resultPath": "data/molecular-representation-choice/complex-v2/result.json",
+      "scenes": [],
+      "assets": [
+        {
+          "id": "model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+          "sha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+          "actualFileSha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+          "parts": 12,
+          "triangles": 90004
+        }
+      ]
+    },
+    {
+      "case": "protein-v2",
+      "status": "complete",
+      "runId": "9fa2661f-1992-479a-a358-fdea375804b0",
+      "requestSha256": "90deb2cad753d177ffad9ebb12a950de5ab7280c75b3edc2f8ec6ac5ce6472be",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "duration": 80.53399999999999,
+      "elapsedMs": 785806.3907,
+      "resultPath": "data/molecular-representation-choice/protein-v2/result.json",
+      "scenes": [
+        {
+          "id": "beat-1",
+          "duration": 40.3,
+          "sourceSha256": "6dd9e04c82aa5912b7bea8409f92221e411e6657a459401dfea49045675a97dc"
+        },
+        {
+          "id": "beat-2",
+          "duration": 40.234,
+          "sourceSha256": "1af77d3bbd77b250185b7aeff8a3e8b3e21fd4b069c1d73989f911d402f8e944"
+        }
+      ],
+      "assets": [
+        {
+          "id": "model-cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "actualFileSha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "parts": 46,
+          "triangles": 7328
+        },
+        {
+          "id": "model-8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "sha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "actualFileSha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "parts": 45,
+          "triangles": 8676
+        }
+      ],
+      "reviewAttempts": [
+        {
+          "file": "task-1-review.output.txt",
+          "result": {
+            "schemaVersion": 1,
+            "verdict": "pass",
+            "summary": "The two-scene, subtitle-only lesson earns the connectivity-versus-shape insight through a reachable observation and clearly distinguishes structure from folding history.",
+            "issues": [],
+            "checks": [
+              "Both parsed beats match the plan in order; the learner’s existing chain knowledge supports the opening observation.",
+              "The connected route is inspected before explanation; the four-second pause has an explicit invitation and no planned answer annotations.",
+              "Supplied metadata supports 1CRN chain A, 46 residue beads, the schematic envelope, and their shared coordinate origin. The surface residue-0/node-15 mapping matches the asset listing.",
+              "Beads represent amino acids rather than atoms; the envelope indicates simplified bulk rather than an exact molecular boundary.",
+              "The fixed chain carries consistently into scene two. Sequence highlighting and envelope visibility changes are explicitly distinguished from folding.",
+              "Both 3D views permit rotation and use depth meaningfully. The envelope toggle preserves chain geometry and alignment.",
+              "Approximately 173 subtitle words plus four seconds of explicit pause are broadly compatible with the requested duration; final reading and visual timing remain unmeasured.",
+              "Review used supplied script, plan, and asset metadata; coordinates and rendered behavior were not independently verified."
+            ]
+          }
+        },
+        {
+          "file": "task-3-review.output.txt",
+          "result": {
+            "approved": false,
+            "findings": [
+              {
+                "timeSec": 36.94166666666666,
+                "objectIds": [
+                  "endpoint-1",
+                  "endpoint-46"
+                ],
+                "problem": "After the reveal camera turn, endpoint label 1 disappears behind the model, while 46 overlaps a bead and its adjoining links. Both defects persist in the final held view at both aspect ratios, obscuring the endpoint identification required for following the route.",
+                "fix": "Keep both labels anchored to their endpoint coordinates, but use readable billboard offsets and overlay depth handling, with short leaders if needed. Check clearance throughout the camera turn and final hold without changing the chain geometry."
+              }
+            ]
+          }
+        },
+        {
+          "file": "task-5-review.output.txt",
+          "result": {
+            "approved": false,
+            "findings": [
+              {
+                "timeSec": 20.15,
+                "objectIds": [
+                  "endpoint-46"
+                ],
+                "problem": "The final-view correction works, but in the initial viewpoint the 46 label overlaps a bottom-row bead. This remains visible throughout the invitation in both aspect ratios, including the 26.87-second sample.",
+                "fix": "Adjust its billboard offset to clear the bottom-row beads in both initial and final viewpoints, preserving its endpoint anchor. Add a short leader if needed to retain unambiguous endpoint identification."
+              }
+            ]
+          }
+        },
+        {
+          "file": "task-7-review.output.txt",
+          "result": {
+            "approved": true,
+            "findings": []
+          }
+        },
+        {
+          "file": "task-9-review.output.txt",
+          "result": {
+            "approved": true,
+            "findings": []
+          }
+        }
+      ]
+    },
+    {
+      "case": "complex-v3",
+      "status": "complete",
+      "runId": "c4f05163-c284-483d-9dde-ac3226843ab2",
+      "requestSha256": "e45a22c209b9038f755caf60c804a95086c5fc82756b0813117feeabb102ad52",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "duration": 74.434,
+      "elapsedMs": 1416044.3817,
+      "resultPath": "data/molecular-representation-choice/complex-v3/result.json",
+      "scenes": [
+        {
+          "id": "beat-1",
+          "duration": 26.8,
+          "sourceSha256": "5e43e8cf49086120f21aa78ba2bf6464a3255e73d6a34a59c91c39d9d9f0f79c"
+        },
+        {
+          "id": "beat-2",
+          "duration": 47.634,
+          "sourceSha256": "f2635213d68e266a1877c9f86539a1a810ebd42349f636b27a1d12b77735613a"
+        }
+      ],
+      "assets": [
+        {
+          "id": "model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+          "sha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+          "actualFileSha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+          "parts": 12,
+          "triangles": 90004
+        }
+      ],
+      "reviewAttempts": [
+        {
+          "file": "task-1-review.output.txt",
+          "result": {
+            "schemaVersion": 1,
+            "verdict": "pass",
+            "summary": "The two-scene, subtitles-only lesson earns its spatial conclusion through guided observation and appropriately limits what the static structure establishes.",
+            "issues": [],
+            "checks": [
+              "Both parsed beats match the plan in order and preserve molecular identities, coordinates and protein context across the transition.",
+              "The opening distinguishes protein machinery from DNA and explains the trace representation without assuming molecular-structure expertise.",
+              "The default close-up exposes RNA and both DNA routes before the explicitly invited five-second pause. Template identification is withheld until confirmation.",
+              "Fetched and reviewed the cited Zuo–Steitz article: it identifies 4YLN as the four-nucleotide-RNA complex with a 17-bp spacer and supports the template–RNA hybrid relationship.",
+              "Supplied asset metadata supports chain identities, RNA length, 5.50-angstrom resolution and the nucleotide-link caveat. Planned representations preserve element colors without inventing surfaces or missing links.",
+              "The conclusion distinguishes spatial arrangement from exact atomic contacts, catalytic chemistry and motion. Visibility changes do not move molecules.",
+              "Both 3D scenes allow rotation; the protein-visibility toggle retains whole-complex context and a complete default presentation.",
+              "Approximately 155–160 subtitle words and a five-second observation pause suggest roughly 74–90 seconds under the supplied pacing guidance. Subtitles-only delivery is explicit.",
+              "This is a script-and-plan model review with source consultation, not independent structural verification or rendered/runtime inspection."
+            ]
+          }
+        },
+        {
+          "file": "task-3-review.output.txt",
+          "result": {
+            "approved": false,
+            "findings": [
+              {
+                "timeSec": 0.5,
+                "objectIds": [
+                  "assembly-title",
+                  "assembly-tag",
+                  "trace-note",
+                  "trace-scope",
+                  "dna-note",
+                  "fixed-coordinates",
+                  "bubble-name"
+                ],
+                "problem": "Fixed explanatory text sits inside the molecular viewport rather than above it. The introductory subheading visibly crosses the protein trace; the final coordinates note repeats this overlap in both aspect ratios.",
+                "fix": "Reserve a header band outside complex-view and move the fixed headings and notes into it, keeping complete glyphs below the top overlay margin and clear of molecular geometry."
+              },
+              {
+                "timeSec": 15.633333333333333,
+                "objectIds": [
+                  "dna-2-label",
+                  "dna-2-label-end",
+                  "dna-2-leader"
+                ],
+                "problem": "The DNA 2 label is drawn directly over the bright, dense protein trace when the narration asks viewers to follow it. Its glyphs and leader are difficult to distinguish in both aspect ratios before the protein fades.",
+                "fix": "Move the attached label and its leader endpoint farther into clear space beside the assembly, preserving the deposited landmark endpoint and upright attachment."
+              }
+            ]
+          }
+        },
+        {
+          "file": "task-5-review.output.txt",
+          "result": {
+            "approved": true,
+            "findings": []
+          }
+        },
+        {
+          "file": "task-7-review.output.txt",
+          "result": {
+            "approved": false,
+            "findings": [
+              {
+                "timeSec": 35.7255,
+                "objectIds": [
+                  "detail-dna-1",
+                  "bubble-closeup"
+                ],
+                "problem": "In the 4:3 frames, the revealed ‘Other DNA’ label extends beyond the close-up’s right edge and loses its final glyphs. This persists through the final hold.",
+                "fix": "Move its attached label inward, retaining the same molecular anchor and leader, so the complete label fits at both aspect ratios."
+              },
+              {
+                "timeSec": 7.939,
+                "objectIds": [
+                  "focus-caption",
+                  "link-caveat",
+                  "bubble-closeup"
+                ],
+                "problem": "Fixed explanatory text sits inside the molecular viewport: ‘Same coordinates, enlarged’ overlaps the upper DNA, and the later qualification overlays protein traces near the bottom. These are not clear, separate reading areas.",
+                "fix": "Reserve screen-text bands outside the model viewport for the caption and qualification, adjusting viewport framing without changing molecular coordinates."
+              },
+              {
+                "timeSec": 23.4166666667,
+                "objectIds": [
+                  "inside-heading"
+                ],
+                "problem": "The reveal crossfades the question and answer in the same location over 1.5 seconds. The sampled midpoint shows both complete strings superimposed and illegible.",
+                "fix": "Replace the overlapping text morph with a sequential exit and entrance or an immediate text change at the reveal cue; preserve the camera operation and narration timing."
+              }
+            ]
+          }
+        },
+        {
+          "file": "task-9-review.output.txt",
+          "result": {
+            "approved": true,
+            "findings": []
+          }
+        }
+      ]
+    }
+  ],
+  "scope": "Two contrasting fresh production cases and same-request preceding integration iterations. Single runs show capability and qualitative differences, not statistical reliability or controlled causal improvement. Generated sources are unedited. Subtitle-only interactive lessons; no encoded video export.",
+  "testResults": {
+    "backend": {
+      "passed": 336,
+      "failed": 0
+    },
+    "backendTypecheck": "passed",
+    "independentFocused": {
+      "passed": 14,
+      "failed": 0
+    }
+  },
+  "excludedRun": {
+    "path": "data/molecular-representation-choice/complex-v1",
+    "reason": "Test author incorrectly called bacterial 4YLN polymerase II. Cancelled during draft and restarted with corrected identity; excluded from delivered evidence."
+  },
+  "priorReferences": {
+    "protein": "../visual-quality-recovery/README.md",
+    "complex": {
+      "sourceSha256": "f766a8b4ff29c6b814b49c9cd0d5e82e0dc85da8d5adeedd3f3d222c53c3b848",
+      "modelSha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+      "scope": "Prior resumed insertion, then manually refined; geometry and visual reference, not evidence of fresh planner choice."
+    }
+  },
+  "refinement": {
+    "reason": "Three native reviews found RNA obscured before the observation question.",
+    "comparison": "Same corrected complex request and model used in complex-v2 and complex-v3; one run per version, not a statistical reliability estimate.",
+    "changes": [
+      "Planning must expose the observation target before the question, retaining spatial context.",
+      "Craft may reduce nonessential foreground opacity or use a linked close-up.",
+      "Review may recommend these fixes rather than repeated camera-only changes."
+    ],
+    "collaboratorConfirmation": "Add video creation progress estimate confirmed its approved example cut away protein before observation, and independently recommended fixing ordering rather than labels alone."
+  },
+  "nativeProof": [
+    {
+      "manifest": "data/molecular-representation-choice/proof/final-protein-chain/evidence.json",
+      "scene": 0,
+      "duration": 40.3,
+      "frames": 32
+    },
+    {
+      "manifest": "data/molecular-representation-choice/proof/final-protein-trace/evidence.json",
+      "scene": 0,
+      "duration": 40.3,
+      "frames": 28
+    },
+    {
+      "manifest": "data/molecular-representation-choice/proof/final-protein-envelope/evidence.json",
+      "scene": 1,
+      "duration": 40.234,
+      "frames": 44
+    },
+    {
+      "manifest": "data/molecular-representation-choice/proof/final-complex-overview/evidence.json",
+      "scene": 0,
+      "duration": 26.8,
+      "frames": 32
+    },
+    {
+      "manifest": "data/molecular-representation-choice/proof/final-complex-focus/evidence.json",
+      "scene": 1,
+      "duration": 47.634,
+      "frames": 48
+    }
+  ],
+  "liveVerification": {
+    "backend": "WebGPU",
+    "gallery": "http://127.0.0.1:5241/",
+    "protein": [
+      "Scene0 Rotate/Move/Reset",
+      "Scene1 registered envelope toggle, Rotate/Move/Reset",
+      "Playback crossed scene0 toscene1"
+    ],
+    "complex": [
+      "Scene0 Rotate/Move/Reset",
+      "Scene1 overview and focus rotate independently; close-up pan/reset",
+      "Context toggle preserves overview and molecular coordinates",
+      "Playback crossed scene0 toscene1 and reached lesson end"
+    ],
+    "limits": [
+      "Downward free orbit can clip protein endpoint46; pan/reset restores it.",
+      "Two browser automation clicks timed out during complex playback; paused inspection remained usable. No general performance claim."
+    ]
+  },
+  "independentReview": {
+    "report": "review.md",
+    "allFourCategories": "ready for sampled default frames",
+    "sourceAnchor": "4YLN chain2 DC14 P checked against cached original PDB",
+    "scope": "Source and native-frame review; separate parent live navigation evidence"
+  }
+}

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { AudioClock } from "../src/audio.js";
+import { AudioClock, AudioPlaybackError } from "../src/audio.js";
 import type { CompiledScene } from "../src/types.js";
 
 function scene(audio?: string, duration = 2): CompiledScene {
@@ -117,6 +117,32 @@ describe("scene audio clock", () => {
     context.resume.mockImplementationOnce(async () => {});
     await expect(clock.start("voice", 1)).rejects.toThrow("blocked");
     expect(await clock.start("voice", 1)).toBe(true);
+    clock.dispose();
+  });
+
+  it('preserves the cause of a recoverable browser permission rejection', async () => {
+    const { clock, context } = setup();
+    const cause = new DOMException('User gesture required', 'NotAllowedError');
+    await clock.prepare([scene('voice')]);
+    context.resume.mockRejectedValueOnce(cause);
+    const error = await clock.start('voice', 1).catch(error => error);
+    expect(error).toBeInstanceOf(AudioPlaybackError);
+    expect(error.cause).toBe(cause);
+    expect(await clock.start('voice', 1)).toBe(true);
+    clock.dispose();
+  });
+
+  it('does not offer gesture recovery for a closed audio context or an unprepared track', async () => {
+    const { clock, context } = setup();
+    const missing = await clock.start('missing', 0).catch(error => error);
+    expect(missing).toBeInstanceOf(Error);
+    expect(missing).not.toBeInstanceOf(AudioPlaybackError);
+    await clock.prepare([scene('voice')]);
+    context.state = 'closed';
+    context.resume.mockImplementationOnce(async () => {});
+    const closed = await clock.start('voice', 0).catch(error => error);
+    expect(closed).toBeInstanceOf(Error);
+    expect(closed).not.toBeInstanceOf(AudioPlaybackError);
     clock.dispose();
   });
 });

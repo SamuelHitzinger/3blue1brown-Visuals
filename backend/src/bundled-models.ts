@@ -12,6 +12,19 @@ const fixtures = {
   '1crn-beads': 'Crambin: one bead per residue CA anchor, with residue adjacency guides; not individual atoms',
 } as const;
 type FixtureId = keyof typeof fixtures;
+export interface MolecularLandmark {
+  role: 'representative' | 'central-residue' | 'first-residue' | 'last-residue' | 'base' | 'sugar' | 'phosphate';
+  atomId: string;
+  residueId: string;
+  serial: number;
+  atomName: string;
+  residueName: string;
+  authorSequence: number;
+  insertionCode: string;
+  /** Model-local angstrom coordinates, with BundledModelContext.origin already subtracted. */
+  position: Vec3;
+  parts: string[];
+}
 export interface BundledModelContext {
   fixtureId: string;
   representation: string;
@@ -21,7 +34,7 @@ export interface BundledModelContext {
   partMeaning: string;
   colorMeaning: string;
   provenance: AssetProvenance;
-  molecular?: {accession:string;title:string;chains:{id:string;molecule:string;residues:number;atoms:number;parts:string[];authorRanges:string[];gapCount:number;gaps:{before:string;reason:string}[]}[]};
+  molecular?: {accession:string;title:string;landmarkFrame?:string;chains:{id:string;molecule:string;residues:number;atoms:number;parts:string[];authorRanges:string[];gapCount:number;gaps:{before:string;reason:string}[];landmarks?:MolecularLandmark[]}[]};
 }
 type CompactProvenance = Pick<AssetProvenance, 'source'|'sourceHash'|'creator'|'license'|'selection'|'fidelity'>;
 export type BundledModelDescription = Omit<BundledModelContext, 'provenance'> & { provenance: CompactProvenance };

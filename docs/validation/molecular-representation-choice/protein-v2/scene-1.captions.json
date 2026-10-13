@@ -1,0 +1,52 @@
+[
+  {
+    "start": 0.4,
+    "end": 2.6,
+    "text": "Connected does not mean straight."
+  },
+  {
+    "start": 2.6,
+    "end": 7.866666666666667,
+    "text": "The chain can bend through changes in angles around bonds, without breaking its"
+  },
+  {
+    "start": 7.866666666666667,
+    "end": 9.366666666666667,
+    "text": "backbone."
+  },
+  {
+    "start": 9.366666666666667,
+    "end": 13.166666666666668,
+    "text": "Now add a simplified envelope around the protein's atoms."
+  },
+  {
+    "start": 13.166666666666668,
+    "end": 17.96666666666667,
+    "text": "The beads mark the chain's route; the envelope shows its overall bulk."
+  },
+  {
+    "start": 17.96666666666667,
+    "end": 20.76666666666667,
+    "text": "Same protein, same arrangement, two views!"
+  },
+  {
+    "start": 20.76666666666667,
+    "end": 25.300000000000004,
+    "text": "So a chain and a compact three-dimensional object are not opposites."
+  },
+  {
+    "start": 25.300000000000004,
+    "end": 29.36666666666667,
+    "text": "Here, one connected chain occupies a compact region of space."
+  },
+  {
+    "start": 29.36666666666667,
+    "end": 34.96666666666667,
+    "text": "This structure shows an arrangement of crambin, not the steps it took to fold."
+  },
+  {
+    "start": 34.96666666666667,
+    "end": 39.43333333333334,
+    "text": "Our traveling highlight followed the sequence, not a folding movie."
+  }
+]

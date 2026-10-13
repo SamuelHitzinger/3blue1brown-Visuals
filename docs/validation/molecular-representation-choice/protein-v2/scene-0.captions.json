@@ -1,0 +1,57 @@
+[
+  {
+    "start": 0.4,
+    "end": 4.4,
+    "text": "Here is crambin, a small protein with forty-six amino acids."
+  },
+  {
+    "start": 4.4,
+    "end": 7.2,
+    "text": "Each bead stands for one amino acid."
+  },
+  {
+    "start": 7.2,
+    "end": 11.2,
+    "text": "The links let us follow their order along the chain."
+  },
+  {
+    "start": 11.2,
+    "end": 15.6,
+    "text": "Watch the gold highlight travel from one end toward the other."
+  },
+  {
+    "start": 15.6,
+    "end": 17.733333333333334,
+    "text": "The beads themselves stay still."
+  },
+  {
+    "start": 17.733333333333334,
+    "end": 23.333333333333336,
+    "text": "Does the route keep heading away from its starting point, or turn back through"
+  },
+  {
+    "start": 23.333333333333336,
+    "end": 24.833333333333336,
+    "text": "the same region?"
+  },
+  {
+    "start": 24.833333333333336,
+    "end": 27.233333333333334,
+    "text": "Take a few seconds to look."
+  },
+  {
+    "start": 31.233333333333334,
+    "end": 32.733333333333334,
+    "text": "It turns back!"
+  },
+  {
+    "start": 32.733333333333334,
+    "end": 38,
+    "text": "Coils and bends bring different stretches alongside each other, while the route"
+  },
+  {
+    "start": 38,
+    "end": 39.5,
+    "text": "stays connected."
+  }
+]

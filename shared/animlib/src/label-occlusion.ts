@@ -3,7 +3,7 @@ import { add, mul, cameraRay, cross, dot, sub } from './spatial.js';
 import { VERTEX_FLOATS as stride } from './texture-shader.js';
 import type { CameraState, Vec3 } from './types.js';
 import type { GeometryDrawItem } from './render-geometry.js';
-export interface LabelAnchor { point: Vec3; offset: number[]; mode: 'overlay'|'hide'|'fade'; }
+export interface LabelAnchor { point: Vec3; offset: number[]; mode: 'overlay'|'hide'|'fade'; fitAnchor?: Vec3; }
 
 /** Screen-packed labels bypass GPU clipping. Interpolate the same homogeneous
  * clip distances as the shaders before dividing by w, including painter bias. */
@@ -60,7 +60,7 @@ export function applyLabelOcclusion(items: GeometryDrawItem[], labels: Map<strin
     }
     factors.set(id,hidden?(label.mode==='fade'?0.2:0):1);
   }
-  return items.flatMap(item=> {
+  const projectedItems = items.flatMap(item=> {
     if(item.component!=='content')return [item];
     const factor=factors.get(item.elementId);if(factor===undefined)return [item];if(!factor)return [];
     const vertices=clipLabelDepth(item.vertices,camera,width,height);
@@ -72,4 +72,38 @@ export function applyLabelOcclusion(items: GeometryDrawItem[], labels: Map<strin
     }
     return [{...item,vertices:Float32Array.from(vertices),depth:-1e9,transparent:item.transparent||factor<1,cameraDependentGeometry:true}];
   });
+  // Fit the complete glyph set as one rigid translation. Include the viewport
+  // offset applied by the shaders, but leave authored positions and depth tests
+  // untouched. An offscreen attachment must not become an in-view annotation.
+  const bounds = new Map<string,{left:number;right:number;top:number;bottom:number}>();
+  for (const item of projectedItems) {
+    const label=labels.get(item.elementId);
+    if(item.component!=='content'||!label?.fitAnchor)continue;
+    const anchor=project(label.fitAnchor,camera,width,height);
+    const x=anchor.x+label.offset[0]*width,y=anchor.y-label.offset[1]*height;
+    if(!anchor.visible||x<0||x>width||y<0||y>height)continue;
+    let box=bounds.get(item.elementId);
+    if(!box){box={left:Infinity,right:-Infinity,top:Infinity,bottom:-Infinity};bounds.set(item.elementId,box);}
+    for(let i=0;i<item.vertices.length;i+=stride) {
+      const data=item.vertices,x=width/2+data[i]+data[i+13]*width,y=height/2-data[i+1]-data[i+14]*height;
+      box.left=Math.min(box.left,x);box.right=Math.max(box.right,x);
+      box.top=Math.min(box.top,y);box.bottom=Math.max(box.bottom,y);
+    }
+  }
+  const shifts=new Map<string,[number,number]>(),padding=4;
+  for(const [id,box] of bounds) {
+    // Text larger than its view cannot fit without changing scale or content.
+    if(box.right-box.left>width-2*padding||box.bottom-box.top>height-2*padding)continue;
+    const dx=Math.max(padding-box.left,Math.min(0,width-padding-box.right));
+    const dy=Math.max(padding-box.top,Math.min(0,height-padding-box.bottom));
+    if(dx||dy)shifts.set(id,[dx,dy]);
+  }
+  for(const item of projectedItems) {
+    const shift=shifts.get(item.elementId);
+    if(item.component!=='content'||!shift)continue;
+    for(let i=0;i<item.vertices.length;i+=stride) {
+      item.vertices[i]+=shift[0];item.vertices[i+1]-=shift[1];
+    }
+  }
+  return projectedItems;
 }

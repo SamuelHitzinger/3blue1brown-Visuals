@@ -44,6 +44,29 @@ test('settled overlap checks skip moving text unless explicitly requested', asyn
   expect((await inspectScene(scene, { times: [1], includeAnimating: true })).warnings.some(w => w.kind === 'text-overlap')).toBe(true);
 });
 
+test('worker inspection measures overlay billboards correctly while retaining real offscreen and overlap warnings', async () => {
+  const source = `export default scene({mode:'3d'},s=>{
+    s.view('molecule',{rect:[.04,.22,.92,.59],camera:{yaw:.55,pitch:.1,height:5.9,distance:24,perspective:1,target:[.35,-.85,-.8]}},v=>{
+      for(const id of ['label','copy'])v.text(id,{text:'Other DNA',position:[-.1012275,.58059,-1.1126025],billboard:true,billboardOffset:[1.25,.25,.1],labelOcclusion:'overlay',fontSize:.4});
+      v.text('offset',{text:'Fitted',billboard:true,billboardOffset:[15,0,0],labelOcclusion:'overlay',fontSize:.4});
+      v.text('offscreen',{text:'Outside',position:[30,0,0],billboard:true,labelOcclusion:'overlay',fontSize:.4});
+    });s.wait(1);
+  });`;
+  const compiled = await compileSource(source);
+  const report = await inspectInWorker({ source, compiled }, { times: [1], objectIds: ['label', 'offscreen'] });
+  expect(report.warnings).not.toContainEqual(expect.objectContaining({ kind: 'outside-view', elements: ['label'] }));
+  expect(report.warnings).not.toContainEqual(expect.objectContaining({ kind: 'outside-view', elements: ['copy'] }));
+  // An offset label with an in-view attachment now fits; a genuinely offscreen attachment must still warn.
+  expect(report.warnings).not.toContainEqual(expect.objectContaining({ kind: 'outside-view', elements: ['offset'] }));
+  expect(report.warnings).toContainEqual(expect.objectContaining({ kind: 'outside-view', elements: ['offscreen'] }));
+  expect(report.warnings).toContainEqual(expect.objectContaining({ kind: 'text-overlap', elements: ['copy', 'label'] }));
+  expect(report.bounds[0].bounds!.left).toBeGreaterThan(400);
+  expect(report.bounds[0].bounds!.right).toBeLessThan(700);
+  expect(report.bounds[1].bounds!.right).toBeGreaterThan(960);
+  const focused = await sampleInWorker({ source, compiled }, { times: [1], focusObjectId: 'label' });
+  expect(focused[0].focus).toEqual(report.bounds[0].bounds!);
+});
+
 test('sampling limits and local timestamps are validated before doing geometry work', async () => {
   const scene = await candidate('s.wait(2);');
   for (const times of [[], [-1], [3], [NaN], Array(7).fill(0)]) {

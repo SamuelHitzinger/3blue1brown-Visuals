@@ -32,6 +32,21 @@ export interface DrawItem {
 
 /** Isolated groups form atomic compositing units; ordinary groups remain flattened. */
 export function composeItems(items: DrawItem[], first: number): { commands: RenderCommand[]; items: DrawItem[] } {
+  // Material names identify authored parts, not shader state. Equal materials
+  // can share a draw after depth sorting; texture identity and sampler state
+  // must still match. Keys live only for this composition, so edits stay live.
+  const materialKeys=new Map<ModelMaterial,string>(),images=new Map<object,number>();
+  const materialKey=(material?:ModelMaterial):string=>{
+    if(!material)return '';
+    let key=materialKeys.get(material);if(key!==undefined)return key;
+    const {name:_name,maps,...factors}=material;
+    key=JSON.stringify([factors,maps.map(map=>{
+      if(!map)return null;
+      const {image,...sampling}=map;
+      if(!images.has(image))images.set(image,images.size);
+      return [images.get(image),sampling];
+    })]);materialKeys.set(material,key);return key;
+  };
   interface Unit extends LayerEffect { depth: number; transparent: boolean; item?: DrawItem; children?: Unit[]; opacity: number; }
   const root: Unit[] = [], groups = new Map<string, Unit>();
   for (const item of items) {
@@ -54,20 +69,24 @@ export function composeItems(items: DrawItem[], first: number): { commands: Rend
       && (unit.transparent || Boolean(unit.children?.some(transparent)));
     for (const unit of units) unit.transparent = transparent(unit);
     units.sort((a,b) => Number(a.transparent)-Number(b.transparent) || b.depth-a.depth);
-    const commands: RenderCommand[] = units.map(unit => {
-      if (unit.children) return { children: build(unit.children), opacity: unit.opacity, opaque: !unit.transparent, ...(unit.receiverLight !== undefined ? { receiverLight: unit.receiverLight, receiverColor: unit.receiverColor, receiverShadow: unit.receiverShadow } : {}), ...(unit.additive ? { additive: true } : {}) };
-      const item = unit.item!, count = item.vertices.length/VERTEX_FLOATS, command: RenderCommand = { first, count, opaque: !item.transparent, ...(item.imageBinding ? { imageBinding: item.imageBinding } : {}), ...(item.modelMaterial ? { modelMaterial: item.modelMaterial } : {}), ...(item.mesh ? { mesh: item.mesh, instances: [item.instance!] } : {}) };
-      ordered.push(item); first += count; return command;
-    });
     const merged: RenderCommand[] = [];
-    for (const command of commands) {
-      const previous = merged.at(-1);
-      const compatible = previous && 'first' in previous && 'first' in command
-        && previous.opaque === command.opaque && previous.modelMaterial === command.modelMaterial
-        && imageBindingKey(previous.imageBinding) === imageBindingKey(command.imageBinding);
-      if (compatible && 'first' in previous && 'first' in command && previous.mesh && previous.mesh === command.mesh && previous.instances!.length < MAX_INSTANCES) previous.instances!.push(...command.instances!);
-      else if (compatible && 'first' in previous && 'first' in command && !previous.mesh && !command.mesh && previous.first+previous.count === command.first) previous.count += command.count;
-      else merged.push(command);
+    for (const unit of units) {
+      if (unit.children) {
+        merged.push({ children: build(unit.children), opacity: unit.opacity, opaque: !unit.transparent, ...(unit.receiverLight !== undefined ? { receiverLight: unit.receiverLight, receiverColor: unit.receiverColor, receiverShadow: unit.receiverShadow } : {}), ...(unit.additive ? { additive: true } : {}) });
+        continue;
+      }
+      const item=unit.item!,count=item.vertices.length/VERTEX_FLOATS,previous=merged.at(-1);
+      ordered.push(item);
+      const compatible=previous && 'first' in previous && previous.opaque===!item.transparent
+        && materialKey(previous.modelMaterial)===materialKey(item.modelMaterial)
+        && imageBindingKey(previous.imageBinding)===imageBindingKey(item.imageBinding);
+      // Transparent models can contain thousands of adjacent triangles with the
+      // same material. Merge directly instead of allocating a discarded command
+      // and instances array for every triangle after the global depth sort.
+      if(compatible && 'first' in previous && previous.mesh && previous.mesh===item.mesh && previous.instances!.length<MAX_INSTANCES)previous.instances!.push(item.instance!);
+      else if(compatible && 'first' in previous && !previous.mesh && !item.mesh && previous.first+previous.count===first)previous.count+=count;
+      else merged.push({first,count,opaque:!item.transparent,...(item.imageBinding?{imageBinding:item.imageBinding}:{}),...(item.modelMaterial?{modelMaterial:item.modelMaterial}:{}),...(item.mesh?{mesh:item.mesh,instances:[item.instance!]}:{})});
+      first+=count;
     }
     return merged;
   };

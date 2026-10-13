@@ -260,7 +260,7 @@ Still samples do not establish continuous motion, occlusion-free visibility, int
       source = await saved(pendingPath);
       if (!source) {
         source = assemble(await logStage({ videoId, sceneIndex: index, stage: 'scene' }, () => runWithValidationRecovery(runner, task,
-          { diagnosticsPath: join(directory, `scene-${index}.author-retries.json`) })));
+          { diagnosticsPath: join(directory, `scene-${index}.author-retries.json`), prompt: scenePrompt })));
         await atomicWrite(pendingPath, source);
       }
       context.onProgress?.({ stage: 'validating', ...progress });

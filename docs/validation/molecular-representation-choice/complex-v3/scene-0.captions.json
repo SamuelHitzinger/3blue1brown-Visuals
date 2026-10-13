@@ -1,0 +1,42 @@
+[
+  {
+    "start": 0.4,
+    "end": 2,
+    "text": "Here is one E."
+  },
+  {
+    "start": 2,
+    "end": 4.6,
+    "text": "coli RNA polymerase initiation complex."
+  },
+  {
+    "start": 4.6,
+    "end": 9.533333333333333,
+    "text": "The grey tangle traces the protein chains: the copying machinery, not DNA."
+  },
+  {
+    "start": 9.533333333333333,
+    "end": 13.133333333333333,
+    "text": "These traces show chain paths, not a solid surface."
+  },
+  {
+    "start": 13.133333333333333,
+    "end": 15.133333333333333,
+    "text": "Now follow the DNA labels."
+  },
+  {
+    "start": 15.133333333333333,
+    "end": 18,
+    "text": "Two DNA strands pass through the machinery."
+  },
+  {
+    "start": 18,
+    "end": 23.6,
+    "text": "In this region, they separate, making an open stretch called a transcription bubble."
+  },
+  {
+    "start": 23.6,
+    "end": 26,
+    "text": "Where does the tiny RNA fit?"
+  }
+]

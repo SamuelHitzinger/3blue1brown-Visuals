@@ -59,7 +59,7 @@ function triangles(frame: Frame, ids: Set<string>, root: ElementState, camera: C
     const data = item.vertices;
     for (let i = 0; i < data.length; i += 3 * VERTEX_FLOATS) {
       const triangle: Vec3[] = [0, VERTEX_FLOATS, 2 * VERTEX_FLOATS].map(j => [data[i+j], data[i+j+1], data[i+j+2]]);
-      if (triangle.every(p => p.every(Number.isFinite)) && nondegenerate(triangle)) consume(triangle, item.screen, [data[i+13], data[i+14]]);
+      if (triangle.every(p => p.every(Number.isFinite)) && nondegenerate(triangle)) consume(triangle, Boolean(data[i+7]), [data[i+13], data[i+14]]);
     }
   }
 }

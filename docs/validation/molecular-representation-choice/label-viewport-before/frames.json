@@ -1,0 +1,37 @@
+{
+  "backend": "native-webgpu",
+  "frames": [
+    {
+      "time": 20,
+      "width": 1280,
+      "height": 720,
+      "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\docs\\validation\\molecular-representation-choice\\label-viewport-before\\1280x720-0.png"
+    },
+    {
+      "time": 20,
+      "width": 960,
+      "height": 720,
+      "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\docs\\validation\\molecular-representation-choice\\label-viewport-before\\960x720-0.png"
+    }
+  ],
+  "sheets": [
+    {
+      "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\docs\\validation\\molecular-representation-choice\\label-viewport-before\\1280x720-sheet-0.png",
+      "width": 1280,
+      "height": 720,
+      "times": [
+        20
+      ],
+      "columns": 2
+    },
+    {
+      "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\docs\\validation\\molecular-representation-choice\\label-viewport-before\\960x720-sheet-0.png",
+      "width": 960,
+      "height": 720,
+      "times": [
+        20
+      ],
+      "columns": 2
+    }
+  ]
+}

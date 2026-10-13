@@ -42,7 +42,7 @@ it('packs effective deformation, caps and scalar colors before per-view shadow c
  }finally{sequence.dispose();}
 });
 
-it('keeps projected labels world-batched while gating hidden morph endpoints and leaving depth occluders retained',async()=>{
+it('keeps projected labels world-batched with retained overlay geometry and gates hide/fade morph endpoints',async()=>{
  const sequence=new SceneSequence(),retained=new RetainedGeometry(),palette=paletteResolver();
  try {
   expect((await sequence.submit({type:'load',scenes:[{id:'a',source:`export default scene({},s=>{
@@ -50,8 +50,11 @@ it('keeps projected labels world-batched while gating hidden morph endpoints and
    s.text('label',{text:'M',position:[1,0,-2],labelOcclusion:'overlay'});s.wait(1);
   });`}]})).ok).toBe(true);
   const frame=await sequence.evaluate(0,0),label=frame.elements.find(e=>e.id==='label')!;
-  expect(retentionForFrame(frame)).toBe(false);
-  const items=buildDrawItems(frame,frame.camera,640,480,palette);
+  expect(retentionForFrame(frame)).toBe(true);
+  retained.beginFrame();
+  const items=buildDrawItems(frame,frame.camera,640,480,palette,undefined,false,retained);
+  retained.endFrame();
+  expect(items.find(i=>i.elementId==='b')!.mesh).toBeDefined();
   const glyphs=items.filter(i=>i.elementId==='label');expect(glyphs.length).toBeGreaterThan(0);
   expect(glyphs.every(i=>!i.screen)).toBe(true);
   for(const item of glyphs)for(let i=7;i<item.vertices.length;i+=VERTEX_FLOATS)expect(item.vertices[i]).toBe(1);
@@ -59,6 +62,13 @@ it('keeps projected labels world-batched while gating hidden morph endpoints and
   expect(retentionForFrame(frame)).toBe(true);
   retained.beginFrame();expect(buildDrawItems(frame,frame.camera,640,480,palette,undefined,false,retained).some(i=>i.mesh)).toBe(true);retained.endFrame();
   label.morph={from,to:label.geometry,progress:1};label.opacity=0;
-  expect(retentionForFrame(frame)).toBe(false);
+  expect(retentionForFrame(frame)).toBe(true);
+  for(const mode of ['hide','fade'] as const) {
+    const dependent={...from,labelOcclusion:mode};
+    label.morph={from:dependent,to:label.geometry,progress:1};
+    expect(retentionForFrame(frame)).toBe(false);
+    label.morph={from:label.geometry,to:dependent,progress:0};
+    expect(retentionForFrame(frame)).toBe(false);
+  }
  }finally{sequence.dispose();}
 });

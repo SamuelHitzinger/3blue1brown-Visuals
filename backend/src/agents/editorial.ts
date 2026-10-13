@@ -53,8 +53,11 @@ async function latestRejectedDraft(directory: string, request: VideoRequest, ima
     // Legacy audit prompts did not record images, so they cannot establish image identity.
     if (prior === undefined && images?.length) continue;
     for (const name of await readdir(runDirectory)) {
-      const match = /^lesson-review-(\d+)\.json$/.exec(name);
-      if (match && Number(match[1]) < MAX_REVIEW_ROUNDS) candidates.push({ runDirectory, attempt: Number(match[1]), modified: (await stat(join(runDirectory, name))).mtimeMs, legacy: prior === undefined });
+      const match = /^lesson-review-(0|[1-9]\d*)\.json$/.exec(name);
+      const attempt = match ? Number(match[1]) : -1;
+      if (Number.isInteger(attempt) && attempt >= 0 && attempt < MAX_REVIEW_ROUNDS) {
+        candidates.push({ runDirectory, attempt, modified: (await stat(join(runDirectory, name))).mtimeMs, legacy: prior === undefined });
+      }
     }
   }
   candidates.sort((a, b) => b.modified - a.modified || b.attempt - a.attempt);
@@ -127,18 +130,19 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
         await rm(join(runDirectory, `lesson-${phase}-${attempt - 3}.${suffix}`), { force: true });
       }
     }
+    const draftPrompt = () => repair
+      ? `Revise the complete lesson and plan to correct the material editorial errors below. Preserve sound content, requested scope, stable entity IDs/meanings, and scene IDs where possible. Update narration and nonspoken planning together. Return the full planning envelope.\n${JSON.stringify({ request: promptRequest, draft: repair.lesson, issues: repair.issues, ...modelContext() })}`
+      : `Write ${request.sceneRequest ? "one inserted scene" : "a concise visual lesson"} and its plan from this request:\n${JSON.stringify({ ...promptRequest, ...modelContext() })}`;
     const task: AgentTask = {
       systemPrompt: `${messages[0].content}\n\n${PLANNING_CONTRACT}${capabilities.publishModel ? '\n\nPrepare any required model with publish_model before finishing this plan. Use the returned asset ID, node names, and scientific provenance as evidence; modelAssets and modelAssetContext list assets already prepared for this job. The editorial reviewer receives updated prepared asset evidence.' : ''}`,
-      prompt: repair
-        ? `Revise the complete lesson and plan to correct the material editorial errors below. Preserve sound content, requested scope, stable entity IDs/meanings, and scene IDs where possible. Update narration and nonspoken planning together. Return the full planning envelope.\n${JSON.stringify({ request: promptRequest, draft: repair.lesson, issues: repair.issues, ...modelContext() })}`
-        : `Write ${request.sceneRequest ? "one inserted scene" : "a concise visual lesson"} and its plan from this request:\n${JSON.stringify({ ...promptRequest, ...modelContext() })}`,
+      prompt: draftPrompt(),
       signal, images, publishModel: capabilities.publishModel, validate: async output => { parsePlannedLesson(output, request); },
       logContext: { videoId, stage: 'draft' },
     };
     await atomicWrite(join(runDirectory, `lesson-draft-${attempt}.instructions.json`), JSON.stringify(instructionSnapshot(task.systemPrompt)));
     await atomicWrite(join(runDirectory, `lesson-draft-${attempt}.prompt.md`), `${task.systemPrompt}\n\n${task.prompt}`);
     const lesson = state.lesson ?? parsePlannedLesson(await logStage({ videoId, stage: 'draft', attempt: attempt + 1 }, () => runWithValidationRecovery(runner, task,
-      { diagnosticsPath: join(runDirectory, `lesson-draft-${attempt}.diagnostics.json`) })), request);
+      { diagnosticsPath: join(runDirectory, `lesson-draft-${attempt}.diagnostics.json`), prompt: draftPrompt })), request);
     signal.throwIfAborted();
     const draft = JSON.stringify(lesson, null, 2);
     await atomicWrite(join(runDirectory, `lesson-draft-${attempt}.json`), draft);

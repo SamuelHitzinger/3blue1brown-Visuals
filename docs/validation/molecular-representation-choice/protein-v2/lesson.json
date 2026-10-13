@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "markdown": "# One chain, one folded shape\n\n## Beat 1 — Follow the connected route\n\nContent needed: Prepared 1CRN chain A residue beads and adjacency guides. One bead represents one amino acid, not one atom. Trace the deposited chain in sequence without moving any bead. Keep the whole connected route visible; withhold the envelope until beat-2.\n\nNotes: Subtitles only; no voiceover. Assume the learner knows proteins are amino-acid chains but may picture a chain as stretched out. The missing intuition is that sequence connectivity and spatial arrangement are different properties. Enter through following a visible route. Two scenes, approximately 75–85 seconds including the thinking interval; reading-time estimate, not measured timing.\n\nNarration: Here is crambin, a small protein with forty-six amino acids. Each bead stands for one amino acid. The links let us follow their order along the chain.\n\nNarration: Watch the gold highlight travel from one end toward the other. The beads themselves stay still.\n\nInvitation (spoken): Does the route keep heading away from its starting point, or turn back through the same region? Take a few seconds to look.\n\nPause: 4s\n\nReveal (spoken): It turns back! Coils and bends bring different stretches alongside each other, while the route stays connected.\n\n## Beat 2 — A chain with volume\n\nContent needed: Continue the same fixed bead model, then overlay the coordinate-aligned schematic envelope from 1CRN. Compare envelope present and absent without changing coordinates. Preserve visibility of the connected route through a transparent envelope.\n\nNotes: Subtitles only. Credit in metadata: W. A. Hendrickson and M. M. Teeter; wwPDB Chemical Component Dictionary; RCSB PDB 1CRN; CC0-1.0. Envelope is schematic, not an exact molecular boundary. No folding trajectory is supplied or depicted.\n\nNarration: Connected does not mean straight. The chain can bend through changes in angles around bonds, without breaking its backbone.\n\nNarration: Now add a simplified envelope around the protein's atoms. The beads mark the chain's route; the envelope shows its overall bulk. Same protein, same arrangement, two views!\n\nNarration: So a chain and a compact three-dimensional object are not opposites. Here, one connected chain occupies a compact region of space.\n\nNarration: This structure shows an arrangement of crambin, not the steps it took to fold. Our traveling highlight followed the sequence, not a folding movie.",
+  "plan": {
+    "audience": "A learner who knows proteins are chains of amino acids but wants to understand their compact three-dimensional form.",
+    "prerequisites": [
+      "Proteins consist of amino acids connected in a chain."
+    ],
+    "learningGoal": "Explain how a connected chain can occupy a compact three-dimensional region, and distinguish a static structure from a folding trajectory.",
+    "centralQuestion": "How can one connected amino-acid chain also be a compact three-dimensional object?",
+    "keyInsight": "Connectivity specifies the order along the chain, not a straight spatial path; bends and coils place different stretches beside one another without interrupting the backbone.",
+    "runningExample": "Crambin, deposited PDB 1CRN chain A: 46 amino acids, shown as 46 residue beads with adjacency guides and then a coordinate-aligned schematic envelope.",
+    "misconceptions": [
+      "A chain must be straight or extended.",
+      "A compact protein must consist of disconnected pieces.",
+      "Residue beads are individual atoms or an exact molecular surface.",
+      "Tracing a deposited structure depicts its folding history."
+    ],
+    "entities": [
+      {
+        "id": "crambin-chain",
+        "meaning": "The fixed 46-residue route in deposited 1CRN chain A. Introduced in beat-1 and retained unchanged in beat-2. All residues and adjacency guides remain connected in sequence and move only as a rigid group during viewer rotation. Align with crambin-envelope using their shared coordinate origin and equal scale.",
+        "color": "TEAL"
+      },
+      {
+        "id": "sequence-highlight",
+        "meaning": "A temporary gold emphasis advancing through residue order in beat-1, not motion of amino acids or a folding simulation. Removed after the route has been inspected.",
+        "color": "GOLD"
+      },
+      {
+        "id": "crambin-envelope",
+        "meaning": "The schematic envelope around deposited 1CRN heavy-atom positions, introduced in beat-2. Shares the chain's coordinate frame and rigid rotation; indicates bulk rather than an exact boundary. Its 45 exposed residue parts do not replace or remove any of the 46 chain beads.",
+        "color": "GREY"
+      }
+    ],
+    "scenes": [
+      {
+        "id": "beat-1",
+        "purpose": "Observe a continuous residue sequence repeatedly changing direction within a bounded three-dimensional region.",
+        "whyNow": "Opens with the learner's familiar chain and makes its spatial route observable before explaining compactness.",
+        "keyPoints": [
+          "A bead represents an amino acid and a guide represents sequence adjacency.",
+          "A gold highlight follows residue order while the structure remains fixed.",
+          "The route coils and returns through the same region without breaks."
+        ],
+        "visualDescription": "Use prepared asset model-cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529: source-backed 1CRN chain A residue beads with adjacency guides, not atomic geometry. Named parts residue-0 through residue-45 correspond to node-0 through node-45 and sequence positions 1 through 46. Preserve deposited proportions, all connections, and the complete irregular spatial route. Start with a readable whole-model view and simple endpoint markers labeled 1 and 46. Explain beads and links before highlighting them. At 'Watch the gold highlight', advance emphasis in sequence across existing parts without translating, stretching, or reconstructing them. Complete the trace before the invitation; remove the temporary gold emphasis and hold the same unannotated chain during thinking time. Do not add explanatory highlights or answer text during the pause. At Reveal, use a modest rigid view change to expose depth separation of neighboring stretches; projected crossings must not suggest branching or severed links. Clear depth shading, smooth geometry, distinguishable beads, and unobscured turns must make both continuous order and folded spatial arrangement legible in the default view. Permit viewer orbit around the geometry throughout, with subtitles and labels outside the rotating view; do not require interaction to find the evidence. No atoms or molecular motion are inferred from these guides.",
+        "endsWith": "The full teal connected bead model in its original deposited geometry; gold emphasis removed. The endpoint labels remain. No envelope yet.",
+        "carry": [
+          "crambin-chain"
+        ],
+        "cleanup": [
+          "sequence-highlight"
+        ],
+        "sourceRefs": [
+          {
+            "document": "request",
+            "location": "modelCatalog: 1crn-beads",
+            "supports": "Crambin identity, source provenance, residue-bead meaning, shared origin, and static-structure limitation."
+          },
+          {
+            "document": "request",
+            "location": "topic",
+            "supports": "Audience knowledge, initial reachable observation, two connected scenes, and no folding-trajectory implication."
+          }
+        ],
+        "interactions": [],
+        "view": {
+          "mode": "3d",
+          "rationale": "Depth separates overlapping stretches and shows that one uninterrupted route bends through a volume rather than branching at apparent crossings."
+        }
+      },
+      {
+        "id": "beat-2",
+        "purpose": "Connect the visible chain route to the protein's compact bulk while distinguishing structure from history.",
+        "whyNow": "Builds directly on the continuous turning route observed in beat-1, then concludes by reconciling chain connectivity with three-dimensional form.",
+        "keyPoints": [
+          "Connectivity does not require a straight backbone.",
+          "A residue route and an envelope describe the same fixed arrangement at different detail levels.",
+          "Neither the static model nor the sequence highlight records folding."
+        ],
+        "visualDescription": "Begin with exactly the teal bead model and endpoints left by beat-1. Explain bond-angle flexibility verbally as the general mechanism; do not animate an invented molecular trajectory. At 'Now add', reveal prepared asset model-8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36, the 1CRN schematic Gaussian envelope around deposited heavy atoms. Register it to the bead asset using their common origin [10.5935,10.2105,6.079] angstroms and identical scale; do not separately center or fit the two assets. Surface parts use residue names, not the bead asset's node indices: e.g. surface residue-0 is node-15. The surface has 45 exposed residue parts, while the complete 46-bead chain remains intact. This view exposes the relation between the uninterrupted interior route and the protein's overall bulk, not exact steric fit. Use a pale translucent envelope with restrained boundary shading so the trace remains clearly visible; also demonstrate removing and restoring only the envelope once at 'Same protein'. Retain the model's recognizable irregular shape rather than replacing it with a sphere. No morph or physical expansion occurs. Both representations rotate together and allow viewer orbit, with fixed external subtitles and the short key 'route / schematic bulk'. Provide the envelope toggle after its narrated introduction. End on the superimposed view and the static-structure qualification; never show an unfolded starting chain or a speculative folding path.",
+        "endsWith": "A transparent grey envelope surrounding the unchanged teal residue route, with optional envelope removal available for inspection.",
+        "carry": [
+          "crambin-chain",
+          "crambin-envelope"
+        ],
+        "cleanup": [],
+        "sourceRefs": [
+          {
+            "document": "request",
+            "location": "modelCatalog: 1crn-surface and 1crn-beads",
+            "supports": "Both representations share a coordinate origin; envelope and residue-bead meanings, provenance, differing exposed part counts, and lack of folding dynamics."
+          },
+          {
+            "document": "request",
+            "location": "topic and narrationMode",
+            "supports": "Explain compactness without disconnecting the chain; subtitles only."
+          }
+        ],
+        "interactions": [
+          {
+            "id": "envelope-visible",
+            "type": "toggle",
+            "label": "Show schematic bulk",
+            "drives": "After the envelope is introduced, switch its visibility on or off; default on with transparency. Keep the entire 46-bead chain, its coordinates, endpoint labels, scale, and shared rotation unchanged. This changes representation, not conformation.",
+            "discover": "The same connected chain underlies both views; removing the bulk representation reveals rather than unfolds it."
+          }
+        ],
+        "view": {
+          "mode": "3d",
+          "rationale": "Coordinate-aligned bulk and interior chain show how the same connected route occupies a compact volume; rotation reveals the relationship beyond a single projection."
+        }
+      }
+    ]
+  },
+  "instructionVersion": 3,
+  "editorialReview": {
+    "runId": "6692c8f7-9b52-4bb9-8e05-b00d229fe665",
+    "attempt": 0,
+    "draftSha256": "77acd0c798b96ba3e8c1a65231905fd8889c3d492903afb94eb0fadc4c7074f9"
+  }
+}

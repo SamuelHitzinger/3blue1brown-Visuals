@@ -593,6 +593,8 @@ export interface PlayerState {
   orbitAvailable?: boolean;
   views: { id: string; rect: ViewState["rect"]; orbitEnabled: boolean }[];
   error?: string;
+  /** A user Play gesture can recover this error without recreating the player. */
+  errorRecovery?: 'play';
 }
 
 export interface CompileInput {

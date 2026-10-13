@@ -6,6 +6,7 @@ import { CanvasRenderer } from '../src/renderer.js';
 import { SceneSequence } from '../src/sequence.js';
 import { audioDurationRegression } from './time-audio.browser.js';
 import { pauseDuringRefreshRegression } from './playback-intent.browser.js';
+import { controlPlacementRegression } from './controls.browser.js';
 import { createPlayer } from '../src/player.js';
 import { compositionCases } from './composition-cases.js';
 import { waveSource } from './dynamic-surface-cases.js';
@@ -188,6 +189,7 @@ export async function runWebGLTests() {
       assert(foreground(draw()) > 15000, 'Expected a filled rectangle');
     });
     await test('combined production-player seek/control/end/append handoffs',async()=>{await integrationPlayerRegression(createPlayer);});
+    await test('authored controls stay within resized canvas bounds',async()=>{await controlPlacementRegression();});
     for(const entry of integrationCases)await test('cross-feature: '+entry.name,async()=>{
       renderer.resetInteraction();
       await entry.run({sequence,draw:async(frame,options,reference=false)=>{

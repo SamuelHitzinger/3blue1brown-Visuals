@@ -1,0 +1,57 @@
+[
+  {
+    "start": 0.4,
+    "end": 5.266666666666667,
+    "text": "Making the protein faint lets us look inside without moving any molecule."
+  },
+  {
+    "start": 5.266666666666667,
+    "end": 9.666666666666668,
+    "text": "The gold label marks RNA, just four building blocks long here."
+  },
+  {
+    "start": 9.666666666666668,
+    "end": 14.466666666666669,
+    "text": "Does that short RNA lie alongside one DNA strand, or bridge both?"
+  },
+  {
+    "start": 14.466666666666669,
+    "end": 17.666666666666668,
+    "text": "Take a few seconds to follow its position."
+  },
+  {
+    "start": 22.666666666666668,
+    "end": 24.166666666666668,
+    "text": "Alongside one!"
+  },
+  {
+    "start": 24.166666666666668,
+    "end": 27.366666666666667,
+    "text": "That DNA strand is the template being copied."
+  },
+  {
+    "start": 27.366666666666667,
+    "end": 32.96666666666667,
+    "text": "The short RNA pairs with it inside the machinery; the other DNA strand follows"
+  },
+  {
+    "start": 32.96666666666667,
+    "end": 34.46666666666667,
+    "text": "a separate route."
+  },
+  {
+    "start": 34.46666666666667,
+    "end": 39.86666666666667,
+    "text": "This is a static, low-resolution structural model, with some imperfect nucleotide"
+  },
+  {
+    "start": 39.86666666666667,
+    "end": 41.36666666666667,
+    "text": "links."
+  },
+  {
+    "start": 41.36666666666667,
+    "end": 46.833333333333336,
+    "text": "It shows an arrangement—not exact atomic contacts, copying chemistry, or movement."
+  }
+]
