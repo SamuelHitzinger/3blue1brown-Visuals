@@ -3,10 +3,10 @@ import {mkdir,readFile,stat} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {createMoleculeBuilders,createMolecularBackboneBuilders,createModelGLB,importPDBStructure} from 'animlib/core';
 import type {GeneratedModel,MolecularBackboneResult,ResidueBondTemplate,StructureAtom,Vec3} from 'animlib/core';
-import type {BundledModelContext} from './bundled-models.js';
+import type {BundledModelContext,MolecularLandmark} from './bundled-models.js';
 import {atomicWrite} from './narration/service.js';
 
-const VERSION='rcsb-deposited-v1';
+const VERSION='rcsb-deposited-v2';
 const LIMIT=16_000_000;
 const protein=new Set('ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL'.split(' '));
 const nucleic=new Set('A C G U I DA DC DG DT DI ATP CTP GTP UTP'.split(' '));
@@ -94,6 +94,7 @@ async function build(accession:string,chains:string[]|undefined,source:{text:str
   const atoms=new Map(structure.atoms.map(a=>[a.id,a])),residues=new Map(structure.residues.map(r=>[r.id,r]));
   const moleculeNames=molecules(source.text);
   const parts:GeneratedModel['parts']=[],mapping:Record<string,unknown>={},chainDescriptions:NonNullable<BundledModelContext['molecular']>['chains']=[];
+  const representedParts=new Map<string,string[]>();
   const provenance={kind:'scientific' as const,source:url,units:'angstrom'};
   function append(result:MolecularBackboneResult,prefix:string,atomic:boolean){
     for(let i=0;i<result.meshes.length;i++){
@@ -101,11 +102,18 @@ async function build(accession:string,chains:string[]|undefined,source:{text:str
       const spans:{id:string;first:number;count:number}[]=[];
       for(let v=0;v<ids.length;v++){const last=spans.at(-1);if(last?.id===ids[v])last.count++;else spans.push({id:ids[v],first:v,count:1});}
       mapping[name]=spans;
+      for(const id of new Set(ids))representedParts.set(id,[...(representedParts.get(id)??[]),name]);
       parts.push({name,vertices:mesh.vertices! as Vec3[],triangles:mesh.triangles!,normals:mesh.normals,roughness:.65,
         ...(atomic?{vertexColors:ids.map(id=>elementColors[atoms.get(id)!.element]??[.6,.6,.6,1])}:{baseColor:[.38,.44,.52,1]})});
     }
   }
   const dist=(a:StructureAtom,b:StructureAtom)=>Math.hypot(...a.position.map((v,j)=>v-b.position[j]));
+  const representative=(sites:StructureAtom[])=>{
+    const center=sites.reduce((sum,site)=>sum.map((v,axis)=>v+site.position[axis]/sites.length) as Vec3,[0,0,0] as Vec3);
+    const distance=(site:StructureAtom)=>site.position.reduce((sum,v,axis)=>sum+(v-center[axis])**2,0);
+    // Select an actual retained site; the centroid itself need not belong to the molecule.
+    return sites.reduce((best,site)=>distance(site)<distance(best)?site:best);
+  };
   const backboneLinks:{a:string;b:string;source:string}[]=[];
   for(const chain of [...new Set(structure.residues.map(r=>r.chainId))]){
     signal?.throwIfAborted();const before=parts.length,selectedResidues=structure.residues.filter(r=>r.chainId===chain),proteinResidues=selectedResidues.filter(r=>protein.has(r.name)&&r.anchorId),nucleicResidues=selectedResidues.filter(r=>nucleic.has(r.name));
@@ -137,7 +145,29 @@ async function build(accession:string,chains:string[]|undefined,source:{text:str
     }
     const ranges:{first:string;last:string;sequence:number}[]=[];
     for(const residue of selectedResidues){const label=`${residue.authorSequence}${residue.insertionCode}`,last=ranges.at(-1);if(last&&residue.authorSequence===last.sequence+1&&!residue.insertionCode){last.last=label;last.sequence=residue.authorSequence;}else ranges.push({first:label,last:label,sequence:residue.authorSequence});}
-    if(parts.length>before)chainDescriptions.push({id:chain,molecule:moleculeNames.get(chain)??'Deposited polymer',residues:selectedResidues.length,atoms:selectedResidues.reduce((n,r)=>n+r.atomIds.length,0),parts:parts.slice(before).map(p=>p.name),authorRanges:ranges.map(r=>r.first===r.last?r.first:`${r.first}–${r.last}`),gapCount:gaps.length,gaps:gaps.slice(0,16)});
+    const landmarks:MolecularLandmark[]=[];
+    const addLandmark=(role:MolecularLandmark['role'],atom:StructureAtom|undefined)=>{
+      if(!atom||!representedParts.has(atom.id))return;
+      const residue=residues.get(atom.residueId)!;
+      landmarks.push({role,atomId:atom.id,residueId:residue.id,serial:atom.serial,atomName:atom.name,residueName:residue.name,authorSequence:residue.authorSequence,insertionCode:residue.insertionCode,
+        position:atom.position.map((v,axis)=>v-structure.center[axis]) as Vec3,parts:[...representedParts.get(atom.id)!]});
+    };
+    const proteinSites=proteinResidues.map(r=>atoms.get(r.anchorId!)!).filter(atom=>representedParts.has(atom.id));
+    if(proteinSites.length)addLandmark('representative',representative(proteinSites));
+    const nucleicSites=nucleicResidues.map(residue=>{
+      const sites=residue.atomIds.map(id=>atoms.get(id)!).filter(atom=>representedParts.has(atom.id));
+      return ['P',"C4'","C1'"].map(name=>sites.find(atom=>atom.name===name)).find(Boolean)??sites[0];
+    }).filter((atom):atom is StructureAtom=>!!atom);
+    if(nucleicSites.length){
+      const middle=representative(nucleicSites),residue=residues.get(middle.residueId)!,sites=residue.atomIds.map(id=>atoms.get(id)!);
+      addLandmark(proteinSites.length?'central-residue':'representative',middle);
+      addLandmark('first-residue',nucleicSites[0]);addLandmark('last-residue',nucleicSites.at(-1));
+      // C6 belongs to both purine and pyrimidine base rings; no missing atom is replaced.
+      addLandmark('base',sites.find(atom=>atom.name==='C6'));
+      addLandmark('sugar',sites.find(atom=>atom.name==="C1'"));
+      addLandmark('phosphate',sites.find(atom=>atom.name==='P'));
+    }
+    if(parts.length>before)chainDescriptions.push({id:chain,molecule:moleculeNames.get(chain)??'Deposited polymer',residues:selectedResidues.length,atoms:selectedResidues.reduce((n,r)=>n+r.atomIds.length,0),parts:parts.slice(before).map(p=>p.name),authorRanges:ranges.map(r=>r.first===r.last?r.first:`${r.first}–${r.last}`),gapCount:gaps.length,gaps:gaps.slice(0,16),landmarks});
   }
   if(!parts.length)throw new Error('No supported protein or nucleic-acid geometry in selected PDB chains');
   const resolution=/^REMARK   2 RESOLUTION\.\s+([\d.]+) ANGSTROMS/m.exec(source.text)?.[1];
@@ -146,11 +176,11 @@ async function build(accession:string,chains:string[]|undefined,source:{text:str
     representation:'Deposited protein CA trace and nucleotide heavy-atom geometry with CCD connectivity; no invented surface or molecular dynamics.',
     partMeaning:'Named chain parts use PDB author chain IDs. Protein traces connect deposited CA anchors only inside validated contiguous peptide segments. Nucleotide parts preserve deposited atom sites and CCD atom-name mapping. Individual residues are recorded in host provenance; model parts are chain-level.',
     colorMeaning:'Protein neutral grey is a residue trace, not atoms. Nucleotide atoms use C grey, N blue, O red, P orange, S yellow; bond endpoint colors interpolate. Use WHITE model tint to retain element identity. Single cylinders encode connectivity, not bond order.',
-    molecular:{accession,title:structure.title,chains:chainDescriptions},
+    molecular:{accession,title:structure.title,landmarkFrame:'Model-local angstrom coordinates; common origin already subtracted. Apply the model scale/rotation/translation once, without subtracting origin again. Every landmark is a retained deposited atom site at a bead or trace-ring center in the named parts. Representative sites are nearest their chain anchor centroid, not inferred active sites. First/last mean retained source residue order, not biological termini; labels still need camera and occlusion checks.',chains:chainDescriptions},
     provenance:{source:url,sourceHash:source.hash,creator:source.text.split(/\r?\n/).filter(l=>l.startsWith('AUTHOR')).map(l=>l.slice(10).trim()).join(' ')||'wwPDB depositors',license:'CC0-1.0',preparedAt:new Date().toISOString(),
       selection:`First deposited model; author chains ${chains?.join(', ')??'all'}; highest-occupancy residue conformer; heavy atoms only. ${selected.promoted} nucleotide HETATM records declared in chain SEQRES and LINK-connected to a deposited polymer retained as polymer atoms. Other HETATM, waters, ions and unsupported residues omitted.`,
       modifications:['Subtract one common bounding-box center; no rotation, rescaling or coordinate replacement.','Protein side chains omitted; fixed-radius CA trace is schematic. Nucleic atom radii are display radii, not van der Waals radii.','Nucleotide intramolecular bonds come from wwPDB CCD by deposited atom name; contiguous O3′–P links use explicit template and distance sanity gate. Missing atoms and gaps remain missing.'],
-      converter:{name:VERSION,version:'1',options:{origin:structure.center,componentHashes,mapping,atoms:structure.atoms.map(({id,residueId,serial,name,element,alt})=>({id,residueId,serial,name,element,alt})),residues:structure.residues.map(({id,chainId,authorSequence,insertionCode,name})=>({id,chainId,authorSequence,insertionCode,name})),backboneLinks,breaks:structure.breaks,diagnostics:structure.diagnostics}},
+      converter:{name:VERSION,version:'2',options:{origin:structure.center,componentHashes,mapping,atoms:structure.atoms.map(({id,residueId,serial,name,element,alt})=>({id,residueId,serial,name,element,alt})),residues:structure.residues.map(({id,chainId,authorSequence,insertionCode,name})=>({id,chainId,authorSequence,insertionCode,name})),backboneLinks,breaks:structure.breaks,diagnostics:structure.diagnostics}},
       fidelity:`Static deposited experimental model${resolution?` at ${resolution} Å resolution`:''}; does not establish atomic precision, catalytic chemistry, dynamic trajectories or processive motion. Protein is a CA trace, not a molecular surface; nucleic coordinates are unchanged. No symmetry mates or biological-assembly transforms applied. ${caveats?`Depositor caveat: ${caveats}`:''}`}};
   const bytes=await createModelGLB({parts});signal?.throwIfAborted();return {bytes,context};
 }

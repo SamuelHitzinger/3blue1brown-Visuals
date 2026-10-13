@@ -1,0 +1,216 @@
+{
+  "approved": true,
+  "sourceSha256": "6dd9e04c82aa5912b7bea8409f92221e411e6657a459401dfea49045675a97dc",
+  "attempt": 2,
+  "evidence": {
+    "backend": "native-webgpu",
+    "frames": [
+      {
+        "time": 0,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-0.png"
+      },
+      {
+        "time": 0.5,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-1.png"
+      },
+      {
+        "time": 4.4,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-2.png"
+      },
+      {
+        "time": 7.8500000000000005,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-3.png"
+      },
+      {
+        "time": 12.177173913043479,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-4.png"
+      },
+      {
+        "time": 16.547463768115957,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-5.png"
+      },
+      {
+        "time": 20.15,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-6.png"
+      },
+      {
+        "time": 23.50833333333333,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-7.png"
+      },
+      {
+        "time": 26.866666666666664,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-8.png"
+      },
+      {
+        "time": 32.641666666666666,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-9.png"
+      },
+      {
+        "time": 36.94166666666666,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-10.png"
+      },
+      {
+        "time": 40.3,
+        "width": 1280,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-11.png"
+      },
+      {
+        "time": 0,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-0.png"
+      },
+      {
+        "time": 0.5,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-1.png"
+      },
+      {
+        "time": 4.4,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-2.png"
+      },
+      {
+        "time": 7.8500000000000005,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-3.png"
+      },
+      {
+        "time": 12.177173913043479,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-4.png"
+      },
+      {
+        "time": 16.547463768115957,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-5.png"
+      },
+      {
+        "time": 20.15,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-6.png"
+      },
+      {
+        "time": 23.50833333333333,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-7.png"
+      },
+      {
+        "time": 26.866666666666664,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-8.png"
+      },
+      {
+        "time": 32.641666666666666,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-9.png"
+      },
+      {
+        "time": 36.94166666666666,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-10.png"
+      },
+      {
+        "time": 40.3,
+        "width": 960,
+        "height": 720,
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-11.png"
+      }
+    ],
+    "sheets": [
+      {
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-sheet-0.png",
+        "width": 1280,
+        "height": 720,
+        "times": [
+          0,
+          0.5,
+          4.4,
+          7.8500000000000005,
+          12.177173913043479,
+          16.547463768115957
+        ],
+        "columns": 2
+      },
+      {
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\1280x720-sheet-1.png",
+        "width": 1280,
+        "height": 720,
+        "times": [
+          20.15,
+          23.50833333333333,
+          26.866666666666664,
+          32.641666666666666,
+          36.94166666666666,
+          40.3
+        ],
+        "columns": 2
+      },
+      {
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-sheet-0.png",
+        "width": 960,
+        "height": 720,
+        "times": [
+          0,
+          0.5,
+          4.4,
+          7.8500000000000005,
+          12.177173913043479,
+          16.547463768115957
+        ],
+        "columns": 2
+      },
+      {
+        "path": "C:\\Users\\samue\\.codex\\worktrees\\visual-quality-recovery\\3yellow3white\\data\\molecular-representation-choice\\protein-v2\\runs\\9fa2661f-1992-479a-a358-fdea375804b0\\scene-0.visual\\2\\960x720-sheet-1.png",
+        "width": 960,
+        "height": 720,
+        "times": [
+          20.15,
+          23.50833333333333,
+          26.866666666666664,
+          32.641666666666666,
+          36.94166666666666,
+          40.3
+        ],
+        "columns": 2
+      }
+    ]
+  },
+  "review": {
+    "approved": true,
+    "findings": []
+  }
+}

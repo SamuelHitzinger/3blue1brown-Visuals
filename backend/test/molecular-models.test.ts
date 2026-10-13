@@ -4,6 +4,7 @@ import {join} from 'node:path';
 import {tmpdir} from 'node:os';
 import {parseModelGLB} from 'animlib/core';
 import {prepareMolecularModel} from '../src/molecular-models.js';
+import {describeBundledModel} from '../src/bundled-models.js';
 
 const originalCache=process.env.MOLECULAR_MODEL_CACHE_DIR;
 let fetchSpy:ReturnType<typeof spyOn>|undefined;
@@ -49,6 +50,53 @@ test('publishes deposited chain geometry, CCD nucleotide bonds, common origin an
   expect(again.bytes).toEqual(prepared.bytes);
   expect(fetchSpy).toHaveBeenCalledTimes(2);
   expect(fetchSpy!.mock.calls[0][1]).toMatchObject({redirect:'error'});
+});
+test('publishes compact chain landmarks at independently known deposited sites and rendered mesh centers',async()=>{
+  await mockSource();
+  const prepared=await prepareMolecularModel({accession:'1ABC',chains:['A','1']}),decoded=await parseModelGLB(prepared.bytes);
+  const molecular=describeBundledModel(prepared.context).molecular!;
+  expect(molecular.landmarkFrame).toContain('origin already subtracted');
+  const chainA=molecular.chains.find(chain=>chain.id==='A')!,chainDNA=molecular.chains.find(chain=>chain.id==='1')!;
+  const representative=chainA.landmarks!.find(point=>point.role==='representative')!;
+  expect(representative).toMatchObject({atomId:'1/A/0/1//ALA/CA',residueId:'1/A/0/1//ALA',serial:2,atomName:'CA',residueName:'ALA',authorSequence:1,insertionCode:'',parts:['chain-A-protein-trace-0']});
+  // Raw fixture CA is [1,0,0], common origin [3.05,2,0]; no chain-center substitution.
+  expect(representative.position[0]).toBeCloseTo(-2.05,12);expect(representative.position.slice(1)).toEqual([-2,0]);
+  const last=chainDNA.landmarks!.find(point=>point.role==='last-residue')!;
+  expect(last).toMatchObject({atomId:'1/1/1/2//DA/P',serial:10,atomName:'P',authorSequence:2});
+  expect(last.position[0]).toBeCloseTo(1.55,12);expect(last.position.slice(1)).toEqual([2,0]);
+  expect(chainDNA.landmarks!.some(point=>point.role==='base'||point.role==='sugar')).toBe(false);
+  const atomsBySerial=new Map([[2,[1,0,0]],[5,[4.5,0,0]],[7,[0,4,0]],[8,[1.5,4,0]],[9,[3,4,0]],[10,[4.6,4,0]],[11,[6.1,4,0]]]);
+  for(const chain of molecular.chains){
+    expect(chain.landmarks!.length).toBeLessThanOrEqual(7);
+    for(const point of chain.landmarks!){
+      expect(point.atomId.split('/')[1]).toBe(chain.id);
+      const expected=atomsBySerial.get(point.serial)!;expect(expected).toBeDefined();
+      for(let axis=0;axis<3;axis++)expect(point.position[axis]+prepared.context.origin[axis]).toBeCloseTo(expected[axis],10);
+      for(const name of point.parts){
+        const part=decoded.metadata.parts.find(part=>part.name===name)!,geometry=decoded.primitives[part.primitives[0]].geometry;
+        const spans=(prepared.context.provenance.converter.options.mapping as Record<string,{id:string;first:number;count:number}[]>)[name];
+        const span=spans.find(span=>span.id===point.atomId)!;expect(span).toBeDefined();
+        for(let axis=0;axis<3;axis++)expect(geometry.vertices!.slice(span.first,span.first+6).reduce((sum,vertex)=>sum+vertex[axis],0)/6).toBeCloseTo(point.position[axis],5);
+      }
+    }
+  }
+  expect(JSON.stringify(molecular).length).toBeLessThan(6000);
+  expect(describeBundledModel(prepared.context).provenance).not.toHaveProperty('converter');
+});
+test('nucleotide anatomy landmarks use deposited atoms in one representative residue without inventing missing sites',async()=>{
+  const source=pdb.replace('\nEND',`\n${atom(12,"C1'",'DA','1',2,5.1,5)}\n${atom(13,'C6','DA','1',2,5.6,6)}\n${atom(14,'P','DA','1',3,8,4)}\nEND`);
+  await mockSource(source);
+  const {context}=await prepareMolecularModel({accession:'1ABC',chains:['A','1']});
+  const points=context.molecular!.chains.find(chain=>chain.id==='1')!.landmarks!;
+  expect(context.origin).toEqual([4,3,0]);
+  expect(points).toHaveLength(6);
+  expect(points.find(point=>point.role==='representative')).toMatchObject({serial:10,atomName:'P',authorSequence:2});
+  expect(points.find(point=>point.role==='first-residue')).toMatchObject({serial:7,authorSequence:1});
+  expect(points.find(point=>point.role==='last-residue')).toMatchObject({serial:14,authorSequence:3});
+  const base=points.find(point=>point.role==='base')!,sugar=points.find(point=>point.role==='sugar')!,phosphate=points.find(point=>point.role==='phosphate')!;
+  expect(base).toMatchObject({serial:13,atomName:'C6',residueId:'1/1/1/2//DA'});expect(base.position[0]).toBeCloseTo(1.6,12);expect(base.position.slice(1)).toEqual([3,0]);
+  expect(sugar).toMatchObject({serial:12,atomName:"C1'",residueId:base.residueId});expect(sugar.position[0]).toBeCloseTo(1.1,12);expect(sugar.position.slice(1)).toEqual([2,0]);
+  expect(phosphate).toMatchObject({serial:10,atomName:'P',residueId:base.residueId});expect(phosphate.position[0]).toBeCloseTo(.6,12);expect(phosphate.position.slice(1)).toEqual([1,0]);
 });
 test('rejects unknown chains instead of silently dropping requested geometry',async()=>{
   await mockSource();await expect(prepareMolecularModel({accession:'1ABC',chains:['Z']})).rejects.toThrow('Requested PDB chain Z has no selected atoms');
