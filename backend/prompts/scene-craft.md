@@ -22,7 +22,7 @@ Compose for both 16:9 and 4:3. Keep essential labels and the main inference out 
 
 Check labels against the full path of moving geometry. Remove an obsolete label before geometry crosses it, or place it outside that path. Separate outgoing and incoming annotations when their overlap would obscure meaning; inspect both glyph layers during formula morphs.
 
-Only essential active notation belongs on screen. Remove obsolete equations and definitions completely, including dimmed copies. Worked solutions may use many expressions over time, retaining only steps being compared or transformed. Give each annotation a reveal and an exit tied to measured narration. Retire introductory titles after establishing the object. Keep source credits and preparation jargon in metadata or a brief closing credit; label the visible meaning in learner vocabulary, not asset terminology. Reserve space for the full navigable model so rotation cannot cover fixed explanations.
+Only essential active notation belongs on screen. Remove obsolete equations and definitions completely, including dimmed copies. Worked solutions may use many expressions over time, retaining only steps being compared or transformed. Give each annotation a reveal and an exit tied to measured narration. Retire introductory titles after establishing the object. Keep source credits and preparation jargon in metadata or a brief closing credit; label the visible meaning in learner vocabulary, not asset terminology. Keep fixed explanations outside the 3D viewport rectangle, which can occlude screen text even where its background looks empty. Retire gesture hints once introduced; player controls remain available.
 
 ## Coherent construction
 
