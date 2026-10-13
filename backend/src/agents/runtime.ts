@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url';
 import type { InspectionOptions, InspectionReport, PreviewOptions } from './scene-inspection.js';
 import type { PreviewFrame } from './scene-preview.js';
 import type { CatalogTools } from './catalog.js';
+import type { ReferenceTools } from './reference-tools.js';
 
 const webAccessExtension = fileURLToPath(import.meta.resolve('pi-web-access/dist/index.js'));
 
@@ -50,6 +51,8 @@ export interface AgentRunMetrics {
 export interface AgentTask {
   /** Local allowlisted authoring knowledge; never arbitrary file access. */
   catalogTools?: CatalogTools;
+  /** Verbatim recipes omitted from the prompt, scoped to its immutable API snapshot. */
+  referenceTools?: ReferenceTools;
   /** Disable external research for private source processing; defaults to true. */
   allowWeb?: boolean;
   /** Host-owned asset publication, scoped to this generation job. */
@@ -208,13 +211,25 @@ export class PiAgentRunner implements AgentRunner {
       })] : [];
       const customTools: ToolDefinition[] =
         [...modelTools, ...(task.validate ? [...(mode === 'submit-only' ? [] : [validationTool]), ...(isSubmission ? [submissionTool] : [])] : [])];
+      if (task.referenceTools) customTools.push(defineTool({
+        name: 'read_animlib_reference', label: 'Read animlib recipe',
+        description: 'Read a verbatim worked recipe from the indexed animlib reference. Use an exact ID from the supplied worked recipe index. Bounded pages include nextOffset when more remains; read all pages needed before using the example. Core API and quality guidance remain in the system prompt. Does not read arbitrary files or access the network.',
+        parameters: Type.Object({ id: Type.String({ minLength: 1, maxLength: 160 }),
+          offset: Type.Optional(Type.Integer({ minimum: 0 })), limit: Type.Optional(Type.Integer({ minimum: 1000, maximum: 16000 })) }),
+        async execute(_id, input) {
+          try { return { content: [{ type: 'text', text: JSON.stringify(await task.referenceTools!.read(input, signal)) }], details: {} }; }
+          catch (error) { return { content: [{ type: 'text', text: validationMessage(error) }], details: {}, isError: true }; }
+        },
+      }));
       if (task.catalogTools) {
         customTools.push(defineTool({
           name: 'search_visualization_catalog', label: 'Search visualization catalog',
           description: 'Search local animlib resources, reusable techniques and quality foundations by the visual relationship or data needed. Returns bounded metadata and pagination; read selected IDs for inputs, preparation, provenance and limits. Does not load assets.',
           parameters: Type.Object({query: Type.Optional(Type.String({maxLength:240})),
             tier: Type.Optional(Type.Union([Type.Literal('resource'),Type.Literal('technique'),Type.Literal('foundation')])),
-            offset: Type.Optional(Type.Integer({minimum:0,maximum:100000})), limit: Type.Optional(Type.Integer({minimum:1,maximum:20}))}),
+            domain: Type.Optional(Type.String({maxLength:60})),
+            readiness: Type.Optional(Type.Union([Type.Literal('ready'),Type.Literal('host-preparation'),Type.Literal('reference')])),
+            offset: Type.Optional(Type.Integer({minimum:0,maximum:256000})), limit: Type.Optional(Type.Integer({minimum:1,maximum:20}))}),
           async execute(_id, input) {
             try { return {content:[{type:'text',text:JSON.stringify(await task.catalogTools!.search(input,signal))}],details:{}}; }
             catch(error) { return {content:[{type:'text',text:validationMessage(error)}],details:{},isError:true}; }

@@ -28,6 +28,7 @@ films. They write sources/manifests/frame requests, not encoded films.
 
 | Operation | Generator under `shared/animlib/demo/expansion/` | Output under `data/animlib-expansion/` | Independent review |
 | --- | --- | --- | --- |
+| Supplied vibration modes → geometric displacement sum | `coupled-modes-proof.mjs` | Defaults to `.tmp/interdisciplinary-proof/` (override with first argument); source, metrics and native frames | [Native proof ready](../../../../docs/animlib-expansion/interdisciplinary-independent-review.md); encoded film unverified |
 | Compact graph frontier | `compact-frontier-3b1b.mjs` | `compact-frontier-3b1b/manifest.json`, `frames.json` | [Ready](../../../../docs/animlib-expansion/compact-frontier-3b1b-independent-review.md) |
 | Logistic residual; event/rate/state; projected trajectory | `science-3b1b.mjs` | `science-3b1b/{logistic-residual,artem-state,neural-trajectory}/manifest.json`, `frames-input.json` | [All three ready](../../../../docs/animlib-expansion/science-3b1b-independent-review.md) |
 | Local coil formation → hold → packing | `peptide-3b1b-revision5.mjs` | `peptide-3b1b-revision5/peptide-manifest.json`, `peptide-frames.json` | [Ready](../../../../docs/animlib-expansion/peptide-3b1b-revision5-independent-review.md) |

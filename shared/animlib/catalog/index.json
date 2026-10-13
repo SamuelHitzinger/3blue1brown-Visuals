@@ -3,6 +3,8 @@
   "shards": [
     "indexes/resource.json",
     "indexes/technique.json",
-    "indexes/foundation.json"
+    "indexes/foundation.json",
+    "indexes/science.json",
+    "indexes/data-sources.json"
   ]
 }

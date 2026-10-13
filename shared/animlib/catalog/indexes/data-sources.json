@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "horizons-ephemerides",
+      "title": "JPL Horizons ephemeris source",
+      "description": "Reference for preparing dated solar-system state vectors with explicit target, origin, frame, time scale and units before rendering.",
+      "tier": "resource",
+      "domains": [
+        "astronomy",
+        "physics"
+      ],
+      "tags": [
+        "NASA",
+        "JPL",
+        "Horizons",
+        "ephemeris",
+        "orbit",
+        "state vector"
+      ],
+      "aliases": [
+        "planetary data",
+        "solar system positions"
+      ],
+      "capabilities": [
+        "external-preparation: ephemeris selection and parsing",
+        "s.sampledState"
+      ],
+      "relatedIds": [
+        "orbital-mechanics",
+        "sampled-trajectories"
+      ],
+      "readiness": "reference",
+      "document": "resources/horizons-ephemerides.md",
+      "provenance": "NASA JPL Solar System Dynamics Horizons manual, checked 2026-10-14; no downloaded ephemeris is bundled by this record.",
+      "limitations": [
+        "No Horizons connector or parser is installed in the production agent pipeline.",
+        "Exact request, returned metadata, units, frame, source snapshot and applicable usage terms must accompany prepared samples."
+      ]
+    },
+    {
+      "id": "usgs-elevation-data",
+      "title": "USGS elevation-data preparation source",
+      "description": "Reference for selecting and preparing a bounded elevation grid while preserving projection, datum, resolution, units and missing data.",
+      "tier": "resource",
+      "domains": [
+        "geoscience",
+        "environment",
+        "engineering"
+      ],
+      "tags": [
+        "USGS",
+        "DEM",
+        "elevation",
+        "terrain",
+        "GIS",
+        "topography"
+      ],
+      "aliases": [
+        "digital elevation database",
+        "terrain data",
+        "heightmap source"
+      ],
+      "capabilities": [
+        "external-preparation: raster selection and reprojection",
+        "s.mesh"
+      ],
+      "relatedIds": [
+        "terrain-scalars",
+        "native-model-packages"
+      ],
+      "readiness": "reference",
+      "document": "resources/usgs-elevation-data.md",
+      "provenance": "USGS DEM metadata documentation and glossary, checked 2026-10-14; this record does not bundle or fetch a dataset.",
+      "limitations": [
+        "No GeoTIFF reader, GIS reprojection or elevation downloader is installed in scene or agent tools.",
+        "Product coverage and resolution vary; preserve each selected product metadata and usage terms."
+      ]
+    }
+  ]
+}

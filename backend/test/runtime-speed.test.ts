@@ -9,6 +9,7 @@ import { createModelRuntime } from '../src/agents/auth.js';
 import { agentConfig } from '../src/agents/config.js';
 import { PiAgentRunner } from '../src/agents/runtime.js';
 import type { AgentRunMetrics, AgentTask } from '../src/agents/runtime.js';
+import { createReferenceTools } from '../src/agents/reference-tools.js';
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(path => rm(path, { recursive: true, force: true }))); });
@@ -43,11 +44,37 @@ async function harness(outputs: AssistantMessage[], wait?: (ms: number, signal?:
 }
 const base = { systemPrompt: 'Author a complete scene.', prompt: 'Generate a scene.' };
 
-function sceneCall(name: string, args: Record<string, string | number[] | string[]>, id = crypto.randomUUID()) {
+function sceneCall(name: string, args: Record<string, string | number | string[] | number[]>, id = crypto.randomUUID()) {
   const result = reply('', 'toolUse');
   result.content = [{ type: 'toolCall', id, name, arguments: args }];
   return result;
 }
+
+test('bounded recipe tool remains available without web access and reports failed reads for recovery', async () => {
+  const { runner, contexts } = await harness([
+    sceneCall('read_animlib_reference', { id: '../../private' }),
+    sceneCall('read_animlib_reference', { id: 'example', offset: 1000, limit: 1000 }),
+    reply('complete'),
+  ]);
+  const referenceTools = createReferenceTools([{ id: 'example', title: 'Recipe', content: 'a'.repeat(1000) + 'correct page' }]);
+  expect(await runner.run({ ...base, referenceTools, allowWeb: false })).toBe('complete');
+  const names = contexts[0].messages.flatMap(m => m.role === 'system' ? (m.toolsAdded ?? []).map(t => t.name) : []);
+  expect(names).toContain('read_animlib_reference'); expect(names).not.toContain('web_enable');
+  expect(JSON.stringify(contexts[2])).toContain('Unknown animlib reference ID');
+  const result = contexts[2].messages.find(m => m.role === 'toolResult' && m.toolCallId !== undefined && JSON.stringify(m.content).includes('correct page'));
+  expect(result).toBeDefined(); expect(JSON.stringify(result)).toContain('1012');
+});
+
+test('catalog search forwards discipline and readiness filters', async () => {
+  const query = { query: 'normal modes', domain: 'physics', readiness: 'ready', limit: 2 };
+  const { runner } = await harness([sceneCall('search_visualization_catalog', query), reply('complete')]);
+  let searched: unknown;
+  await runner.run({ ...base, allowWeb: false, catalogTools: {
+    async search(input) { searched = input; return { entries: [], total: 0, offset: 0, limit: 2 }; },
+    async read() { throw new Error('Not required'); },
+  } });
+  expect(searched).toEqual(query);
+});
 const inspectionReport = { viewport: { width: 960, height: 540 }, times: [1], warnings: [], bounds: [], truncated: false, note: 'sampled' };
 const previewImage = { type: 'image' as const, mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGOQi7rzHwAEQgJUZSSrPwAAAABJRU5ErkJggg==' };
 

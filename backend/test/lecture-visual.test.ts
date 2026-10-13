@@ -45,6 +45,11 @@ test('lecture visual generation runs authoritative compiler and mandatory review
   expect(result.source).toBe(scene); expect(result.duration).toBe(12); expect(reviewed).toBe(true);
   expect(tasks).toHaveLength(1); expect(tasks[0].sceneTools?.inspect).toBeDefined();
   expect(tasks[0].catalogTools).toBeDefined(); expect(tasks[0].allowWeb).toBe(false);
+  expect(tasks[0].referenceTools).toBeDefined(); expect(tasks[0].outputMode).toBe('validated-reference');
+  expect(tasks[0].systemPrompt).toContain('read_animlib_reference');
+  const recipe = await tasks[0].referenceTools!.read({id:'coordinate-maps-basis-vectors-and-algebra'},new AbortController().signal);
+  expect(recipe.content).toContain('```js scene');
+  expect(tasks[0].systemPrompt.includes(recipe.content)).toBe(false);
   expect(tasks[0].systemPrompt).toContain('silent');
   expect(await readdir(join(root, 'lectures'))).toEqual([]);
 });
@@ -53,6 +58,19 @@ test('unavailable rendered review never publishes an unreviewed lecture visual',
   const root = await mkdtemp(join(tmpdir(), 'lecture-visual-')); directories.push(root);
   const generate = createLectureVisualGenerator({ async run() { return scene; } }, root, { visualGate: async () => { throw new Error('Renderer unavailable'); } });
   await expect(generate(input, new AbortController().signal)).rejects.toThrow('Renderer unavailable');
+  expect(await readdir(join(root, 'lectures'))).toEqual([]);
+});
+
+test('review output still receives final validation and cancelled cached candidates cannot publish', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'lecture-visual-')); directories.push(root);
+  const runner = { async run(task: AgentTask) { await task.validate!(scene); return scene; } };
+  const invalid = createLectureVisualGenerator(runner, root, { visualGate: async () => scene.replace('s.wait(12)', 's.wait(11)') });
+  await expect(invalid(input, new AbortController().signal)).rejects.toThrow('12');
+  const controller = new AbortController();
+  const cancelled = createLectureVisualGenerator(runner, root, { visualGate: async () => {
+    controller.abort(new Error('cancelled after review')); return scene;
+  } });
+  await expect(cancelled(input, controller.signal)).rejects.toThrow('cancelled after review');
   expect(await readdir(join(root, 'lectures'))).toEqual([]);
 });
 

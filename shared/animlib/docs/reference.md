@@ -3754,3 +3754,41 @@ Open `/model-viewer.html` in the demo to import a local GLB, orbit, highlight na
 parts, and replay rotation. `/models.html` runs focused WebGL2/WebGPU browser
 checks; `npm --workspace animlib run test:gpu` includes native Vulkan model pixel
 checks when the browser has no WebGPU adapter.
+
+## Bounded scientific state
+
+Construct scientific data once, then bind ordinary geometry to its absolute-time
+samples. These helpers are available on every scene/view context. Hosts use the
+same methods from `createScientificStateBuilders()` exported by `animlib/core`.
+They do not choose layouts, solve arbitrary physics, or infer scientific data.
+
+- `s.modalState({modes:[{shape,amplitude,angularFrequency,phase?}],equilibrium?})`
+  returns `at(time) -> {displacement,position,velocity,contributions}`.
+  Each contribution is `shape * amplitude * cos(angularFrequency*time+phase)`;
+  displacement sums contributions, position adds equilibrium, and velocity is
+  the exact derivative. Use explicit mode shapes/frequencies: no eigenproblem
+  is solved. At most 32 modes and 64 coordinates. Construct once, sample many.
+- `s.conservativeTransport({initial,transfers:[{id,from,to,fraction}],steps?})`
+  returns `at(integerStep) -> {values,flows}`. Zero-based compartment indices;
+  fractions apply simultaneously to the source's beginning-of-step mass.
+  Nonnegative outgoing fractions sum to at most one; the rest stays at source.
+  `flows` are `{id,from,to,amount}` moving this step to the next, and are empty
+  at the final step. Prepares up to 256 steps for ≤64 compartments/512 edges.
+  This is a discrete conservative update, not continuous-time dynamics.
+- `s.complexInterference({waves:[{amplitude:[real,imaginary],waveVector?,angularFrequency?,phase?}]})`
+  returns `at(time,position?) -> {components,amplitude,intensity}`. The phase is
+  `phase + waveVector dot position - angularFrequency*time`; omitted values
+  are zero. Sum complex components before squaring their magnitude. Intensity
+  is not a normalized probability. At most 64 waves; no quantum/PDE solver.
+- `s.eventRates({events,times,bandwidth})` returns `{times,values}` containing
+  aligned Gaussian kernel rates, ready for `s.sampledState({...rates,projection})`.
+  Events are arrays per channel; times strictly increase; bandwidth is a positive
+  standard deviation in the same time units. Rates have inverse-time units.
+  At most 64 channels, 10,000 events, 20,000 output component slots, and one
+  million kernel evaluations. Reuse prepared rates instead of convolving per frame.
+
+Inputs are validated/copied once; snapshots are independent arrays. Bounds,
+units, formulas, numerical limits, and runnable small source recipes are in
+[scientific state](scientific-state.md). Recipes are construction starting points,
+not approved complete films. Use local causal geometry and the existing review
+gates; identify illustrative data and the scientific assumptions behind it.

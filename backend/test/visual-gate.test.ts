@@ -9,13 +9,15 @@ import { sourceHash } from '../src/agents/visual-edits.js';
 import { createModelGLB, parseModelGLB } from 'animlib/core';
 import { loadPrompt } from '../src/agents/prompts.js';
 import { catalogTools } from '../src/agents/catalog.js';
+import { createReferenceTools } from '../src/agents/reference-tools.js';
+const referenceTools = createReferenceTools([{ id:'sample',title:'Recipe',content:'Complete example.' }]);
 const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(root=>rm(root,{recursive:true,force:true})));});
 const source=`export default scene({audio:'voice',end:'hold'},s=>{s.text('label',{text:'DNA',position:[5,0]});s.wait(4);});`;
 const repair=source.replace('[5,0]','[0,0]');
 async function fixture(){const directory=await mkdtemp(join(tmpdir(),'visual-gate-'));roots.push(directory);return {
   recoveryWait:async()=>{},source,directory,index:0,videoId:crypto.randomUUID(),signal:new AbortController().signal,
-  task:{systemPrompt:'Same style and complete API.',prompt:'Authoritative narration and request.', catalogTools, allowWeb:false},
+  task:{systemPrompt:'Same style and complete API.',prompt:'Authoritative narration and request.', catalogTools, referenceTools, allowWeb:false},
   input:{audioAssetId:'voice',endMode:'hold' as const,scene:{id:'beat-1',durationSec:4},planning:{}},
   validate:async(value:string)=>{await compileSource(value);},
 };}
@@ -48,7 +50,7 @@ test('image rejection produces an automatically repaired candidate that must be 
   const result=await reviewGeneratedScene({...input,runner,renderFrames});
   expect(result).toBe(repair);expect(rendered).toEqual([source,repair]);
   expect(tasks.map(task=>task.logContext?.stage)).toEqual(['review','repair','review']);
-  tasks.forEach(task => { expect(task.catalogTools).toBe(catalogTools); expect(task.allowWeb).toBe(false); });
+  tasks.forEach(task => { expect(task.catalogTools).toBe(catalogTools); expect(task.referenceTools).toBe(referenceTools); expect(task.allowWeb).toBe(false); });
   expect(tasks[0].images).toHaveLength(2);expect(tasks[2].images).toHaveLength(2);
   expect(tasks[2].prompt).toContain(repair);
   expect(tasks[0].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-verify')}`);
@@ -99,6 +101,7 @@ test('invalid patches fall back to full regeneration, which must render and pass
   const input=await fixture();let renders=0,patches=0,rewrites=0;
   const result=await reviewGeneratedScene({...input,renderFrames:async()=>{renders++;return {backend:'test',frames:[],sheets:[]};},runner:{async run(task){
     expect(task.catalogTools).toBe(catalogTools);
+    expect(task.referenceTools).toBe(referenceTools);
     expect(task.allowWeb).toBe(false);
     if(task.logContext?.stage==='repair'){
       if(task.outputMode==='text'){rewrites++;return repair;}

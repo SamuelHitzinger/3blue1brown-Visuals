@@ -1,3 +1,6 @@
+import { createHash } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+
 // Explicit coverage makes documentation changes require an authoring-scope review.
 // Never silently discard a newly added API section.
 const headings = [
@@ -80,23 +83,30 @@ const headings = [
   '## Imported static 3D models',
   '### Registering and delivering models',
   '### Scene-agent publication',
+  '## Bounded scientific state',
 ];
+
+function scanReferenceHeadings(text: string) {
+  const sections: { heading: string; line: number; offset: number }[] = [];
+  let fence: { marker: string; length: number } | undefined;
+  let offset = 0;
+  for (const [line, value] of text.split('\n').entries()) {
+    const marker = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(value);
+    if (fence) {
+      if (marker && marker[1][0] === fence.marker && marker[1].length >= fence.length && !marker[2].trim()) fence = undefined;
+    } else if (marker) fence = { marker: marker[1][0], length: marker[1].length };
+    else if (/^ {0,3}#{1,6}(?:\s|$)/.test(value)) sections.push({ heading: value, line, offset });
+    offset += value.length + 1;
+  }
+  if (fence) throw new Error('Unclosed fence in animlib reference.');
+  return sections;
+}
 
 /** Production scene-authoring reference; preserves retained sections verbatim (LF). */
 export function buildAuthoringReference(reference: string): string {
-  const lines = reference.replaceAll('\r\n', '\n').split('\n');
-  const sections: { heading: string; line: number }[] = [];
-  let fence: { marker: string; length: number } | undefined;
-  for (const [line, text] of lines.entries()) {
-    const marker = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(text);
-    if (fence) {
-      if (marker && marker[1][0] === fence.marker && marker[1].length >= fence.length && !marker[2].trim()) fence = undefined;
-      continue;
-    }
-    if (marker) { fence = { marker: marker[1][0], length: marker[1].length }; continue; }
-    if (/^ {0,3}#{1,6}(?:\s|$)/.test(text)) sections.push({ heading: text, line });
-  }
-  if (fence) throw new Error('Unclosed fence in animlib reference.');
+  const normalized = reference.replaceAll('\r\n', '\n');
+  const lines = normalized.split('\n');
+  const sections = scanReferenceHeadings(normalized);
   if (sections.length !== headings.length || sections.some((section, i) => section.heading !== headings[i])) {
     throw new Error('Unexpected animlib reference structure; review authoring section coverage before extracting.');
   }
@@ -117,4 +127,56 @@ export function buildAuthoringReference(reference: string): string {
     return lines.slice(from, to).join('\n').trim();
   });
   return ['# animlib scene-authoring reference', ...selected].join('\n\n') + '\n';
+}
+
+export interface AuthoringReferenceSection { id: string; title: string; content: string }
+
+/** Keep the complete API and craft contract in context; retrieve only worked recipes on demand. */
+export function buildAuthoringContext(reference: string): { reference: string; sections: AuthoringReferenceSection[] } {
+  // The full builder checks every heading first, so new API content cannot disappear silently.
+  const complete = buildAuthoringReference(reference);
+  const headings = scanReferenceHeadings(complete);
+  const start = headings.find(section => section.heading === '### General animation recipes')?.offset;
+  const end = headings.find(section => section.heading === '### Execution environment')?.offset;
+  if (start === undefined || end === undefined || end <= start) throw new Error('Recipe reference boundaries are missing.');
+  const recipes = complete.slice(start, end);
+  const boundaries = scanReferenceHeadings(recipes).map(section => ({ title: section.heading.replace(/^#+ /, ''), offset: section.offset }));
+  const sections = boundaries.map((section, index) => ({
+    id: section.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''),
+    title: section.title,
+    content: recipes.slice(section.offset, boundaries[index + 1]?.offset ?? recipes.length),
+  }));
+  if (!sections.length || sections.map(section => section.content).join('') !== recipes
+    || new Set(sections.map(section => section.id)).size !== sections.length) throw new Error('Incomplete or duplicate recipe reference sections.');
+  const index = [
+    '### Worked recipe index',
+    `Recipe snapshot SHA-256: ${createHash('sha256').update(recipes).digest('hex')}.`,
+    'The complete API remains above and below. Worked examples are available verbatim through read_animlib_reference({id, offset?, limit?}). Read the relevant recipe before using an unfamiliar method; follow nextOffset until the selected section is complete. All examples and host/scene execution boundaries remain authoritative. A recipe is guidance, never a restriction on the approved explanation. The tool reads only the immutable sections listed here, not arbitrary files.',
+    ...sections.map(section => `- ${section.id} (${section.content.length} characters): ${section.title}`),
+  ].join('\n');
+  return { reference: complete.slice(0, start) + index + '\n\n' + complete.slice(end), sections };
+}
+
+/** Fixed repository sources only; author, reviewer and repair share the same immutable snapshot. */
+export async function loadAuthoringContext(): Promise<ReturnType<typeof buildAuthoringContext>> {
+  const sources = [
+    { id: 'scientific-modal-state', title: 'Modal motion construction seed', file: 'catalog/recipes/modal-state.js' },
+    { id: 'scientific-conservative-transport', title: 'Conservative transport construction seed', file: 'catalog/recipes/conservative-transport.js' },
+    { id: 'scientific-complex-interference', title: 'Complex interference construction seed', file: 'catalog/recipes/complex-interference.js' },
+    { id: 'scientific-event-rates', title: 'Event-rate construction seed', file: 'catalog/recipes/event-rates.js' },
+    { id: 'scientific-state-guide', title: 'Scientific state contracts, limits and interpretation', file: 'docs/scientific-state.md' },
+  ];
+  const [reference, ...contents] = await Promise.all([
+    readFile(new URL('../../../shared/animlib/docs/reference.md', import.meta.url), 'utf8'),
+    ...sources.map(source => readFile(new URL(`../../../shared/animlib/${source.file}`, import.meta.url), 'utf8')),
+  ]);
+  const context = buildAuthoringContext(reference);
+  const extra = sources.map(({ id, title }, i) => ({ id, title, content: contents[i] }));
+  const index = [
+    '### Scientific construction references',
+    `Scientific reference snapshot SHA-256: ${createHash('sha256').update(JSON.stringify(extra)).digest('hex')}.`,
+    'Read these exact repository sources with read_animlib_reference. Construction seeds are runnable starting points, not complete approved explanations. Keep the normal inspection and rendered review; add the causal construction and local evidence required by the storyboard.',
+    ...extra.map(section => `- ${section.id} (${section.content.length} characters): ${section.title}`),
+  ].join('\n');
+  return { reference: context.reference + '\n' + index + '\n', sections: [...context.sections, ...extra] };
 }

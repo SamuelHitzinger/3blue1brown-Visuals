@@ -11,6 +11,11 @@ export interface LogFields {
   completedChunks?: number;
   totalChunks?: number;
   elapsedMs?: number;
+  providerCalls?: number;
+  providerMs?: number;
+  inputTokens?: number;
+  outputTokens?: number;
+  cacheReadTokens?: number;
   warnings?: number;
   frames?: number;
   cached?: boolean;

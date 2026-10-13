@@ -1,9 +1,62 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { buildAuthoringReference } from '../src/agents/authoring-reference.js';
+import { buildAuthoringReference, buildAuthoringContext, loadAuthoringContext } from '../src/agents/authoring-reference.js';
+import { createReferenceTools } from '../src/agents/reference-tools.js';
 import { compileSource, evaluateScene } from 'animlib/core';
 
 const reference = readFileSync(new URL('../../shared/animlib/docs/reference.md', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
+
+test('compact context moves only complete recipes to an indexed verbatim reference', () => {
+  const context = buildAuthoringContext(reference);
+  const recipes = between('### General animation recipes', '## 7. Live source submissions');
+  expect(context.sections.map(section => section.content).join('').trim()).toBe(recipes);
+  expect(context.reference.includes(context.sections.find(section => section.id === 'coordinate-maps-basis-vectors-and-algebra')!.content)).toBe(false);
+  expect(context.reference).toContain('read_animlib_reference');
+  for (const section of context.sections) expect(context.reference).toContain(section.id);
+  expect(context.sections.find(section => section.id === 'coordinate-maps-basis-vectors-and-algebra')?.content).toContain('```js scene');
+  expect(context.reference).toContain(between('### Fixed-topology deformation and scene time', '### Control appearance'));
+  expect(context.reference).toContain(between('### Domain helpers and prepared assets', '### General animation recipes'));
+  expect(context.reference).toContain(between('## Bounded scientific state'));
+  expect(context.reference.length).toBeLessThan(buildAuthoringReference(reference).length - 60_000);
+});
+
+test('compact extraction ignores headings in recipe fences and rejects new unreviewed sections', () => {
+  const modified = reference.replace('```js scene\n', '```js scene\n#### This stays inside an example\n');
+  const context = buildAuthoringContext(modified);
+  expect(context.sections.map(section => section.content).join('')).toContain('#### This stays inside an example');
+  expect(context.sections.some(section => section.id === 'this-stays-inside-an-example')).toBe(false);
+  const earlierExample = reference.replace('### Color palettes\n', '### Color palettes\n\n```text\n### General animation recipes\n```\n');
+  expect(buildAuthoringContext(earlierExample).sections.map(section => section.content).join('').trim())
+    .toBe(between('### General animation recipes', '## 7. Live source submissions'));
+  expect(() => buildAuthoringContext(reference.replace('### General animation recipes', '### General animation recipes\n#### New discipline'))).toThrow('reference structure');
+});
+
+test('compact prompt fingerprints recipe changes even when their size stays fixed', () => {
+  const context = buildAuthoringContext(reference);
+  const first = context.sections.find(section => section.content.includes('```js scene'))!;
+  const changedRecipe = first.content.replace('```js scene', '```js other');
+  const changed = reference.replace(first.content, changedRecipe);
+  expect(changed.length).toBe(reference.length);
+  expect(buildAuthoringContext(changed).reference === context.reference).toBe(false);
+});
+
+test('loaded context exposes exact canonical scientific recipes without eagerly injecting their code', async () => {
+  const context = await loadAuthoringContext();
+  const tools = createReferenceTools(context.sections);
+  for (const name of ['modal-state', 'conservative-transport', 'complex-interference', 'event-rates']) {
+    const content = readFileSync(new URL(`../../shared/animlib/catalog/recipes/${name}.js`, import.meta.url), 'utf8');
+    const section = context.sections.find(section => section.id === `scientific-${name}`);
+    expect(section?.content).toBe(content);
+    const page = await tools.read({id: `scientific-${name}`}, new AbortController().signal);
+    expect(page.content).toBe(content); expect(page.nextOffset).toBeUndefined();
+    expect(context.reference).toContain(`scientific-${name}`);
+    expect(context.reference.includes(content)).toBe(false);
+  }
+  const guide = readFileSync(new URL('../../shared/animlib/docs/scientific-state.md', import.meta.url), 'utf8');
+  expect(context.sections.find(section => section.id === 'scientific-state-guide')?.content).toBe(guide);
+  expect(context.reference.includes(guide)).toBe(false);
+  expect(context.reference).toContain('Scientific reference snapshot SHA-256');
+});
 function between(start: string, end?: string): string {
   return reference.slice(reference.indexOf(start), end ? reference.indexOf(end) : undefined).trim();
 }

@@ -1,4 +1,6 @@
 import type { SampledState, SampledStateOptions } from './diagrams/sampled-state-types.js';
+import type { ScientificStateBuilders } from './scientific-state-types.js';
+export type * from './scientific-state-types.js';
 export type * from './diagrams/sampled-state-types.js';
 import type { NucleicDuplexProps, NucleicDuplexResult, NucleicTranscriptProps, NucleicTranscriptResult } from './nucleic-types.js';
 import type { NucleicSpliceProps, NucleicSpliceResult, NucleicThreadProps, NucleicThreadResult } from './nucleic-processing-types.js';
@@ -483,7 +485,7 @@ export interface ElementHandle {
   countTo(values: Record<string, number>): AnimationAction;
 }
 
-export interface SceneContext {
+export interface SceneContext extends ScientificStateBuilders {
   modelInfo(asset: string): ModelAssetDescriptor;
   image(id: string, props: ImageProps): ElementHandle;
   circle(id: string, props?: ElementProps): ElementHandle;

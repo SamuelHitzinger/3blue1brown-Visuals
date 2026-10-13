@@ -20,6 +20,7 @@ index retains the exact scope and acceptance history of existing proofs.
 | --- | --- |
 | Watch what the library can animate | [Capability showcase](showcase.md): complete reviewed films with chapter navigation |
 | Choose a public helper or understand budgets | [Helpers and assets](helpers-and-assets.md), [complete API reference](reference.md) |
+| Reuse scientific calculations and domain guidance | [Scientific state](scientific-state.md), [visualization catalog](../catalog/README.md), [measured authoring expansion](../../../docs/animlib-expansion/interdisciplinary-authoring-results.md) |
 | Author a scene without copying an existing film | [Reusable explanatory motion](explanatory-motion.md), the [current visual contract](../../../docs/animlib-expansion/unified-3b1b-direction.md), then [proof entry points](../demo/expansion/README.md) |
 | Select prepared geometry and inspect provenance | [Biological fixture catalog](../fixtures/biological/README.md), [Suzanne](../fixtures/suzanne/README.md), [asset import contract](assets-import.md) |
 | Load assets | `tools/load-assets.mjs`; use descriptor-only `registry.catalog` for generation and keep the registry alive for rendering |
@@ -34,6 +35,7 @@ index retains the exact scope and acceptance history of existing proofs.
 | Coordinates and formulas | `s.plane`, mapped paths/vectors/components; [formula identity transport](identity-transport.md) | Shear and matrix column → sum → row transport |
 | Graphs and queues | `s.graph`, `s.dijkstra`, `s.collection`, [s.compactQueue](compact-queue.md) | Relaxation, equal-value swap, general frontier reorder, compact insertion/extraction |
 | Sampled science data | [s.sampledState](sampled-state.md), aligned `countTo` and path samples | Event → rate → vector, trace → projected trajectory, logistic residual emphasis |
+| Scientific state preparation | [s.modalState / s.conservativeTransport / s.complexInterference / s.eventRates](scientific-state.md) | Numerical invariant and seek tests; [coupled-mode proof and measured scope](../../../docs/animlib-expansion/interdisciplinary-authoring-results.md) |
 | Molecular motion | `s.molecularBackbone`, `s.molecularBackboneGeometry`, `s.articulatedChainPose`, `s.peptidePose` | Deposited representation identity and separate original prescribed peptide poses |
 | Nucleic motion | `s.nucleicDuplex`, `s.nucleicTranscript`, [s.nucleicTranscriptionCycle](nucleic-transcription-cycle.md) | Paired strands, RNA arrival/emergence and exposed repeated transcription cycles |
 | Processing and translation | [s.nucleicSplice / s.nucleicThread](nucleic-processing.md), [s.nucleicTranslationCycle](nucleic-translation.md) | Cut/join topology, bounded pore transport, codon/adaptor/product identity |

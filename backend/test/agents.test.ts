@@ -460,6 +460,11 @@ test.each(['classic', 'interactive', undefined] as const)('%s requests generate 
     expect(task.systemPrompt).not.toContain('# Current animation quality policy');
     expect(task.systemPrompt).toContain('# animlib scene-authoring reference');
     expect(task.catalogTools).toBe(catalogTools);
+    expect(task.referenceTools).toBeDefined();
+    expect(task.systemPrompt).toContain('read_animlib_reference');
+    const recipe = await task.referenceTools!.read({id:'coordinate-maps-basis-vectors-and-algebra'},new AbortController().signal);
+    expect(recipe.content).toContain('```js scene');
+    expect(task.systemPrompt.includes(recipe.content)).toBe(false);
     expect(task.systemPrompt).toContain('search_visualization_catalog');
     expect(task.systemPrompt).not.toContain('### Player API');
     expect(task.systemPrompt).not.toContain('3D is the default');

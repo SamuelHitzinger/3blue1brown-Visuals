@@ -43,7 +43,7 @@ export interface SceneVerificationInput {
 
 export interface VisualGateInput {
   runner: AgentRunner; source: string; input: SceneVerificationInput;
-  task: Pick<AgentTask,'systemPrompt'|'prompt'|'catalogTools'|'allowWeb'>;
+  task: Pick<AgentTask,'systemPrompt'|'prompt'|'catalogTools'|'referenceTools'|'allowWeb'>;
   directory: string; index: number; videoId: string; signal: AbortSignal;
   validate: (source: string) => Promise<unknown>;
   renderFrames?: FrameRenderer;
@@ -91,7 +91,8 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
     await atomicWrite(join(attemptDirectory, `${phase}.prompt.md`), `${task.systemPrompt}\n\n${task.prompt}`);
     try {
       return await logStage({ videoId, sceneIndex: index, stage: phase, attempt: state.attempt }, () => runWithValidationRecovery(runner, {
-        ...task, catalogTools: options.task.catalogTools, allowWeb: options.task.allowWeb, onMetrics: value => { metrics = value; },
+        ...task, catalogTools: options.task.catalogTools, referenceTools: options.task.referenceTools,
+        allowWeb: options.task.allowWeb, onMetrics: value => { metrics = value; },
       }, { diagnosticsPath: join(attemptDirectory, `${phase}.diagnostics.json`), maxAttempts, wait }));
     } finally {
       await atomicWrite(join(attemptDirectory, `${phase}.metrics.json`), JSON.stringify(metrics ?? { elapsedMs: performance.now() - started }, null, 2));

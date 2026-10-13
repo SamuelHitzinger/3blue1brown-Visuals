@@ -1,0 +1,621 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "vector-scalar-fields",
+      "title": "Vector and scalar fields",
+      "description": "Show local field direction, magnitude, potential and gradients in a shared coordinate system; relate sample vectors to the scalar landscape.",
+      "domains": [
+        "physics",
+        "mathematics",
+        "engineering"
+      ],
+      "tags": [
+        "field",
+        "electric",
+        "magnetic",
+        "potential",
+        "gradient",
+        "divergence",
+        "flux"
+      ],
+      "aliases": [
+        "electromagnetic fields",
+        "vector calculus",
+        "electrostatics",
+        "gradient descent"
+      ],
+      "capabilities": [
+        "s.arrow3D",
+        "s.surface",
+        "s.mesh",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "spatial-framing",
+        "linear-algebra-3d",
+        "terrain-scalars"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/vector-scalar-fields.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No Maxwell, fluid or PDE solver; provide the field and boundary conditions.",
+        "Normalized arrows discard magnitude unless separately encoded."
+      ]
+    },
+    {
+      "id": "waves-interference",
+      "title": "Waves and complex interference",
+      "description": "Add complex wave amplitudes before deriving intensity, preserving each source phase and the visible cause of constructive or destructive interference.",
+      "domains": [
+        "physics",
+        "optics",
+        "mathematics"
+      ],
+      "tags": [
+        "wave",
+        "interference",
+        "phase",
+        "amplitude",
+        "intensity",
+        "phasor",
+        "quantum"
+      ],
+      "aliases": [
+        "wave interference",
+        "standing waves",
+        "superposition",
+        "complex amplitude"
+      ],
+      "capabilities": [
+        "s.complexInterference",
+        "s.path",
+        "s.arrow3D",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "signals-fourier",
+        "ray-optics",
+        "coherent-motion"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/waves-interference.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "Computed squared amplitude is not calibrated irradiance or automatically normalized quantum probability.",
+        "No diffraction or wave-equation solver; supply frequencies, wave vectors and phases."
+      ]
+    },
+    {
+      "id": "mechanical-modes",
+      "title": "Mechanical vibration and modal superposition",
+      "description": "Combine supplied mode shapes and frequencies into one displacement and velocity state for coupled oscillators, beams and engineering vibration.",
+      "domains": [
+        "engineering",
+        "physics",
+        "mathematics"
+      ],
+      "tags": [
+        "mechanics",
+        "vibration",
+        "oscillator",
+        "mode",
+        "frequency",
+        "eigenvector",
+        "beam"
+      ],
+      "aliases": [
+        "engineering vibration",
+        "normal modes",
+        "coupled oscillators",
+        "modal analysis",
+        "resonance"
+      ],
+      "capabilities": [
+        "s.modalState",
+        "s.path",
+        "s.deform",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "elastic-deformation",
+        "dynamical-systems",
+        "waves-interference"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/mechanical-modes.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No eigenproblem, damping, forcing or finite-element solver is supplied by modalState.",
+        "Mode shapes and frequencies must be supplied or calculated separately; exaggeration needs a label."
+      ]
+    },
+    {
+      "id": "dynamical-systems",
+      "title": "Dynamics and phase portraits",
+      "description": "Explain state-space flow, equilibria and trajectories using one explicit vector field and verified analytic or sampled solutions.",
+      "domains": [
+        "mathematics",
+        "physics",
+        "ecology",
+        "engineering"
+      ],
+      "tags": [
+        "dynamics",
+        "phase",
+        "trajectory",
+        "equilibrium",
+        "ODE",
+        "differential equation",
+        "stability"
+      ],
+      "aliases": [
+        "differential equations",
+        "phase portrait",
+        "phase space",
+        "state space",
+        "predator prey"
+      ],
+      "capabilities": [
+        "s.sampledState",
+        "s.modalState",
+        "s.path",
+        "s.plane"
+      ],
+      "relatedIds": [
+        "sampled-trajectories",
+        "mechanical-modes",
+        "ecological-flows"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/dynamical-systems.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No general ODE solver or stability inference; trajectory samples require independent validation.",
+        "Display interpolation is not a numerical integration method."
+      ]
+    },
+    {
+      "id": "signals-fourier",
+      "title": "Signals, Fourier components and reconstruction",
+      "description": "Build a signal from supplied frequencies, complex coefficients and a shared time cursor; reveal how each harmonic changes the same reconstruction.",
+      "domains": [
+        "engineering",
+        "mathematics",
+        "physics"
+      ],
+      "tags": [
+        "signal",
+        "Fourier",
+        "frequency",
+        "harmonic",
+        "spectrum",
+        "phase",
+        "filter"
+      ],
+      "aliases": [
+        "Fourier series",
+        "signal processing",
+        "frequency domain",
+        "spectral decomposition"
+      ],
+      "capabilities": [
+        "s.complexInterference",
+        "s.path",
+        "s.sampledState",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "waves-interference",
+        "neural-event-rates",
+        "coherent-motion"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/signals-fourier.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No FFT, coefficient fitting or filter-design engine; coefficients or validated samples are inputs.",
+        "A finite harmonic sum and a sampled signal have distinct truncation and aliasing limits."
+      ]
+    },
+    {
+      "id": "ray-optics",
+      "title": "Ray optics and geometric correspondence",
+      "description": "Construct incident, reflected and refracted rays from a shared interface normal and supplied refractive indices, with locally attached angles.",
+      "domains": [
+        "optics",
+        "physics",
+        "engineering"
+      ],
+      "tags": [
+        "optics",
+        "ray",
+        "reflection",
+        "refraction",
+        "Snell",
+        "lens",
+        "normal"
+      ],
+      "aliases": [
+        "Snell law",
+        "geometric optics",
+        "total internal reflection",
+        "ray tracing"
+      ],
+      "capabilities": [
+        "s.line3D",
+        "s.arrow3D",
+        "s.path",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "waves-interference",
+        "spatial-framing",
+        "coordinate-maps-2d"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/ray-optics.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No general ray tracer, lens optimizer or wave-optics solver.",
+        "Geometrical rays do not establish diffraction, polarization or calibrated power."
+      ]
+    },
+    {
+      "id": "circuit-state",
+      "title": "Circuit state and charge-flow explanations",
+      "description": "Synchronize an authored circuit diagram, capacitor voltage, current and time trace from a supplied circuit solution.",
+      "domains": [
+        "engineering",
+        "physics"
+      ],
+      "tags": [
+        "circuit",
+        "voltage",
+        "current",
+        "charge",
+        "capacitor",
+        "resistor",
+        "RC"
+      ],
+      "aliases": [
+        "electrical circuits",
+        "RC time constant",
+        "capacitor charging",
+        "circuit transient"
+      ],
+      "capabilities": [
+        "s.path",
+        "s.sampledState",
+        "s.bind",
+        "s.latex"
+      ],
+      "relatedIds": [
+        "dynamical-systems",
+        "signals-fourier",
+        "coherent-motion"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/circuit-state.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No SPICE, schematic parser or circuit solver; supply topology, values and a verified solution.",
+        "Moving charge markers are schematic, not literal drift velocity or electromagnetic propagation."
+      ]
+    },
+    {
+      "id": "elastic-deformation",
+      "title": "Elastic deformation and stress correspondence",
+      "description": "Show an explicit displacement field on retained geometry while tying strain, force and supplied stress data to the same material points.",
+      "domains": [
+        "engineering",
+        "physics"
+      ],
+      "tags": [
+        "elasticity",
+        "stress",
+        "strain",
+        "deformation",
+        "beam",
+        "tensor",
+        "material"
+      ],
+      "aliases": [
+        "engineering stress",
+        "mechanical deformation",
+        "stress strain",
+        "finite element visualization"
+      ],
+      "capabilities": [
+        "s.mesh",
+        "s.deform",
+        "s.bind",
+        "s.arrow3D"
+      ],
+      "relatedIds": [
+        "mechanical-modes",
+        "linear-algebra-3d",
+        "vector-scalar-fields"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/elastic-deformation.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No constitutive, finite-element or failure solver; deformation alone does not determine stress.",
+        "Fixed topology only; fracture, remeshing and contact need separate prepared geometry."
+      ]
+    },
+    {
+      "id": "probability-inference",
+      "title": "Probability distributions and Bayesian updating",
+      "description": "Expose sample space, conditioning and normalization with shared probability masses or supplied densities, then derive the updated distribution.",
+      "domains": [
+        "statistics",
+        "mathematics"
+      ],
+      "tags": [
+        "probability",
+        "Bayes",
+        "distribution",
+        "density",
+        "conditional",
+        "posterior",
+        "uncertainty"
+      ],
+      "aliases": [
+        "bayesian probability",
+        "probability distributions",
+        "Bayesian inference",
+        "conditional probability"
+      ],
+      "capabilities": [
+        "s.plane",
+        "s.path",
+        "s.collection",
+        "s.latex"
+      ],
+      "relatedIds": [
+        "coherent-motion",
+        "sampled-trajectories",
+        "geometry-led-explanation"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/probability-inference.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No statistical fitting or inference engine; provide hypotheses, prior, likelihood and assumptions.",
+        "Density height is not probability; interval mass requires integration or declared approximation."
+      ]
+    },
+    {
+      "id": "reaction-transport",
+      "title": "Reaction stoichiometry and conservative transport",
+      "description": "Track conserved quantities through explicit compartments and transfer events; keep chemical stoichiometry separate from assumed kinetic rates.",
+      "domains": [
+        "chemistry",
+        "engineering",
+        "biology"
+      ],
+      "tags": [
+        "reaction",
+        "chemical",
+        "kinetics",
+        "stoichiometry",
+        "transport",
+        "mass",
+        "compartment"
+      ],
+      "aliases": [
+        "chemical reactions",
+        "reaction kinetics",
+        "mass balance",
+        "compartment model"
+      ],
+      "capabilities": [
+        "s.conservativeTransport",
+        "s.sampledState",
+        "s.graph",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "ecological-flows",
+        "molecular-structures",
+        "coherent-motion"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/reaction-transport.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "Conservative transfer is not a chemical-reaction solver and does not infer rate laws from stoichiometry.",
+        "Molecule counts need not be conserved by reactions; choose elemental mass or other valid conserved quantities."
+      ]
+    },
+    {
+      "id": "ecological-flows",
+      "title": "Ecological stocks and compartment flows",
+      "description": "Explain transfers among explicit ecological reservoirs with stable stock identities, consistent units and an auditable conservation ledger.",
+      "domains": [
+        "ecology",
+        "biology",
+        "environment"
+      ],
+      "tags": [
+        "ecology",
+        "ecosystem",
+        "carbon",
+        "reservoir",
+        "stock",
+        "flow",
+        "population"
+      ],
+      "aliases": [
+        "carbon cycle",
+        "ecological transport",
+        "population migration",
+        "compartment flows"
+      ],
+      "capabilities": [
+        "s.conservativeTransport",
+        "s.graph",
+        "s.sampledState",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "reaction-transport",
+        "dynamical-systems",
+        "coherent-motion"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/ecological-flows.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No ecosystem prediction, birth/death model or calibration; assumptions and external reservoirs must be supplied.",
+        "Conservation only applies to the declared closed quantity, not all biological counts or energy availability."
+      ]
+    },
+    {
+      "id": "orbital-mechanics",
+      "title": "Orbital motion and swept-area reasoning",
+      "description": "Keep position, velocity and swept areas tied to one verified orbit with an explicit origin, frame, units and time parameter.",
+      "domains": [
+        "astronomy",
+        "physics"
+      ],
+      "tags": [
+        "orbit",
+        "Kepler",
+        "planet",
+        "ellipse",
+        "gravity",
+        "astronomy",
+        "ephemeris"
+      ],
+      "aliases": [
+        "orbital mechanics",
+        "planetary motion",
+        "Kepler laws",
+        "solar system"
+      ],
+      "capabilities": [
+        "s.sampledState",
+        "s.path",
+        "s.arrow3D",
+        "s.mesh"
+      ],
+      "relatedIds": [
+        "horizons-ephemerides",
+        "sampled-trajectories",
+        "spatial-framing"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/orbital-mechanics.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No N-body propagator or ephemeris downloader; use verified analytic motion or prepared state samples.",
+        "Uniform motion around an ellipse does not demonstrate equal areas in equal times."
+      ]
+    },
+    {
+      "id": "terrain-scalars",
+      "title": "Terrain, scalar maps and cross-sections",
+      "description": "Relate sampled elevation or scalar values to a surface, selected cross-section and locally marked contour under an explicit coordinate transform.",
+      "domains": [
+        "geoscience",
+        "environment",
+        "engineering"
+      ],
+      "tags": [
+        "terrain",
+        "elevation",
+        "topography",
+        "contour",
+        "DEM",
+        "scalar",
+        "map"
+      ],
+      "aliases": [
+        "geospatial terrain",
+        "topographic map",
+        "digital elevation model",
+        "scalar surface"
+      ],
+      "capabilities": [
+        "s.surface",
+        "s.mesh",
+        "s.path",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "usgs-elevation-data",
+        "vector-scalar-fields",
+        "spatial-framing"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/terrain-scalars.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "No GIS raster reader, reprojection, erosion or flood solver; prepare a selected bounded grid on the host.",
+        "Smoothing and vertical exaggeration alter the visible geometry and must be disclosed."
+      ]
+    },
+    {
+      "id": "neural-event-rates",
+      "title": "Neural events, rates and projected state",
+      "description": "Link spike events to bounded kernel-rate estimates and projected population trajectories while preserving channel, time and averaging meaning.",
+      "domains": [
+        "neuroscience",
+        "biology",
+        "statistics"
+      ],
+      "tags": [
+        "neural",
+        "spike",
+        "firing",
+        "rate",
+        "event",
+        "kernel",
+        "population"
+      ],
+      "aliases": [
+        "neural firing rates",
+        "spike trains",
+        "neuroscience raster",
+        "event rate",
+        "population trajectory"
+      ],
+      "capabilities": [
+        "s.eventRates",
+        "s.sampledState",
+        "s.path",
+        "s.bind"
+      ],
+      "relatedIds": [
+        "sampled-trajectories",
+        "signals-fourier",
+        "probability-inference"
+      ],
+      "tier": "technique",
+      "readiness": "ready",
+      "document": "techniques/neural-event-rates.md",
+      "provenance": "Original authoring method grounded in installed animlib contracts; primary scientific references and input requirements recorded in its document (checked 2026-10-14).",
+      "limitations": [
+        "Kernel rates are smoothing estimates, not recovered latent states or evidence of causation.",
+        "A supplied projection is not a learned neural manifold; bandwidth and time units must be explicit."
+      ]
+    }
+  ]
+}
