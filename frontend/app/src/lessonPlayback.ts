@@ -4,7 +4,7 @@ import { sceneRequestTimeline, sceneRequestBarriers } from './sceneRequests.ts'
 import type { TimelineScene } from './sceneRequests.ts'
 import type { VideoManifest } from '../../../shared/video/contract'
 
-type AnimationPlayer = Pick<Player, 'submit' | 'seek' | 'play' | 'pause' | 'subscribe' | 'dispose'> & Partial<Pick<Player, 'registerAssets' | 'unlockAudio' | 'setSceneBarriers'>>
+type AnimationPlayer = Pick<Player, 'submit' | 'seek' | 'play' | 'pause' | 'subscribe' | 'dispose'> & Partial<Pick<Player, 'getState' | 'registerAssets' | 'unlockAudio' | 'setSceneBarriers'>>
 export interface LessonPlaybackState {
   time: number
   sceneId?: string
@@ -14,6 +14,7 @@ export interface LessonPlaybackState {
   ended: boolean
   ready: boolean
   error: string
+  playbackNotice?: string
   buffering?: boolean
   waitingForInsertion?: boolean
   generating?: boolean
@@ -84,7 +85,8 @@ export class LessonPlayback {
       if (!this.changingTimeline && !waitingForInsertion && (ended || state.status === 'ended' && !waitingAtAppend && (!atEdge || this.complete) || state.status === 'blocked')) this.wantsPlay = false
       this.update({
         time, duration, sceneId: state.scene ?? undefined, sceneTime: state.time,
-        playing: state.status === 'playing', ended, error: state.error ?? '',
+        playing: state.status === 'playing', ended, error: state.errorRecovery === 'play' ? '' : state.error ?? '',
+        playbackNotice: state.errorRecovery === 'play' ? state.error ?? '' : '',
         spatialNavigation: state.orbitAvailable ?? Boolean(state.orbitEnabled || state.views?.some(view => view.orbitEnabled)),
         buffering: waitingForInsertion || !this.complete && (atEdge || !duration), waitingForInsertion, wantsPlay: this.wantsPlay,
       })
@@ -119,7 +121,17 @@ export class LessonPlayback {
     if (ended) this.wantsPlay = false
     this.update({ waitingForInsertion, ended, buffering: waitingForInsertion || !this.complete && (atEdge || !this.state.ready), wantsPlay: this.wantsPlay })
     if (this.state.buffering) { if (this.state.playing) this.player.pause(); return }
-    if (this.wantsPlay && !this.suspended) { if (!this.state.playing) await this.player.play() }
+    if (this.wantsPlay && !this.suspended) {
+      if (!this.state.playing) try { await this.player.play() }
+      catch (error) {
+        // The player may still be sampling an animated frame before it notifies
+        // subscribers. Read its typed error directly when classifying Play failure.
+        const current = this.player.getState?.()
+        if (current ? current.errorRecovery !== 'play' : !this.state.playbackNotice) throw error
+        this.wantsPlay = false
+        this.update({ playing: false, wantsPlay: false, error: '', playbackNotice: current?.error ?? this.state.playbackNotice })
+      }
+    }
     else if (this.state.playing) this.player.pause()
   }
 
@@ -243,7 +255,9 @@ export class LessonPlayback {
 
   toggle() {
     if (!this.state.ready || this.state.error || this.suspended) return Promise.resolve()
-    if (!this.wantsPlay) void this.player.unlockAudio?.().catch(error => this.update({ error: String(error) }))
+    if (!this.wantsPlay) void this.player.unlockAudio?.().catch(() => {
+      // play() owns the typed failure state; unlock only opens the browser gesture.
+    })
     if (this.state.ended) return this.restart()
     this.wantsPlay = !this.wantsPlay
     this.update({ wantsPlay: this.wantsPlay })

@@ -1,0 +1,83 @@
+{
+  "date": "2026-10-13",
+  "branch": "codex/release-integration",
+  "base": "8522aade14b3525d924ca62b813d210b87aef8f2",
+  "targetMainObserved": "7e3df304a8efb13d2ce3fed9baa089e5e5cdf138",
+  "scope": [
+    "Typed audio permission recovery with position and control preservation",
+    "Focus/visibility insertion refresh with stale-response protection",
+    "Latest validated/rejected candidate preservation and fresh model context on retry",
+    "Canonical editorial review filenames across the existing 50 rounds",
+    "Overlay bounds use packed vertex flag; matches coordinator bounds implementation",
+    "Mobile control clamp and caption/notice/insertion-card spacing",
+    "Insertion integration CI step; molecular release smoke coverage"
+  ],
+  "preserved": [
+    "DEPLOY_ENABLED opt-in guard",
+    "All newer molecular representation prompts and landmark v2 from base",
+    "Original release worktree and QA data"
+  ],
+  "checks": [
+    {
+      "result": "passed",
+      "command": "npm run build"
+    },
+    {
+      "result": "1110 passed, 99 files",
+      "command": "npm test"
+    },
+    {
+      "result": "341 passed, 0 failed",
+      "command": "npm run test --workspace @aha/backend"
+    },
+    {
+      "result": "89 passed, 0 failed",
+      "command": "node --test frontend/app/tests/*.test.ts"
+    },
+    {
+      "result": "passed",
+      "command": "npm run typecheck"
+    },
+    {
+      "result": "passed",
+      "command": "npm run typecheck --workspace @aha/backend"
+    },
+    {
+      "result": "passed; existing bundle-size warning",
+      "command": "npm run app:build"
+    },
+    {
+      "result": "19 passed after final Boolean flag alignment",
+      "command": "npm run test --workspace animlib -- test/bounds.test.ts"
+    },
+    {
+      "result": "native Chromium control placement, resize/focus and input dispatch passed",
+      "command": "bun .aha/quality-run/check-control-layout.ts"
+    }
+  ],
+  "independentReview": {
+    "findings": "No actionable bugs",
+    "agent": "integration_insertion_review",
+    "runtimeAudioPlayer": 61,
+    "note": "114 focused tests overlap main totals; devices and provider simulated",
+    "insertionEditorialRecovery": 20,
+    "frontend": 33
+  },
+  "remaining": [
+    "Coordinator renderer/performance commit must be merged and final combined gates rerun",
+    "Rebuild tracked frontend/site after final renderer integration; generated bundles excluded here",
+    "Full container/release lifecycle not rerun for this selective commit",
+    "No fresh paid generation requested or performed during integration"
+  ],
+  "overlaps": {
+    "resolution": "Uses Boolean(data[i+7]) exactly like coordinator current file; retain coordinator final renderer version",
+    "file": "shared/animlib/src/bounds.ts"
+  },
+  "excluded": [
+    "Already merged progress/loading/navigation foundations",
+    "Landmark changes already in base 8522aad",
+    "Older scene-craft/scene-verify changes superseded by molecular branch",
+    "Generated frontend assets",
+    "Offline export artifacts in original workspace"
+  ]
+}

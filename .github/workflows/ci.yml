@@ -36,6 +36,8 @@ jobs:
       - run: npm test
       - run: npm run typecheck --workspace @aha/backend
       - run: npm run test --workspace @aha/backend
+      - name: Test scene insertion integration
+        run: npm run test:scene-insertion
       - run: npm run app:test
       - run: npm run app:build
       - run: npm run demo:build

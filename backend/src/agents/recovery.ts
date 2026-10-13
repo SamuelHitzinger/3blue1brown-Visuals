@@ -24,26 +24,35 @@ export async function runWithValidationRecovery(runner: AgentRunner, task: Agent
   diagnosticsPath?: string;
   maxAttempts?: number;
   wait?: typeof waitForRecovery;
+  /** Tools may publish assets during an attempt; retries need their current context. */
+  prompt?: () => string;
 } = {}): Promise<string> {
   const signal = task.signal ?? new AbortController().signal;
-  let feedback = '', rejectedOutput = '';
+  let feedback = '', previousOutput = '', outputRejected = false;
   const diagnostics: { attempt: number; code: string; detail: string }[] = [];
   for (let attempt = 1; ; attempt++) {
     signal.throwIfAborted();
     let validationFailed = false;
     const validate = async (output: string) => {
-      try { await task.validate?.(output); }
+      try {
+        await task.validate?.(output);
+        signal.throwIfAborted();
+        previousOutput = output.slice(0, 256000);
+        outputRejected = false;
+        feedback = '';
+      }
       catch (error) {
         signal.throwIfAborted();
         validationFailed = true;
         feedback = validationMessage(error).slice(0, 8000);
-        rejectedOutput = output.slice(0, 256000);
+        previousOutput = output.slice(0, 256000);
+        outputRejected = true;
         throw error;
       }
     };
     try {
       const output = await runner.run({ ...task, signal, validate: task.validate ? validate : undefined,
-        prompt: task.prompt + (attempt > 1 ? `\n\nThe previous attempt did not finish with valid output. Correct the following problem, preserve the task's facts and constraints, and return a complete result.\n${feedback}\n${rejectedOutput ? `Previous rejected output:\n${rejectedOutput}` : 'Keep the output concise enough to finish within one response.'}` : ''),
+        prompt: (options.prompt?.() ?? task.prompt) + (attempt > 1 ? `\n\nThe previous attempt did not finish. Preserve the task's facts and constraints, address the feedback, and return a complete result.\n${feedback}\n${previousOutput ? `${outputRejected ? 'Previous rejected output' : 'Previous host-validated candidate (still requires final submission and review)'}:\n${previousOutput}` : 'Keep the output concise enough to finish within one response.'}` : ''),
       });
       signal.throwIfAborted();
       // Also enforce validation for injected runners and alternate completion paths.
@@ -53,7 +62,9 @@ export async function runWithValidationRecovery(runner: AgentRunner, task: Agent
       signal.throwIfAborted();
       const code = error instanceof AgentError ? error.code : 'VALIDATION';
       if (error instanceof AgentError ? !['VALIDATION', 'OUTPUT', 'TURN_LIMIT'].includes(code) : !validationFailed) throw error;
-      if (!validationFailed) { feedback = `The previous response reached ${code}. Produce a concise, complete result.`; rejectedOutput = ''; }
+      // A fresh conversation must not discard useful scene work or detach a
+      // rejected revision from its diagnostics, even if a later attempt is empty.
+      if (!feedback) feedback = `The previous response reached ${code}. Produce a concise, complete result.`;
       diagnostics.push({ attempt, code, detail: feedback });
       if (diagnostics.length > 20) diagnostics.shift();
       if (options.diagnosticsPath) await atomicWrite(options.diagnosticsPath, JSON.stringify(diagnostics.slice(-20), null, 2));

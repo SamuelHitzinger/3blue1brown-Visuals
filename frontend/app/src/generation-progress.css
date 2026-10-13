@@ -31,6 +31,14 @@
 .scene-request-progress { margin-top: 12px; }
 .scene-request-progress-question { margin: 0 0 6px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: .7; }
 .scene-request-status:has(.scene-request-progress) { width: 340px; max-height: 35vh; overflow-y: auto; }
+.player-page:has(.player-notice) .scene-request-status { bottom: 174px; }
+.has-captions .scene-request-status { bottom: 174px; }
+.has-captions:has(.player-notice) .scene-request-status { bottom: 244px; }
+.has-captions.has-spatial-navigation .scene-request-status { bottom: 222px; }
+.has-captions.has-spatial-navigation:has(.player-notice) .scene-request-status { bottom: 292px; }
+@media (max-width: 650px) {
+  .scene-request-status, .scene-request-status:has(.scene-request-progress) { left: 24px; right: 24px; width: auto; max-width: none; max-height: 25vh; }
+}
 @keyframes generation-progress-pulse { from { opacity: .35; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) {
   .generation-digit-track { animation: none; }

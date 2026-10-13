@@ -159,6 +159,31 @@ test('disposal cancels pending initialization and detaches subscriptions', async
   assert.equal(player.calls.length, 0)
 })
 
+test('audio recovery keeps the lesson ready for Play without treating fatal errors as recoverable', async () => {
+  class RecoverablePlayer extends TestPlayer {
+    async play() {
+      this.emit({ error: undefined, errorRecovery: undefined } as Partial<PlayerState>)
+      await super.play()
+    }
+  }
+  const player = new RecoverablePlayer(), playback = new LessonPlayback(player)
+  await playback.load(sources, 4)
+  player.emit({ status: 'blocked', error: 'Audio interrupted', errorRecovery: 'play' } as Partial<PlayerState>)
+  assert.equal(playback.getState().error, '')
+  assert.equal(playback.getState().playbackNotice, 'Audio interrupted')
+  await playback.setSuspended(true); await playback.setSuspended(false)
+  assert.equal(playback.getState().playing, false, 'overlay dismissal must not restart interrupted audio')
+  await playback.toggle()
+  assert.equal(playback.getState().playing, true)
+  assert.equal(playback.getState().time, 4)
+  assert.equal(playback.getState().playbackNotice, '')
+  player.emit({ status: 'blocked', error: 'Device lost', errorRecovery: undefined } as Partial<PlayerState>)
+  await playback.toggle()
+  assert.equal(playback.getState().playing, false)
+  assert.equal(playback.getState().error, 'Device lost')
+  playback.dispose()
+})
+
 test('every sample lesson compiles into a deterministic animlib timeline with matching duration', async () => {
   for (const lesson of [...lessons, { ...lessons[0], id: 'idea-test', title: 'Convergent sequences', subject: 'Analysis', artwork: 'idea' as const, demo: true, duration: 120 }]) {
     for (const background of [Color.WHITE, Color.BLACK]) {

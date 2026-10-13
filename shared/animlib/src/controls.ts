@@ -180,7 +180,7 @@ export class ControlOverlay {
       }
       Object.assign(widget.row.style, {
         position: control.position ? "absolute" : "relative",
-        left: control.position ? `${control.position[0]*100}%` : "",
+        left: control.position ? `clamp(0px, ${control.position[0]*100}%, max(0px, calc(100% - ${control.width ?? 220}px)))` : "",
         top: control.position ? `${control.position[1]*100}%` : "",
         width: `${control.width ?? 220}px`,
       });

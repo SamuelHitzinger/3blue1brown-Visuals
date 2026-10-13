@@ -114,6 +114,29 @@ describe('public bounds queries', () => {
     expect(getScreenBounds(state, 'label', viewport)).toEqual(visible);
   });
 
+  it.each(['overlay', 'hide', 'fade'] as const)('measures %s billboard labels in an inset perspective view without projecting twice', mode => {
+    const label = element('label', { kind: 'text', text: 'Other DNA', fontSize: 0.27, labelOcclusion: mode }, {
+      view: 'molecule', position: [-0.1012275, 0.58059, -1.1126025], billboard: true,
+      billboardOffset: [1.25, 0.25, 0.1], viewportOffset: [0.04, -0.03],
+    });
+    const state: Frame = { ...frame(label), views: [{ id: 'molecule', rect: [0.04, 0.22, 0.92, 0.59],
+      camera: { yaw: 0.55, pitch: 0.1, height: 5.9, distance: 24, perspective: 1, target: [0.35, -0.85, -0.8] },
+      orbit: true, cameraAnimated: false }] };
+    // Occlusion policy changes visibility/depth, not the glyph's projected footprint.
+    const depth = { ...state, elements: [{ ...label, geometry: { ...label.geometry, labelOcclusion: 'depth' as const } }] };
+    const options = { width: 960, height: 540, clip: false };
+    const expected = getScreenBounds(depth, 'label', options)!;
+    const actual = getScreenBounds(state, 'label', options)!;
+    expect(actual).toBeDefined();
+    for (const edge of ['left', 'top', 'right', 'bottom'] as const) expect(actual[edge]).toBeCloseTo(expected[edge], 3);
+    expect(actual.left).toBeGreaterThan(500); expect(actual.right).toBeLessThan(700);
+    expect(actual.top).toBeGreaterThan(118); expect(actual.bottom).toBeLessThan(300);
+    const copy = { ...label, id: 'copy' };
+    const overlap = detectOverlaps({ ...state, elements: [label, copy] }, options);
+    expect(overlap).toHaveLength(1);
+    expect(overlap[0].elementBounds[0]).toEqual(actual);
+  });
+
   it('clips projected geometry at view/canvas edges, with optional offscreen extents', () => {
     const state = frame(rect('r', { position: [8, 0, 0] }));
     expect(getScreenBounds(state, 'r', viewport)).toEqual({ left: 750, top: 175, right: 800, bottom: 225 });

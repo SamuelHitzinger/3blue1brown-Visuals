@@ -131,7 +131,7 @@ describe("native control reconciliation", () => {
     const row = root.children[0].children[0], input = row.children.find(child => child.tagName === "INPUT");
     expect(row.style.position).toBe("relative");
     overlay.update("a", [{ ...control, position: [0.1, 0.2], width: 180 }]);
-    expect(row.style).toMatchObject({ position: "absolute", left: "10%", top: "20%", width: "180px" });
+    expect(row.style).toMatchObject({ position: "absolute", left: "clamp(0px, 10%, max(0px, calc(100% - 180px)))", top: "20%", width: "180px" });
     expect(row.children.find(child => child.tagName === "INPUT")).toBe(input);
     overlay.update("a", [control]);
     expect(row.style).toMatchObject({ position: "relative", left: "", top: "", width: "220px" });
@@ -556,7 +556,7 @@ describe("player navigation and live source updates", () => {
     await player.play();
     const result = await player.submit({ type: "replace", scene: "a", source: `export default scene({audio:"voice"},s=>s.wait(3));` });
     expect(result.ok).toBe(true);
-    expect(player.getState()).toMatchObject({ scene: "a", time: 0, status: "blocked" });
+    expect(player.getState()).toMatchObject({ scene: "a", time: 0, status: "blocked", errorRecovery: 'play' });
     expect(player.getState().error).toContain("blocked");
     player.dispose();
   });
@@ -599,7 +599,7 @@ describe("player navigation and live source updates", () => {
     advance(1.25);
     context.state = "suspended";
     advance(0.25);
-    expect(player.getState()).toMatchObject({ time: 1.25, status: "blocked" });
+    expect(player.getState()).toMatchObject({ time: 1.25, status: "blocked", errorRecovery: 'play' });
     expect(player.getState().error).toContain("interrupted");
     expect(rendering.frame?.elements[0].position[0]).toBe(1.25);
     expect(frames.size).toBe(0);
@@ -607,6 +607,7 @@ describe("player navigation and live source updates", () => {
     expect(offsets).toEqual([0, 1.25]);
     expect(player.getState()).toMatchObject({ time: 1.25, status: "playing" });
     expect(player.getState().error).toBeUndefined();
+    expect(player.getState().errorRecovery).toBeUndefined();
     context.currentTime = 2;
     advance(0.75);
     expect(player.getState().time).toBe(2);
@@ -643,6 +644,7 @@ it('keeps backend errors blocking even if another scene is submitted',async()=>{
   try{
     expect((await player.submit({type:'load',scenes})).ok).toBe(true);
     expect(player.getState()).toMatchObject({status:'blocked',error:failure.message});
+    expect(player.getState().errorRecovery).toBeUndefined();
     expect((await player.submit({type:'load',scenes})).ok).toBe(true);
     expect(player.getState()).toMatchObject({status:'blocked',error:failure.message});
     await expect(player.play()).rejects.toBe(failure);

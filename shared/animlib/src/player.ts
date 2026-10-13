@@ -1,6 +1,6 @@
 import { ModelStore } from './model-store.js';
 import type { AssetGeometryResolver } from './asset-types.js';
-import { AudioClock } from "./audio.js";
+import { AudioClock, AudioPlaybackError } from "./audio.js";
 import { ControlOverlay } from "./controls.js";
 import { CanvasRenderer } from "./renderer.js";
 import { SceneSequence } from "./sequence.js";
@@ -33,6 +33,7 @@ export class Player {
   private time = 0;
   private status: PlayerState["status"] = "empty";
   private error?: string;
+  private errorRecovery?: PlayerState['errorRecovery'];
   private rendererError?: Error;
   private raf?: number;
   private frameInvalidated = false;
@@ -78,6 +79,7 @@ export class Player {
       if (this.rendererError) {
         this.rendererError = undefined;
         this.error = undefined;
+        this.errorRecovery = undefined;
         this.status = this.sceneId ? "paused" : "empty";
       }
       this.refresh();
@@ -90,6 +92,7 @@ export class Player {
       this.status = "blocked";
       this.rendererError = error;
       this.error = error.message;
+      this.errorRecovery = undefined;
       // A failed GPU must not be asked to render again while reporting its error.
       this.notify();
     };
@@ -184,9 +187,10 @@ export class Player {
     this.audio.stop();
   }
 
-  private report(error: unknown): void {
+  private report(error: unknown, recovery?: PlayerState['errorRecovery']): void {
     if (this.disposed) return;
     this.error = error instanceof Error ? error.message : String(error);
+    this.errorRecovery = recovery;
     this.refresh();
   }
 
@@ -221,6 +225,7 @@ export class Player {
           if (this.disposed || generation !== this.refreshGeneration) return;
           this.stopClock(); this.status = 'blocked';
           this.error = error instanceof Error ? error.message : String(error);
+          this.errorRecovery = undefined;
           this.notify(); return;
         }
         // A newer seek, input refresh, source replacement, or disposal wins.
@@ -249,7 +254,7 @@ export class Player {
   }
 
   private notify(): void {
-    if (this.rendererError) { this.status = "blocked"; this.error = this.rendererError.message; }
+    if (this.rendererError) { this.status = "blocked"; this.error = this.rendererError.message; this.errorRecovery = undefined; }
     const state = this.getState();
     for (const listener of this.listeners) {
       try { listener(state); } catch (error) { console.error("animlib subscriber failed", error); }
@@ -280,6 +285,7 @@ export class Player {
       // Reconstruction can replace the active instance even when only a later source changed.
       if (affected || oldCompiled[oldIndex] !== this.currentScene()) { this.input.cancel(); this.behaviors.reset(); }
       this.error = undefined;
+      this.errorRecovery = undefined;
       if (change.type === "load") this.renderer.resetInteraction();
       if (change.type === "load" || !activeId) {
         this.sceneId = this.sequence.sources[0]?.id ?? null;
@@ -317,6 +323,7 @@ export class Player {
     if (this.time >= scene.duration && scene.duration > 0) this.time = 0;
     const generation = ++this.playbackGeneration;
     this.error = undefined;
+    this.errorRecovery = undefined;
     try {
       if (scene.options.audio && !await this.audio.start(scene.options.audio, this.time)) return;
       if (generation !== this.playbackGeneration || this.disposed) return;
@@ -328,7 +335,7 @@ export class Player {
       if (generation !== this.playbackGeneration || this.disposed) return;
       this.audio.stop();
       this.status = "blocked";
-      this.report(error);
+      this.report(error, error instanceof AudioPlaybackError ? 'play' : undefined);
       throw error;
     }
   }
@@ -344,7 +351,8 @@ export class Player {
       if (scene.options.audio && this.audio.interrupted) {
         this.stopClock();
         this.status = "blocked";
-        this.error = "Browser interrupted audio playback; press Play to resume";
+        this.error = this.audio.closed ? 'Audio context is closed; reload the player' : "Browser interrupted audio playback; press Play to resume";
+        this.errorRecovery = this.audio.closed ? undefined : 'play';
         this.refresh();
         return;
       }
@@ -401,6 +409,7 @@ export class Player {
         this.time = Math.max(0, Math.min(position.time, this.sequence.compiled[index].duration));
         this.status = "paused";
         this.error = undefined;
+        this.errorRecovery = undefined;
         await this.refresh();
       });
     } finally {
@@ -485,7 +494,7 @@ export class Player {
       orbitAvailable: Boolean(frame && (scene?.options.orbit && frame.camera.perspective > 0 || frame.views?.some(view => view.orbit && view.camera.perspective > 0))),
       orbitEnabled: Boolean(scene?.options.orbit && frame && frame.camera.perspective > 0 && (!frame.cameraAnimated || this.status !== 'playing')),
       views: (frame?.views ?? []).map(view => ({ id: view.id, rect: [...view.rect] as typeof view.rect, orbitEnabled: view.orbit && view.camera.perspective > 0 && (!view.cameraAnimated || this.status !== 'playing') })),
-      ...(this.error ? { error: this.error } : {}),
+      ...(this.error ? { error: this.error, ...(this.errorRecovery ? { errorRecovery: this.errorRecovery } : {}) } : {}),
     };
   }
 

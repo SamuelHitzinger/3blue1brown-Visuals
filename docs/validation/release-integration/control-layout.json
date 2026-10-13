@@ -1,0 +1,37 @@
+{
+  "positions": [
+    {
+      "canvasWidth": 390,
+      "left": 200,
+      "width": 190
+    },
+    {
+      "canvasWidth": 1000,
+      "left": 730,
+      "width": 190
+    },
+    {
+      "canvasWidth": 390,
+      "left": 200,
+      "width": 190
+    },
+    {
+      "canvasWidth": 390,
+      "left": 200,
+      "width": 190
+    },
+    {
+      "canvasWidth": 390,
+      "left": 0,
+      "width": 190
+    },
+    {
+      "canvasWidth": 390,
+      "left": 0,
+      "width": 390
+    }
+  ],
+  "defaultFlow": true,
+  "resizePreservesFocus": true,
+  "inputDispatch": true
+}

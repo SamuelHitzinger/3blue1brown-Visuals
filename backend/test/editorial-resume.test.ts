@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { authorReviewedLesson, type EditorialReview } from '../src/agents/editorial.js';
 import type { PlannedLesson } from '../src/agents/planning.js';
 import type { AgentTask } from '../src/agents/runtime.js';
+import { AgentError } from '../src/agents/config.js';
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
@@ -66,6 +67,38 @@ test('author can prepare models before review, and every repair/review sees curr
   expect(calls).toBe(4); expect(approved.markdown).toContain('four');
 });
 
+test('draft recovery reuses model evidence published before the prior turn limit', async () => {
+  const root = await directory(); let drafts = 0, publications = 0;
+  const assets: Record<string, unknown> = {}, context: Record<string, unknown> = {};
+  const approved = await authorReviewedLesson({ async run(task) {
+    if (task.logContext?.stage === 'draft' && ++drafts === 1) {
+      expect(payload(task).modelAssets).toEqual({});
+      await task.publishModel!({ fixtureId: 'prepared-molecule' }, task.signal!);
+      throw new AgentError('TURN_LIMIT', 'Agent exceeded its turn limit.');
+    }
+    // Recovery appends feedback after the JSON planning context.
+    const prompt = task.prompt.split('\n\nThe previous attempt did not finish.')[0];
+    const input = JSON.parse(prompt.slice(prompt.indexOf('\n') + 1));
+    expect(input.modelAssets['prepared-molecule']).toEqual({ nodes: ['chain-F'] });
+    expect(input.modelAssetContext['prepared-molecule']).toEqual({ source: 'deposited structure', landmarks: ['F/264/CA'] });
+    if (task.logContext?.stage === 'draft') {
+      expect(input.documents).toEqual(request.documents);
+      return JSON.stringify(lesson());
+    }
+    return JSON.stringify(review());
+  } }, request, root, signal(), undefined, 'test-video', {
+    async publishModel(input) {
+      publications++;
+      assets[input.fixtureId!] = { nodes: ['chain-F'] };
+      context[input.fixtureId!] = { source: 'deposited structure', landmarks: ['F/264/CA'] };
+      return { id: input.fixtureId };
+    },
+    modelAssets: () => assets, modelAssetContext: () => context,
+  });
+  expect(drafts).toBe(2); expect(publications).toBe(1);
+  expect(approved.markdown).toContain('four');
+});
+
 test('restart repairs latest rejected draft and still requires a fresh passing review', async () => {
   const root = await directory(), firstRun = await rejected(root);
   const lastDraft = JSON.parse(await readFile(join(root, 'editorial', firstRun, 'lesson-draft-2.json'), 'utf8'));
@@ -78,6 +111,42 @@ test('restart repairs latest rejected draft and still requires a fresh passing r
   expect(calls).toBe(2); expect(approved.editorialReview.runId).not.toBe(firstRun);
   expect(approved.editorialReview.attempt).toBe(0);
   expect(JSON.parse(await readFile(join(root, 'editorial', firstRun, 'lesson-review-2.json'), 'utf8')).verdict).toBe('revise');
+});
+
+test.each(['missing', 'outdated'] as const)('a %s checkpoint recovers the latest paired rejection beyond the first three rounds', async checkpoint => {
+  const root = await directory(); let calls = 0;
+  const latest = lesson('wrong-round-6');
+  const lateReview = (attempt: number) => ({ ...review('revise'), issues: [{ severity: 'error', sceneId: 'beat-1', detail: `Correct the arithmetic in round ${attempt}.` }] });
+  await expect(authorReviewedLesson({ async run(task) {
+    if (calls === 14) throw new Error('Interrupted after seven reviewed drafts');
+    const attempt = Math.floor(calls++ / 2);
+    return JSON.stringify(task.logContext?.stage === 'draft' ? lesson(`wrong-round-${attempt}`) : lateReview(attempt));
+  } }, request, root, signal())).rejects.toThrow('Interrupted after seven reviewed drafts');
+  const run = (await readdir(join(root, 'editorial')))[0], runDirectory = join(root, 'editorial', run);
+  const priorState = JSON.parse(await readFile(join(root, 'editorial-state.json'), 'utf8'));
+  expect(priorState.attempt).toBe(7);
+  expect((await readdir(runDirectory)).some(name => /^lesson-review-[0-2]\.json$/.test(name))).toBe(false);
+  // A newer review without its exact draft cannot supply recovery material.
+  await writeFile(join(runDirectory, 'lesson-review-8.json'), JSON.stringify(lateReview(8)));
+  if (checkpoint === 'missing') await rm(join(root, 'editorial-state.json'));
+  else await writeFile(join(root, 'editorial-state.json'), JSON.stringify({ ...priorState, contextHash: 'previous-checkpoint-identity' }));
+  calls = 0;
+  const approved = await authorReviewedLesson({ async run(task) {
+    const input = payload(task);
+    if (calls++ === 0) {
+      expect(task.logContext?.stage).toBe('draft');
+      expect(input.draft).toEqual(latest);
+      expect(input.issues).toEqual(lateReview(6).issues);
+      return JSON.stringify(lesson());
+    }
+    expect(task.logContext?.stage).toBe('review');
+    expect(input.draft).toEqual(lesson());
+    return JSON.stringify(review());
+  } }, request, root, signal());
+  expect(calls).toBe(2);
+  expect(approved.editorialReview.runId).not.toBe(run);
+  expect(approved.editorialReview.attempt).toBe(0);
+  expect(JSON.parse(await readFile(join(runDirectory, 'lesson-review-6.json'), 'utf8'))).toEqual(lateReview(6));
 });
 
 test('interrupted review resumes its checkpoint draft and still requires a passing review', async () => {
@@ -151,19 +220,6 @@ test('malformed rejected audit pair is ignored rather than becoming repair conte
   let calls = 0;
   await authorReviewedLesson({ async run(task) {
     if (calls++ === 0) { expect(payload(task).draft).toBeUndefined(); return JSON.stringify(lesson()); }
-    return JSON.stringify(review());
-  } }, request, root, signal());
-  expect(calls).toBe(2);
-});
-
-test('audit fallback recovers rejected rounds beyond the former three-round cap', async () => {
-  const root = await directory(), run = await rejected(root), runDirectory = join(root, 'editorial', run);
-  for (const name of await readdir(runDirectory)) if (/^lesson-/.test(name)) await rm(join(runDirectory, name));
-  await writeFile(join(runDirectory, 'lesson-draft-12.json'), JSON.stringify(lesson('late-error')));
-  await writeFile(join(runDirectory, 'lesson-review-12.json'), JSON.stringify(review('revise')));
-  let calls = 0;
-  await authorReviewedLesson({ async run(task) {
-    if (calls++ === 0) { expect(payload(task).draft).toEqual(lesson('late-error')); return JSON.stringify(lesson()); }
     return JSON.stringify(review());
   } }, request, root, signal());
   expect(calls).toBe(2);

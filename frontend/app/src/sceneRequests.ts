@@ -7,7 +7,45 @@ async function responseJSON<T>(response: Response): Promise<T> {
   if (!response.ok) throw new Error(body.detail ?? 'Could not add scenes. Please try again.')
   return body
 }
-export const listSceneRequests = (lessonId: string) => fetch(`/api/videos/${encodeURIComponent(lessonId)}/scene-requests`).then(responseJSON<SceneRequest[]>)
+export const listSceneRequests = (lessonId: string, signal?: AbortSignal) => fetch(`/api/videos/${encodeURIComponent(lessonId)}/scene-requests`, { signal }).then(responseJSON<SceneRequest[]>)
+/** Retain newer SSE/local submissions when an older list response arrives. */
+export function mergeSceneRequests(current: SceneRequest[], saved: SceneRequest[]): SceneRequest[] {
+  const known = new Map(current.map(request => [request.id, request]))
+  const incoming = new Set(saved.map(request => request.id))
+  const merged = [...saved.map(request => {
+    const previous = known.get(request.id)
+    return previous && previous.video.revision >= request.video.revision ? previous : request
+  }), ...current.filter(request => !incoming.has(request.id))]
+  return merged.length === current.length && merged.every((request, index) => request === current[index]) ? current : merged
+}
+
+/** Discover requests made in other tabs when the viewer returns, without polling. */
+export function watchSceneRequestList(lessonId: string, onRequests: (requests: SceneRequest[]) => void, onConnection: (message: string) => void) {
+  let active = true, refreshing = false, refreshAgain = false
+  const abort = new AbortController()
+  const refresh = async () => {
+    if (!active) return
+    if (refreshing) { refreshAgain = true; return }
+    refreshing = true
+    try {
+      const saved = await listSceneRequests(lessonId, abort.signal)
+      if (active) { onRequests(saved); onConnection('') }
+    } catch { if (active) onConnection('Could not load added scenes. Return to this tab or reload to try again.') }
+    finally {
+      refreshing = false
+      if (active && refreshAgain) { refreshAgain = false; void refresh() }
+    }
+  }
+  const visible = () => { if (document.visibilityState === 'visible') void refresh() }
+  window.addEventListener('focus', visible)
+  document.addEventListener('visibilitychange', visible)
+  void refresh()
+  return () => {
+    active = false; abort.abort()
+    window.removeEventListener('focus', visible)
+    document.removeEventListener('visibilitychange', visible)
+  }
+}
 export const requestScenes = (input: SceneRequestInput, key: string) => fetch(`/api/videos/${encodeURIComponent(input.context.lessonId)}/scene-requests`, {
   method: 'POST', headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key }, body: JSON.stringify(input),
 }).then(responseJSON<SceneRequest>)

@@ -57,6 +57,8 @@ async function harness(fail = false, options: { autoplay?: boolean; loadManifest
   const requests: Parameters<Generator>[0][] = []
   const downloads: string[] = []
   const audioStarts: number[] = []
+  const audioContexts: { state: string }[] = []
+  let audioResumeAllowed = true
   const restoreGlobals: (() => void)[] = []
   function install(name: string, value: unknown) {
     const descriptor = Object.getOwnPropertyDescriptor(globalThis, name)
@@ -67,13 +69,14 @@ async function harness(fail = false, options: { autoplay?: boolean; loadManifest
   install('requestAnimationFrame', (callback: FrameRequestCallback) => { frames.set(++nextFrame, callback); return nextFrame })
   install('cancelAnimationFrame', (id: number) => { frames.delete(id) })
   install('AudioContext', class {
+    constructor() { audioContexts.push(this) }
     state = 'running'
     destination = {}
     get currentTime() { return now / 1000 }
     createGain() { return { gain: { value: 1 }, connect() {}, disconnect() {} } }
     async decodeAudioData(bytes: ArrayBuffer) { expect(bytes.byteLength).toBeGreaterThan(0); return { duration: 1 } }
     createBufferSource() { return { connect() {}, disconnect() {}, stop() {}, start(_at: number, offset: number) { audioStarts.push(offset) } } }
-    async resume() { this.state = 'running' }
+    async resume() { if (audioResumeAllowed) this.state = 'running' }
     async close() {}
   })
   const clock = spyOn(performance, 'now').mockImplementation(() => now)
@@ -113,6 +116,7 @@ async function harness(fail = false, options: { autoplay?: boolean; loadManifest
   }
   return {
     service, player, playback, parent, requests, gates, downloads, audioStarts,
+    interruptAudio(allowResume = true) { audioContexts.at(-1)!.state = 'suspended'; audioResumeAllowed = allowResume },
     holdAudio(url: string) {
       const blocked = { ...gate(), entered: false }
       audioGates.set(url, blocked)
@@ -142,6 +146,27 @@ async function harness(fail = false, options: { autoplay?: boolean; loadManifest
     },
   }
 }
+
+test('Play recovers interrupted browser audio in place and keeps controls through repeated permission blocks', async () => {
+  const h = await harness()
+  try {
+    await h.player.setControl({ scene: 'scene-0', id: 'x', value: 3 })
+    await h.advance(.25)
+    h.interruptAudio(false)
+    await h.advance(.1)
+    const offset = h.playback.getState().sceneTime
+    expect(h.playback.getState()).toMatchObject({ playing: false, ready: true, error: '', wantsPlay: false })
+    expect(h.playback.getState().playbackNotice).toContain('interrupted')
+    await h.playback.toggle()
+    expect(h.playback.getState()).toMatchObject({ playing: false, ready: true, error: '', wantsPlay: false, sceneTime: offset })
+    expect(h.playback.getState().playbackNotice).toContain('blocked')
+    h.interruptAudio(true)
+    await h.playback.toggle()
+    expect(h.playback.getState()).toMatchObject({ playing: true, error: '', playbackNotice: '', wantsPlay: true, sceneTime: offset })
+    expect(h.player.getState().controls.find(control => control.id === 'x')?.value).toBe(3)
+    expect(h.audioStarts.at(-1)).toBe(offset)
+  } finally { await h.close() }
+})
 
 test('request -> generation -> real Player waits, plays a nested insertion, and restores the original handoff', async () => {
   const h = await harness()

@@ -1,5 +1,8 @@
 import type { Asset, CompiledScene } from "./types.js";
 
+/** Browser audio permission/interruption failures can retry from a user gesture. */
+export class AudioPlaybackError extends Error {}
+
 /** Host-owned audio only: submitted scene code selects an asset ID, never a URL. */
 export class AudioClock {
   private context?: AudioContext;
@@ -69,6 +72,7 @@ export class AudioClock {
   get interrupted(): boolean {
     return Boolean(this.running && this.context && this.context.state !== "running");
   }
+  get closed(): boolean { return this.context?.state === 'closed'; }
 
   /** False means a concurrent pause/disposal canceled the resume operation. */
   async start(assetId: string, offset: number): Promise<boolean> {
@@ -77,9 +81,17 @@ export class AudioClock {
     const buffer = this.buffers.get(assetId);
     if (!buffer) throw new Error(`Audio asset is not prepared: ${assetId}`);
     const context = this.ensureContext();
-    if (context.state !== "running") await context.resume();
+    if (this.closed) throw new Error('Audio context is closed; reload the player');
+    if (context.state !== "running") {
+      try { await context.resume(); }
+      catch (error) {
+        if (context.state === 'closed') throw error;
+        throw new AudioPlaybackError('Audio playback is blocked; press Play to allow browser audio', { cause: error });
+      }
+    }
     if (generation !== this.generation || this.disposed) return false;
-    if (context.state !== "running") throw new Error("Audio playback is blocked; press Play to allow browser audio");
+    if (this.closed) throw new Error('Audio context is closed; reload the player');
+    if (context.state !== "running") throw new AudioPlaybackError("Audio playback is blocked; press Play to allow browser audio");
     this.offset = offset;
     this.startedAt = context.currentTime;
     this.running = true;
