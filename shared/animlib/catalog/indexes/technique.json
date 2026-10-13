@@ -1,0 +1,190 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "linear-algebra-3d",
+      "title": "3D linear algebra",
+      "description": "Explain basis vectors, matrix action, span, projection and determinant with true spatial geometry and shared numerical state.",
+      "tier": "technique",
+      "domains": [
+        "mathematics"
+      ],
+      "tags": [
+        "3D",
+        "linear algebra",
+        "matrix",
+        "basis",
+        "span",
+        "projection",
+        "determinant"
+      ],
+      "relatedIds": [
+        "coordinate-maps-2d",
+        "coherent-motion",
+        "spatial-framing",
+        "visual-verification"
+      ],
+      "readiness": "ready",
+      "document": "techniques/linear-algebra-3d.md",
+      "provenance": "Authored guidance grounded in installed animlib API contracts, reusable helpers and bounded reviewed examples.",
+      "limitations": [
+        "The technique must be adapted to the supplied data and installed host capabilities.",
+        "Existing representative proofs do not approve every new scene or scientific claim."
+      ]
+    },
+    {
+      "id": "coordinate-maps-2d",
+      "title": "2D coordinate maps and formula correspondence",
+      "description": "Keep grids, vectors, components, labels and named formula terms tied to one explicit transformation.",
+      "tier": "technique",
+      "domains": [
+        "mathematics"
+      ],
+      "tags": [
+        "2D",
+        "basis",
+        "matrix",
+        "shear",
+        "formula",
+        "coordinates"
+      ],
+      "relatedIds": [
+        "linear-algebra-3d",
+        "geometry-led-explanation",
+        "coherent-motion"
+      ],
+      "readiness": "ready",
+      "document": "techniques/coordinate-maps-2d.md",
+      "provenance": "Authored guidance grounded in installed animlib API contracts, reusable helpers and bounded reviewed examples.",
+      "limitations": [
+        "The technique must be adapted to the supplied data and installed host capabilities.",
+        "Existing representative proofs do not approve every new scene or scientific claim."
+      ]
+    },
+    {
+      "id": "graphs-and-frontiers",
+      "title": "Graph search and compact frontiers",
+      "description": "Explain edge relaxation, accepted costs and queue insertion/extraction while retaining candidate identity.",
+      "tier": "technique",
+      "domains": [
+        "algorithms",
+        "mathematics"
+      ],
+      "tags": [
+        "graph",
+        "Dijkstra",
+        "queue",
+        "frontier",
+        "sorting",
+        "collection"
+      ],
+      "relatedIds": [
+        "geometry-led-explanation",
+        "coherent-motion",
+        "visual-verification"
+      ],
+      "readiness": "ready",
+      "document": "techniques/graphs-and-frontiers.md",
+      "provenance": "Authored guidance grounded in installed animlib API contracts, reusable helpers and bounded reviewed examples.",
+      "limitations": [
+        "The technique must be adapted to the supplied data and installed host capabilities.",
+        "Existing representative proofs do not approve every new scene or scientific claim."
+      ]
+    },
+    {
+      "id": "sampled-trajectories",
+      "title": "Sampled state, traces and projected trajectories",
+      "description": "Synchronize plots, growing paths, markers and numeric readouts from aligned samples and an explicit projection.",
+      "tier": "technique",
+      "domains": [
+        "science",
+        "mathematics"
+      ],
+      "tags": [
+        "data",
+        "samples",
+        "trajectory",
+        "projection",
+        "neural",
+        "residual",
+        "time"
+      ],
+      "relatedIds": [
+        "coherent-motion",
+        "geometry-led-explanation",
+        "visual-verification"
+      ],
+      "readiness": "ready",
+      "document": "techniques/sampled-trajectories.md",
+      "provenance": "Authored guidance grounded in installed animlib API contracts, reusable helpers and bounded reviewed examples.",
+      "limitations": [
+        "The technique must be adapted to the supplied data and installed host capabilities.",
+        "Existing representative proofs do not approve every new scene or scientific claim."
+      ]
+    },
+    {
+      "id": "molecular-structures",
+      "title": "Molecular representation and spatial mechanisms",
+      "description": "Choose atomic, residue, surface or schematic geometry according to the biological claim and preserve source identity.",
+      "tier": "technique",
+      "domains": [
+        "biology",
+        "molecular"
+      ],
+      "tags": [
+        "protein",
+        "RNA",
+        "DNA",
+        "molecular",
+        "atoms",
+        "structure",
+        "3D"
+      ],
+      "relatedIds": [
+        "crambin-1crn",
+        "pdb-structures",
+        "peptide-motion-data",
+        "spatial-framing",
+        "visual-verification"
+      ],
+      "readiness": "ready",
+      "document": "techniques/molecular-structures.md",
+      "provenance": "Authored guidance grounded in installed animlib API contracts, reusable helpers and bounded reviewed examples.",
+      "limitations": [
+        "The technique must be adapted to the supplied data and installed host capabilities.",
+        "Existing representative proofs do not approve every new scene or scientific claim."
+      ]
+    },
+    {
+      "id": "nucleic-mechanisms",
+      "title": "Nucleic pairing, processing and translation",
+      "description": "Stage complementarity, incorporation, cut/join topology and carrier transfer using explicit IDs and event boundaries.",
+      "tier": "technique",
+      "domains": [
+        "biology",
+        "molecular"
+      ],
+      "tags": [
+        "DNA",
+        "RNA",
+        "transcription",
+        "translation",
+        "splicing",
+        "codon",
+        "nucleic"
+      ],
+      "relatedIds": [
+        "nucleic-example-inputs",
+        "molecular-structures",
+        "coherent-motion"
+      ],
+      "readiness": "ready",
+      "document": "techniques/nucleic-mechanisms.md",
+      "provenance": "Authored guidance grounded in installed animlib API contracts, reusable helpers and bounded reviewed examples.",
+      "limitations": [
+        "The technique must be adapted to the supplied data and installed host capabilities.",
+        "Existing representative proofs do not approve every new scene or scientific claim."
+      ]
+    }
+  ]
+}

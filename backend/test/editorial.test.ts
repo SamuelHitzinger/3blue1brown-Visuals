@@ -74,6 +74,9 @@ test('editorial repairs update speech and plan together, forward sources, and pr
   for (const task of tasks) {
     expect(task.systemPrompt).toContain(await loadPrompt('guidance'));
     expect(task.systemPrompt).toContain(PLANNING_CONTRACT);
+    expect(task.systemPrompt).toContain('search_visualization_catalog');
+    expect(task.catalogTools).toBeDefined();
+    expect((await task.catalogTools!.read('linear-algebra-3d', new AbortController().signal)).id).toBe('linear-algebra-3d');
     expect(task.systemPrompt).not.toContain('# Viewing mode policy');
     expect(task.systemPrompt).not.toContain('# Current animation quality policy');
     expect(task.systemPrompt).not.toContain('# Animlib capabilities for storyboard planning');

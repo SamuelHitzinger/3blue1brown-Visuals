@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "shards": [
+    "indexes/resource.json",
+    "indexes/technique.json",
+    "indexes/foundation.json"
+  ]
+}

@@ -106,7 +106,7 @@ export default function WorkspacePage({ onCreate, initialTopic }: { onCreate: (l
 
   return <main className="workspace-page">
     <div className="workspace-heading">
-      <span className="workspace-label">Workspace</span>
+      <span className="workspace-label">Video workspace</span>
       <h1>What would you like<br/>to understand?</h1>
       <p>Any topic. One clear video. Start with a question or an idea.</p>
     </div>

@@ -18,7 +18,7 @@ afterAll(async () => { await rm(site, { recursive: true, force: true }); });
 
 test("workspace, library, subject plans, and player deep links serve the app shell", async () => {
   const handle = createHandler(site);
-  for (const route of ["/", "/library", "/plan", "/plan/analysis", "/plan/diskrete-mathematik", "/courses", "/courses/analysis", "/courses/course-new", "/settings", "/watch/demo"]) {
+  for (const route of ["/", "/videos/new", "/lectures", "/lectures/session-1", "/catalog", "/library", "/plan", "/plan/analysis", "/plan/diskrete-mathematik", "/courses", "/courses/analysis", "/courses/course-new", "/settings", "/watch/demo"]) {
     const response = await handle(new Request(`http://localhost${route}`));
     expect(response.status).toBe(200);
     expect(response.headers.get('Cache-Control')).toBe('no-cache');
@@ -66,7 +66,7 @@ test('unversioned assets and unsuccessful requests never receive immutable cache
 
 test("new app routes retain method restrictions and do not expose nested paths", async () => {
   const handle = createHandler(site);
-  for (const route of ["/library", "/plan/analysis", "/courses", "/courses/course-new"]) {
+  for (const route of ["/library", "/plan/analysis", "/courses", "/courses/course-new", "/videos/new", "/lectures", "/lectures/session-1", "/catalog"]) {
     const response = await handle(new Request(`http://localhost${route}`, { method: "POST" }));
     expect(response.status).toBe(405);
     expect(response.headers.get("Allow")).toBe("GET, HEAD");
@@ -74,4 +74,6 @@ test("new app routes retain method restrictions and do not expose nested paths",
   expect((await handle(new Request("http://localhost/plan/analysis/extra"))).status).toBe(404);
   expect((await handle(new Request("http://localhost/library/extra"))).status).toBe(404);
   expect((await handle(new Request("http://localhost/courses/analysis/extra"))).status).toBe(404);
+  expect((await handle(new Request("http://localhost/lectures/session-1/extra"))).status).toBe(404);
+  expect((await handle(new Request("http://localhost/catalog/extra"))).status).toBe(404);
 });

@@ -39,6 +39,7 @@ COPY --from=build /app/backend/dist/ backend/dist/
 COPY --from=build /app/backend/prompts/ backend/prompts/
 COPY --from=build /app/shared/animlib/package.json shared/animlib/package.json
 COPY --from=build /app/shared/animlib/dist/ shared/animlib/dist/
+COPY --from=build /app/shared/animlib/catalog/ shared/animlib/catalog/
 COPY --from=build /app/shared/animlib/tools/ shared/animlib/tools/
 COPY --from=build /app/shared/animlib/fixtures/biological/1crn/ shared/animlib/fixtures/biological/1crn/
 COPY --from=build /app/shared/animlib/docs/reference.md shared/animlib/docs/reference.md

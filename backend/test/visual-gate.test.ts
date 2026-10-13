@@ -8,13 +8,14 @@ import type { AgentTask } from '../src/agents/runtime.js';
 import { sourceHash } from '../src/agents/visual-edits.js';
 import { createModelGLB, parseModelGLB } from 'animlib/core';
 import { loadPrompt } from '../src/agents/prompts.js';
+import { catalogTools } from '../src/agents/catalog.js';
 const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(root=>rm(root,{recursive:true,force:true})));});
 const source=`export default scene({audio:'voice',end:'hold'},s=>{s.text('label',{text:'DNA',position:[5,0]});s.wait(4);});`;
 const repair=source.replace('[5,0]','[0,0]');
 async function fixture(){const directory=await mkdtemp(join(tmpdir(),'visual-gate-'));roots.push(directory);return {
   recoveryWait:async()=>{},source,directory,index:0,videoId:crypto.randomUUID(),signal:new AbortController().signal,
-  task:{systemPrompt:'Same style and complete API.',prompt:'Authoritative narration and request.'},
+  task:{systemPrompt:'Same style and complete API.',prompt:'Authoritative narration and request.', catalogTools, allowWeb:false},
   input:{audioAssetId:'voice',endMode:'hold' as const,scene:{id:'beat-1',durationSec:4},planning:{}},
   validate:async(value:string)=>{await compileSource(value);},
 };}
@@ -47,6 +48,7 @@ test('image rejection produces an automatically repaired candidate that must be 
   const result=await reviewGeneratedScene({...input,runner,renderFrames});
   expect(result).toBe(repair);expect(rendered).toEqual([source,repair]);
   expect(tasks.map(task=>task.logContext?.stage)).toEqual(['review','repair','review']);
+  tasks.forEach(task => { expect(task.catalogTools).toBe(catalogTools); expect(task.allowWeb).toBe(false); });
   expect(tasks[0].images).toHaveLength(2);expect(tasks[2].images).toHaveLength(2);
   expect(tasks[2].prompt).toContain(repair);
   expect(tasks[0].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-verify')}`);
@@ -96,6 +98,8 @@ test('verification retries invalid findings without invoking repair or approving
 test('invalid patches fall back to full regeneration, which must render and pass review',async()=>{
   const input=await fixture();let renders=0,patches=0,rewrites=0;
   const result=await reviewGeneratedScene({...input,renderFrames:async()=>{renders++;return {backend:'test',frames:[],sheets:[]};},runner:{async run(task){
+    expect(task.catalogTools).toBe(catalogTools);
+    expect(task.allowWeb).toBe(false);
     if(task.logContext?.stage==='repair'){
       if(task.outputMode==='text'){rewrites++;return repair;}
       patches++;return JSON.stringify({sourceSha256:'stale',edits:[]});
@@ -103,6 +107,15 @@ test('invalid patches fall back to full regeneration, which must render and pass
     return JSON.stringify(renders===1?{approved:false,findings:[{timeSec:4,objectIds:['label'],problem:'Clipped',fix:'Move'}]}:{approved:true,findings:[]});
   }}});
   expect(result).toBe(repair);expect(patches).toBe(3);expect(rewrites).toBe(1);expect(renders).toBe(2);
+});
+
+test('an explicitly bounded visual review fails rather than approving after its last round',async()=>{
+  const input=await fixture();let reviews=0;
+  await expect(reviewGeneratedScene({...input,maxReviewRounds:1,renderFrames:async()=>({backend:'test',frames:[],sheets:[]}),runner:{async run(task){
+    if(task.logContext?.stage==='repair') return JSON.stringify({sourceSha256:sourceHash(source),edits:[{finding:0,before:'[5,0]',after:'[0,0]'}]});
+    reviews++;return JSON.stringify({approved:false,findings:[{timeSec:4,objectIds:['label'],problem:'Clipped',fix:'Move'}]});
+  }}})).rejects.toMatchObject({code:'RECOVERY_EXHAUSTED'});
+  expect(reviews).toBe(1);
 });
 test('compiler failure regenerates source within existing limits before review',async()=>{
   const input=await fixture();let rewrites=0,reviews=0;

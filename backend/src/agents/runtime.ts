@@ -13,6 +13,7 @@ import type { LogFields } from '../logging.js';
 import { fileURLToPath } from 'node:url';
 import type { InspectionOptions, InspectionReport, PreviewOptions } from './scene-inspection.js';
 import type { PreviewFrame } from './scene-preview.js';
+import type { CatalogTools } from './catalog.js';
 
 const webAccessExtension = fileURLToPath(import.meta.resolve('pi-web-access/dist/index.js'));
 
@@ -47,6 +48,10 @@ export interface AgentRunMetrics {
   validations: AgentValidationMetrics[];
 }
 export interface AgentTask {
+  /** Local allowlisted authoring knowledge; never arbitrary file access. */
+  catalogTools?: CatalogTools;
+  /** Disable external research for private source processing; defaults to true. */
+  allowWeb?: boolean;
   /** Host-owned asset publication, scoped to this generation job. */
   publishModel?: (input: { fixtureId?: string; url?: string; generated?: string; pdbId?: string; pdbChains?: string[]; license?: string; attribution?: string }, signal: AbortSignal) => Promise<unknown>;
   systemPrompt: string;
@@ -135,11 +140,14 @@ export class PiAgentRunner implements AgentRunner {
       if (!auth) throw new AgentError("AUTH", "Agent login is missing. Run agents:login.");
       const model = runtime.getModel(this.config.provider, this.config.model);
       if (!model) throw new AgentError("MODEL", "AGENT_MODEL is not in the pinned Pi model catalog.");
-      const completion = AGENT_COMPLETION_INSTRUCTIONS[mode] + (task.sceneTools && mode === 'validated-reference'
+      const protocol = task.allowWeb === false
+        ? AGENT_COMPLETION_INSTRUCTIONS[mode].replace('Web research tools are available for gathering evidence before submission. ', '')
+        : AGENT_COMPLETION_INSTRUCTIONS[mode];
+      const completion = protocol + (task.sceneTools && mode === 'validated-reference'
         ? '\nYou may also select a candidateId returned by inspect_scene or preview_scene; both run the same host validation before inspection. No extra validate_output call is needed for that candidate.' : '');
       const settingsManager = SettingsManager.inMemory({ compaction: { enabled: false }, retry: { enabled: false, provider: { maxRetries: 0 } } });
       const resourceLoader = new DefaultResourceLoader({ cwd: this.config.agentDir, agentDir: this.config.agentDir, settingsManager,
-        additionalExtensionPaths: [webAccessExtension],
+        additionalExtensionPaths: task.allowWeb === false ? [] : [webAccessExtension],
         noExtensions: true, noSkills: true, noPromptTemplates: true, noThemes: true, noContextFiles: true,
         systemPrompt: task.systemPrompt + completion, appendSystemPromptOverride: () => [] });
       await resourceLoader.reload();
@@ -200,6 +208,27 @@ export class PiAgentRunner implements AgentRunner {
       })] : [];
       const customTools: ToolDefinition[] =
         [...modelTools, ...(task.validate ? [...(mode === 'submit-only' ? [] : [validationTool]), ...(isSubmission ? [submissionTool] : [])] : [])];
+      if (task.catalogTools) {
+        customTools.push(defineTool({
+          name: 'search_visualization_catalog', label: 'Search visualization catalog',
+          description: 'Search local animlib resources, reusable techniques and quality foundations by the visual relationship or data needed. Returns bounded metadata and pagination; read selected IDs for inputs, preparation, provenance and limits. Does not load assets.',
+          parameters: Type.Object({query: Type.Optional(Type.String({maxLength:240})),
+            tier: Type.Optional(Type.Union([Type.Literal('resource'),Type.Literal('technique'),Type.Literal('foundation')])),
+            offset: Type.Optional(Type.Integer({minimum:0,maximum:100000})), limit: Type.Optional(Type.Integer({minimum:1,maximum:20}))}),
+          async execute(_id, input) {
+            try { return {content:[{type:'text',text:JSON.stringify(await task.catalogTools!.search(input,signal))}],details:{}}; }
+            catch(error) { return {content:[{type:'text',text:validationMessage(error)}],details:{},isError:true}; }
+          },
+        }), defineTool({
+          name: 'read_visualization_catalog', label: 'Read visualization guidance',
+          description: 'Read one allowlisted catalog ID and bounded related-entry summaries. Use the method within current host contracts. Catalog IDs are not loaded model IDs, lesson citations or visual approval.',
+          parameters: Type.Object({id:Type.String({pattern:'^[a-z][a-z0-9-]{0,79}$',maxLength:80})}),
+          async execute(_id, {id}) {
+            try { return {content:[{type:'text',text:JSON.stringify(await task.catalogTools!.read(id,signal))}],details:{}}; }
+            catch(error) { return {content:[{type:'text',text:validationMessage(error)}],details:{},isError:true}; }
+          },
+        }));
+      }
       if (task.sceneTools) {
         if (!task.validate) throw new AgentError('CONFIG', 'Scene inspection requires a host validator.');
         const select = async ({ output, candidateId }: { output?: string; candidateId?: string }) => {

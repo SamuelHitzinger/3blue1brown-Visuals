@@ -1,0 +1,7 @@
+# Visualization catalog navigation
+
+Use `search_visualization_catalog` to find resources (exact assets/data sources), techniques (reusable domain representations), and foundations (general explanatory skills). Search for the storyboard's relationship, mechanism, invariants, and required data; read relevant entries with `read_visualization_catalog` before choosing an unfamiliar approach. Follow only related IDs needed by this scene. Search results are paginated; request a small limit and read selected entries instead of loading the whole library.
+
+Start from the teaching need, then choose a suitable technique, exact resources, and applicable foundations. Reuse the method while preserving the approved example, identity, narration, timing, and reveal order. If nothing fits, use the installed API and current quality guidance; do not force the story into an unrelated template.
+
+Readiness describes availability, not scientific or visual approval. A catalog asset is not loaded merely because it is listed. Use the supplied `publish_model` tool and returned asset evidence when available; respect host-preparation requirements and missing capabilities. Preserve source provenance, distinctions between measured/calculated/schematic data, and the entry's limits. Catalog IDs are authoring references, never citations to supplied lecture/source material. Existing host contracts, full API guidance, validation, and visual review remain authoritative. Review and repair may consult the same catalog without changing the approved lesson.

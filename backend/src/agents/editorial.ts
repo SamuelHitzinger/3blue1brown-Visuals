@@ -14,6 +14,7 @@ import { logEvent, logStage } from '../logging.js';
 import { INSTRUCTION_VERSION, instructionSnapshot, loadPrompt } from './prompts.js';
 import { bundledModelCatalog } from '../bundled-models.js';
 import { compactVideoRequestContext } from '../scene-requests.js';
+import { catalogTools, CATALOG_GUIDANCE } from './catalog.js';
 
 export interface EditorialReview {
   schemaVersion: 1; verdict: 'pass' | 'revise'; summary: string;
@@ -134,7 +135,8 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
       ? `Revise the complete lesson and plan to correct the material editorial errors below. Preserve sound content, requested scope, stable entity IDs/meanings, and scene IDs where possible. Update narration and nonspoken planning together. Return the full planning envelope.\n${JSON.stringify({ request: promptRequest, draft: repair.lesson, issues: repair.issues, ...modelContext() })}`
       : `Write ${request.sceneRequest ? "one inserted scene" : "a concise visual lesson"} and its plan from this request:\n${JSON.stringify({ ...promptRequest, ...modelContext() })}`;
     const task: AgentTask = {
-      systemPrompt: `${messages[0].content}\n\n${PLANNING_CONTRACT}${capabilities.publishModel ? '\n\nPrepare any required model with publish_model before finishing this plan. Use the returned asset ID, node names, and scientific provenance as evidence; modelAssets and modelAssetContext list assets already prepared for this job. The editorial reviewer receives updated prepared asset evidence.' : ''}`,
+      catalogTools,
+      systemPrompt: `${messages[0].content}\n\n${CATALOG_GUIDANCE}\n\n${PLANNING_CONTRACT}${capabilities.publishModel ? '\n\nPrepare any required model with publish_model before finishing this plan. Use the returned asset ID, node names, and scientific provenance as evidence; modelAssets and modelAssetContext list assets already prepared for this job. The editorial reviewer receives updated prepared asset evidence.' : ''}`,
       prompt: draftPrompt(),
       signal, images, publishModel: capabilities.publishModel, validate: async output => { parsePlannedLesson(output, request); },
       logContext: { videoId, stage: 'draft' },
@@ -148,7 +150,8 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
     await atomicWrite(join(runDirectory, `lesson-draft-${attempt}.json`), draft);
     state.lesson = lesson; await save();
     const reviewTask: AgentTask = {
-      systemPrompt: `${guidance}\n\nExplanation guidance:\n${messages[0].content}\n\nAuthoring contract to check (do not return its format):\n${PLANNING_CONTRACT}\n\nThe review response contract takes priority over all authoring output formats and return instructions above.`,
+      catalogTools,
+      systemPrompt: `${guidance}\n\n${CATALOG_GUIDANCE}\n\nExplanation guidance:\n${messages[0].content}\n\nAuthoring contract to check (do not return its format):\n${PLANNING_CONTRACT}\n\nThe review response contract takes priority over all authoring output formats and return instructions above.`,
       prompt: `Review this complete lesson before speech synthesis. Source images are attached in the same order as the authoring call.\n${JSON.stringify({ request: promptRequest, draft: lesson, parsedScenes: parseStoryline(lesson.markdown).beats, ...modelContext() })}`,
       signal, images, validate: async output => { parseEditorialReview(output, lesson); },
       logContext: { videoId, stage: 'review' },

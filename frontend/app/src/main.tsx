@@ -11,5 +11,6 @@ import './interface.css'
 import './plan.css'
 import './artwork.css'
 import './workspace.css'
+import './learning.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>)

@@ -1,12 +1,14 @@
 import { ModelAssets } from './model-assets.js';
 import { realpath, stat } from "node:fs/promises";
-import { isAbsolute, relative, resolve, sep } from "node:path";
+import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { VideoService } from './videos.js';
 import { narrationRoutes } from "./narration/routes.js";
 import type { NarrationService } from "./narration/service.js";
 import { proxyUser } from './identity.js';
 import { studyPlanRoutes } from './study-plans.js';
+import { LectureService } from './lectures.js';
+import { catalogRoutes } from './visualization-catalog.js';
 
 const defaultFrontendDir = fileURLToPath(new URL("../../frontend/site/", import.meta.url));
 
@@ -19,11 +21,13 @@ function inside(root: string, path: string) {
   return suffix !== ".." && !suffix.startsWith(`..${sep}`) && !isAbsolute(suffix);
 }
 
-export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets()) {
+export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets(), lectureService?: LectureService) {
   const root = resolve(frontendDir);
   let videos = videoService;
   const narration = narrationRoutes(narrationService);
   const studyPlans = studyPlanRoutes();
+  const catalog = catalogRoutes();
+  let lectures = lectureService;
 
   async function serveFile(path: string) {
     const candidate = resolve(root, path);
@@ -44,6 +48,11 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     try { path = decodeURIComponent(new URL(request.url).pathname); }
     catch { return Response.json({ detail: "Invalid URL" }, { status: 400 }); }
     if (path.includes("\0")) return Response.json({ detail: "Invalid URL" }, { status: 400 });
+    if (path === '/api/visualization-catalog' || path.startsWith('/api/visualization-catalog/')) return catalog(request);
+    if (path === '/api/lectures' || path.startsWith('/api/lectures/')) {
+      lectures ??= new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'));
+      return lectures.handle(request);
+    }
     if (path === '/api/models' || path.startsWith('/api/models/')) return models.handle(request);
     if (path === '/api/study-plans' || path.startsWith('/api/study-plans/')) return studyPlans(request);
     if (path === '/api/videos' || path.startsWith('/api/videos/')) {
@@ -53,7 +62,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     if (path === "/api/narrations" || path.startsWith("/api/narrations/")) return narration(request, path);
 
     const api = path === "/api/hello" || path === "/api/me" || path === "/healthz";
-    const page = path === "/" || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
+    const page = path === "/" || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
     const asset = path.startsWith("/static/");
     if (!api && !page && !asset) return notFound();
     if (request.method !== "GET" && request.method !== "HEAD") {

@@ -12,6 +12,10 @@ its stated representative operation and exact artifact identity.
 
 ## Find the right layer
 
+The [three-tier visualization catalog](../catalog/README.md) is the searchable
+authoring entry point for resources, techniques and foundations. This evidence
+index retains the exact scope and acceptance history of existing proofs.
+
 | Need | Start here |
 | --- | --- |
 | Watch what the library can animate | [Capability showcase](showcase.md): complete reviewed films with chapter navigation |

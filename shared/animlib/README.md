@@ -9,6 +9,11 @@ The goal is clear, interactive explanations of linear algebra, organic chemistry
 and computer algorithms. Scene code describes the objects and how they change;
 the library handles reproducible playback, scene handoffs, and live updates.
 
+Use the [visualization catalog](catalog/README.md) to find exact resources,
+reusable domain techniques, and general explanatory foundations. Catalog access
+is bounded and selected by the scene's teaching need; assets still require their
+documented host preparation and publication.
+
 ## What it needs to do
 
 - **Keep scene timing simple.** Each scene has its own clock and chooses whether

@@ -6,6 +6,10 @@ import NavigationDrawer from './NavigationDrawer'
 import SettingsPage from './SettingsPage'
 import CoursesPage from './CoursesPage'
 import WorkspacePage from './WorkspacePage'
+import OverviewPage from './OverviewPage'
+import LecturesPage from './LecturesPage'
+import LecturePage from './LecturePage'
+import CatalogPage from './CatalogPage'
 import type { SubjectColor } from './curriculum'
 import { addCourse, coursesKey, courseForSubject, loadCourses, loadRecentPlayback, deleteCourse, overviewLessons, recentPlaybackKey, recordPlayback } from './courses'
 import { addSubjectTopic, appendSubjectMaterials, deleteSubjectLesson, deleteSubjectTopic, loadSubjectPlans, removeGeneratedCourseLessons, subjectPlansKey } from './subjectPlans'
@@ -49,6 +53,7 @@ function VideoCard({ lesson, color, saved, onOpen, onToggleSaved, onDelete, dele
 export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => readLocal('aha-theme', 'light'))
   const [path, setPath] = useState(window.location.pathname)
+  const [catalogItem, setCatalogItem] = useState(() => new URLSearchParams(window.location.search).get('item') ?? '')
   const [menu, setMenu] = useState(false)
   const [filter, setFilter] = useState('All subjects')
   const [query, setQuery] = useState('')
@@ -96,13 +101,17 @@ export default function App() {
   const settings = path === '/settings'
   const planning = path === '/courses' || path.startsWith('/courses/') || path === '/plan' || path.startsWith('/plan/')
   const libraryPage = path === '/library'
+  const videoWorkspace = path === '/videos/new'
+  const lecturePage = path === '/lectures' || path.startsWith('/lectures/')
+  const lectureId = lecturePage ? decodeURIComponent(path.split('/')[2] || '') : ''
+  const catalogPage = path === '/catalog'
 
   useLayoutEffect(() => {
     document.documentElement.dataset.theme = theme
     localStorage.setItem('aha-theme', JSON.stringify(theme))
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'light' ? '#f5f4f8' : '#000000')
   }, [theme])
-  useEffect(() => { const listener = () => { setPath(window.location.pathname); setMenu(false) }; window.addEventListener('popstate', listener); return () => window.removeEventListener('popstate', listener) }, [])
+  useEffect(() => { const listener = () => { setPath(window.location.pathname); setCatalogItem(new URLSearchParams(window.location.search).get('item') ?? ''); setMenu(false) }; window.addEventListener('popstate', listener); return () => window.removeEventListener('popstate', listener) }, [])
   useEffect(() => { localStorage.setItem('aha-bookmarks', JSON.stringify(bookmarks)) }, [bookmarks])
   useEffect(() => { localStorage.setItem('aha-lessons', JSON.stringify(customLessons)) }, [customLessons])
   useEffect(() => {
@@ -111,9 +120,10 @@ export default function App() {
     return () => window.removeEventListener('storage', sync)
   }, [])
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 3500); return () => clearTimeout(timer) }, [toast])
-  useEffect(() => { document.title = selected ? `${selected.title} — Aha!` : settings ? 'Settings — Aha!' : planning ? 'Courses — Aha!' : libraryPage ? 'Library — Aha!' : 'Aha! — Make it click.' }, [selected, settings, planning, libraryPage])
+  useEffect(() => { document.title = selected ? `${selected.title} — Aha!` : settings ? 'Settings — Aha!' : planning ? 'Courses — Aha!' : libraryPage ? 'Library — Aha!' : videoWorkspace ? 'Create a video — Aha!' : lecturePage ? 'Lectures — Aha!' : catalogPage ? 'Catalog — Aha!' : 'Aha! — Make it click.' }, [selected, settings, planning, libraryPage, videoWorkspace, lecturePage, catalogPage])
 
-  const navigate = (url: string, scroll = true) => { window.history.pushState({}, '', url); setPath(url); setMenu(false); if (scroll) window.scrollTo({ top: 0, behavior: 'instant' }) }
+  const navigate = (url: string, scroll = true) => { window.history.pushState({}, '', url); setPath(window.location.pathname); setMenu(false); if (scroll) window.scrollTo({ top: 0, behavior: 'instant' }) }
+  const goCatalog = (id = '') => { setCatalogItem(id); navigate(`/catalog${id ? `?item=${encodeURIComponent(id)}` : ''}`) }
   const openLesson = (lesson: Lesson) => navigate(`/watch/${encodeURIComponent(lesson.id)}`)
   const onPlayed = useCallback((id: string) => setPlayHistory(old => recordPlayback(old, id)), [])
   useEffect(() => {
@@ -205,8 +215,9 @@ export default function App() {
     const next = removeGeneratedCourseLessons(subjectPlans, customLessons)
     if (next !== subjectPlans) saveSubjectPlans(next)
   }, [customLessons, subjectPlans, saveSubjectPlans])
-  const makeTopicVideo = (request: TopicVideoRequest) => { setTopicRequest(request); navigate('/') }
-  const goWorkspace = () => { setTopicRequest(null); navigate('/') }
+  const makeTopicVideo = (request: TopicVideoRequest) => { setTopicRequest(request); navigate('/videos/new') }
+  const goWorkspace = () => { setTopicRequest(null); navigate('/videos/new') }
+  const goOverview = () => navigate('/')
   const createLesson = (lesson: Lesson) => {
     setCustomLessons(old => [lesson, ...old])
     setTopicRequest(null)
@@ -220,9 +231,11 @@ export default function App() {
     open={menu}
     theme={theme}
     onTheme={setTheme}
-    current={settings ? 'settings' : planning ? 'courses' : selected ? 'lesson' : libraryPage ? 'library' : 'workspace'}
+    current={settings ? 'settings' : planning ? 'courses' : selected ? 'lesson' : libraryPage ? 'library' : lecturePage ? 'lectures' : catalogPage ? 'catalog' : videoWorkspace ? 'video' : 'workspace'}
     onClose={() => setMenu(false)}
-    onWorkspace={goWorkspace}
+    onWorkspace={goOverview}
+    onLectures={() => navigate('/lectures')}
+    onCatalog={() => goCatalog()}
     onLibrary={goLibrary}
     onCourses={() => navigate('/courses')}
     onCreate={() => { goWorkspace(); requestAnimationFrame(() => document.getElementById('video-topic')?.focus()) }}
@@ -238,10 +251,11 @@ export default function App() {
 
   return <>
     {selected ? <LessonPlayer key={selected.id} lesson={selected} onPlayed={onPlayed} overlayOpen={false} menuOpen={menu} onMenu={() => setMenu(!menu)} menuContent={menuContent} onHome={goLibrary}/>
-    : <div className={`app-shell ${settings ? 'settings-shell' : !planning && !libraryPage ? 'workspace-shell' : ''}`}>
+    : <div className={`app-shell learning-shell ${settings ? 'settings-shell' : videoWorkspace ? 'workspace-shell' : ''}`}>
       <header className="header">
-        <div className="header-start"><div className="menu-anchor"><button className={`icon-button menu-toggle ${menu ? 'is-open' : ''}`} aria-label="Open navigation" aria-expanded={menu} aria-controls="navigation-drawer" onClick={() => setMenu(!menu)}><MenuGlyph/></button>{menuContent}</div><button className="wordmark" onClick={goWorkspace}>Aha!</button></div>
-        {!settings && !planning && !libraryPage && <button className="workspace-library-link" onClick={goLibrary}>Your library <ArrowUpRight size={15}/></button>}
+        <div className="header-start"><div className="menu-anchor"><button className={`icon-button menu-toggle ${menu ? 'is-open' : ''}`} aria-label="Open navigation" aria-expanded={menu} aria-controls="navigation-drawer" onClick={() => setMenu(!menu)}><MenuGlyph/></button>{menuContent}</div><button className="wordmark" onClick={goOverview}>Aha!</button></div>
+        <nav className="learning-top-nav" aria-label="Main navigation">{[{ label: 'Overview', active: path === '/', go: goOverview }, { label: 'Lectures', active: lecturePage, go: () => navigate('/lectures') }, { label: 'Videos', active: videoWorkspace || libraryPage, go: goLibrary }, { label: 'Courses', active: planning, go: () => navigate('/courses') }, { label: 'Catalog', active: catalogPage, go: () => goCatalog() }].map(item => <button key={item.label} className={item.active ? 'active' : ''} aria-current={item.active ? 'page' : undefined} onClick={item.go}>{item.label}</button>)}</nav>
+        <button className="header-create-video" onClick={goWorkspace}>New video <ArrowUpRight size={15}/></button>
       </header>
       {settings ? <SettingsPage theme={theme} onTheme={setTheme}/> : planning ? <CoursesPage curriculum={courses} selectedId={path.split('/')[2]} onSelect={id => navigate(id ? `/courses/${id}` : '/courses', false)} plans={subjectPlans} onAddMaterial={addPlanMaterial} onAddTopic={createTopic} onDeleteTopic={removeTopic} onAddLesson={createPlanLesson} onDeleteLesson={removePlanLesson} pendingLessons={pendingCourseLessons} onMakeVideo={makeTopicVideo} onAddCourse={createCourse} onDeleteCourse={removeCourse} onNewVideo={goWorkspace} recent={overviewLessons(playHistory, activeLessons, courses)} renderVideo={lesson => <VideoThumbnail lesson={lesson} color={lesson.color} onOpen={() => openLesson(lesson)}/>} storageNote={planStorageNote}/> : libraryPage ? <main className="library-page">
         <section className="library-section" id="library">
@@ -264,10 +278,10 @@ export default function App() {
           </div>)}
           {!visible.length && <div className="empty-library"><h3>{query || filter !== 'All subjects' ? 'No videos found' : libraryView === 'archive' ? 'No archived videos' : libraryView === 'saved' ? 'No saved videos' : 'No videos found'}</h3>{(query || filter !== 'All subjects') && <button className="secondary-button" onClick={() => { setQuery(''); setFilter('All subjects') }}>Clear filters</button>}</div>}
         </section>
-      </main> : <>
+      </main> : lecturePage ? lectureId ? <LecturePage key={lectureId} id={lectureId} onBack={() => navigate('/lectures')} onCatalog={goCatalog} suspended={menu}/> : <LecturesPage courses={courses.subjects} onOpen={id => navigate(`/lectures/${encodeURIComponent(id)}`)}/> : catalogPage ? <CatalogPage selectedId={catalogItem} onSelect={id => { setCatalogItem(id); window.history.replaceState({}, '', `/catalog${id ? `?item=${encodeURIComponent(id)}` : ''}`) }}/> : videoWorkspace ? <>
         {invalidLesson && <div className="not-found"><p>This explanation isn’t in your library yet.</p><button onClick={goLibrary}>Open your library <ArrowRight size={16}/></button></div>}
         <WorkspacePage key={topicRequest ? `${topicRequest.sourceName}:${topicRequest.chapter}:${topicRequest.title}` : 'workspace'} initialTopic={topicRequest} onCreate={createLesson}/>
-      </>}
+      </> : invalidLesson ? <div className="not-found"><p>This explanation isn’t in your library yet.</p><button onClick={goLibrary}>Open your library <ArrowRight size={16}/></button></div> : <OverviewPage onVideo={goWorkspace} onLectures={() => navigate('/lectures')} onLecture={id => navigate(`/lectures/${encodeURIComponent(id)}`)} onLibrary={goLibrary} onCatalog={() => goCatalog()} recent={overviewLessons(playHistory, activeLessons, courses)} renderVideo={lesson => <VideoThumbnail lesson={lesson} color={lesson.color} onOpen={() => openLesson(lesson)}/>}/>}
       <footer><span className="footer-logo">Aha!</span></footer>
     </div>}
     {toast && <div className="toast" role="status"><span><Check size={16}/></span>{toast}</div>}

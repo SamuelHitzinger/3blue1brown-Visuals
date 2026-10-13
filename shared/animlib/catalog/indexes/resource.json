@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "crambin-1crn",
+      "title": "Deposited crambin: 1CRN",
+      "description": "Three prepared representations of the same deposited protein: atomic sticks, residue beads and a schematic envelope.",
+      "tier": "resource",
+      "domains": [
+        "biology",
+        "molecular"
+      ],
+      "tags": [
+        "protein",
+        "crambin",
+        "PDB",
+        "atoms",
+        "residues",
+        "surface"
+      ],
+      "relatedIds": [
+        "molecular-structures",
+        "pdb-structures",
+        "visual-verification"
+      ],
+      "readiness": "ready",
+      "document": "resources/crambin-1crn.md",
+      "provenance": "Pinned RCSB PDB/CCD CC0 inputs, source lock and shared-coordinate packages in animlib fixtures.",
+      "limitations": [
+        "A static deposited conformer does not supply a folding trajectory.",
+        "The envelope is schematic; CA beads are residues, not atoms."
+      ]
+    },
+    {
+      "id": "pdb-structures",
+      "title": "RCSB deposited molecular structures",
+      "description": "Research and publish a selected protein or nucleic structure through the existing PDB preparation path.",
+      "tier": "resource",
+      "domains": [
+        "biology",
+        "molecular"
+      ],
+      "tags": [
+        "PDB",
+        "RNA",
+        "DNA",
+        "protein",
+        "chains",
+        "deposited"
+      ],
+      "relatedIds": [
+        "molecular-structures",
+        "crambin-1crn"
+      ],
+      "readiness": "host-preparation",
+      "document": "resources/pdb-structures.md",
+      "provenance": "Host downloads fixed RCSB PDB/CCD endpoints and records hash-checked cached snapshots and source selections.",
+      "limitations": [
+        "Requires a researched supported four-character PDB accession and available publication tool.",
+        "Returned protein traces and nucleotide geometry do not reconstruct assemblies, dynamics, or missing atoms."
+      ]
+    },
+    {
+      "id": "peptide-motion-data",
+      "title": "Illustrative peptide rig and staging",
+      "description": "Original component templates, stable residue identities and prescribed torsions for staged coil formation and packing.",
+      "tier": "resource",
+      "domains": [
+        "biology",
+        "molecular"
+      ],
+      "tags": [
+        "peptide",
+        "folding",
+        "torsions",
+        "phi",
+        "psi",
+        "packing"
+      ],
+      "relatedIds": [
+        "molecular-structures",
+        "coherent-motion"
+      ],
+      "readiness": "host-preparation",
+      "document": "resources/peptide-motion-data.md",
+      "provenance": "Original CC0-1.0 sequence and staging; component geometry derives from pinned CC0 CCD inputs.",
+      "limitations": [
+        "Authored motion is neither a measured folding trajectory nor an energy simulation.",
+        "Packing has no general collision-avoidance guarantee."
+      ]
+    },
+    {
+      "id": "nucleic-example-inputs",
+      "title": "Nucleic mechanism inputs",
+      "description": "Portable explicit sequence, pairing and schedule inputs for transcription and RNA processing examples.",
+      "tier": "resource",
+      "domains": [
+        "biology",
+        "molecular"
+      ],
+      "tags": [
+        "DNA",
+        "RNA",
+        "transcription",
+        "splicing",
+        "threading",
+        "sequence"
+      ],
+      "relatedIds": [
+        "nucleic-mechanisms",
+        "coherent-motion"
+      ],
+      "readiness": "host-preparation",
+      "document": "resources/nucleic-example-inputs.md",
+      "provenance": "Versioned original illustrative inputs and preparation records bundled with animlib demonstrations.",
+      "limitations": [
+        "Illustrative sequences and kinematic schedules are not deposited reaction measurements.",
+        "Scene VM cannot fetch these files; the host must prepare the selected input."
+      ]
+    },
+    {
+      "id": "native-model-packages",
+      "title": "Prepared native geometry and image packages",
+      "description": "Reusable immutable model/image packages with content hashes, provenance and explicit resource ownership.",
+      "tier": "resource",
+      "domains": [
+        "geometry",
+        "biology"
+      ],
+      "tags": [
+        "assets",
+        "GLB",
+        "glTF",
+        "images",
+        "textures",
+        "registry"
+      ],
+      "relatedIds": [
+        "crambin-1crn",
+        "spatial-framing"
+      ],
+      "readiness": "host-preparation",
+      "document": "resources/native-model-packages.md",
+      "provenance": "Package manifests retain original or upstream provenance, source hashes and binary dependency identities.",
+      "limitations": [
+        "Native package registry and production GLB publication are distinct delivery paths.",
+        "Only explicitly selected assets and their dependencies should be loaded."
+      ]
+    }
+  ]
+}

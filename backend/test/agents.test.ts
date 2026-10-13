@@ -17,6 +17,7 @@ import { VideoService } from "../src/videos.js";
 import type { GenerationProgressUpdate, Generator } from '../src/videos.js';
 import { parseStoryline } from '../src/narration/markdown.js';
 import type { LessonPlan } from '../src/agents/planning.js';
+import { catalogTools } from '../src/agents/catalog.js';
 
 function planned(script: string, overrides: Partial<LessonPlan> = {}) {
   return JSON.stringify({ schemaVersion: 1, markdown: script, plan: {
@@ -273,6 +274,29 @@ test('Pi exposes molecular database selection and returns published asset eviden
   expect(JSON.stringify(result)).toContain('verified-source');
 });
 
+test('Pi exposes bounded catalog tools and can disable web access for private notes', async () => {
+  const search = message('', 'toolUse');
+  search.content = [{ type: 'toolCall', id: 'search-catalog', name: 'search_visualization_catalog', arguments: {query: '3D linear algebra', limit: 2} }];
+  const read = message('', 'toolUse');
+  read.content = [{ type: 'toolCall', id: 'read-catalog', name: 'read_visualization_catalog', arguments: {id: 'linear-algebra-3d'} }];
+  const { runner, contexts } = await fakeRuntime([search, read, message('Ready')]);
+  expect(await runner.run({systemPrompt: 'Plan a private visual', prompt: 'Basis change', catalogTools, allowWeb: false})).toBe('Ready');
+  const names = contexts[0].messages.flatMap(m => m.role === 'system' ? (m.toolsAdded ?? []).map(tool => tool.name) : []);
+  expect(names).toEqual(expect.arrayContaining(['search_visualization_catalog', 'read_visualization_catalog']));
+  for (const name of ['web_search', 'fetch_content', 'bash', 'read', 'write']) expect(names).not.toContain(name);
+  const result = contexts[2].messages.find(m => m.role === 'toolResult' && m.toolName === 'read_visualization_catalog');
+  expect(result?.role === 'toolResult' && result.isError).toBe(false);
+  expect(JSON.stringify(result)).toContain('Vec3');
+});
+
+test('private submit-only tasks do not advertise unavailable external research', async () => {
+  const submit = message('', 'toolUse');
+  submit.content = [{type:'toolCall',id:'submit-private',name:'submit_output',arguments:{output:'approved'}}];
+  const {runner,contexts} = await fakeRuntime([submit]);
+  expect(await runner.run({systemPrompt:'Review local evidence',prompt:'Check',allowWeb:false,outputMode:'submit-only',validate:async()=>{}})).toBe('approved');
+  expect(JSON.stringify(contexts[0])).not.toContain('Web research tools are available');
+});
+
 test('Pi includes uploaded image attachments in the script conversation', async () => {
   const { runner, contexts } = await fakeRuntime([message('Narration: One dot.')]);
   const image = { type: 'image' as const, mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGOQi7rzHwAEQgJUZSSrPwAAAABJRU5ErkJggg==' };
@@ -435,6 +459,8 @@ test.each(['classic', 'interactive', undefined] as const)('%s requests generate 
     expect(task.systemPrompt).not.toContain('# Viewing mode policy');
     expect(task.systemPrompt).not.toContain('# Current animation quality policy');
     expect(task.systemPrompt).toContain('# animlib scene-authoring reference');
+    expect(task.catalogTools).toBe(catalogTools);
+    expect(task.systemPrompt).toContain('search_visualization_catalog');
     expect(task.systemPrompt).not.toContain('### Player API');
     expect(task.systemPrompt).not.toContain('3D is the default');
     expect(input.videoMode).toBe('interactive');

@@ -43,12 +43,14 @@ export interface SceneVerificationInput {
 
 export interface VisualGateInput {
   runner: AgentRunner; source: string; input: SceneVerificationInput;
-  task: Pick<AgentTask,'systemPrompt'|'prompt'>;
+  task: Pick<AgentTask,'systemPrompt'|'prompt'|'catalogTools'|'allowWeb'>;
   directory: string; index: number; videoId: string; signal: AbortSignal;
   validate: (source: string) => Promise<unknown>;
   renderFrames?: FrameRenderer;
   models?: RenderModelAssets;
   recoveryWait?: typeof waitForRecovery;
+  /** A stricter caller budget never bypasses approval; default remains 50 rounds. */
+  maxReviewRounds?: number;
 }
 
 interface VisualProgress {
@@ -66,6 +68,9 @@ interface VisualProgress {
 export async function reviewGeneratedScene(options: VisualGateInput): Promise<string> {
   const { runner, input, directory, index, videoId, signal } = options;
   const wait = options.recoveryWait ?? waitForRecovery;
+  const requestedRounds = options.maxReviewRounds ?? MAX_REVIEW_ROUNDS;
+  const maxReviewRounds = Number.isFinite(requestedRounds)
+    ? Math.max(1, Math.min(MAX_REVIEW_ROUNDS, Math.floor(requestedRounds))) : MAX_REVIEW_ROUNDS;
   signal.throwIfAborted();
   const [guidance, repairGuidance, style] = await Promise.all([
     loadPrompt('scene-verify'), loadPrompt('scene-repair'),
@@ -86,7 +91,7 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
     await atomicWrite(join(attemptDirectory, `${phase}.prompt.md`), `${task.systemPrompt}\n\n${task.prompt}`);
     try {
       return await logStage({ videoId, sceneIndex: index, stage: phase, attempt: state.attempt }, () => runWithValidationRecovery(runner, {
-        ...task, onMetrics: value => { metrics = value; },
+        ...task, catalogTools: options.task.catalogTools, allowWeb: options.task.allowWeb, onMetrics: value => { metrics = value; },
       }, { diagnosticsPath: join(attemptDirectory, `${phase}.diagnostics.json`), maxAttempts, wait }));
     } finally {
       await atomicWrite(join(attemptDirectory, `${phase}.metrics.json`), JSON.stringify(metrics ?? { elapsedMs: performance.now() - started }, null, 2));
@@ -94,7 +99,7 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
   };
   for (;;) {
     signal.throwIfAborted();
-    if (state.attempt >= MAX_REVIEW_ROUNDS) throw new AgentError('RECOVERY_EXHAUSTED', 'Visual review reached 50 rounds.');
+    if (state.attempt >= maxReviewRounds) throw new AgentError('RECOVERY_EXHAUSTED', `Visual review reached ${maxReviewRounds} rounds.`);
     const attemptDirectory = join(directory, `scene-${index}.visual`, String(state.attempt));
     await mkdir(attemptDirectory, { recursive: true });
     await save();

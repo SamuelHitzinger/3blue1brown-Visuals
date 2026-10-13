@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "id": "geometry-led-explanation",
+      "title": "Geometry-led explanation",
+      "description": "Build the visible evidence first, then earn the rule and notation through persistent objects and restrained semantic color.",
+      "tier": "foundation",
+      "domains": [
+        "general"
+      ],
+      "tags": [
+        "3Blue1Brown",
+        "style",
+        "reasoning",
+        "color",
+        "reveal",
+        "teaching"
+      ],
+      "relatedIds": [
+        "coherent-motion",
+        "spatial-framing",
+        "visual-verification"
+      ],
+      "readiness": "ready",
+      "document": "foundations/geometry-led-explanation.md",
+      "provenance": "Current geometry-led animlib guidance, production scene craft and evidence/review contracts.",
+      "limitations": [
+        "Host narration, timing, interaction and validation contracts retain priority.",
+        "Guidance and automated checks do not guarantee visual acceptance of uninspected output."
+      ]
+    },
+    {
+      "id": "coherent-motion",
+      "title": "Coherent motion and persistent identity",
+      "description": "Derive geometry, labels and readouts from one state while preserving the relationship throughout motion and handoffs.",
+      "tier": "foundation",
+      "domains": [
+        "general"
+      ],
+      "tags": [
+        "motion",
+        "identity",
+        "invariants",
+        "continuity",
+        "time",
+        "binding",
+        "constraints"
+      ],
+      "relatedIds": [
+        "geometry-led-explanation",
+        "visual-verification",
+        "linear-algebra-3d"
+      ],
+      "readiness": "ready",
+      "document": "foundations/coherent-motion.md",
+      "provenance": "Current geometry-led animlib guidance, production scene craft and evidence/review contracts.",
+      "limitations": [
+        "Host narration, timing, interaction and validation contracts retain priority.",
+        "Guidance and automated checks do not guarantee visual acceptance of uninspected output."
+      ]
+    },
+    {
+      "id": "spatial-framing",
+      "title": "Spatial framing and readable 3D",
+      "description": "Use accurate geometry, orientation landmarks, local labels and purposeful views to expose spatial relationships.",
+      "tier": "foundation",
+      "domains": [
+        "general",
+        "geometry"
+      ],
+      "tags": [
+        "3D",
+        "camera",
+        "labels",
+        "occlusion",
+        "projection",
+        "framing",
+        "cutaway"
+      ],
+      "relatedIds": [
+        "geometry-led-explanation",
+        "coherent-motion",
+        "visual-verification"
+      ],
+      "readiness": "ready",
+      "document": "foundations/spatial-framing.md",
+      "provenance": "Current geometry-led animlib guidance, production scene craft and evidence/review contracts.",
+      "limitations": [
+        "Host narration, timing, interaction and validation contracts retain priority.",
+        "Guidance and automated checks do not guarantee visual acceptance of uninspected output."
+      ]
+    },
+    {
+      "id": "visual-verification",
+      "title": "Visual verification and evidence limits",
+      "description": "Check reasoning, readability, style and technical delivery separately, preserving exact source and artifact identity.",
+      "tier": "foundation",
+      "domains": [
+        "general"
+      ],
+      "tags": [
+        "quality",
+        "verification",
+        "preview",
+        "inspection",
+        "render",
+        "evidence",
+        "review"
+      ],
+      "relatedIds": [
+        "geometry-led-explanation",
+        "coherent-motion",
+        "spatial-framing"
+      ],
+      "readiness": "ready",
+      "document": "foundations/visual-verification.md",
+      "provenance": "Current geometry-led animlib guidance, production scene craft and evidence/review contracts.",
+      "limitations": [
+        "Host narration, timing, interaction and validation contracts retain priority.",
+        "Guidance and automated checks do not guarantee visual acceptance of uninspected output."
+      ]
+    }
+  ]
+}
