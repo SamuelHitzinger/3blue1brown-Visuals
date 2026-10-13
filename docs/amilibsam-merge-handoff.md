@@ -1,5 +1,7 @@
 # amilibsam merge handoff
 
+> Historical October 11 snapshot. For the repaired clean-checkout integration and new repository, use [visual-quality recovery](validation/visual-quality-recovery/README.md). Do not restore the old molecular test fixture or two-round audit limit.
+
 This commit collects the current branch work, including concurrent molecular preparation, progress, and loading changes. Base before this commit: `3b0a97b`.
 
 Main integration: merged `origin/main` at `b6df259`. Preserve its consolidated prompt assembly: guidance and scene craft now own the transferred teaching, 3D and molecular rules; retired animation-quality/viewing-mode files are not reappended. Main's direct manipulation, archive/title UI and persistent 50-round recovery remain intact. Legacy audit fallback complements checkpoints; checkpoint identity now includes source images. Frontend bundles were rebuilt from combined source.

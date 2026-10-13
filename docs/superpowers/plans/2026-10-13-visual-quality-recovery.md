@@ -26,8 +26,8 @@
 - [x] Restore application delta and rebuild bundles; preserve latest README.
 - [x] Fix molecular test fixtures using OS temporary directories. Reproduce before/after from empty cwd; audit other tests for same dependency.
 - [x] Add destination deployment opt-in and document it; validate deployment configuration.
-- [ ] Run complete local gates and fresh Linux CI on a review branch.
-- [ ] Run bounded real production generation with fresh plans, asset publication, native render review and retained evidence. Compare with prior approved cases; inspect navigation and molecular fidelity.
+- [x] Run complete local gates and fresh Linux CI on a review branch.
+- [x] Run bounded real production generation with fresh plans, asset publication, native render review and retained evidence. Compare with prior approved cases; inspect navigation and molecular fidelity.
 - [ ] Independent final review, resolve findings, rerun affected gates, merge PR into destination main and verify remote result.
 
 ## Evidence ledger
