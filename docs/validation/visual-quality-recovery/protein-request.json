@@ -1,0 +1,7 @@
+{
+  "title": "One protein, two views of its shape",
+  "topic": "Explain how a folded protein's backbone and outer shape describe the same structure to a learner who knows proteins are chains of amino acids. Use the real prepared 1CRN structure available in the supplied model inventory. Establish the complete three-dimensional protein before examining its interior. Connect its backbone and outer envelope using the same coordinates, clearly distinguishing residue-level, atomic and schematic representations wherever used. Include a brief inspection of the deposited heavy-atom representation, using 1crn-sticks, so the viewer can observe its element colors; preserve those colors and explain the relevant representation limits. Keep this atomic view connected to the same-origin residue and envelope comparison. Give the viewer a guided observation before explaining the relationship. Do not imply that changing representations is a measured folding trajectory. Make two connected scenes, about 60–90 seconds total, with enough time to establish and inspect the spatial model. Deliver subtitles only.",
+  "documents": [],
+  "videoMode": "interactive",
+  "narrationMode": "subtitles"
+}

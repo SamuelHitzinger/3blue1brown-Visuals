@@ -1,0 +1,512 @@
+{
+  "scope": "Single-run iteration comparison; same request/model, not a causal or statistical benchmark. Speech uses subtitle-only silent clocks.",
+  "freshRunPromptCommit": "37a2766",
+  "targetedRepairPromptCommit": "ef9f5c3",
+  "runtimeFiles": [
+    {
+      "path": "shared/animlib/dist/core.js",
+      "sha256": "008a849a9aaf2a0a2948153545cb0c119f537bb5985abbdc35146f455304cf68"
+    },
+    {
+      "path": "shared/animlib/dist/renderer.js",
+      "sha256": "816a98ff624e3459c380ba8fea0e1a9c1b6a193181ade22d465167b4bf591fde"
+    },
+    {
+      "path": "shared/animlib/dist/player.js",
+      "sha256": "4dfea9bf55ed72a2506b12a915abfac3155ba578e07f7c0d6af7e72d4da72551"
+    }
+  ],
+  "runs": [
+    {
+      "label": "previous",
+      "id": "7aae47b1-db83-41e5-abc2-3fa01c5b235b",
+      "status": "complete",
+      "requestSha256": "019e330f0f7783d96406de2717b0c2d4a0304bd98fe11d0df2016bf094eca250",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "totalDuration": 84.8,
+      "scenes": [
+        {
+          "index": 0,
+          "duration": 43.5,
+          "sourceSha256": "3f10a4ee4ba89cf68f1005e0928389f2242dcb13ca1000a9f5a3be841f55be66",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 0,
+          "nativeFrameCount": 24,
+          "narration": "This is crambin, a small protein recorded as structure one C R N. First, look at its complete three-dimensional shape. This smooth envelope summarizes the space around its atoms. Now reveal the chain inside. Each bead represents one amino acid, positioned at its alpha carbon. Connecting guides trace residue order, not individual chemical bonds. Compare the chain’s bends with the envelope’s outline. Take a moment to inspect their shared shape. They occupy the same coordinate frame: chain route and outer shape describe one folded structure."
+        },
+        {
+          "index": 1,
+          "duration": 41.3,
+          "sourceSha256": "6b33e1f0e623bf7b663bf8a6dc5605f8ab4a7f2c2f0bfae293dff02a1f7b99eb",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 1,
+          "nativeFrameCount": 24,
+          "narration": "Keep that position fixed and reveal the deposited heavy-atom view. Notice grey carbon, blue nitrogen, red oxygen and yellow sulfur. Unlike the residue beads, these sticks resolve atomic connections, including side chains. Hydrogens are omitted. Single cylinders do not specify bond order. Restore the envelope around these same coordinates. It is a schematic Gaussian envelope, not an electron-density map or a solvent-excluded surface. Beads reveal the chain’s route; sticks reveal atomic detail; the envelope reveals overall shape. We changed representations, not the protein’s fold."
+        }
+      ],
+      "assets": [
+        {
+          "sha256": "14f44b116cf0f9ed7092009fef76b48f620536133be08b10225f9c1533fb2480",
+          "fixtureId": "1crn-sticks",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "CPK element identity: C grey, N blue, O red, S yellow. Default to omitted/WHITE tint; a subtle molecule tint must preserve these element identities. Role colors must not replace element colors. Hydrogens are excluded."
+        },
+        {
+          "sha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "fixtureId": "1crn-surface",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        },
+        {
+          "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "fixtureId": "1crn-beads",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        }
+      ],
+      "prompts": [
+        {
+          "file": "task-0-draft.prompt.md",
+          "sha256": "d41802d5748399f2e757290af088df31bb871821c9277ac776e2b407eaa67235"
+        },
+        {
+          "file": "task-1-review.prompt.md",
+          "sha256": "a1ef307474116b0e9c501cf548b0f2a554d479894fd04ec300bf514818df8e09"
+        },
+        {
+          "file": "task-2-scene.prompt.md",
+          "sha256": "07aafd1fdb14adfd32af566e836a99764a8a7a0d10e1c87b1ba2976c3cfc7d4b"
+        },
+        {
+          "file": "task-3-review.prompt.md",
+          "sha256": "e32efd5670379b7f11198e093d4c10af9eb3b361ddabb22f8858618a88e5c657"
+        },
+        {
+          "file": "task-4-scene.prompt.md",
+          "sha256": "ea4d03afe755ebbe7f0a28bb188306488810984107c81c2bd5a75b688d79c94c"
+        },
+        {
+          "file": "task-5-review.prompt.md",
+          "sha256": "58d5fe2d62e9e9da3e669c2530d3c50111551e5a49c777cbe720dc570c8db964"
+        },
+        {
+          "file": "task-6-repair.prompt.md",
+          "sha256": "a6b4777264b9e1943d3ffb069115d117566ce3aed9edeb128471b0e573ae9e31"
+        },
+        {
+          "file": "task-7-review.prompt.md",
+          "sha256": "19ab554b3f71bcf751087718f7851df492d17b5acbbb81b95a05dc9a28649502"
+        }
+      ]
+    },
+    {
+      "label": "restored",
+      "id": "f2a823b6-612a-4789-9d6a-ccc03899e000",
+      "status": "complete",
+      "requestSha256": "019e330f0f7783d96406de2717b0c2d4a0304bd98fe11d0df2016bf094eca250",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "totalDuration": 92.03399999999999,
+      "scenes": [
+        {
+          "index": 0,
+          "duration": 43,
+          "sourceSha256": "482aa4063abffdbf218e045078a3a9247b4f90371540abafde61f1109af0ea69",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 1,
+          "nativeFrameCount": 24,
+          "narration": "This is crambin, a small protein, shown as a three-dimensional envelope. How does its amino-acid chain fit this shape? Take a few seconds to inspect the whole shape as it turns. Now look beneath the envelope. Each bead represents one residue, anchored at its alpha carbon. Links trace the backbone's route, not every backbone atom. Follow that route through depth; take a moment to compare it with the outline. The chain bends through the volume. The envelope summarizes its outside, not the chain's route."
+        },
+        {
+          "index": 1,
+          "duration": 49.034,
+          "sourceSha256": "a9bc32b92f2e22cc3b3c6191b1e98422b334a2a510c5eaa0155b3f4321f4df26",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 1,
+          "nativeFrameCount": 24,
+          "narration": "Keep that orientation. Here are sticks connecting deposited heavy-atom positions. Carbon is grey, nitrogen blue, oxygen red, and sulfur yellow. Take a moment to find those colors in the structure. Hydrogens are omitted; these sticks do not encode bond order. The atoms include side chains extending beyond the backbone trace. Returning the beads and envelope changes the description, not the coordinates! The beads summarize the backbone; the envelope summarizes the whole atomic arrangement, including side chains. It is a schematic envelope, not a measured skin or electron-density surface. These are views of one folded structure, not a folding movie."
+        }
+      ],
+      "assets": [
+        {
+          "sha256": "14f44b116cf0f9ed7092009fef76b48f620536133be08b10225f9c1533fb2480",
+          "fixtureId": "1crn-sticks",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "CPK element identity: C grey, N blue, O red, S yellow. Default to omitted/WHITE tint; a subtle molecule tint must preserve these element identities. Role colors must not replace element colors. Hydrogens are excluded."
+        },
+        {
+          "sha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "fixtureId": "1crn-surface",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        },
+        {
+          "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "fixtureId": "1crn-beads",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        }
+      ],
+      "prompts": [
+        {
+          "file": "task-0-draft.prompt.md",
+          "sha256": "f26dd4a3f912e9553a425cee3662443def4a465c2719dce1423857750ec2f098"
+        },
+        {
+          "file": "task-1-review.prompt.md",
+          "sha256": "ff5a39ac29a02a3b79436e46c175437abd989e6135951c1f98c6577e98982e1f"
+        },
+        {
+          "file": "task-2-scene.prompt.md",
+          "sha256": "18e4a966a3afc34998543c4d2af2e0039e0a2317bb5d185423ebbb921726466d"
+        },
+        {
+          "file": "task-3-review.prompt.md",
+          "sha256": "8df6faa695aecd3b4b79736e43f46b9a900b6b0d9548f60b81f4d022a4aa6c1b"
+        },
+        {
+          "file": "task-4-repair.prompt.md",
+          "sha256": "f89e04edd7092374546a1577470e2fb43f66da3b2d0830360acb2e84d068220a"
+        },
+        {
+          "file": "task-5-review.prompt.md",
+          "sha256": "96ff408cac18df064751260c792b51a39d596d292385f8292615c214cbc1b2ae"
+        },
+        {
+          "file": "task-6-scene.prompt.md",
+          "sha256": "143134063c20549e74956e81b9ffa27597a2609c431405138de600df1c154ca8"
+        },
+        {
+          "file": "task-7-review.prompt.md",
+          "sha256": "2fa0f489bf66b174661ef46c99b7f540d2f34e09fc3bc65124249c2fbc7e6057"
+        },
+        {
+          "file": "task-8-repair.prompt.md",
+          "sha256": "e1effedd7d7df577c4f00f1a70b43948e02539eb0b0970f1930a3c33dcddec25"
+        },
+        {
+          "file": "task-9-review.prompt.md",
+          "sha256": "28a8b87f3be341f360e4cf947985f33a7accdce43c6a1aaea3348785777126c2"
+        }
+      ]
+    },
+    {
+      "label": "clarity",
+      "id": "9c166491-3a60-446f-b8e8-7aeab1e060df",
+      "status": "complete",
+      "requestSha256": "019e330f0f7783d96406de2717b0c2d4a0304bd98fe11d0df2016bf094eca250",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "totalDuration": 80.90100000000001,
+      "scenes": [
+        {
+          "index": 0,
+          "duration": 44.634,
+          "sourceSha256": "9334f3e44ce7389268339c15ed92402ac6b17ec5fbc239c898f68c6821e5c73c",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 0,
+          "nativeFrameCount": 24,
+          "narration": "This is crambin, a protein with forty-six amino acids, shown as a three-dimensional envelope. How does its chain fit inside this shape? Take a few seconds to inspect the whole shape. Now look through the envelope. Each bead represents one amino acid, anchored at its alpha-carbon position. The links trace sequence order, simplifying the backbone. Follow that path for a moment. Does it stay on the outside? It runs through the volume! The backbone trace describes the chain’s route, not the protein’s boundary."
+        },
+        {
+          "index": 1,
+          "duration": 36.267,
+          "sourceSha256": "37c1b03d545b54ac17f05da7749d8a957679ad183dc37122af1102c49fde40cf",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 1,
+          "nativeFrameCount": 24,
+          "narration": "Keep the same orientation; switch to deposited heavy-atom sticks. Carbon is grey, nitrogen blue, oxygen red, sulfur yellow. Take a moment to inspect those colors. Hydrogens are omitted; these sticks do not distinguish bond orders. Atoms extend beyond the backbone, including side chains. The envelope summarizes this atomic arrangement, not just the backbone. It is a schematic boundary, not an exact molecular surface. Same coordinates, different information—not a movie of folding."
+        }
+      ],
+      "assets": [
+        {
+          "sha256": "14f44b116cf0f9ed7092009fef76b48f620536133be08b10225f9c1533fb2480",
+          "fixtureId": "1crn-sticks",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "CPK element identity: C grey, N blue, O red, S yellow. Default to omitted/WHITE tint; a subtle molecule tint must preserve these element identities. Role colors must not replace element colors. Hydrogens are excluded."
+        },
+        {
+          "sha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "fixtureId": "1crn-surface",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        },
+        {
+          "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "fixtureId": "1crn-beads",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        }
+      ],
+      "prompts": [
+        {
+          "file": "task-0-draft.prompt.md",
+          "sha256": "4954f5e4fe3f42dec68fe319461f5c3982ddcaa9e88079150a2039e79a33c206"
+        },
+        {
+          "file": "task-1-review.prompt.md",
+          "sha256": "d2880a7f9a7e67453bb38d6bbf020852ba233ada5d68c00d458e7bd18002187b"
+        },
+        {
+          "file": "task-2-scene.prompt.md",
+          "sha256": "3dd988452d65dfdbc09f1b5867537a3d2ea03900e6ef8d0023ca95b75ac6f907"
+        },
+        {
+          "file": "task-3-review.prompt.md",
+          "sha256": "7ee82d0463797aec242f95f4ac32c16553fd5b6ba53ca6b722347fdafbe5b62c"
+        },
+        {
+          "file": "task-4-scene.prompt.md",
+          "sha256": "e31b0d2684b153b041041a800f7fe97fdd18b33948c7610669f7f2080e6940db"
+        },
+        {
+          "file": "task-5-review.prompt.md",
+          "sha256": "786bc5e64a12133af734ce517d0c22506f47158587f725394e021e98741c1594"
+        },
+        {
+          "file": "task-6-repair.prompt.md",
+          "sha256": "1d12caf27a0b8d422063cdb4d54fcaee6e32c79e4a478563ff4ad642143ccc4d"
+        },
+        {
+          "file": "task-7-review.prompt.md",
+          "sha256": "3f032d8dca50584e4ea975d9810675cc45eea9474b07cf9280bb9a28190e6f87"
+        }
+      ]
+    },
+    {
+      "label": "final",
+      "id": "144177fc-af6b-434b-a606-798fef4eef13",
+      "status": "complete",
+      "requestSha256": "019e330f0f7783d96406de2717b0c2d4a0304bd98fe11d0df2016bf094eca250",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "totalDuration": 89.634,
+      "scenes": [
+        {
+          "index": 0,
+          "duration": 42.834,
+          "sourceSha256": "3f5b8d2b0e1eb993b498dfbf936454846db3b8dec91a2771fd515ce8bc96d835",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 0,
+          "nativeFrameCount": 24,
+          "narration": "Here is crambin, a small protein, shown as a complete three-dimensional envelope. Look around its rounded regions and indentations. Where does the amino-acid chain run inside? Making the envelope transparent reveals a simplified backbone trace. Each bead marks one amino acid; links follow chain order. These are residue markers, not individual atoms. Take four seconds to follow the linked beads. Does the chain run straight through, or turn back through the volume? It turns back! The folded chain occupies three dimensions, not just the outline you see."
+        },
+        {
+          "index": 1,
+          "duration": 46.8,
+          "sourceSha256": "a87ff8eba6e0b41afa48ffae125c5555d55a5ef3fae1fd214c585425cefaff8a",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 0,
+          "nativeFrameCount": 24,
+          "narration": "Now keep that orientation and inspect the deposited heavy-atom sticks. Gray marks carbon, blue nitrogen, red oxygen, and yellow sulfur. Hydrogens are omitted. Take four seconds to find different element colors beyond the simplified chain trace. The residues contain more atoms than the beads show. The sticks show bonds, but not bond order. The envelope summarizes space around these same atoms, including side chains. It is schematic, not a physical skin or an electron-density map. Backbone trace and envelope describe one structure: chain route and overall shape. Switching views is not watching folding."
+        }
+      ],
+      "assets": [
+        {
+          "sha256": "14f44b116cf0f9ed7092009fef76b48f620536133be08b10225f9c1533fb2480",
+          "fixtureId": "1crn-sticks",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "CPK element identity: C grey, N blue, O red, S yellow. Default to omitted/WHITE tint; a subtle molecule tint must preserve these element identities. Role colors must not replace element colors. Hydrogens are excluded."
+        },
+        {
+          "sha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "fixtureId": "1crn-surface",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        },
+        {
+          "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "fixtureId": "1crn-beads",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        }
+      ],
+      "prompts": [
+        {
+          "file": "task-0-draft.prompt.md",
+          "sha256": "283773e31bc67ca450d117defa419f48b120d59d0f74c969420cd8d9f1c1c0c8"
+        },
+        {
+          "file": "task-1-review.prompt.md",
+          "sha256": "15592c7d0e5bf069e2bc306d309d3748f6ee903180c332b7d2f9472f86ec9cda"
+        },
+        {
+          "file": "task-2-scene.prompt.md",
+          "sha256": "2e2aedcd18a6b0b1cbc9dcc0e469da9ac7f66685456eb6affe3d1b77a0ee8681"
+        },
+        {
+          "file": "task-3-review.prompt.md",
+          "sha256": "d2ce11e9d9e883074275e7a7d3415840f447f6c6b19adcade182a583e6f11f47"
+        },
+        {
+          "file": "task-4-scene.prompt.md",
+          "sha256": "7e77b4f18595701afc39146e33604c9fb75c1a53bf857cb505275623b5a9a95c"
+        },
+        {
+          "file": "task-5-review.prompt.md",
+          "sha256": "c5a0cf87c641fef1d8f1a86f1bd50e5f4c6b414e8dd09db866d0c2bb3106aa55"
+        }
+      ]
+    },
+    {
+      "label": "delivery",
+      "id": "144177fc-af6b-434b-a606-798fef4eef13",
+      "status": "complete",
+      "requestSha256": "019e330f0f7783d96406de2717b0c2d4a0304bd98fe11d0df2016bf094eca250",
+      "model": "gpt-6-astra",
+      "thinking": "high",
+      "totalDuration": 89.634,
+      "scenes": [
+        {
+          "index": 0,
+          "duration": 42.834,
+          "sourceSha256": "b5c9a367228f899b4432a726b6d69f725a66307eb0ab22f0a3426fbf5f0d3e46",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 1,
+          "nativeFrameCount": 24,
+          "narration": "Here is crambin, a small protein, shown as a complete three-dimensional envelope. Look around its rounded regions and indentations. Where does the amino-acid chain run inside? Making the envelope transparent reveals a simplified backbone trace. Each bead marks one amino acid; links follow chain order. These are residue markers, not individual atoms. Take four seconds to follow the linked beads. Does the chain run straight through, or turn back through the volume? It turns back! The folded chain occupies three dimensions, not just the outline you see."
+        },
+        {
+          "index": 1,
+          "duration": 46.8,
+          "sourceSha256": "57f99de1e0df183af7bbb278015170accaa313bd2efb4c964b35a2ada12784fb",
+          "reviewSourceMatches": true,
+          "approved": true,
+          "reviewAttempt": 1,
+          "nativeFrameCount": 24,
+          "narration": "Now keep that orientation and inspect the deposited heavy-atom sticks. Gray marks carbon, blue nitrogen, red oxygen, and yellow sulfur. Hydrogens are omitted. Take four seconds to find different element colors beyond the simplified chain trace. The residues contain more atoms than the beads show. The sticks show bonds, but not bond order. The envelope summarizes space around these same atoms, including side chains. It is schematic, not a physical skin or an electron-density map. Backbone trace and envelope describe one structure: chain route and overall shape. Switching views is not watching folding."
+        }
+      ],
+      "assets": [
+        {
+          "sha256": "14f44b116cf0f9ed7092009fef76b48f620536133be08b10225f9c1533fb2480",
+          "fixtureId": "1crn-sticks",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "CPK element identity: C grey, N blue, O red, S yellow. Default to omitted/WHITE tint; a subtle molecule tint must preserve these element identities. Role colors must not replace element colors. Hydrogens are excluded."
+        },
+        {
+          "sha256": "8e8bff9f17df4dd7544aae49b410a0910bdfa32d022f198b55a2948bb9d75e36",
+          "fixtureId": "1crn-surface",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        },
+        {
+          "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+          "fixtureId": "1crn-beads",
+          "origin": [
+            10.593499999999999,
+            10.2105,
+            6.078999999999999
+          ],
+          "source": "https://www.rcsb.org/structure/1CRN",
+          "sourceSha256": "42199a30a0701864a2a5cc76cd7f35cc544cd0e65fbcf63e03c166543249b811",
+          "colorMeaning": "Neutral schematic representation color, not atom-element colors. CA beads represent residues; the surface is an envelope."
+        }
+      ],
+      "prompts": [
+        {
+          "file": "task-0-repair.prompt.md",
+          "sha256": "1ac0e6f9daebabf624a5bcceb40ba3c774f50957fe87c655e584d68a03757d29"
+        },
+        {
+          "file": "task-1-review.prompt.md",
+          "sha256": "f94476407b5c0a3db92d1efc036ebe88b05dfa0c29ce49bdb332880aa2aad4cf"
+        }
+      ]
+    }
+  ]
+}
