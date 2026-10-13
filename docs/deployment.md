@@ -1,5 +1,7 @@
 # Docker deployment
 
+Production deployment is opt-in for this repository. Set the GitHub Actions repository variable `DEPLOY_ENABLED` to `true` only after configuring your own production environment, VM credentials, host, and public origin below. Without that variable, CI still builds, tests and packages the application; the deploy job is skipped. Inherited example addresses do not configure a new deployment.
+
 The app repository owns `.github/workflows/ci.yml`, `Dockerfile`, `compose.yaml`,
 and `scripts/*release*`. GitHub Actions builds and tests a Linux x86_64 Docker
 image, then uploads that exact image over SSH. No container registry, GitHub

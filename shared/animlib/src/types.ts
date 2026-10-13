@@ -589,6 +589,8 @@ export interface PlayerState {
   scenes: { id: string; duration: number }[];
   controls: ControlDefinition[];
   orbitEnabled: boolean;
+  /** An orbitable 3D view exists, including during authored camera motion. */
+  orbitAvailable?: boolean;
   views: { id: string; rect: ViewState["rect"]; orbitEnabled: boolean }[];
   error?: string;
 }
