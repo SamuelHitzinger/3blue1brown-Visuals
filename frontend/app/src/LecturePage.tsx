@@ -8,13 +8,12 @@ import './lecture-notebook.css'
 import LectureVisual from './LectureVisual'
 import CapturePairingPanel from './CapturePairingPanel'
 import ViewerLinkPanel from './ViewerLinkPanel'
-import LiveBridgePanel from './LiveBridgePanel'
-import { appendLectureSource, deleteLecture, downloadLecture, hasLectureVisual, lectureStatus, mergeLectureSnapshot, patchLecture, sourceRequestKey, synthesizeLecture, visualizeConcept, watchLectureSnapshots } from './lectures'
+import { appendLectureSource, deleteLecture, downloadLecture, finishLecture, hasLectureVisual, lectureStatus, mergeLectureSnapshot, patchLecture, sourceRequestKey, synthesizeLecture, visualizeConcept, watchLectureSnapshots } from './lectures'
 
 function readDraft(key: string): string | null { try { return localStorage.getItem(key) } catch { return null } }
 function storeDraft(key: string, value: string) { try { if (value) localStorage.setItem(key, value); else localStorage.removeItem(key) } catch { /* The visible draft is retained for this session. */ } }
 
-export default function LecturePage({ id, onBack, onCatalog, suspended, courses = [] }: { id: string; onBack: (courseId?: string) => void; onCatalog: (id?: string) => void; suspended: boolean; courses?: CourseSubject[] }) {
+export default function LecturePage({ id, onBack, suspended, courses = [] }: { id: string; onBack: (courseId?: string) => void; suspended: boolean; courses?: CourseSubject[] }) {
   const [session, setSession] = useState<LectureSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
@@ -69,10 +68,10 @@ export default function LecturePage({ id, onBack, onCatalog, suspended, courses 
     <button className="learning-back" onClick={() => onBack(session.courseId ?? "__independent__")}><ArrowLeft size={16}/> {courseTitle}</button>
     <div className="lecture-heading"><div><span className="learning-eyebrow">{courseTitle} {'\u00b7'} Lecture notebook</span><EditableTitle title={session.title} busy={!!busy} save={title => act("title", () => patchLecture(id, { title }))}/><div className="lecture-heading-meta"><span className={`lecture-status status-${session.status}`}><span/>{lectureStatus(session)}</span><span>{session.sources.length} {session.sources.length === 1 ? 'source' : 'sources'}</span></div></div><button className="secondary-button" onClick={() => downloadLecture({ ...session, personalNotes })}><FileText size={16}/> Export notes</button></div>
     {(error || loadError) && <p className="learning-error" role="alert">{error || loadError} {loadError && <button onClick={() => setReload(value => value + 1)}>Reconnect</button>}</p>}
+    <div className="lecture-finish"><button className="secondary-button" disabled={!!busy || !!session.finishedAt || !!sourceText.trim()} onClick={() => { void act('finish', () => finishLecture(id)) }}><Check size={16}/>{session.finishedAt ? 'Finished' : busy === 'finish' ? 'Finishing…' : 'Finish lecture'}</button><p>{sourceText.trim() ? 'Add or clear your pending source text before finishing.' : session.finishedAt ? 'Any remaining uploads will still update your notes.' : session.titleMode === 'automatic' ? 'After recording, finish to add a subtitle from your notes.' : 'Finish when you are done. Your chosen title stays unchanged.'}</p></div>
     <ViewerLinkPanel key={id} lectureId={id}/>
     <details className="notebook-tools" ref={sourceDrawer}><summary>Capture & source material <span>{session.sources.length} {session.sources.length === 1 ? 'source' : 'sources'}</span></summary><div className="notebook-tools-body">
         <CapturePairingPanel lectureId={id}/>
-        <LiveBridgePanel key={id} lectureId={id}/>
         <section className="learning-panel source-composer" aria-labelledby="source-heading"><div className="learning-section-heading"><h2 id="source-heading">Add to the lecture</h2><Plus size={18}/></div><p>Paste a passage, a slide’s text, or what you just heard.</p>
           <div className="lecture-input-tabs" aria-label="Lecture input"><span><FileText size={14}/> Text</span><span>Use phone capture above for photos and audio.</span></div>
           <form onSubmit={event => { event.preventDefault(); const text = sourceText; if (!text.trim()) return; if (request.current.body !== text) request.current = { body: text, key: sourceRequestKey(localStorage, id, text) }; void act('source', () => appendLectureSource(id, text, request.current.key), () => { setSourceText(''); storeDraft(`aha-lecture-source-${id}`, ''); storeDraft(`aha-lecture-request-${id}`, ''); request.current = { body: '', key: crypto.randomUUID() } }) }}>
@@ -94,7 +93,6 @@ export default function LecturePage({ id, onBack, onCatalog, suspended, courses 
           <p className="concept-explanation">{concept.explanation}{citations(concept.sourceIds)}</p>
           {hasLectureVisual(visual) ? <><LectureVisual key={visual.id} visualization={visual} suspended={suspended}/>{visualPending && <p className="lecture-progress" role="status"><span className="working-dot"/>Updating the visual. Your earlier explanation is still playable.</p>}{visual.status === 'failed' && <p className="learning-error" role="alert">{visual.error || 'The visual could not be updated.'} <button disabled={!!busy} onClick={() => visualize(concept)}>Retry update</button></p>}</> : <div className="concept-placeholder"><Layers3 size={32}/><h3>{visualPending ? 'Building your visual explanation' : visual?.status === 'failed' ? 'Let’s try that visual again' : 'Make this idea visible'}</h3><p>{visualPending ? 'You can keep adding material while the animation takes shape.' : visual?.error || 'Explore this concept through a focused, interactive animation.'}</p>{!visualPending && <button className="primary-button" disabled={!!busy} onClick={() => visualize(concept)}>{visual?.status === 'failed' ? 'Retry visualization' : 'Visualize concept'}<ArrowRight size={16}/></button>}</div>}
           {visual && visual.sourceRevision < session.sourceRevision && <div className="stale-visual-note"><span>This visualization reflects earlier material.</span>{!visualPending && <button disabled={!!busy} onClick={() => visualize(concept)}>Update visual</button>}</div>}
-          {concept.catalogIds.length > 0 && <div className="concept-catalog-links"><span>Explore the building blocks</span>{concept.catalogIds.map(catalogId => <button key={catalogId} onClick={() => onCatalog(catalogId)}>{catalogId.replace(/[-_]/g, ' ')}<ArrowRight size={12}/></button>)}</div>}
 </figure>
           })}</section>)}{session.notes.questions.length > 0 && <section id="notebook-role-questions" data-notebook-section="role-questions" className="notebook-section"><h3>Questions to come back to</h3><ul>{session.notes.questions.map((point,index) => <li key={index}>{point.text}{citations(point.sourceIds)}</li>)}</ul></section>}</div> : !notesPending && <div className="learning-empty compact"><BookOpen size={33}/><h3>From material to meaning</h3><p>Add your first passage using Capture & source material. Your notes will grow here.</p></div>}
         </section>

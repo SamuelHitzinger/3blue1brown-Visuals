@@ -7,6 +7,12 @@
 .workspace-label { font-size: 12px; color: var(--muted); }
 .workspace-heading h1 { font-family: DynaPuff, sans-serif; font-size: clamp(32px, 4.4vw, 49px); font-weight: 600; letter-spacing: -1.8px; line-height: 1.18; margin: 20px 0 17px; }
 .workspace-heading p { font-size: 15px; line-height: 1.6; color: var(--muted); margin: 0; }
+.home-composer { --input-color: var(--butter); width: min(720px, 100%); margin: 36px auto 0; border: 1px solid var(--line); border-radius: 24px; background: var(--input-color); color: var(--card-ink); }
+.home-topic-label { display: block; font-size: 13px; font-weight: 500; }
+.home-attachments { display: flex; flex-wrap: wrap; gap: 10px; }
+.home-file-hint { text-align: center; color: var(--muted); font-size: 12px; margin: 16px 0 0; }
+.home-composer .video-composer textarea { resize: vertical; min-height: 150px; max-height: 50vh; }
+.home-composer .video-composer textarea:focus-visible { outline: 2px solid var(--card-ink); outline-offset: 5px; border-radius: 4px; }
 
 /* Three full cards share a centre; only the active card has editable content. */
 .input-deck { --peek: 64px; --reveal: 105px; position: relative; width: min(680px, calc(100% - 190px)); margin: 57px auto 30px; isolation: isolate; }

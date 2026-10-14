@@ -1,4 +1,5 @@
 import { orderLectureSummaries } from '../../shared/lecture.js';
+import { nextLectureTitle } from '../../shared/lectureTitles.js';
 import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -32,8 +33,14 @@ function field(value: unknown, name: string, max: number, allowEmpty = false): s
   if (value.length > max) throw new LectureError(`${name} must contain at most ${max.toLocaleString('en-US')} characters.`, 413);
   return allowEmpty ? value : value.trim();
 }
-const summary = ({ schemaVersion, id, title, courseId, position, createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status }: LectureSession): LectureSummary =>
-  ({ schemaVersion, id, title, ...(courseId ? { courseId } : {}), ...(position === undefined ? {} : { position }), createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status });
+const summary = ({ schemaVersion, id, title, finishedAt, courseId, position, createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status }: LectureSession): LectureSummary =>
+  ({ schemaVersion, id, title, ...(finishedAt ? { finishedAt } : {}), ...(courseId ? { courseId } : {}), ...(position === undefined ? {} : { position }), createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status });
+
+function updateFinishedTitle(session: LectureSession) {
+  if (!session.finishedAt || session.titleMode !== 'automatic' || !session.titleBase || !session.notes || session.synthesizedRevision !== session.sourceRevision) return;
+  const subtitle = (session.notes.subtitle ?? session.notes.sections[0]?.title ?? '').replace(/\s+/g, ' ').trim().slice(0, 120);
+  if (subtitle) session.title = `${session.titleBase}: ${subtitle}`.slice(0, 200);
+}
 
 /** Release worker capacity even if an injected provider ignores the cancellation signal. */
 function abortable<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
@@ -65,6 +72,7 @@ export class LectureService {
       CREATE TABLE IF NOT EXISTS lecture_source_keys (lecture TEXT NOT NULL, key TEXT NOT NULL, text TEXT NOT NULL, source TEXT NOT NULL, PRIMARY KEY(lecture,key));
       CREATE TABLE IF NOT EXISTS lecture_visual_inputs (id TEXT PRIMARY KEY, lecture TEXT NOT NULL, input TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS lecture_view_links (lecture TEXT PRIMARY KEY, token_hash TEXT NOT NULL, expires_at INTEGER NOT NULL);
+      CREATE TABLE IF NOT EXISTS lecture_deleted_courses (owner TEXT NOT NULL, course TEXT NOT NULL, PRIMARY KEY(owner,course));
       CREATE INDEX IF NOT EXISTS lectures_owner ON lectures(owner);`);
     this.concurrency = Number.isFinite(options.concurrency) ? Math.max(1, Math.min(4, Math.floor(options.concurrency!))) : 2;
     for (const row of this.rows()) {
@@ -200,6 +208,7 @@ export class LectureService {
       const previousIds = new Set(initial.notes?.concepts.map(concept => concept.id) ?? []);
       current.notes = notes; current.synthesizedRevision = revision;
       current.status = current.sourceRevision > revision ? 'queued' : 'idle'; delete current.error;
+      updateFinishedTitle(current);
       // Only one newly discovered concept is automatic. Other concepts remain deliberate requests.
       const firstNew = current.visualizations.length < MAX_VISUALIZATIONS
         ? notes.concepts.find(concept => !previousIds.has(concept.id) && !current.visualizations.some(visual => visual.conceptId === concept.id)) : undefined;
@@ -306,8 +315,8 @@ export class LectureService {
     try {
       const url = new URL(request.url), user = proxyUser(request), owner = user ? `user:${user.id}` : 'local';
       let path: string; try { path = decodeURIComponent(url.pathname); } catch { throw new LectureError('Invalid URL.'); }
-      const match = /^\/api\/lectures(?:\/([a-f0-9-]{36})(?:\/(sources|synthesize|concepts|view-link)(?:\/([a-z0-9][a-z0-9_-]{0,79})\/visualize)?)?)?$/.exec(path);
-      if (path !== '/api/lectures/reorder' && (!match || (match![2] === 'concepts') !== !!match![3])) return json({ detail: 'Not Found' }, 404);
+      const match = /^\/api\/lectures(?:\/([a-f0-9-]{36})(?:\/(sources|synthesize|concepts|view-link|finish)(?:\/([a-z0-9][a-z0-9_-]{0,79})\/visualize)?)?)?$/.exec(path);
+      if (!['/api/lectures/reorder', '/api/lectures/detach-course'].includes(path) && (!match || (match![2] === 'concepts') !== !!match![3])) return json({ detail: 'Not Found' }, 404);
       if (!['GET', 'HEAD'].includes(request.method)) {
         const origin = request.headers.get('origin'), protocol = request.headers.get('x-forwarded-proto') ?? url.protocol.slice(0, -1);
         const publicOrigin = process.env.NARRATION_PUBLIC_ORIGIN ?? `${protocol}://${url.host}`;
@@ -332,6 +341,18 @@ export class LectureService {
         if (!value || typeof value !== 'object' || Array.isArray(value)) throw new LectureError('Provide a JSON object.');
         return value as Record<string, unknown>;
       };
+      if (path === '/api/lectures/detach-course') {
+        if (request.method !== 'POST') return method('POST');
+        const input = await body(), courseId = field(input.courseId, 'a course ID', 200);
+        return json(this.db.transaction(() => {
+          this.db.query('INSERT OR IGNORE INTO lecture_deleted_courses (owner, course) VALUES (?, ?)').run(owner, courseId);
+          const sessions = this.ownedSessions(owner);
+          let position = sessions.filter(session => !session.courseId).reduce((max, session, index) => Math.max(max, session.position ?? index), -1) + 1;
+          return sessions.filter(session => session.courseId === courseId).map(session => {
+            delete session.courseId; session.position = position++; this.save(session); return summary(session);
+          });
+        })());
+      }
       if (path === '/api/lectures/reorder') {
         if (request.method !== 'POST') return method('POST');
         const input = await body();
@@ -348,15 +369,21 @@ export class LectureService {
       if (!match![1]) {
         if (request.method === 'GET') return json(this.ownedSessions(owner).map(summary));
         if (request.method !== 'POST') return method('GET, POST');
-        const idempotency = key(), input = await body(), title = field(input.title, 'a lecture title', 200);
+        const idempotency = key(), input = await body();
+        const requestedTitle = input.title === undefined ? '' : field(input.title, 'a lecture title', 200, true).trim();
         const courseId = input.courseId === undefined ? undefined : field(input.courseId, 'a course ID', 200);
-        const normalized = JSON.stringify({ title, ...(courseId ? { courseId } : {}) });
+        const normalized = JSON.stringify({ title: requestedTitle, ...(courseId ? { courseId } : {}) });
         const prior = this.db.query('SELECT * FROM lectures WHERE owner = ? AND key = ?').get(owner, idempotency) as Row | null;
         if (prior) { if (prior.input !== normalized) throw new LectureError('This Idempotency-Key was already used for a different lecture.', 409); return json(this.decode(prior), 201); }
+        if (courseId && this.db.query('SELECT 1 FROM lecture_deleted_courses WHERE owner = ? AND course = ?').get(owner, courseId)) {
+          throw new LectureError('This course was deleted. Open Independent learning or choose another course to start a lecture.', 409);
+        }
         const now = new Date().toISOString();
         const siblings = this.ownedSessions(owner).filter(session => session.courseId === courseId);
+        const title = requestedTitle || nextLectureTitle(siblings);
         const position = siblings.reduce((max, session, index) => Math.max(max, session.position ?? index), -1) + 1;
-        const session: LectureSession = { position, schemaVersion: 1, id: crypto.randomUUID(), title, ...(courseId ? { courseId } : {}),
+        const session: LectureSession = { position, schemaVersion: 1, id: crypto.randomUUID(), title,
+          titleMode: requestedTitle ? 'manual' : 'automatic', ...(!requestedTitle ? { titleBase: title } : {}), ...(courseId ? { courseId } : {}),
           createdAt: now, updatedAt: now, revision: 0, sourceRevision: 0, synthesizedRevision: 0, status: 'idle', sources: [], notes: null, personalNotes: '', visualizations: [] };
         this.db.query('INSERT INTO lectures VALUES (?, ?, ?, ?, ?)').run(session.id, owner, idempotency, normalized, JSON.stringify(session));
         return json(session, 201);
@@ -418,7 +445,7 @@ export class LectureService {
           if (Object.keys(edits).length > 100 || Object.values(edits).reduce((total, value) => total + value.length, 0) > 100_000) throw new LectureError('Note edits are too long.', 413);
           session.noteEdits = edits;
         }
-        if (title !== undefined) session.title = title;
+        if (title !== undefined) { session.title = title; session.titleMode = 'manual'; }
         if (personalNotes !== undefined) session.personalNotes = personalNotes;
         this.save(session); return json(session);
       }
@@ -431,7 +458,15 @@ export class LectureService {
         return json(this.appendSource(owner, id, idempotency, text), 202);
       }
       const session = this.snapshot(id)!;
-      if (match![2] === 'synthesize') {
+      if (match![2] === 'finish') {
+        session.finishedAt ??= new Date().toISOString();
+        updateFinishedTitle(session);
+        if (session.sourceRevision > session.synthesizedRevision) {
+          clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
+          this.prepareSynthesis(session);
+        }
+        this.save(session);
+      } else if (match![2] === 'synthesize') {
         clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
         if (!session.sources.length) throw new LectureError('Add lecture text before updating the notes.');
         this.prepareSynthesis(session);

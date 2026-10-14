@@ -25,6 +25,8 @@ export interface LectureConcept {
   catalogIds: string[];
 }
 export interface LectureNotes {
+  /** Concise content-based subtitle, applied only after the lecture is finished. */
+  subtitle?: string;
   summary: string;
   sections: { id: string; title: string; points: LecturePoint[] }[];
   concepts: LectureConcept[];
@@ -46,6 +48,10 @@ export interface LectureSession {
   schemaVersion: 1;
   id: string;
   title: string;
+  /** Missing on legacy records: treat their titles as manually chosen. */
+  titleMode?: 'automatic' | 'manual';
+  titleBase?: string;
+  finishedAt?: string;
   courseId?: string;
   position?: number;
   noteEdits?: Record<string, string>;
@@ -61,7 +67,7 @@ export interface LectureSession {
   visualizations: LectureVisualization[];
   error?: string;
 }
-export type LectureSummary = Pick<LectureSession, 'schemaVersion' | 'id' | 'title' | 'courseId' | 'position' | 'createdAt' | 'updatedAt' | 'revision' | 'sourceRevision' | 'synthesizedRevision' | 'status'>;
+export type LectureSummary = Pick<LectureSession, 'schemaVersion' | 'id' | 'title' | 'finishedAt' | 'courseId' | 'position' | 'createdAt' | 'updatedAt' | 'revision' | 'sourceRevision' | 'synthesizedRevision' | 'status'>;
 export interface LectureSynthesisInput {
   title: string;
   sources: LectureSource[];

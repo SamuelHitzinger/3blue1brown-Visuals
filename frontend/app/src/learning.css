@@ -230,7 +230,7 @@
   .catalog-entry-icon { width: 34px; height: 34px; }
 }
 @media (max-width: 850px) {
-  .learning-top-nav { display: none; }
+  .learning-top-nav { display: flex; }
   .learning-shell .header { height: 85px; }
   .header-create-video { margin-left: auto; }
   .overview-diagram { margin-right: 0; }
@@ -255,6 +255,10 @@
 @media (max-width: 600px) {
   .learning-shell { padding: 0 22px; }
   .learning-shell .header { height: 78px; }
+  .learning-shell .header-start { gap: 8px; }
+  .learning-shell .wordmark { font-size: 28px; }
+  .learning-top-nav button { padding: 12px 9px; font-size: 12px; }
+  .learning-shell .menu-toggle { width: 34px; height: 34px; }
   .header-create-video { font-size: 10px; padding: 9px 11px; }
   .learning-page { padding-top: 28px; }
   .learning-page h1 { letter-spacing: -1.4px; }

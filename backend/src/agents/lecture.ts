@@ -58,7 +58,7 @@ export function parseLectureNotes(output: string, sources: LectureSource[], prev
     return { id, title, ...(sectionId === undefined ? {} : { sectionId }), explanation: text(concept.explanation, 6000), sourceIds: refs(concept.sourceIds),
       visualizationPrompt: text(concept.visualizationPrompt, 4000), catalogIds };
   });
-  return { summary: text(raw.summary, 6000), sections, concepts, questions: list(raw.questions, 20).map(point) };
+  return { ...(raw.subtitle === undefined ? {} : { subtitle: text(raw.subtitle, 120) }), summary: text(raw.summary, 6000), sections, concepts, questions: list(raw.questions, 20).map(point) };
 }
 
 export const LECTURE_SYNTHESIS_INSTRUCTIONS = `You organize an incrementally received lecture into concise, faithful study notes.
@@ -67,11 +67,12 @@ Use only the supplied lecture sources for factual claims. Do not search the web 
 For incremental updates, sources contains only the new batch. Earlier material is represented by previousNotes: preserve its important facts and exact citations. Existing citations remain valid; do not invent earlier source IDs or reconstruct missing transcript text. Revise earlier notes only when the new sources support the change.
 Use a short summary of 1-3 sentences and direct section bullets; avoid repeating the same explanation. The summary must be grounded in the supplied sources and agree with the cited sections. Every section point and concept requires one or more exact sourceIds from the provided chunks. Catalog IDs are visualization references, never evidence for lecture claims.
 Separate open questions from established results. Phrase questions as unresolved, rather than inventing missing answers. If the input is fragmentary, say so.
+Include a concise subtitle (2–8 words, at most 120 characters) describing the main topic of the complete notes, in the language of the lecture. Base it on the actual noted content, not the generic lecture title. Do not include a lecture number, quotation marks, or a trailing period. It will be used after the lecture is finished.
 Merge overlapping material, retain important earlier facts, and incorporate the newest chunk. Preserve IDs for sections and concepts that already exist. Assign each concept a sectionId from the sections. Keep the complete notes concise, not a transcript.
 Captured sources include their actual capture timestamp and device sequence. Use these to understand lecture chronology; upload or extraction order may differ. Photos and audio may overlap. Preserve uncertainty from transcription and unreadable material.
 Identify at most twelve concepts that benefit from visual explanation. For each, give a causal visualizationPrompt for one short scene: what the learner manipulates or observes, what changes, and what construction makes the relationship visible. Specify evidence for a claimed equality or invariant (for example matched lengths, corresponding parts, or unchanged slices), not just a formula or changing caption. Do not add claims beyond the sources or promise a specific unavailable asset.
 Use catalog search/read only when helpful for selecting a representation. Include only catalogIds you have verified through those tools; an empty array is valid.
-Return only JSON: {"summary":"...","sections":[{"id":"stable-id","title":"...","points":[{"text":"...","sourceIds":["exact-source-id"]}]}],"concepts":[{"id":"stable-id","sectionId":"stable-id","title":"...","explanation":"...","sourceIds":["exact-source-id"],"visualizationPrompt":"...","catalogIds":[]}],"questions":[{"text":"...","sourceIds":["exact-source-id"]}]}.
+Return only JSON: {"subtitle":"...","summary":"...","sections":[{"id":"stable-id","title":"...","points":[{"text":"...","sourceIds":["exact-source-id"]}]}],"concepts":[{"id":"stable-id","sectionId":"stable-id","title":"...","explanation":"...","sourceIds":["exact-source-id"],"visualizationPrompt":"...","catalogIds":[]}],"questions":[{"text":"...","sourceIds":["exact-source-id"]}]}.
 Sections: at most 20, with 1–30 points each. Concepts: 0–12. Questions: 0–20. Use lowercase IDs with hyphens or underscores. Do not include Markdown fences.`;
 
 export async function generateLectureNotes(runner: AgentRunner, input: LectureSynthesisInput, signal: AbortSignal): Promise<LectureNotes> {

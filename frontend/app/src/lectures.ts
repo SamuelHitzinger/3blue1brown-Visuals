@@ -31,7 +31,9 @@ export function watchLectureSnapshots(id: string, accept: (session: LectureSessi
   window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible)
   return () => { controller.abort(); clearInterval(interval); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible) }
 }
-export const createLecture = (input: { title: string; courseId?: string }, key: string) => mutate('/api/lectures', 'POST', input, key)
+export const createLecture = (input: { title?: string; courseId?: string }, key: string) => mutate('/api/lectures', 'POST', input, key)
+export const detachCourseLectures = (courseId: string): Promise<LectureSummary[]> => fetch('/api/lectures/detach-course', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ courseId }) }).then(responseJSON<LectureSummary[]>)
+export const finishLecture = (id: string) => mutate(`${path(id)}/finish`, 'POST')
 export const appendLectureSource = (id: string, text: string, key: string) => mutate(`${path(id)}/sources`, 'POST', { text, kind: 'text' }, key)
 export const patchLecture = (id: string, fields: { title?: string; personalNotes?: string; noteEdits?: Record<string, string | null> }) => mutate(path(id), 'PATCH', fields)
 export const synthesizeLecture = (id: string) => mutate(`${path(id)}/synthesize`, 'POST')
@@ -53,7 +55,7 @@ export function sourceRequestKey(storage: Pick<Storage, 'getItem' | 'setItem'>, 
   try { storage.setItem(storageKey, JSON.stringify({ text, key })) } catch { /* In-memory retries still retain their request key. */ }
   return key
 }
-export const lectureStatus = (session: LectureSummary) => session.status === 'failed' ? 'Needs attention' : session.status === 'processing' || session.status === 'queued' ? 'Updating notes' : session.sourceRevision === 0 ? 'Ready for your notes' : 'Notes saved'
+export const lectureStatus = (session: LectureSummary) => session.status === 'failed' ? 'Needs attention' : session.status === 'processing' || session.status === 'queued' ? 'Updating notes' : session.finishedAt ? 'Finished' : session.sourceRevision === 0 ? 'Ready for your notes' : 'Notes saved'
 export function lectureMarkdown(session: LectureSession): string {
   const labels = new Map(session.sources.map(source => [source.id, `source-${source.sequence}`]))
   const citations = (ids: string[]) => [...new Set(ids)].flatMap(id => labels.has(id) ? [`[^${labels.get(id)}]`] : []).join(' ')

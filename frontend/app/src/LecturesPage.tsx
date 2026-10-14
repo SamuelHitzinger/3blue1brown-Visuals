@@ -4,6 +4,7 @@ import type { LectureSummary } from '../../../shared/lecture';
 import { createLecture, deleteLecture, lectureStatus, listLectures, patchLecture, reorderLectures } from './lectures';
 import { ArrowRight, BookOpen, Plus, Search } from './Icons';
 import { moveLecture, orderedLectures } from './notebook-order';
+import { nextLectureTitle } from '../../../shared/lectureTitles';
 import './notes-dashboard.css';
 export const INDEPENDENT_COURSE_ID = '__independent__';
 export const lectureDate = (date: string) => new Date(date).toLocaleDateString(undefined, {
@@ -16,13 +17,15 @@ type Props = {
   selectedCourseId?: string;
   onSelectCourse: (id?: string) => void;
   onAddCourse?: (name: string) => void;
+  onDeleteCourse?: (id: string) => Promise<void>;
 };
 export default function LecturesPage({
   courses,
   onOpen,
   selectedCourseId,
   onSelectCourse,
-  onAddCourse
+  onAddCourse,
+  onDeleteCourse
 }: Props) {
   const [lectures, setLectures] = useState<LectureSummary[]>([]),
     [loading, setLoading] = useState(true),
@@ -36,6 +39,8 @@ export default function LecturesPage({
     [rename, setRename] = useState(''),
     [deleting, setDeleting] = useState<string>(),
     [dragged, setDragged] = useState<string>();
+  const [confirmingCourse, setConfirmingCourse] = useState(false);
+  const deleteCourseButton = useRef<HTMLButtonElement>(null);
   const mutation = useRef(false),
     mounted = useRef(true),
     request = useRef({
@@ -71,6 +76,7 @@ export default function LecturesPage({
     courseTitle = course?.title ?? (courseId ? 'Other course' : 'Independent learning');
   const ordered = orderedLectures(lectures.filter(item => item.courseId === courseId)),
     visible = ordered.filter(item => item.title.toLowerCase().includes(query.trim().toLowerCase()));
+  const suggestedTitle = nextLectureTitle(ordered);
   const groups = [...courses.map(item => ({
     id: item.id,
     title: item.title,
@@ -125,6 +131,13 @@ export default function LecturesPage({
   return <main className="learning-page notes-dashboard">
  {selected && <button className="notebook-back" onClick={() => onSelectCourse()}>← All courses</button>}
  <div className="learning-heading"><span className="learning-eyebrow">Your notebooks</span><h1>{selected ? courseTitle : 'A place for what you learn.'}</h1><p>{selected ? 'One lecture at a time. Your material, clear notes, and ideas worth keeping.' : 'Choose a course. Pick up where you left off, or start something new.'}</p></div>
+ {selected && courseId && onDeleteCourse && <div className="notebook-course-delete" onKeyDown={event => { if (event.key === 'Escape' && !busy) { setConfirmingCourse(false); requestAnimationFrame(() => deleteCourseButton.current?.focus()); } }}>
+   {confirmingCourse ? <div className="notebook-delete-confirm" role="group" aria-labelledby="delete-course-heading">
+     <strong id="delete-course-heading">Delete {courseTitle}?</strong><p>All lectures and their notes will be kept under Independent learning. Your videos stay in Library.</p>
+     <button disabled={busy} onClick={() => void mutate(async () => { await onDeleteCourse(courseId); })}>{busy ? 'Deleting…' : 'Confirm deletion'}</button>
+     <button autoFocus disabled={busy} onClick={() => { setConfirmingCourse(false); requestAnimationFrame(() => deleteCourseButton.current?.focus()); }}>Cancel</button>
+   </div> : <button className="learning-text-button" ref={deleteCourseButton} disabled={busy || loading} onClick={() => setConfirmingCourse(true)}>Delete course</button>}
+ </div>}
  {error && <div className="notebook-error" role="alert">{error} <button className="secondary-button" disabled={busy} onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
  {loading ? <div className="learning-empty" role="status">Opening your notebooks…</div> : !selected ? <>
  <div className="notebook-section-title"><h2>Your courses <span>{groups.length}</span></h2><span>{lectures.length} lectures saved</span></div>
@@ -143,10 +156,9 @@ export default function LecturesPage({
  </> : <>
  <form className="notebook-add-lecture" onSubmit={event => {
         event.preventDefault();
-        if (!title.trim()) return;
         void mutate(async () => {
           const body = {
-              title: title.trim(),
+              ...(title.trim() ? { title: title.trim() } : {}),
               ...(courseId ? {
                 courseId
               } : {})
@@ -167,7 +179,7 @@ export default function LecturesPage({
             onOpen(created.id);
           }
         });
-      }}><label htmlFor="notebook-lecture-title">Start a new lecture</label><div><input id="notebook-lecture-title" placeholder="Give your lecture a title" required maxLength={200} disabled={busy} value={title} onChange={event => setTitle(event.target.value)} /><button className="primary-button" disabled={busy || !title.trim()}><Plus size={17} /> {busy ? 'Saving…' : 'Add lecture'}</button></div></form>
+      }}><label htmlFor="notebook-lecture-title">Start a new lecture</label><div><input id="notebook-lecture-title" placeholder={suggestedTitle} aria-describedby="lecture-title-help" maxLength={200} disabled={busy} value={title} onChange={event => setTitle(event.target.value)} /><button className="primary-button" disabled={busy}><Plus size={17} /> {busy ? 'Saving…' : 'Add lecture'}</button></div><p id="lecture-title-help" className="lecture-title-help">Leave blank for {suggestedTitle}. A subtitle comes from your notes when you finish. Custom titles stay as you write them.</p></form>
  <div className="notebook-section-title"><h2>Lectures <span>{ordered.length}</span></h2><label className="learning-search"><Search size={17} /><input aria-label="Search lectures" placeholder="Find a lecture" value={query} onChange={event => setQuery(event.target.value)} /></label></div>
  {ordered.length > 1 && <p className="notebook-order-help">{query.trim() ? 'Clear search to rearrange lectures.' : 'Drag to arrange, or use the up and down buttons.'}</p>}
  {visible.length ? <ol className="notebook-lecture-list">{visible.map(lecture => {
