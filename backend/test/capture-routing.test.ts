@@ -26,6 +26,8 @@ async function fixture() {
     writeFile(join(directory, 'index.html'), '<!doctype html><main id="root">Capture shell</main><script type="module" src="/static/assets/capture-Ab123456.js"></script>'),
     writeFile(join(directory, 'assets', 'capture-Ab123456.js'), 'globalThis.captureBundleLoaded = true;'),
     writeFile(join(directory, 'private.txt'), 'must not leave the desktop'),
+    writeFile(join(directory, 'capture.webmanifest'), JSON.stringify({ id: '/capture', start_url: '/capture', display: 'standalone' })),
+    writeFile(join(directory, 'capture-icon-192.png'), new Uint8Array([137, 80, 78, 71])),
   ]);
   const lectures = new LectureService(':memory:', async input => ({ summary: 'A vector has direction.',
     sections: [{ id: 'vectors', title: 'Vectors', points: [{ text: 'A vector has direction.', sourceIds: [input.sources[0].id] }] }], concepts: [], questions: [] }));
@@ -79,6 +81,17 @@ test('actual app routes owner pairing before lecture routes and gateway upload r
   expect(JSON.stringify(status)).not.toMatch(/personalNotes|sourceIds|A vector has direction/);
   expect((await app(desktop(`${route}/${pairing.status.id}`, 'DELETE'))).status).toBe(200);
   expect((await gateway(phone('/api/capture/status', token))).status).toBe(401);
+});
+
+test('stable recorder installation assets pass through gateway without exposing other public files', async () => {
+  const { gateway } = await fixture();
+  const manifest = await gateway(phone('/capture.webmanifest'));
+  expect(manifest.status).toBe(200);
+  expect(await manifest.json()).toMatchObject({id:'/capture',start_url:'/capture',display:'standalone'});
+  expect((await gateway(phone('/capture-icon-192.png'))).status).toBe(200);
+  expect((await gateway(phone('/capture.webmanifest', undefined, 'POST'))).status).toBe(405);
+  expect((await gateway(phone('/private.txt'))).status).toBe(404);
+  expect((await gateway(phone('/static/private.txt'))).status).toBe(404);
 });
 
 test('real gateway blocks desktop APIs even with valid device capability and spoofed identity', async () => {

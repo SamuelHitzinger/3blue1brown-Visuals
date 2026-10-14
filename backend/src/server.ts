@@ -71,7 +71,8 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
 
     const api = path === "/api/hello" || path === "/api/me" || path === "/healthz";
     const page = path === "/" || path === '/capture' || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/(?:course\/)?[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
-    const asset = path.startsWith("/static/");
+    const captureAsset = ['/capture.webmanifest', '/capture-icon-192.png', '/capture-icon-512.png'].includes(path);
+    const asset = path.startsWith("/static/") || captureAsset;
     if (!api && !page && !asset) return notFound();
     if (request.method !== "GET" && request.method !== "HEAD") {
       return Response.json({ detail: "Method Not Allowed" }, { status: 405, headers: { Allow: "GET, HEAD" } });
@@ -84,7 +85,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     });
     else if (path === "/api/me") response = Response.json({ user: proxyUser(request) });
     else if (path === "/api/hello") response = Response.json({ message: "Hello from the 3yellow3white backend", user: proxyUser(request) });
-    else response = await serveFile(page ? "index.html" : path.slice("/static/".length));
+    else response = await serveFile(page ? "index.html" : captureAsset ? path.slice(1) : path.slice("/static/".length));
     // Vite fingerprints these files; the app shell must pick up new references on deployment.
     if (response.ok && page) response.headers.set('Cache-Control', 'no-cache');
     else if (response.ok && /^\/static\/assets\/[^/]+-[A-Za-z0-9_-]{8}\.[A-Za-z0-9]+$/.test(path)) {

@@ -19,7 +19,7 @@ and creates reviewed visual explanations using the existing animation catalog.
    recording QR automatically. Scan it with a phone or tablet connected to the
    same Tailscale network. The QR also opens the recorder when clicked.
    Opening or reloading the lecture page preserves a connected recorder.
-5. Tap **Start capture** and allow camera and microphone access. Point the rear
+5. Tap the red **Record** button and allow camera and microphone access. Point the rear
    camera at the slides or board. Keep Safari visible and the phone unlocked.
 6. Leave that lecture open on the computer. Its continuous notes page updates
    automatically as material is processed; visual explanations appear inline.
@@ -52,22 +52,44 @@ an error. For an existing trusted HTTPS reverse proxy, use
 `--origin https://your-capture-host` and forward it **only** to the capture port,
 default `127.0.0.1:8081`. Never forward the unrestricted anonymous desktop API.
 
+## Install the recorder on iPhone
+
+Open the stable `/capture` address on your private Tailscale HTTPS host in Safari.
+Use **Share → Add to Home Screen** (enable **Open as Web App** if shown).
+Open the new **Aha! Recorder** icon, tap **Scan lecture QR**, and scan the QR on
+the computer's lecture page. This pairs inside the app, so it also works when
+Safari and the installed app have separate storage. A recording link can be
+pasted instead. The app address stays the same for every lecture.
+
+For another lecture, pause, wait for uploads, then open **Recorder settings →
+Connect another lecture**. Expired/revoked connections can be replaced while
+durable unsent items remain stored under their original connection; they are
+never uploaded to a different lecture. The app still needs a network connection
+to open, and must remain visible and unlocked while recording.
+
 ## During a lecture
 
-The phone is a camera controller: use the zoom slider or presets to frame the
-board, **Take photo** to capture an important change immediately, and the fixed
-**Pause** / **Resume capture** button to stop or continue. Zoom affects both the
+The phone is a camera controller: pinch the preview or use zoom presets/slider,
+tap the camera button to capture an important change immediately, and use the red
+record/pause button to stop or continue. Zoom affects both the
 preview and the saved photograph. Supported camera zoom is preferred; otherwise
-the page labels it **Digital crop**. Cropped photos are not artificially enlarged.
-Audio, photo interval, and privacy details are under **Capture settings & privacy**;
-upload progress can be expanded separately. Errors remain visible.
+settings explain digital cropping. Cropped photos are not artificially enlarged.
+Audio, photo interval, available cameras, privacy, and upload details are under
+the settings icon. Errors remain visible. Available camera choices appear after
+camera permission is granted; pause to switch cameras.
+
+**Frame board** experimentally finds a contrasting rectangular screen/board and
+crops both preview and saved photos. Detection runs locally without AI charges.
+Check its edges and use **Reset frame** to undo. This is a one-time framing aid,
+not tracking or perspective correction: other rectangles can be mistaken for a
+board, and angled, obscured, or low-contrast boards may require manual zoom.
 
 Audio is recorded as complete clips of about 15 seconds. Photos default to every
 15 seconds, with 10-, 30- and 60-second options. Substantially unchanged frames are
 suppressed, with periodic refreshes so small board changes are not skipped
 indefinitely. Pausing flushes the final audio clip. Switching apps, locking the
 phone, losing a media device, or reaching queue capacity pauses capture visibly.
-Return to Safari and tap **Resume capture**. Screen wake lock helps when available
+Return to the recorder and tap **Resume**. Screen wake lock helps when available
 but does not enable background recording.
 
 The next audio clip starts before the previous clip waits for local storage.

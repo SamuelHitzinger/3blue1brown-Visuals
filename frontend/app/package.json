@@ -13,9 +13,10 @@
     "preview": "vite preview --host 0.0.0.0"
   },
   "dependencies": {
-    "animlib": "file:../../shared/animlib",
     "@fontsource/dm-sans": "^5.2.7",
     "@fontsource/dynapuff": "^5.2.6",
+    "animlib": "file:../../shared/animlib",
+    "jsqr": "^1.4.0",
     "lucide-react": "^0.468.0",
     "mammoth": "^1.13.0",
     "pdfjs-dist": "^6.4.299",

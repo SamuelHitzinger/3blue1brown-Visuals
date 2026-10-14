@@ -1,13 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { CaptureCapabilities, CaptureClaim } from '../../../shared/lecture-capture'
-import { Camera, Check, Pause, Play, RotateCcw } from './Icons'
+import { Camera, Check, Pause, Play, RotateCcw, Maximize, Settings } from './Icons'
+import CaptureConnect from './CaptureConnect'
+import { setupCaptureApp } from './captureApp'
+import { fullFrame } from './captureFraming'
+import type { CaptureFrame } from './captureFraming'
 import { CaptureHTTPError, claimCapture, claimStorageKey, forgetCaptureClaim, getCaptureStatus, getDeviceCaptureCapabilities, prepareCaptureClaim, readCaptureClaim, retryCaptureItem, saveCaptureClaim, uploadCapture } from './captureClient'
 import { CaptureQueue, IndexedCaptureStore } from './captureQueue'
 import type { QueueSnapshot } from './captureQueue'
 import { CaptureEngine, pauseWhenHidden } from './captureEngine'
 import type { CaptureZoom } from './captureEngine'
-import { capturePreset, capturePhotoIntervalMs } from './captureMode'
-import type { CaptureMode } from './captureMode'
 import { captureHealth } from './captureHealth'
 import './capture.css'
 
@@ -26,7 +28,6 @@ export default function CapturePage() {
   const [state, setState] = useState<'ready' | 'starting' | 'recording' | 'stopping' | 'paused'>('ready')
   const [note, setNote] = useState('')
   const [audio, setAudio] = useState(true)
-  const [mode, setMode] = useState<CaptureMode>('standard')
   const [photo, setPhoto] = useState(true)
   const [interval, setIntervalValue] = useState(15)
   const [lastStatusAt, setLastStatusAt] = useState(0)
@@ -37,7 +38,16 @@ export default function CapturePage() {
   const [retrying, setRetrying] = useState('')
   const [zoom, setZoom] = useState<CaptureZoom | null>(null)
   const [zoomValue, setZoomValue] = useState(1)
-  const [previewRatio, setPreviewRatio] = useState('4 / 3')
+  const [previewRatio, setPreviewRatio] = useState(4 / 3)
+  const [frame, setFrame] = useState<CaptureFrame>(fullFrame)
+  const [framed, setFramed] = useState(false)
+  const [framing, setFraming] = useState(false)
+  const [connecting, setConnecting] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [deviceId, setDeviceId] = useState('')
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([])
+  const pointers = useRef(new Map<number, { x: number; y: number }>())
+  const pinch = useRef<{ distance: number; zoom: number } | null>(null)
   const [takingPhoto, setTakingPhoto] = useState(false)
   const video = useRef<HTMLVideoElement>(null)
   const engine = useRef<CaptureEngine | null>(null)
@@ -61,8 +71,8 @@ export default function CapturePage() {
   useEffect(() => {
     mounted.current = true
     const clock = window.setInterval(() => setNow(Date.now()), 1000)
-    document.title = 'Phone capture — Aha!'
-    return () => { clearInterval(clock); mounted.current = false; void engine.current?.stop(); void wake.current?.release().catch(() => {}) }
+    const cleanup = setupCaptureApp()
+    return () => { cleanup(); clearInterval(clock); mounted.current = false; void engine.current?.stop(); void wake.current?.release().catch(() => {}) }
   }, [])
   useEffect(() => {
     let active = true
@@ -71,7 +81,7 @@ export default function CapturePage() {
     const connect = async () => {
       const caps = await getDeviceCaptureCapabilities(controller.signal)
       if (!active) return
-      setCapabilities(caps); const preset = capturePreset(mode, caps); setAudio(preset.audio); setPhoto(preset.photo)
+      setCapabilities(caps); setAudio(caps.audio); setPhoto(caps.photo)
       const fragment = new URLSearchParams(location.hash.slice(1)).get('pair')
       let pending: { secret?: string } | null = null
       try { pending = JSON.parse(localStorage.getItem(claimStorageKey) || 'null') } catch { /* The visible fragment can repair this record. */ }
@@ -91,11 +101,11 @@ export default function CapturePage() {
           finally { previous.close() }
         }
       } else {
-        if (!saved) throw new Error('Scan the pairing code from a lecture on your computer to connect this phone.')
+        if (!saved) return
         try { next = { token: saved.token, status: await getCaptureStatus(saved.token, controller.signal) } }
         catch (error) { if (error instanceof CaptureHTTPError && [401, 403, 404, 410].includes(error.status)) forgetCaptureClaim(localStorage, saved.pairingId); throw error }
       }
-      if (active) { setClaim(next); setLastStatusAt(Date.now()) }
+      if (active) { setClaim(next); setConnecting(false); setLastStatusAt(Date.now()) }
     }
     void connect().catch(error => { if (active) setError(message(error)) }).finally(() => { if (active) setLoading(false) })
     return () => { active = false; controller.abort() }
@@ -167,11 +177,12 @@ export default function CapturePage() {
     busy.current = true; setState('starting'); setError(''); setNote('')
     const sender = queue.current
     const capture = new CaptureEngine({
-      video: video.current, ...capturePreset(mode, { audio, photo }), photoIntervalMs: capturePhotoIntervalMs(mode, interval),
+      video: video.current, audio, photo, photoIntervalMs: interval * 1000, deviceId: deviceId || undefined,
       canCapture: () => sender.hasCapacity(),
       onPaused: reason => { void stop(reason) },
       onSkipped: () => { if (mounted.current) setSkipped(value => value + 1) },
       onZoomChanged: value => { if (mounted.current && engine.current === capture) { setZoom(value); setZoomValue(value.value) } },
+      onFrameChanged: (value, automatic) => { if (mounted.current && engine.current === capture) { setFrame(value); setFramed(automatic) } },
       onMedia: async media => {
         sequence.current++
         try { localStorage.setItem(sequenceKey(claim.status.id), String(sequence.current)) } catch { /* Durable queue metadata also restores the sequence. */ }
@@ -189,6 +200,7 @@ export default function CapturePage() {
       if (engine.current !== capture) { await capture.stop(); return }
       if (!busy.current || !mounted.current || document.visibilityState !== 'visible') { await stop(); return }
       started.current = Date.now(); setElapsed(0); setState('recording')
+      void navigator.mediaDevices.enumerateDevices().then(devices => { if (mounted.current) setCameras(devices.filter(device => device.kind === 'videoinput')) }).catch(() => {})
       if ('wakeLock' in navigator) {
         try {
           const lock = await navigator.wakeLock.request('screen')
@@ -217,50 +229,103 @@ export default function CapturePage() {
     setTakingPhoto(true)
     try { await engine.current?.takePhoto() } finally { if (mounted.current) setTakingPhoto(false) }
   }
+  const connect = (secret: string) => {
+    if (busy.current || (!ended && queueState.pending) || queueState.unsaved) { setError('Pause and let uploads finish before switching lectures.'); return }
+    try {
+      prepareCaptureClaim(localStorage, secret)
+      // An explicitly scanned replacement supersedes an expired URL fragment.
+      history.replaceState({}, '', '/capture')
+      if (ended && queueState.pending) setNote(`${queueState.pending} unsent items from the ended connection remain stored on this phone. They cannot upload to this new lecture. Keep this browser’s data to retain them.`)
+      setError(''); setReload(value => value + 1)
+    }
+    catch (error) { setError(message(error)) }
+  }
+  const autoFrame = async () => {
+    if (framed) { engine.current?.resetFrame(); setNote('Manual view restored.'); return }
+    setFraming(true)
+    try {
+      const found = await engine.current?.frameBoard()
+      if (mounted.current) setNote(found ? 'Board framed. Check the edges; tap Reset frame to undo.' : 'No clear board edges found. Use pinch zoom or move closer.')
+    } catch { setNote('Could not frame this view. Use pinch zoom instead.') }
+    finally { if (mounted.current) setFraming(false) }
+  }
+  const pointerEnd = (id: number) => { pointers.current.delete(id); pinch.current = null }
+  const clockText = `${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}`
   return <main className="capture-page">
-    <header className="capture-heading"><span className="wordmark">Aha!</span><span>Phone capture</span></header>
-    <div className="capture-intro"><h1>{claim?.status.title ?? 'Connect your device'}</h1><p>This device records speech and slide photos. Your notes update on the lecture page where you scanned the QR code.</p></div>
-    {loading && <p className="capture-notice" role="status">Connecting to your lecture…</p>}
-    {error && <div className="capture-notice capture-error" role="alert"><p>{error}</p>{!claim && <button className="secondary-button" onClick={() => setReload(value => value + 1)}>Try connecting again</button>}</div>}
-    {claim && <>
-      <section className="capture-notice" aria-label="Capture mode"><label htmlFor="capture-mode">Capture mode </label><select id="capture-mode" value={mode} disabled={active || loading} onChange={event => {
-        const next = event.target.value as CaptureMode; setMode(next)
-        if (capabilities) { const preset = capturePreset(next, capabilities); setAudio(preset.audio); setPhoto(preset.photo) }
-      }}><option value="standard">Direct recording (recommended)</option><option value="chatgpt">Camera for ChatGPT Live (legacy)</option></select>
-      {mode === 'standard' && <p>Record speech and slide photos directly into this lecture. No ChatGPT session needed. Keep this page visible and the screen awake.</p>}
-      {mode === 'standard' && capabilities && !capabilities.audio && <p role="alert">{capabilities.detail || 'Audio transcription is unavailable. Connect a transcription provider on the computer. Photos can still be captured.'}</p>}
-      {mode === 'chatgpt' && <p>One still photo every 10 seconds, with unchanged views skipped. No video is uploaded. This page leaves the microphone to ChatGPT. Enable this lecture’s ChatGPT connection on your computer. Keep Safari visible; same-iPhone background voice still needs testing.</p>}</section>
-      <section className="capture-preview" aria-label="Camera and recording status" style={{ aspectRatio: previewRatio }}>
-        <video ref={video} muted playsInline aria-label="Rear camera preview" style={{ transform: `scale(${zoom?.digitalScale ?? 1})` }} onLoadedMetadata={event => { const camera = event.currentTarget; if (camera.videoWidth && camera.videoHeight) setPreviewRatio(`${camera.videoWidth} / ${camera.videoHeight}`) }} onResize={event => { const camera = event.currentTarget; if (camera.videoWidth && camera.videoHeight) setPreviewRatio(`${camera.videoWidth} / ${camera.videoHeight}`) }} className={!photo || state !== 'recording' ? 'capture-preview-inactive' : ''}/>
-        {state !== 'recording' && <div className="capture-preview-placeholder"><Camera size={38}/><p>{state === 'starting' ? 'Allow camera and microphone access…' : state === 'stopping' ? 'Saving the final clip…' : ended ? 'Pairing ended' : 'Ready when you are'}</p></div>}
-        {state === 'recording' && !photo && <div className="capture-preview-placeholder"><span className="capture-mic-glyph">◉</span><p>Listening to your lecture</p></div>}
-        <div className={`capture-live-status ${state === 'recording' ? 'is-recording' : ''}`} role="status"><span/>{state === 'recording' ? `${audio ? 'Recording' : 'Taking photos'} · ${Math.floor(elapsed / 60)}:${String(elapsed % 60).padStart(2, '0')}` : state === 'starting' ? 'Opening devices' : state === 'stopping' ? 'Finishing' : 'Paused'}</div>
+    <header className="capture-heading">
+      <div><span className="capture-eyebrow">Aha! Recorder</span><h1>{claim?.status.title ?? 'Lecture recorder'}</h1></div>
+      <button className="capture-icon-button" aria-label="Recorder settings" aria-expanded={settingsOpen} onClick={() => setSettingsOpen(value => !value)}><Settings size={22}/></button>
+    </header>
+    {loading && <p className="capture-notice" role="status">Connecting…</p>}
+    {error && <div className="capture-notice capture-error" role="alert">{error}<button className="capture-text-button" onClick={() => { setError(''); if (!claim) setReload(value => value + 1) }}>Dismiss</button></div>}
+    {!loading && (!claim || connecting) && <CaptureConnect onConnect={connect} onCancel={claim ? () => setConnecting(false) : undefined}/>}
+    {claim && !connecting && <>
+      <section className="capture-preview" aria-label="Camera and recording status" style={{ aspectRatio: previewRatio * frame.width / frame.height, width: `min(100%, ${55 * previewRatio * frame.width / frame.height}dvh)` }}
+        onPointerDown={event => {
+          if (state !== 'recording' || !photo || (event.target as HTMLElement).closest('button')) return
+          event.currentTarget.setPointerCapture(event.pointerId)
+          pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+          if (pointers.current.size === 2) { const [a,b] = [...pointers.current.values()]; pinch.current = { distance: Math.hypot(a.x-b.x,a.y-b.y), zoom: zoomValue } }
+        }}
+        onPointerMove={event => {
+          if (!pointers.current.has(event.pointerId)) return
+          pointers.current.set(event.pointerId, { x: event.clientX, y: event.clientY })
+          if (pinch.current && pointers.current.size === 2 && pinch.current.distance > 0) {
+            const [a,b] = [...pointers.current.values()]
+            changeZoom(Math.max(zoom?.min ?? 1, Math.min(zoom?.max ?? 4, pinch.current.zoom * Math.hypot(a.x-b.x,a.y-b.y) / pinch.current.distance)))
+          }
+        }} onPointerUp={event => pointerEnd(event.pointerId)} onPointerCancel={event => pointerEnd(event.pointerId)} onLostPointerCapture={event => pointerEnd(event.pointerId)}>
+        <video ref={video} muted playsInline aria-label="Rear camera preview"
+          style={{ width: `${100/frame.width}%`, height: `${100/frame.height}%`, left: `${-100*frame.x/frame.width}%`, top: `${-100*frame.y/frame.height}%` }}
+          onLoadedMetadata={event => { const camera=event.currentTarget; if(camera.videoWidth && camera.videoHeight) setPreviewRatio(camera.videoWidth/camera.videoHeight) }}
+          onResize={event => { const camera=event.currentTarget; if(camera.videoWidth && camera.videoHeight) setPreviewRatio(camera.videoWidth/camera.videoHeight) }}
+          className={!photo || state !== 'recording' ? 'capture-preview-inactive' : ''}/>
+        {state !== 'recording' && <div className="capture-preview-placeholder"><Camera size={42}/><p>{state === 'starting' ? 'Opening camera…' : state === 'stopping' ? 'Saving…' : ended ? 'Connect a new lecture' : 'Ready to record'}</p></div>}
+        {state === 'recording' && !photo && <div className="capture-preview-placeholder"><span className="capture-mic-glyph">◉</span><p>Audio only</p></div>}
+        <div className={`capture-live-status ${state === 'recording' ? 'is-recording' : ''}`} role="status"><span/>{state === 'recording' ? clockText : state === 'ready' ? 'Ready' : state === 'paused' ? 'Paused' : 'Please wait'}</div>
+        {photo && state === 'recording' && <button className="capture-frame-button" disabled={framing} onClick={() => { void autoFrame() }}><Maximize size={16}/>{framing ? 'Finding…' : framed ? 'Reset frame' : 'Frame board'}</button>}
       </section>
       {photo && <section className="capture-zoom" aria-label="Camera zoom">
-        <div className="capture-zoom-heading"><label htmlFor="capture-zoom">Zoom <strong>{Number(zoomValue.toFixed(1))}×</strong></label><span>{!zoom ? 'Available while recording' : zoom.mode === 'camera' ? 'Camera zoom' : 'Digital crop'}</span></div>
-        <input id="capture-zoom" type="range" min={zoom?.min ?? 1} max={zoom?.max ?? 4} step={zoom?.step ?? .1} value={zoomValue} disabled={state !== 'recording'} onChange={event => changeZoom(Number(event.target.value))}/>
-        <div className="capture-zoom-presets">{[1, 2, 3].filter(value => value >= (zoom?.min ?? 1) && value <= (zoom?.max ?? 4)).map(value => <button key={value} type="button" aria-pressed={Math.abs(zoomValue - value) < .05} disabled={state !== 'recording'} onClick={() => changeZoom(value)}>{value}×</button>)}</div>
+        <div className="capture-zoom-presets">{[1,2,3].filter(value => value >= (zoom?.min ?? 1) && value <= (zoom?.max ?? 4)).map(value => <button key={value} aria-label={`Zoom ${value}×`} aria-pressed={!framed && Math.abs(zoomValue-value)<.05} disabled={state !== 'recording'} onClick={() => changeZoom(value)}>{value}×</button>)}<span>{framed ? 'Framed' : `${zoomValue.toFixed(1)}×`}</span></div>
+        <input aria-label="Zoom" type="range" min={zoom?.min ?? 1} max={zoom?.max ?? 4} step={zoom?.step ?? .1} value={zoomValue} disabled={state !== 'recording'} onChange={event => changeZoom(Number(event.target.value))}/>
       </section>}
-      {note && <p className="capture-notice" role="status">{note}</p>}
-      {health && <section className={`capture-health capture-health-${health.tone}`} role="status" aria-label="Live notes health"><strong>{health.title}</strong><p>{health.detail}</p><small>{queueState.pending} on this device · {claim.status.pending} processing · {claim.status.notes?.synthesizedRevision ?? 0}/{claim.status.notes?.sourceRevision ?? 0} sources in notes</small></section>}
-      {queueState.message && <div className="capture-notice capture-error" role="alert"><p>{queueState.message}</p>{!ended && <button className="secondary-button" onClick={() => { void queue.current?.retry() }}>Retry uploads</button>}</div>}
-      {queueState.unsaved > 0 && <p className="capture-notice capture-error" role="alert">Keep this tab open: {queueState.unsaved} final {queueState.unsaved === 1 ? 'item is' : 'items are'} held in memory because phone storage is full.</p>}
-      <details className="capture-receipts"><summary><span><Check size={15}/> {queueState.uploading ? 'Uploading…' : queueState.pending ? `${queueState.pending} waiting to upload` : 'Uploads up to date'}</span><span>{claim.status.processed} saved</span></summary><div className="capture-details-body"><div className="capture-counts"><div><strong>{queueState.pending}</strong><span>On this phone</span></div><div><strong>{claim.status.pending}</strong><span>Processing</span></div><div><strong>{claim.status.processed}</strong><span>Text saved</span></div></div><p>{queueState.pending ? 'Queued material is retained until accepted.' : 'All captured material has been sent.'}</p><small>{skipped + claim.status.skipped} unchanged or empty captures skipped. Visual explanations appear on your other screen as they finish.</small></div></details>
-      {claim.status.failed > 0 && <section className="capture-notice capture-error" aria-label="Processing failures">
-        <div className="capture-failures"><p>{claim.status.failed} items need another processing attempt.</p>{claim.status.items.filter(item => item.status === 'failed').map(item => <div key={item.id}><span>{item.kind === 'photo' ? 'Photo' : 'Audio'} · {new Date(item.capturedAt).toLocaleTimeString()}<small>{item.error}</small></span><button className="learning-text-button" disabled={!!retrying} onClick={async () => { setRetrying(item.id); try { await retryCaptureItem(claim.token, item.id); const status = await getCaptureStatus(claim.token); if (mounted.current) setClaim({ ...claim, status }) } catch (error) { if (mounted.current) setError(message(error)) } finally { if (mounted.current) setRetrying('') } }}><RotateCcw size={14}/>{retrying === item.id ? 'Retrying…' : 'Retry'}</button></div>)}</div>
-      </section>}
-      {claim.status.failed > claim.status.items.filter(item => item.status === 'failed').length && <p className="capture-notice">Earlier items also need another attempt. Use “Retry failed items” on your computer to retry all of them.</p>}
-      <details className="capture-settings"><summary>Capture settings & privacy</summary><div className="capture-details-body">
-        <div className="capture-switches"><label><input type="checkbox" checked={photo} disabled={active || !capabilities?.photo} onChange={event => setPhoto(event.target.checked)}/> Slide photos</label><label><input type="checkbox" checked={audio} disabled={active || mode === 'chatgpt' || !capabilities?.audio} onChange={event => setAudio(event.target.checked)}/> Lecture audio</label></div>
-        <label className="capture-interval">Photo interval <select value={capturePhotoIntervalMs(mode, interval) / 1000} disabled={active || !photo || mode === 'chatgpt'} onChange={event => setIntervalValue(Number(event.target.value))}><option value={10}>10 seconds</option><option value={15}>15 seconds</option><option value={30}>30 seconds</option><option value={60}>60 seconds</option></select></label>
-        <p className="capture-provider">Pause capture to change these settings. Unchanged slides are skipped automatically; “Take photo” always saves a frame.</p>
-        <aside className="capture-privacy"><h2>Before you start</h2><p>Photos are read by the server’s configured AI provider. Audio captured here is transcribed by {capabilities?.transcriptionProvider ?? 'the configured transcription provider'}. Successful raw photos and clips are deleted after their text is saved, except when a ChatGPT connection is enabled: up to eight recent photos are also available to that plugin for fifteen minutes. Failed items stay available for retry. Unsent material stays on this phone until accepted.</p><p>Start only when you have permission to capture this lecture. You can pause at any time, or disconnect this phone from the computer.</p></aside>
-      </div></details>
       <section className="capture-controls" aria-label="Capture controls">
-        <div className="capture-action-row"><button className="primary-button capture-start" disabled={state === 'stopping' || ended || !storageReady || (!photo && !audio) || !capabilities?.available || queueState.blocked} onClick={() => { if (active) void stop(); else void start() }}>{active ? <><Pause size={22}/>{state === 'stopping' ? 'Saving…' : 'Pause'}</> : <><Play size={22}/>{state === 'paused' ? 'Resume capture' : 'Start capture'}</>}</button>
-        {photo && <button className="secondary-button capture-snap" disabled={state !== 'recording' || takingPhoto} onClick={() => { void snap() }}><Camera size={22}/>{takingPhoto ? 'Saving…' : 'Take photo'}</button>}</div>
-        <p className="capture-foreground">Keep this page open and your phone unlocked.{wakeActive && ' Screen stays awake.'}</p>
+        <button className="capture-icon-button" disabled={state !== 'recording' || !photo || takingPhoto} aria-label="Take photo" onClick={() => { void snap() }}><Camera size={25}/></button>
+        <button className={`capture-record-button ${active ? 'is-recording' : ''}`} aria-label={active ? 'Pause recording' : state === 'paused' ? 'Resume recording' : 'Start recording'} disabled={state === 'starting' || state === 'stopping' || ended || !storageReady || (!photo && !audio) || !capabilities?.available || queueState.blocked} onClick={() => { if (active) void stop('Recording paused.'); else void start() }}>{active ? <Pause size={28}/> : <Play size={28}/>}</button>
+        <span className="capture-control-label">{state === 'recording' ? 'Recording' : state === 'paused' ? 'Resume' : 'Record'}</span>
       </section>
+      <p className={`capture-status-line capture-status-${health?.tone ?? 'waiting'}`} role="status">{health?.title ?? 'Getting ready…'}{queueState.pending > 0 ? ` · ${queueState.pending} uploading` : ''}</p>
+      {health?.tone === 'error' && <p className="capture-notice capture-error">{health.detail}</p>}
+      {note && <p className="capture-note" role="status">{note}</p>}
+      <p className="capture-foreground">Keep app open and phone unlocked.{wakeActive ? ' Screen stays awake.' : ''}</p>
+      {capabilities && !capabilities.audio && <p className="capture-notice capture-error">{capabilities.detail || 'Audio transcription unavailable. Photos can still be captured.'}</p>}
+      {queueState.message && <div className="capture-notice capture-error" role="alert">{queueState.message}{!ended && <button className="capture-text-button" onClick={() => { void queue.current?.retry() }}>Retry uploads</button>}</div>}
+      {queueState.unsaved > 0 && <p className="capture-notice capture-error" role="alert">Keep app open: {queueState.unsaved} items need space to save.</p>}
+      {claim.status.failed > 0 && <details className="capture-details capture-failures"><summary>{claim.status.failed} recordings need attention</summary>
+        {claim.status.items.filter(item => item.status === 'failed').map(item => <div key={item.id}><p>{item.kind === 'audio' ? 'Audio' : 'Photo'} · {new Date(item.capturedAt).toLocaleTimeString()}<small>{item.error}</small></p><button className="capture-text-button" disabled={!!retrying} onClick={async () => {
+          setRetrying(item.id)
+          try { await retryCaptureItem(claim.token,item.id); const status=await getCaptureStatus(claim.token); if(mounted.current) setClaim({...claim,status}) }
+          catch(error) { if(mounted.current) setError(message(error)) }
+          finally { if(mounted.current) setRetrying('') }
+        }}><RotateCcw size={14}/>{retrying === item.id ? 'Retrying…' : 'Retry'}</button></div>)}
+        {claim.status.failed > claim.status.items.filter(item=>item.status==='failed').length && <p>Retry earlier recordings from lecture page on your computer.</p>}
+      </details>}
+      {ended && <button className="capture-button" disabled={active || !!queueState.unsaved} onClick={() => setConnecting(true)}>Connect another lecture</button>}
     </>}
+    {settingsOpen && <section className="capture-settings" aria-label="Recorder settings">
+      <div className="capture-settings-heading"><h2>Settings</h2><button className="capture-text-button" onClick={() => setSettingsOpen(false)}>Done</button></div>
+      {claim && <>
+        <div className="capture-switches"><label><input type="checkbox" checked={photo} disabled={active || !capabilities?.photo} onChange={event=>setPhoto(event.target.checked)}/> Camera</label><label><input type="checkbox" checked={audio} disabled={active || !capabilities?.audio} onChange={event=>setAudio(event.target.checked)}/> Microphone</label></div>
+        <label className="capture-setting">Photo interval<select value={interval} disabled={active || !photo} onChange={event=>setIntervalValue(Number(event.target.value))}>{[10,15,30,60].map(value=><option key={value} value={value}>{value} seconds</option>)}</select></label>
+        {cameras.length > 1 && <label className="capture-setting">Camera<select value={deviceId} disabled={active} onChange={event=>{setDeviceId(event.target.value);setZoomValue(1)}}><option value="">Automatic rear camera</option>{cameras.map((camera,index)=><option key={camera.deviceId} value={camera.deviceId}>{camera.label || `Camera ${index+1}`}</option>)}</select></label>}
+        <p>Pause to change camera or microphone. Pinch preview to zoom. {zoom?.mode === 'camera' ? 'Camera zoom available.' : 'Digital zoom crops the image; it cannot restore missing detail.'}</p>
+        <button className="capture-button" disabled={active || (!ended && !!queueState.pending) || !!queueState.unsaved || loading} onClick={()=>{setConnecting(true);setSettingsOpen(false)}}>Connect another lecture</button>
+        {(queueState.pending > 0 || queueState.unsaved > 0) && <p>{ended && !queueState.unsaved ? 'Unsent items stay on this phone when you connect another lecture; an ended connection cannot upload them.' : 'Finish uploads before switching lectures.'}</p>}
+        <details className="capture-details"><summary><Check size={14}/> Upload details</summary><p>{queueState.pending} on phone · {claim.status.pending} processing · {claim.status.processed} saved · {skipped+claim.status.skipped} unchanged or empty</p><p>{health?.detail}</p></details>
+      </>}
+      <div className="capture-install"><h3>Add to Home Screen</h3><p>In Safari: Share → Add to Home Screen → Open as Web App. Open Recorder from its icon, then scan a lecture QR inside the app.</p><p>Same address every time: <a href="/capture">{location.origin}/capture</a>. Keep Tailscale connected.</p></div>
+      <details className="capture-details"><summary>Framing & privacy</summary><p>Frame board is experimental. It looks for a clear rectangle on this phone and crops captured photos to that area. It can mistake other rectangles for a board. Check the result; angled, obscured, or low-contrast boards may need manual zoom. It does not track a moving camera. No extra AI request is used for framing.</p><p>Audio and photos go to this lecture’s configured providers. Successful raw captures are deleted after text is saved; failures remain for retry. Unsent media stays on this device. Start only with permission to record.</p></details>
+    </section>}
+    {!claim && !settingsOpen && <p className="capture-install-hint">Save this page to your Home Screen for next time.</p>}
   </main>
 }

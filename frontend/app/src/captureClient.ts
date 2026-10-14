@@ -36,6 +36,15 @@ export function uploadCapture(token: string, item: { metadata: CaptureMetadata; 
 }
 export const claimStorageKey = 'aha-capture-pending-claim'
 export const sessionStorageKey = 'aha-capture-session'
+
+export function pairingSecretFromLink(link: string, origin: string): string {
+  let url: URL
+  try { url = new URL(link.trim()) } catch { throw new Error('Scan the lecture QR code or paste its full recording link.') }
+  const secret = new URLSearchParams(url.hash.slice(1)).get('pair')
+  if (url.origin !== origin || url.pathname !== '/capture' || !secret || !/^[a-f0-9]{64}$/.test(secret))
+    throw new Error('Use a fresh lecture QR code from this recorder’s server.')
+  return secret
+}
 type CaptureStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 const tokenKey = (id: string) => `aha-capture-token-${id}`
 export function saveCaptureClaim(storage: CaptureStorage, claim: CaptureClaim) {

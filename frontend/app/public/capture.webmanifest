@@ -1,0 +1,14 @@
+{
+  "id": "/capture",
+  "name": "Aha! Recorder",
+  "short_name": "Recorder",
+  "start_url": "/capture",
+  "scope": "/capture",
+  "display": "standalone",
+  "background_color": "#101411",
+  "theme_color": "#101411",
+  "icons": [
+    { "src": "/capture-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/capture-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

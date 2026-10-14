@@ -1,4 +1,6 @@
 import type { CaptureKind } from '../../../shared/lecture-capture'
+import { detectBoard, zoomFrame } from './captureFraming.ts'
+import type { CaptureFrame } from './captureFraming.ts'
 
 export async function acquireCaptureStream(acquire: () => Promise<MediaStream>, cancelled: () => boolean) {
   const stream = await acquire()
@@ -45,6 +47,8 @@ export interface CaptureEngineOptions {
   onPaused: (message: string) => void
   onSkipped: () => void
   onZoomChanged?: (zoom: CaptureZoom) => void
+  onFrameChanged?: (frame: CaptureFrame, automatic: boolean) => void
+  deviceId?: string
 }
 export class CaptureEngine {
   private options: CaptureEngineOptions
@@ -56,6 +60,7 @@ export class CaptureEngine {
   private pendingManual = false
   private zoom: CaptureZoom = { value: 1, min: 1, max: 4, step: .1, mode: 'digital', digitalScale: 1 }
   private zoomTask: Promise<void> = Promise.resolve()
+  private boardFrame: CaptureFrame | null = null
   private photoTimer: ReturnType<typeof setTimeout> | undefined
   private stopping: Promise<void> | null = null
   private previous: Uint8ClampedArray | null = null
@@ -66,7 +71,7 @@ export class CaptureEngine {
     const generation = ++this.generation
     if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error('Open the HTTPS pairing link in your browser to allow camera and microphone access.')
     if (this.options.audio && typeof MediaRecorder === 'undefined') throw new Error('Audio recording is unavailable in this browser. Try a current Safari or Chrome browser, or turn off audio.')
-    const stream = await acquireCaptureStream(() => navigator.mediaDevices.getUserMedia({ video: this.options.photo ? { facingMode: { ideal: 'environment' }, width: { ideal: 1600 }, height: { ideal: 1200 } } : false, audio: this.options.audio }), () => generation !== this.generation)
+    const stream = await acquireCaptureStream(() => navigator.mediaDevices.getUserMedia({ video: this.options.photo ? { ...(this.options.deviceId ? { deviceId: { exact: this.options.deviceId } } : { facingMode: { ideal: 'environment' } }), width: { ideal: 1920 }, height: { ideal: 1440 } } : false, audio: this.options.audio }), () => generation !== this.generation)
     if (!stream) return false
     this.stream = stream
     for (const track of stream.getTracks()) track.addEventListener('ended', () => this.pause('Camera or microphone disconnected. Tap Start to reconnect.'), { once: true })
@@ -82,6 +87,7 @@ export class CaptureEngine {
         this.zoom = { value, min: range.min, max: range.max, step: range.step || .1, mode: 'camera', digitalScale: 1 }
       }
       this.options.onZoomChanged?.({ ...this.zoom })
+      this.notifyFrame()
     }
     if (!this.running || generation !== this.generation) return false
     if (this.options.audio) this.audioTask = this.audioLoop()
@@ -101,12 +107,32 @@ export class CaptureEngine {
         if (!this.running || generation !== this.generation) return
         this.zoom = { ...this.zoom, value: track.getSettings?.().zoom ?? next }
       } else this.zoom = { ...this.zoom, value: next, digitalScale: next }
+      this.boardFrame = null
       this.previous = null
       this.options.onZoomChanged?.({ ...this.zoom })
+      this.notifyFrame()
     })
     // A rejected device constraint must not poison subsequent requests or photos.
     this.zoomTask = task.catch(() => {})
     return task
+  }
+  private currentFrame() { return this.boardFrame ?? zoomFrame(this.zoom.digitalScale) }
+  private notifyFrame() { this.options.onFrameChanged?.(this.currentFrame(), !!this.boardFrame) }
+  resetFrame() { this.boardFrame = null; this.previous = null; this.notifyFrame() }
+  async frameBoard(): Promise<boolean> {
+    const generation = this.generation
+    await this.zoomTask
+    const video = this.options.video
+    if (!this.running || generation !== this.generation || !this.options.photo || !video.videoWidth || video.readyState < 2) return false
+    const canvas = document.createElement('canvas')
+    const scale = Math.min(1, 320 / Math.max(video.videoWidth, video.videoHeight))
+    canvas.width = Math.round(video.videoWidth * scale); canvas.height = Math.round(video.videoHeight * scale)
+    const context = canvas.getContext('2d', { willReadFrequently: true })!
+    context.drawImage(video, 0, 0, canvas.width, canvas.height)
+    const frame = detectBoard(context.getImageData(0, 0, canvas.width, canvas.height))
+    if (!frame) return false
+    this.boardFrame = frame; this.previous = null; this.notifyFrame()
+    return true
   }
   takePhoto(): Promise<void> { return this.requestPhoto(true) }
   private async audioLoop() {
@@ -178,8 +204,9 @@ export class CaptureEngine {
     if (!video.videoWidth || !video.videoHeight || video.readyState < 2) return
     const sample = document.createElement('canvas'); sample.width = 128; sample.height = 96
     const sampleContext = sample.getContext('2d', { willReadFrequently: true })!
-    const width = video.videoWidth / this.zoom.digitalScale, height = video.videoHeight / this.zoom.digitalScale
-    const x = (video.videoWidth - width) / 2, y = (video.videoHeight - height) / 2
+    const frame = this.currentFrame()
+    const width = video.videoWidth * frame.width, height = video.videoHeight * frame.height
+    const x = video.videoWidth * frame.x, y = video.videoHeight * frame.y
     sampleContext.drawImage(video, x, y, width, height, 0, 0, 128, 96)
     const pixels = sampleContext.getImageData(0, 0, 128, 96).data
     if (!force && !frameChanged(this.previous, pixels, Date.now() - this.lastPhotoAt)) { this.options.onSkipped(); return }

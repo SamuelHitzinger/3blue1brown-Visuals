@@ -5,7 +5,7 @@ export function createCaptureGateway(app:(request:Request)=>Promise<Response>,ca
     try{path=decodeURIComponent(new URL(request.url).pathname);}catch{return Response.json({detail:'Not Found'},{status:404});}
     let response:Response;
     if(path.startsWith('/api/capture/'))response=await capture.handleDevice(request);
-    else if(path==='/capture'||/^\/static\/assets\/[a-zA-Z0-9_.-]+$/.test(path)){
+    else if(['/capture','/capture.webmanifest','/capture-icon-192.png','/capture-icon-512.png'].includes(path)||/^\/static\/assets\/[a-zA-Z0-9_.-]+$/.test(path)){
       if(!['GET','HEAD'].includes(request.method))return Response.json({detail:'Method Not Allowed'},{status:405,headers:{Allow:'GET, HEAD'}});
       response=await app(request);
     }else if(path==='/healthz'&&request.method==='GET')response=Response.json({ok:true,capture:true});

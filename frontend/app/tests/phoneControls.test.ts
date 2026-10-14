@@ -7,9 +7,9 @@ function deferred() { let resolve!: () => void; const promise = new Promise<void
 
 // Only the camera and canvas boundary is synthetic; scheduling, zoom and encoding
 // coordination all run through the production engine.
-function camera(options: { hardware?: boolean; apply?: (value: number) => Promise<void>; encode?: () => Promise<void> } = {}) {
+function camera(options: { hardware?: boolean; apply?: (value: number) => Promise<void>; encode?: () => Promise<void>; pixels?: (width: number, height: number) => Uint8ClampedArray } = {}) {
   const original = new Map(['window', 'navigator', 'document'].map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
-  const draws: number[][] = [], images: { width: number; height: number; draw: number[] }[] = [], zooms: any[] = []
+  const draws: number[][] = [], images: { width: number; height: number; draw: number[] }[] = [], zooms: any[] = [], frames: any[] = []
   let stopped = 0, skipped = 0, hardwareZoom = 1, inFlight = 0, peak = 0
   const track = Object.assign(new EventTarget(), {
     stop: () => { stopped++ }, getCapabilities: () => options.hardware ? { zoom: { min: 1, max: 4, step: .1 } } : {},
@@ -24,7 +24,7 @@ function camera(options: { hardware?: boolean; apply?: (value: number) => Promis
       let draw: number[] = []
       const canvas = { width: 0, height: 0, getContext: () => ({
         drawImage: (_video: unknown, ...args: number[]) => { draw = args; draws.push(args) },
-        getImageData: () => ({ data: new Uint8ClampedArray([10, 20, 30, 255]) }),
+        getImageData: () => ({ width: canvas.width, height: canvas.height, data: options.pixels?.(canvas.width, canvas.height) ?? new Uint8ClampedArray([10, 20, 30, 255]) }),
       }), toBlob: async (done: (blob: Blob) => void) => {
         inFlight++; peak = Math.max(peak, inFlight)
         await options.encode?.(); inFlight--
@@ -37,8 +37,9 @@ function camera(options: { hardware?: boolean; apply?: (value: number) => Promis
   const engine = new CaptureEngine({ video: video as unknown as HTMLVideoElement, audio: false, photo: true, photoIntervalMs: 30_000,
     canCapture: () => true, onMedia: async media => { images.push(JSON.parse(await media.blob.text())) }, onPaused: () => {},
     onSkipped: () => { skipped++ }, onZoomChanged: state => { zooms.push(state) },
+    onFrameChanged: (frame, automatic) => { frames.push({ ...frame, automatic }) },
   })
-  return { engine, images, draws, zooms, video, get stopped() { return stopped }, get skipped() { return skipped }, get peak() { return peak },
+  return { engine, images, draws, zooms, frames, video, get stopped() { return stopped }, get skipped() { return skipped }, get peak() { return peak },
     async cleanup() { await engine.stop(); for (const [key, descriptor] of original) { if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key) } },
   }
 }
@@ -55,6 +56,37 @@ test('digital zoom crops the same centered region for change detection and captu
     assert.equal(fixture.zooms.at(-1).mode, 'digital')
     await fixture.engine.setZoom(99)
     assert.equal(fixture.zooms.at(-1).value, 4)
+  } finally { await fixture.cleanup() }
+})
+
+test('automatic board framing crops saved photos to preview, and manual zoom/reset leave no stale crop', async () => {
+  const fixture = camera({ pixels: (width, height) => {
+    const pixels = new Uint8ClampedArray(width * height * 4)
+    for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4, light = x >= width * .2 && x < width * .8 && y >= height * .2 && y < height * .8 ? 235 : 45
+      pixels[i] = pixels[i + 1] = pixels[i + 2] = light; pixels[i + 3] = 255
+    }
+    return pixels
+  } })
+  try {
+    await fixture.engine.start()
+    assert.equal(await fixture.engine.frameBoard(), true)
+    const frame = fixture.frames.at(-1)
+    assert.equal(frame.automatic, true)
+    await fixture.engine.takePhoto()
+    const crop = [1920 * frame.x, 1080 * frame.y, 1920 * frame.width, 1080 * frame.height]
+    assert.deepEqual(fixture.images.at(-1)!.draw.slice(0, 4), crop)
+    assert.deepEqual(fixture.draws.at(-2)!.slice(0, 4), crop)
+    assert.ok(fixture.images.at(-1)!.width < 1600)
+    await fixture.engine.setZoom(2)
+    assert.equal(fixture.frames.at(-1).automatic, false)
+    await fixture.engine.takePhoto()
+    assert.deepEqual(fixture.images.at(-1)!.draw.slice(0, 4), [480, 270, 960, 540])
+    assert.equal(await fixture.engine.frameBoard(), true)
+    fixture.engine.resetFrame()
+    assert.equal(fixture.frames.at(-1).width, .5)
+    await fixture.engine.stop()
+    assert.equal(await fixture.engine.frameBoard(), false)
   } finally { await fixture.cleanup() }
 })
 
