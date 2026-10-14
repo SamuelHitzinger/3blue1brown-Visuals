@@ -30,6 +30,14 @@ export interface CaptureStatus {
   skipped: number;
   failed: number;
   items: CaptureItem[];
+  notes?: {
+    status: 'idle' | 'queued' | 'processing' | 'failed';
+    sourceRevision: number;
+    synthesizedRevision: number;
+    pendingSources: number;
+    /** Server receipt time of the oldest source not yet included in notes. */
+    pendingSince?: string;
+  };
 }
 export interface CapturePairing {
   status: CaptureStatus;
@@ -44,6 +52,7 @@ export interface CaptureCapabilities {
   available: boolean;
   photo: boolean;
   audio: boolean;
+  transcriptionProvider?: string;
   publicOrigin?: string;
   detail?: string;
 }

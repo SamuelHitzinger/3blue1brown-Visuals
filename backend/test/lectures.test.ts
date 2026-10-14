@@ -307,6 +307,54 @@ test('note synthesis supplies source grounding instructions and validates inject
   expect(web).toBe(false); expect(catalog).toBe(true);
 });
 
+test('incremental synthesis sends new text and existing cited notes without resending old transcript', async () => {
+  const sources: LectureSource[] = [
+    { id: 'old-source', sequence: 1, kind: 'text', text: 'OLD_RAW_TRANSCRIPT', createdAt: '' },
+    { id: 'new-source', sequence: 2, kind: 'text', text: 'NEW_RAW_TRANSCRIPT', createdAt: '' },
+  ];
+  let prompt = '';
+  const previousNotes = makeNotes(sources);
+  const result = await generateLectureNotes({ run: async task => { prompt = task.prompt; return JSON.stringify(previousNotes); } },
+    { title: 'Vectors', sources, previousNotes, previousSourceRevision: 1 }, new AbortController().signal);
+  expect(prompt).toContain('NEW_RAW_TRANSCRIPT'); expect(prompt).not.toContain('OLD_RAW_TRANSCRIPT');
+  expect(prompt).toContain('old-source'); expect(result.sections[0].points[0].sourceIds).toEqual(['old-source']);
+});
+
+test('live source arrivals cannot postpone notes forever', async () => {
+  let calls = 0;
+  const s = service(async input => { calls++; return makeNotes(input.sources); }, { synthesisDebounceMs: 50 });
+  const lecture = await create(s);
+  for (let i = 0; i < 8; i++) { await append(s, lecture.id, `Fact ${i}`, `fact-${i}`); await Bun.sleep(15); }
+  expect(calls).toBeGreaterThan(0);
+  await until(() => get(s, lecture.id), row => row.synthesizedRevision === 8);
+});
+
+test('large backlogs synthesize in bounded batches and advance coverage only after each success', async () => {
+  const sizes: number[] = [];
+  const s = service(async input => { sizes.push(input.sources.filter(source => source.sequence > (input.previousSourceRevision ?? 0)).length); return makeNotes(input.sources); }, { synthesisDebounceMs: 10 });
+  const lecture = await create(s);
+  for (let i = 0; i < 27; i++) s.appendSource('user:alice', lecture.id, `source-${i}`, `Fact ${i}`);
+  const done = await until(() => get(s, lecture.id), row => row.synthesizedRevision === 27);
+  expect(sizes).toEqual([12, 12, 3]); expect(done.sources).toHaveLength(27);
+});
+
+test('failed backlog batch preserves coverage, stops retrying, and resumes from that batch on request', async () => {
+  let calls = 0, fail = true;
+  const s = service(async input => {
+    calls++;
+    if (input.previousSourceRevision === 12 && fail) throw new Error('provider unavailable');
+    return makeNotes(input.sources);
+  }, { synthesisDebounceMs: 10 });
+  const lecture = await create(s);
+  for (let i = 0; i < 27; i++) s.appendSource('user:alice', lecture.id, `source-${i}`, `Fact ${i}`);
+  const failed = await until(() => get(s, lecture.id), row => row.status === 'failed');
+  expect(failed.synthesizedRevision).toBe(12); expect(failed.sources).toHaveLength(27);
+  await Bun.sleep(40); expect(calls).toBe(2);
+  fail = false; await s.handle(api(`/${lecture.id}/synthesize`, 'POST'));
+  const done = await until(() => get(s, lecture.id), row => row.synthesizedRevision === 27);
+  expect(done.status).toBe('idle'); expect(calls).toBe(4);
+});
+
 test('course reordering is exact, owned, guarded and persists positions', async () => {
   const s = service();
   const a = await create(s, 'order-a'), b = await create(s, 'order-b');

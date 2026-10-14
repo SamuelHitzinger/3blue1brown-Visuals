@@ -1,0 +1,13 @@
+{
+  "name": "aha-video",
+  "version": "0.2.0",
+  "description": "Create interactive explanatory videos locally with the complete Aha pipeline and animation library.",
+  "author": { "name": "3yellow3white" },
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "requires_local_executor": true,
+  "interface": {
+    "displayName": "Aha Video",
+    "shortDescription": "Prompt to interactive video using the original Aha engine"
+  }
+}

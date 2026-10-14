@@ -104,8 +104,7 @@ export class LectureService {
     session.sources.push(source); session.sourceRevision++; this.prepareSynthesis(session);
     this.db.transaction(() => { this.db.query('INSERT INTO lecture_source_keys VALUES (?, ?, ?, ?)').run(id, key, text, source.id); this.save(session); })();
     const debounce = this.options.synthesisDebounceMs ?? 0;
-    if (debounce > 0) {
-      clearTimeout(this.synthesisTimers.get(id));
+    if (debounce > 0 && !this.synthesisTimers.has(id)) {
       this.synthesisTimers.set(id, setTimeout(() => { this.synthesisTimers.delete(id); this.kick(); }, debounce));
     }
     this.kick(); return session;
@@ -183,12 +182,19 @@ export class LectureService {
   private async runNotes(id: string, signal: AbortSignal) {
     const initial = this.snapshot(id)!;
     initial.status = 'processing'; delete initial.error; this.save(initial);
-    const revision = initial.sourceRevision;
+    // Bound each incremental update; only mark the batch covered after success.
+    let chars = 0, count = 0, revision = initial.synthesizedRevision;
+    for (const source of initial.sources.filter(source => source.sequence > initial.synthesizedRevision)) {
+      if (count && (count >= 12 || chars + source.text.length > 24_000)) break;
+      chars += source.text.length; count++; revision = source.sequence;
+    }
+    const sources = initial.sources.filter(source => source.sequence <= revision);
     try {
       if (!this.synthesize) throw new AgentError('CONFIG', NO_SYNTHESIS);
-      const result = await abortable(this.trackProvider(this.synthesize({ title: initial.title, sources: initial.sources, previousNotes: initial.notes }, signal)), signal);
+      const result = await abortable(this.trackProvider(this.synthesize({ title: initial.title, sources, previousNotes: initial.notes,
+        previousSourceRevision: initial.synthesizedRevision }, signal)), signal);
       signal.throwIfAborted();
-      const notes = parseLectureNotes(JSON.stringify(result), initial.sources, initial.notes);
+      const notes = parseLectureNotes(JSON.stringify(result), sources, initial.notes);
       if (this.stopped) return;
       const current = this.snapshot(id); if (!current) return;
       const previousIds = new Set(initial.notes?.concepts.map(concept => concept.id) ?? []);
@@ -201,7 +207,7 @@ export class LectureService {
     } catch (error) {
       if (this.stopped || !this.row(id)) return;
       const current = this.snapshot(id)!;
-      current.status = current.sourceRevision > revision && this.synthesize ? 'queued' : 'failed';
+      current.status = 'failed';
       if (current.status === 'failed') current.error = this.synthesize ? failureMessage(error) : NO_SYNTHESIS;
       this.save(current);
     }

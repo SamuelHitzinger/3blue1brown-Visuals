@@ -36,6 +36,12 @@
 .capture-page .capture-notice { padding: 14px 16px; border-radius: 14px; background: #e9eee5; font-size: 13px; line-height: 1.6; margin: 16px 0; overflow-wrap: anywhere; }
 .capture-page .capture-notice p { margin: 0 0 10px; }
 .capture-page .capture-error { color: #713d32; background: #fae9e2; }
+.capture-page .capture-health { margin: 16px 0; padding: 16px; border: 1px solid #d7dfcd; border-radius: 16px; background: #edf3e6; font-size: 13px; line-height: 1.5; }
+.capture-page .capture-health p { margin: 6px 0; }
+.capture-page .capture-health small { color: #59624f; font-variant-numeric: tabular-nums; }
+.capture-page .capture-health-waiting { background: #f7f2df; border-color: #e2d8b8; }
+.capture-page .capture-health-error { background: #fae9e2; border-color: #e6c6b9; color: #713d32; }
+.capture-page #capture-mode { display: block; width: 100%; max-width: 100%; margin: 6px 0 10px; padding: 10px; border: 1px solid #c5cebf; border-radius: 10px; color: #242824; background: #fff; font: inherit; }
 .capture-page .capture-receipts, .capture-page .capture-settings { margin-top: 12px; border: 1px solid #dce2d7; border-radius: 16px; }
 .capture-page details > summary { min-height: 52px; padding: 16px; font-size: 13px; cursor: pointer; box-sizing: border-box; }
 .capture-page .capture-receipts > summary { display: flex; align-items: center; justify-content: space-between; gap: 10px; }

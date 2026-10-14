@@ -3,7 +3,7 @@ import { CaptureHTTPError } from './captureClient.ts'
 
 export interface CaptureEntry { pairingId: string; metadata: CaptureMetadata; blob: Blob }
 export interface CaptureStore { list(): Promise<CaptureEntry[]>; put(item: CaptureEntry): Promise<void>; remove(clientId: string): Promise<void> }
-export interface QueueSnapshot { pending: number; bytes: number; unsaved: number; uploading: boolean; blocked: boolean; message: string; maxSequence: number }
+export interface QueueSnapshot { pending: number; bytes: number; unsaved: number; uploading: boolean; blocked: boolean; message: string; maxSequence: number; lastUploadedAt?: number }
 
 export class IndexedCaptureStore implements CaptureStore {
   private db: Promise<IDBDatabase>
@@ -52,13 +52,14 @@ export class CaptureQueue {
   private blocked = false
   private message = ''
   private disposed = false
+  private lastUploadedAt = 0
   constructor(store: CaptureStore, send: (item: CaptureEntry) => Promise<unknown>, changed: (state: QueueSnapshot) => void, limits = { maxItems: 30, maxBytes: 40 * 1024 * 1024 }) {
     this.store = store; this.send = send; this.changed = changed; this.maxItems = limits.maxItems; this.maxBytes = limits.maxBytes
   }
   snapshot(): QueueSnapshot {
     const all = [...this.entries, ...this.volatile]
     const rejection = this.rejected.size ? `${this.rejected.size} ${this.rejected.size === 1 ? 'capture is' : 'captures are'} retained on this phone for retry: ${this.rejected.values().next().value}. Other capture can continue while storage has room.` : ''
-    return { pending: all.length, bytes: all.reduce((sum, item) => sum + item.blob.size, 0), unsaved: this.volatile.length, uploading: !!this.flight, blocked: this.blocked, message: this.message || rejection, maxSequence: Math.max(0, ...all.map(item => item.metadata.sequence)) }
+    return { pending: all.length, bytes: all.reduce((sum, item) => sum + item.blob.size, 0), unsaved: this.volatile.length, uploading: !!this.flight, blocked: this.blocked, message: this.message || rejection, maxSequence: Math.max(0, ...all.map(item => item.metadata.sequence)), lastUploadedAt: this.lastUploadedAt }
   }
   private notify() { if (!this.disposed) this.changed(this.snapshot()) }
   async restore() { this.entries = await this.store.list(); this.notify() }
@@ -94,6 +95,7 @@ export class CaptureQueue {
       if (!item) { this.message = ''; return }
       try {
         await this.send(item)
+        this.lastUploadedAt = Date.now()
         if (this.entries.includes(item)) await this.store.remove(item.metadata.clientId)
         this.entries = this.entries.filter(entry => entry !== item)
         this.volatile = this.volatile.filter(entry => entry !== item)

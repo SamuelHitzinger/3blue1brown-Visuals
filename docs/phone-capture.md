@@ -1,6 +1,6 @@
-# Capture a lecture with an iPhone
+# Capture a lecture directly from a phone or browser
 
-Your iPhone runs a capture page in Safari. It sends slide photos and complete
+Your phone runs a capture page in Safari or Chrome. It sends slide photos and complete
 audio clips to the computer, which extracts text, updates cited lecture notes,
 and creates reviewed visual explanations using the existing animation catalog.
 
@@ -9,7 +9,9 @@ and creates reviewed visual explanations using the existing animation catalog.
 1. Install Tailscale on the computer and iPhone, sign both into the same account,
    and connect both devices. Private Tailscale Serve supplies trusted HTTPS.
 2. Configure the existing server AI connection. Photos and notes use that
-   connection; audio requires `ELEVENLABS_API_KEY` in `backend/.env.local`.
+   connection; audio uses `ELEVENLABS_API_KEY` in `backend/.env.local` by default.
+   Alternatively set `LECTURE_TRANSCRIPTION_PROVIDER=deepgram` and `DEEPGRAM_API_KEY`.
+   Keys stay on the server. No ChatGPT Live session or plugin is needed.
 3. From the repository root, run `npm install`,
    `npm --prefix frontend/app install`, then `npm run phone:start`.
 4. Open `http://127.0.0.1:8080/lectures`, create or open a lecture, and choose
@@ -49,13 +51,18 @@ the page labels it **Digital crop**. Cropped photos are not artificially enlarge
 Audio, photo interval, and privacy details are under **Capture settings & privacy**;
 upload progress can be expanded separately. Errors remain visible.
 
-Audio is recorded as complete clips of about 20 seconds. Photos default to every
-30 seconds, with 15- and 60-second options. Substantially unchanged frames are
+Audio is recorded as complete clips of about 15 seconds. Photos default to every
+15 seconds, with 10-, 30- and 60-second options. Substantially unchanged frames are
 suppressed, with periodic refreshes so small board changes are not skipped
 indefinitely. Pausing flushes the final audio clip. Switching apps, locking the
 phone, losing a media device, or reaching queue capacity pauses capture visibly.
 Return to Safari and tap **Resume capture**. Screen wake lock helps when available
 but does not enable background recording.
+
+The next audio clip starts before the previous clip waits for local storage.
+If saving stalls for ten seconds, capture pauses visibly and retains the final
+clips instead of silently leaving the microphone idle. This is short-file
+capture, not a WebRTC stream or a promise of sample-perfect audio boundaries.
 
 Phone uploads use a bounded IndexedDB queue, stable item IDs, and automatic
 retries. Keep the capture tab open until its pending count reaches zero. If
@@ -73,6 +80,21 @@ Notes preserve photo/audio provenance and capture times. Personal notes stay
 separate from AI updates. Visuals retain the existing compiler, readability,
 rendered review, and catalog selection gates. Expect incremental notes in tens
 of seconds and complex reviewed visuals in minutes, depending on provider load.
+
+The phone shows local upload backlog, server processing, notes coverage, and the
+age of the oldest extracted source still waiting for notes. This age excludes
+capture/upload/transcription time and is not end-to-end latency. Failed capture,
+failed notes, and stale status remain visible. Failed notes can be retried from
+the lecture page. Transcription retries temporary failures up to three times;
+key/credits errors explain what to fix before retrying saved audio. Providers
+never switch automatically. Optional `LECTURE_TRANSCRIPTION_LANGUAGE` uses the
+selected provider's language code; leaving it unset enables automatic detection.
+
+Notes use bounded batches (up to 12 new sources and normally 24,000 characters;
+a single larger source is processed intact) plus previous cited notes. Earlier
+raw sources remain stored for reference. Successful batches advance coverage;
+failed batches retain earlier notes and stop until a retry or new source arrives.
+The three-second batching window is not extended by continuous arrivals.
 
 ## Read on another screen
 

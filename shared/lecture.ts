@@ -66,6 +66,7 @@ export interface LectureSynthesisInput {
   title: string;
   sources: LectureSource[];
   previousNotes: LectureNotes | null;
+  previousSourceRevision?: number;
 }
 export interface LectureVisualInput {
   title: string;

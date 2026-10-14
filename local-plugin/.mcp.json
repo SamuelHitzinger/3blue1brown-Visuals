@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "aha-video": {
+      "command": "node",
+      "args": ["scripts/mcp.mjs"],
+      "cwd": ".",
+      "env_vars": ["AHA_VIDEO_HOME"],
+      "startup_timeout_sec": 30,
+      "tool_timeout_sec": 90
+    }
+  }
+}

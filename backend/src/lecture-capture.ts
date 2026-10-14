@@ -4,6 +4,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { proxyUser } from './identity.js';
 import { LectureError, LectureService } from './lectures.js';
+import { LectureTranscriptionError } from './lecture-transcription.js';
 import type { CaptureCapabilities, CaptureExtractor, CaptureItem, CaptureMetadata, CaptureStatus } from '../../shared/lecture-capture.js';
 
 const MAX_ITEM_BYTES = 5_000_000, MAX_PHOTO_BYTES = 2_000_000;
@@ -22,11 +23,13 @@ export interface LectureCaptureOptions {
   publicOrigin?: string;
   photo?: boolean;
   audio?: boolean;
+  transcriptionProvider?: string;
   concurrency?: number;
   itemTimeoutMs?: number;
   maxPendingPerLecture?: number;
   maxPendingGlobal?: number;
   now?: () => number;
+  onPhotoAccepted?: (owner: string, lecture: string, id: string, metadata: CaptureMetadata, mime: string, bytes: Uint8Array) => void;
 }
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const ownerOf = (request: Request) => { const user = proxyUser(request); return user ? `user:${user.id}` : 'local'; };
@@ -134,7 +137,8 @@ export class LectureCaptureService {
   private capabilities(): CaptureCapabilities {
     const photo = !!this.options.extract && this.options.photo !== false, audio = !!this.options.extract && this.options.audio !== false;
     const available = !!this.origin && (photo || audio);
-    return { available, photo, audio, ...(this.origin ? { publicOrigin: this.origin } : {}),
+    return { available, photo, audio, ...(this.options.transcriptionProvider ? { transcriptionProvider: this.options.transcriptionProvider } : {}), ...(this.origin ? { publicOrigin: this.origin } : {}),
+      ...(available && !audio ? { detail: 'Audio transcription is not connected. Configure the server transcription key to record speech.' } : {}),
       ...(!available ? { detail: this.origin ? 'Connect the lecture capture service on the computer to enable phone capture.' : 'Set up the private HTTPS capture address on the computer to connect your phone.' } : {}) };
   }
   private pair(id: string) { return this.db.query('SELECT * FROM capture_pairings WHERE id = ?').get(id) as PairRow | null; }
@@ -154,7 +158,11 @@ export class LectureCaptureService {
     const items = this.db.query('SELECT id, client_id, metadata, status, error FROM capture_items WHERE pairing = ? ORDER BY rowid DESC').all(pairing.id) as ItemRow[];
     const recent = (kind: 'photo' | 'audio') => items.map(item => JSON.parse(item.metadata) as CaptureMetadata).filter(item => item.kind === kind).map(item => item.capturedAt).sort().at(-1);
     const lastPhotoAt = recent('photo'), lastAudioAt = recent('audio');
+    const pendingSource = session.sources.find(source => source.sequence > session.synthesizedRevision);
     return { id: pairing.id, lectureId: pairing.lecture, title: session.title, state: this.state(pairing),
+      notes: { status: session.status, sourceRevision: session.sourceRevision, synthesizedRevision: session.synthesizedRevision,
+        pendingSources: session.sourceRevision - session.synthesizedRevision,
+        ...(pendingSource ? { pendingSince: pendingSource.createdAt } : {}) },
       expiresAt: new Date(pairing.device_hash ? pairing.device_expires! : pairing.pair_expires).toISOString(),
       ...(pairing.last_seen !== null ? { lastSeenAt: new Date(pairing.last_seen).toISOString() } : {}),
       ...(lastPhotoAt ? { lastPhotoAt } : {}), ...(lastAudioAt ? { lastAudioAt } : {}),
@@ -229,8 +237,9 @@ export class LectureCaptureService {
         ...(metadata.durationMs === undefined ? {} : { durationMs: metadata.durationMs }),
       });
       this.db.query('UPDATE capture_items SET status = ?, bytes = NULL, normalized = NULL, error = NULL WHERE id = ?').run(normalized.trim() ? 'ready' : 'skipped', id);
-    } catch {
-      if (!this.stopped && !cancelled.aborted && this.item(id)) this.db.query("UPDATE capture_items SET status = 'failed', error = ? WHERE id = ?").run(FAILURE, id);
+    } catch (error) {
+      if (!this.stopped && !cancelled.aborted && this.item(id)) this.db.query("UPDATE capture_items SET status = 'failed', error = ? WHERE id = ?")
+        .run(error instanceof LectureTranscriptionError ? error.message : FAILURE, id);
     }
   }
   close(): Promise<void> {
@@ -358,6 +367,10 @@ export class LectureCaptureService {
           .run(id, pair.id, pair.lecture, pair.owner, metadata.clientId, normalizedMetadata, fingerprint, mime, media);
         this.db.query('UPDATE capture_pairings SET last_seen = ? WHERE id = ?').run(this.now(), pair.id);
       })();
+      if (metadata.kind === 'photo') {
+        try { this.options.onPhotoAccepted?.(pair.owner, pair.lecture, id, metadata, mime, media); }
+        catch { console.warn('A captured photo could not be shared with the lecture bridge. Normal extraction will continue.'); }
+      }
       const accepted = this.publicItem(this.item(id)!); this.kick(); return json(accepted, 202);
     });
   }

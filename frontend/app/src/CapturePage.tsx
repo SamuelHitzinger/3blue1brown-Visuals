@@ -6,6 +6,9 @@ import { CaptureQueue, IndexedCaptureStore } from './captureQueue'
 import type { QueueSnapshot } from './captureQueue'
 import { CaptureEngine, pauseWhenHidden } from './captureEngine'
 import type { CaptureZoom } from './captureEngine'
+import { capturePreset, capturePhotoIntervalMs } from './captureMode'
+import type { CaptureMode } from './captureMode'
+import { captureHealth } from './captureHealth'
 import './capture.css'
 
 const emptyQueue: QueueSnapshot = { pending: 0, bytes: 0, unsaved: 0, uploading: false, blocked: false, message: '', maxSequence: 0 }
@@ -23,8 +26,11 @@ export default function CapturePage() {
   const [state, setState] = useState<'ready' | 'starting' | 'recording' | 'stopping' | 'paused'>('ready')
   const [note, setNote] = useState('')
   const [audio, setAudio] = useState(true)
+  const [mode, setMode] = useState<CaptureMode>('standard')
   const [photo, setPhoto] = useState(true)
-  const [interval, setIntervalValue] = useState(30)
+  const [interval, setIntervalValue] = useState(15)
+  const [lastStatusAt, setLastStatusAt] = useState(0)
+  const [now, setNow] = useState(Date.now)
   const [skipped, setSkipped] = useState(0)
   const [elapsed, setElapsed] = useState(0)
   const [wakeActive, setWakeActive] = useState(false)
@@ -54,8 +60,9 @@ export default function CapturePage() {
 
   useEffect(() => {
     mounted.current = true
+    const clock = window.setInterval(() => setNow(Date.now()), 1000)
     document.title = 'Phone capture — Aha!'
-    return () => { mounted.current = false; void engine.current?.stop(); void wake.current?.release().catch(() => {}) }
+    return () => { clearInterval(clock); mounted.current = false; void engine.current?.stop(); void wake.current?.release().catch(() => {}) }
   }, [])
   useEffect(() => {
     let active = true
@@ -64,7 +71,7 @@ export default function CapturePage() {
     const connect = async () => {
       const caps = await getDeviceCaptureCapabilities(controller.signal)
       if (!active) return
-      setCapabilities(caps); setAudio(caps.audio); setPhoto(caps.photo)
+      setCapabilities(caps); const preset = capturePreset(mode, caps); setAudio(preset.audio); setPhoto(preset.photo)
       const fragment = new URLSearchParams(location.hash.slice(1)).get('pair')
       let pending: { secret?: string } | null = null
       try { pending = JSON.parse(localStorage.getItem(claimStorageKey) || 'null') } catch { /* The visible fragment can repair this record. */ }
@@ -88,7 +95,7 @@ export default function CapturePage() {
         try { next = { token: saved.token, status: await getCaptureStatus(saved.token, controller.signal) } }
         catch (error) { if (error instanceof CaptureHTTPError && [401, 403, 404, 410].includes(error.status)) forgetCaptureClaim(localStorage, saved.pairingId); throw error }
       }
-      if (active) setClaim(next)
+      if (active) { setClaim(next); setLastStatusAt(Date.now()) }
     }
     void connect().catch(error => { if (active) setError(message(error)) }).finally(() => { if (active) setLoading(false) })
     return () => { active = false; controller.abort() }
@@ -115,10 +122,12 @@ export default function CapturePage() {
       if (!active || refreshing || document.visibilityState !== 'visible') return
       refreshing = true
       void sender.flush()
+      const requestedAt = Date.now()
       try {
         const status = await getCaptureStatus(claim.token, controller.signal)
         if (!active) return
         setClaim(current => current?.status.id === status.id ? { ...current, status } : current)
+        setLastStatusAt(requestedAt)
         if (status.state === 'expired' || status.state === 'revoked') { forgetCaptureClaim(localStorage, status.id); void stop('This pairing has ended. Create a new pairing on your computer.') }
       } catch (error) {
         if (active && error instanceof CaptureHTTPError && [401, 403, 404, 410].includes(error.status)) {
@@ -158,7 +167,7 @@ export default function CapturePage() {
     busy.current = true; setState('starting'); setError(''); setNote('')
     const sender = queue.current
     const capture = new CaptureEngine({
-      video: video.current, audio, photo, photoIntervalMs: interval * 1000,
+      video: video.current, ...capturePreset(mode, { audio, photo }), photoIntervalMs: capturePhotoIntervalMs(mode, interval),
       canCapture: () => sender.hasCapacity(),
       onPaused: reason => { void stop(reason) },
       onSkipped: () => { if (mounted.current) setSkipped(value => value + 1) },
@@ -192,11 +201,12 @@ export default function CapturePage() {
       await capture.stop()
       if (engine.current !== capture) return
       busy.current = false
-      if (mounted.current) { setState('paused'); setError(error instanceof DOMException && error.name === 'NotAllowedError' ? 'Allow camera and microphone access in Safari settings, then tap Start again.' : message(error)) }
+      if (mounted.current) { setState('paused'); setError(error instanceof DOMException && error.name === 'NotAllowedError' ? 'Allow camera and microphone access in your browser settings, then tap Start again.' : message(error)) }
     }
   }
   const ended = claim?.status.state === 'revoked' || claim?.status.state === 'expired'
   const active = state === 'recording' || state === 'starting' || state === 'stopping'
+  const health = claim && storageReady ? captureHealth(claim.status, queueState.pending, lastStatusAt, now, queueState.lastUploadedAt) : null
   const changeZoom = (value: number) => {
     setZoomValue(value)
     const capture = engine.current
@@ -213,6 +223,13 @@ export default function CapturePage() {
     {loading && <p className="capture-notice" role="status">Connecting to your lecture…</p>}
     {error && <div className="capture-notice capture-error" role="alert"><p>{error}</p>{!claim && <button className="secondary-button" onClick={() => setReload(value => value + 1)}>Try connecting again</button>}</div>}
     {claim && <>
+      <section className="capture-notice" aria-label="Capture mode"><label htmlFor="capture-mode">Capture mode </label><select id="capture-mode" value={mode} disabled={active || loading} onChange={event => {
+        const next = event.target.value as CaptureMode; setMode(next)
+        if (capabilities) { const preset = capturePreset(next, capabilities); setAudio(preset.audio); setPhoto(preset.photo) }
+      }}><option value="standard">Direct recording (recommended)</option><option value="chatgpt">Camera for ChatGPT Live (legacy)</option></select>
+      {mode === 'standard' && <p>Record speech and slide photos directly into this lecture. No ChatGPT session needed. Keep this page visible and the screen awake.</p>}
+      {mode === 'standard' && capabilities && !capabilities.audio && <p role="alert">{capabilities.detail || 'Audio transcription is unavailable. Connect a transcription provider on the computer. Photos can still be captured.'}</p>}
+      {mode === 'chatgpt' && <p>One still photo every 10 seconds, with unchanged views skipped. No video is uploaded. This page leaves the microphone to ChatGPT. Enable this lecture’s ChatGPT connection on your computer. Keep Safari visible; same-iPhone background voice still needs testing.</p>}</section>
       <section className="capture-preview" aria-label="Camera and recording status" style={{ aspectRatio: previewRatio }}>
         <video ref={video} muted playsInline aria-label="Rear camera preview" style={{ transform: `scale(${zoom?.digitalScale ?? 1})` }} onLoadedMetadata={event => { const camera = event.currentTarget; if (camera.videoWidth && camera.videoHeight) setPreviewRatio(`${camera.videoWidth} / ${camera.videoHeight}`) }} onResize={event => { const camera = event.currentTarget; if (camera.videoWidth && camera.videoHeight) setPreviewRatio(`${camera.videoWidth} / ${camera.videoHeight}`) }} className={!photo || state !== 'recording' ? 'capture-preview-inactive' : ''}/>
         {state !== 'recording' && <div className="capture-preview-placeholder"><Camera size={38}/><p>{state === 'starting' ? 'Allow camera and microphone access…' : state === 'stopping' ? 'Saving the final clip…' : ended ? 'Pairing ended' : 'Ready when you are'}</p></div>}
@@ -225,6 +242,7 @@ export default function CapturePage() {
         <div className="capture-zoom-presets">{[1, 2, 3].filter(value => value >= (zoom?.min ?? 1) && value <= (zoom?.max ?? 4)).map(value => <button key={value} type="button" aria-pressed={Math.abs(zoomValue - value) < .05} disabled={state !== 'recording'} onClick={() => changeZoom(value)}>{value}×</button>)}</div>
       </section>}
       {note && <p className="capture-notice" role="status">{note}</p>}
+      {health && <section className={`capture-health capture-health-${health.tone}`} role="status" aria-label="Live notes health"><strong>{health.title}</strong><p>{health.detail}</p><small>{queueState.pending} on this device · {claim.status.pending} processing · {claim.status.notes?.synthesizedRevision ?? 0}/{claim.status.notes?.sourceRevision ?? 0} sources in notes</small></section>}
       {queueState.message && <div className="capture-notice capture-error" role="alert"><p>{queueState.message}</p>{!ended && <button className="secondary-button" onClick={() => { void queue.current?.retry() }}>Retry uploads</button>}</div>}
       {queueState.unsaved > 0 && <p className="capture-notice capture-error" role="alert">Keep this tab open: {queueState.unsaved} final {queueState.unsaved === 1 ? 'item is' : 'items are'} held in memory because phone storage is full.</p>}
       <details className="capture-receipts"><summary><span><Check size={15}/> {queueState.uploading ? 'Uploading…' : queueState.pending ? `${queueState.pending} waiting to upload` : 'Uploads up to date'}</span><span>{claim.status.processed} saved</span></summary><div className="capture-details-body"><div className="capture-counts"><div><strong>{queueState.pending}</strong><span>On this phone</span></div><div><strong>{claim.status.pending}</strong><span>Processing</span></div><div><strong>{claim.status.processed}</strong><span>Text saved</span></div></div><p>{queueState.pending ? 'Queued material is retained until accepted.' : 'All captured material has been sent.'}</p><small>{skipped + claim.status.skipped} unchanged or empty captures skipped. Visual explanations appear on your other screen as they finish.</small></div></details>
@@ -233,10 +251,10 @@ export default function CapturePage() {
       </section>}
       {claim.status.failed > claim.status.items.filter(item => item.status === 'failed').length && <p className="capture-notice">Earlier items also need another attempt. Use “Retry failed items” on your computer to retry all of them.</p>}
       <details className="capture-settings"><summary>Capture settings & privacy</summary><div className="capture-details-body">
-        <div className="capture-switches"><label><input type="checkbox" checked={photo} disabled={active || !capabilities?.photo} onChange={event => setPhoto(event.target.checked)}/> Slide photos</label><label><input type="checkbox" checked={audio} disabled={active || !capabilities?.audio} onChange={event => setAudio(event.target.checked)}/> Lecture audio</label></div>
-        <label className="capture-interval">Photo interval <select value={interval} disabled={active || !photo} onChange={event => setIntervalValue(Number(event.target.value))}><option value={15}>15 seconds</option><option value={30}>30 seconds</option><option value={60}>60 seconds</option></select></label>
+        <div className="capture-switches"><label><input type="checkbox" checked={photo} disabled={active || !capabilities?.photo} onChange={event => setPhoto(event.target.checked)}/> Slide photos</label><label><input type="checkbox" checked={audio} disabled={active || mode === 'chatgpt' || !capabilities?.audio} onChange={event => setAudio(event.target.checked)}/> Lecture audio</label></div>
+        <label className="capture-interval">Photo interval <select value={capturePhotoIntervalMs(mode, interval) / 1000} disabled={active || !photo || mode === 'chatgpt'} onChange={event => setIntervalValue(Number(event.target.value))}><option value={10}>10 seconds</option><option value={15}>15 seconds</option><option value={30}>30 seconds</option><option value={60}>60 seconds</option></select></label>
         <p className="capture-provider">Pause capture to change these settings. Unchanged slides are skipped automatically; “Take photo” always saves a frame.</p>
-        <aside className="capture-privacy"><h2>Before you start</h2><p>Photos are read by the server’s configured AI provider. Audio is transcribed by ElevenLabs. Successful raw photos and clips are deleted from the server after their text is saved; failed items stay available for retry. Unsent material stays on this phone until accepted.</p><p>Start only when you have permission to capture this lecture. You can pause at any time, or disconnect this phone from the computer.</p></aside>
+        <aside className="capture-privacy"><h2>Before you start</h2><p>Photos are read by the server’s configured AI provider. Audio captured here is transcribed by {capabilities?.transcriptionProvider ?? 'the configured transcription provider'}. Successful raw photos and clips are deleted after their text is saved, except when a ChatGPT connection is enabled: up to eight recent photos are also available to that plugin for fifteen minutes. Failed items stay available for retry. Unsent material stays on this phone until accepted.</p><p>Start only when you have permission to capture this lecture. You can pause at any time, or disconnect this phone from the computer.</p></aside>
       </div></details>
       <section className="capture-controls" aria-label="Capture controls">
         <div className="capture-action-row"><button className="primary-button capture-start" disabled={state === 'stopping' || ended || !storageReady || (!photo && !audio) || !capabilities?.available || queueState.blocked} onClick={() => { if (active) void stop(); else void start() }}>{active ? <><Pause size={22}/>{state === 'stopping' ? 'Saving…' : 'Pause'}</> : <><Play size={22}/>{state === 'paused' ? 'Resume capture' : 'Start capture'}</>}</button>

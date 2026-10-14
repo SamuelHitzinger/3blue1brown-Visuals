@@ -25,9 +25,11 @@ export function completeAudioWindow(recorder: MediaRecorder, durationMs: number)
     // Recording errors are followed by dataavailable and stop; keep that final data.
     recorder.addEventListener('error', () => { interrupted = true; clearTimeout(timer) }, { once: true })
     recorder.addEventListener('stop', () => { clearTimeout(timer); resolve({ blob: new Blob(parts, { type: parts[0]?.type || recorder.mimeType || 'audio/mp4' }), capturedAt: new Date(started).toISOString(), durationMs: (stoppedAt || Date.now()) - started, interrupted }) }, { once: true })
-    recorder.start()
-    timer = setTimeout(stop, durationMs)
   })
+  // Initialization errors must be synchronous so a prestarted window cannot
+  // leave an unobserved rejected promise while the previous clip is saving.
+  recorder.start()
+  timer = setTimeout(stop, durationMs)
   return { done, stop }
 }
 export interface CapturedMedia { kind: CaptureKind; blob: Blob; capturedAt: string; durationMs?: number }
@@ -62,8 +64,8 @@ export class CaptureEngine {
   constructor(options: CaptureEngineOptions) { this.options = options }
   async start() {
     const generation = ++this.generation
-    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error('Open the HTTPS pairing link in Safari to allow camera and microphone access.')
-    if (this.options.audio && typeof MediaRecorder === 'undefined') throw new Error('Audio recording is unavailable in this browser. Try Safari or turn off audio.')
+    if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) throw new Error('Open the HTTPS pairing link in your browser to allow camera and microphone access.')
+    if (this.options.audio && typeof MediaRecorder === 'undefined') throw new Error('Audio recording is unavailable in this browser. Try a current Safari or Chrome browser, or turn off audio.')
     const stream = await acquireCaptureStream(() => navigator.mediaDevices.getUserMedia({ video: this.options.photo ? { facingMode: { ideal: 'environment' }, width: { ideal: 1600 }, height: { ideal: 1200 } } : false, audio: this.options.audio }), () => generation !== this.generation)
     if (!stream) return false
     this.stream = stream
@@ -111,15 +113,37 @@ export class CaptureEngine {
     const audio = new MediaStream(this.stream!.getAudioTracks())
     // Prefer native MP4 recording on iPhone; retain WebM/Ogg fallbacks.
     const mimeType = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/ogg;codecs=opus'].find(type => MediaRecorder.isTypeSupported(type))
-    while (this.running) {
-      if (!this.options.canCapture()) { this.pause('Uploads are catching up. Capture is paused; keep this page open.'); break }
+    const begin = () => completeAudioWindow(new MediaRecorder(audio, mimeType ? { mimeType, audioBitsPerSecond: 64000 } : undefined), 15_000)
+    while (this.running || this.recording) {
       try {
-        this.recording = completeAudioWindow(new MediaRecorder(audio, mimeType ? { mimeType, audioBitsPerSecond: 64000 } : undefined), 20_000)
+        if (!this.recording) {
+          if (!this.options.canCapture()) { this.pause('Uploads are catching up. Capture is paused; keep this page open.'); break }
+          this.recording = begin()
+        }
         const media = await this.recording.done
         this.recording = null
-        if (media.blob.size && media.durationMs > 0) await this.options.onMedia({ ...media, kind: 'audio' })
+        // Start the next complete file before waiting for IndexedDB. Only one
+        // recorder and one pending save may be in flight, including during stop.
+        let nextError: unknown
+        if (this.running && !media.interrupted && this.options.canCapture()) {
+          try { this.recording = begin() } catch (error) { nextError = error }
+        }
+        if (media.blob.size && media.durationMs > 0) {
+          const watchdog = setTimeout(() => this.pause('Saving audio is taking too long. Capture paused to preserve the final clips. Keep this page open.'), 10_000)
+          try { await this.options.onMedia({ ...media, kind: 'audio' }) } finally { clearTimeout(watchdog) }
+        }
+        if (nextError) throw nextError
         if (media.interrupted) { this.pause('The microphone recording was interrupted. Its final audio has been queued. Tap Start to reconnect.'); break }
-      } catch (error) { this.pause(error instanceof Error ? error.message : 'Audio recording was interrupted.'); break }
+      } catch (error) {
+        this.pause(error instanceof Error ? error.message : 'Audio recording was interrupted.')
+        // A failed save can pause a newer recorder. Preserve its final output too.
+        if (this.recording) {
+          const final = this.recording; this.recording = null; final.stop()
+          const media = await final.done
+          if (media.blob.size && media.durationMs > 0) await this.options.onMedia({ ...media, kind: 'audio' }).catch(() => {})
+        }
+        break
+      }
     }
   }
   private schedulePhoto(delay: number) {

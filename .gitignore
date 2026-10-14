@@ -25,3 +25,4 @@ out/
 *.log
 *.tsbuildinfo
 /exports/
+/plugins/live-lecture/.local/

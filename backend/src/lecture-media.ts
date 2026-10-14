@@ -1,7 +1,9 @@
 import {loadImage} from '@napi-rs/canvas';
 import type {AgentRunner} from './agents/runtime.js';
 import type {CaptureExtractor} from '../../shared/lecture-capture.js';
-import {MaterialError,transcribeCourseFile} from './course-material.js';
+import {MaterialError} from './course-material.js';
+import {createLectureTranscriber,lectureTranscriptionConfig} from './lecture-transcription.js';
+import type {LectureTranscriptionConfig} from './lecture-transcription.js';
 
 /** Inspect dimensions before asking the native decoder to allocate a photo. */
 function checkJPEG(bytes:Uint8Array) {
@@ -37,7 +39,9 @@ function checkAudio(bytes:Uint8Array,mime:string) {
 }
 
 /** Reuse existing server AI connections; never expose provider keys to the phone. */
-export function createLectureMediaExtractor(runner:AgentRunner,options:{apiKey?:string;fetcher?:(input:string,init:RequestInit)=>Promise<Response>}={}):CaptureExtractor {
+export function createLectureMediaExtractor(runner:AgentRunner,options:{apiKey?:string;transcription?:LectureTranscriptionConfig;fetcher?:(input:string,init:RequestInit)=>Promise<Response>}={}):CaptureExtractor {
+  const config=options.transcription??(options.apiKey!==undefined?{provider:'elevenlabs' as const,apiKey:options.apiKey}:lectureTranscriptionConfig());
+  const transcribe=createLectureTranscriber(config,options.fetcher);
   return async(file,metadata,signal)=>{
     signal.throwIfAborted();
     const mime=file.type.split(';')[0].trim().toLowerCase();
@@ -63,7 +67,7 @@ export function createLectureMediaExtractor(runner:AgentRunner,options:{apiKey?:
       checkAudio(bytes,mime);
       const extension=mime.includes('mp4')||mime.includes('m4a')?'mp4':mime.includes('webm')?'webm':mime.includes('ogg')?'ogg':'wav';
       const clip=new File([bytes],`lecture-clip.${extension}`,{type:mime});
-      text=await transcribeCourseFile(clip,signal,options.apiKey??process.env.ELEVENLABS_API_KEY,options.fetcher??fetch,{allowEmpty:true});
+      text=await transcribe(clip,signal);
     }
     signal.throwIfAborted();
     if(typeof text!=='string'||text.length>40_000)throw new MaterialError('Capture extraction returned too much text.');

@@ -8,6 +8,7 @@ import './lecture-notebook.css'
 import LectureVisual from './LectureVisual'
 import CapturePairingPanel from './CapturePairingPanel'
 import ViewerLinkPanel from './ViewerLinkPanel'
+import LiveBridgePanel from './LiveBridgePanel'
 import { appendLectureSource, deleteLecture, downloadLecture, hasLectureVisual, lectureStatus, mergeLectureSnapshot, patchLecture, sourceRequestKey, synthesizeLecture, visualizeConcept, watchLectureSnapshots } from './lectures'
 
 function readDraft(key: string): string | null { try { return localStorage.getItem(key) } catch { return null } }
@@ -71,6 +72,7 @@ export default function LecturePage({ id, onBack, onCatalog, suspended, courses 
     <ViewerLinkPanel key={id} lectureId={id}/>
     <details className="notebook-tools" ref={sourceDrawer}><summary>Capture & source material <span>{session.sources.length} {session.sources.length === 1 ? 'source' : 'sources'}</span></summary><div className="notebook-tools-body">
         <CapturePairingPanel lectureId={id}/>
+        <LiveBridgePanel key={id} lectureId={id}/>
         <section className="learning-panel source-composer" aria-labelledby="source-heading"><div className="learning-section-heading"><h2 id="source-heading">Add to the lecture</h2><Plus size={18}/></div><p>Paste a passage, a slide’s text, or what you just heard.</p>
           <div className="lecture-input-tabs" aria-label="Lecture input"><span><FileText size={14}/> Text</span><span>Use phone capture above for photos and audio.</span></div>
           <form onSubmit={event => { event.preventDefault(); const text = sourceText; if (!text.trim()) return; if (request.current.body !== text) request.current = { body: text, key: sourceRequestKey(localStorage, id, text) }; void act('source', () => appendLectureSource(id, text, request.current.key), () => { setSourceText(''); storeDraft(`aha-lecture-source-${id}`, ''); storeDraft(`aha-lecture-request-${id}`, ''); request.current = { body: '', key: crypto.randomUUID() } }) }}>

@@ -3,6 +3,7 @@ import qrcode from 'qrcode-generator'
 import type { CaptureCapabilities, CaptureStatus } from '../../../shared/lecture-capture'
 import { createCapturePairing, getCaptureCapabilities, getCapturePairing, retryCapturePairing, revokeCapturePairing } from './captureClient'
 import { Camera, Check, RotateCcw } from './Icons'
+import { captureHealth } from './captureHealth'
 import './capture-pairing.css'
 
 function PairingQr({ url }: { url: string }) {
@@ -45,6 +46,7 @@ export default function CapturePairingPanel({ lectureId }: { lectureId: string }
   const [copied, setCopied] = useState(false)
   const [reload, setReload] = useState(0)
   const [now, setNow] = useState(Date.now)
+  const [lastStatusAt, setLastStatusAt] = useState(0)
   const generation = useRef(0)
   const revision = useRef(0)
   const acting = useRef(false)
@@ -72,6 +74,7 @@ export default function CapturePairingPanel({ lectureId }: { lectureId: string }
         const next = await getCapturePairing(lectureId, controller.signal)
         if (controller.signal.aborted || revision.current !== currentRevision) return
         setStatus(next)
+        setLastStatusAt(Date.now())
         setPollError('')
         if (next?.state !== 'waiting') setPairingUrl('')
       } catch {
@@ -87,7 +90,7 @@ export default function CapturePairingPanel({ lectureId }: { lectureId: string }
       if (!controller.signal.aborted) setError('Could not check phone capture availability. Please try again.')
     })
     void refresh()
-    const interval = window.setInterval(() => { void refresh() }, 3000)
+    const interval = window.setInterval(() => { setNow(Date.now()); void refresh() }, 3000)
     const focus = () => { void refresh() }
     document.addEventListener('visibilitychange', focus)
     window.addEventListener('focus', focus)
@@ -130,6 +133,7 @@ export default function CapturePairingPanel({ lectureId }: { lectureId: string }
     const pairing = await createCapturePairing(lectureId)
     if (!valid()) return
     setStatus(pairing.status)
+    setLastStatusAt(Date.now())
     setNow(Date.now())
     const url = new URL(pairing.url)
     if (url.protocol !== 'https:' || !url.hash.startsWith('#pair=')) throw new Error('A trusted HTTPS pairing link is required. Check phone capture setup.')
@@ -155,7 +159,7 @@ export default function CapturePairingPanel({ lectureId }: { lectureId: string }
 
   return <section className="learning-panel capture-pairing-panel" aria-labelledby={headingId}>
     <div className="learning-section-heading"><h2 id={headingId}><Camera size={18} /> Connect your phone</h2></div>
-    <p className="capture-pairing-intro">Turn lecture photos and speech into material for your notes.</p>
+    <p className="capture-pairing-intro">Scan, tap Record, and send speech and slide photos directly to your live notes. No ChatGPT session needed.</p>
     {loading && <p className="learning-muted" role="status">Checking phone connection…</p>}
     {capabilities && !canPair && <p className="capture-pairing-unavailable">{capabilities.detail || 'Phone capture is unavailable. Configure a trusted HTTPS capture address and an extraction provider to enable it.'}</p>}
     {canPair && <p className="capture-pairing-modes">{capabilities.photo ? 'Photos enabled' : 'Photos unavailable'} <span aria-hidden="true">·</span> {capabilities.audio ? 'Audio enabled' : 'Audio unavailable'}</p>}
@@ -173,6 +177,7 @@ export default function CapturePairingPanel({ lectureId }: { lectureId: string }
     {state === 'connected' && <p className="learning-muted">Pause or stop capture on your phone. Keep its screen awake and capture page visible.</p>}
     {!loading && state !== 'connected' && !link && <button className="primary-button" disabled={!!busy || !canPair} onClick={create}>{busy === 'create' ? 'Creating pairing…' : state === 'waiting' ? 'Replace pairing link' : 'Pair a phone'}</button>}
     {status && <div className="capture-receipts">
+      {status.notes && <p className="learning-muted">{captureHealth(status, 0, lastStatusAt, now).detail}</p>}
       <div className="capture-receipts-heading"><strong>{received} received</strong><span>Media items</span></div>
       <dl className="capture-counts">
         <div><dt>In progress</dt><dd>{status.pending}</dd></div>

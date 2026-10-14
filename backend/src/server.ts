@@ -10,6 +10,7 @@ import { studyPlanRoutes } from './study-plans.js';
 import { LectureService } from './lectures.js';
 import { catalogRoutes } from './visualization-catalog.js';
 import type { LectureCaptureService } from './lecture-capture.js';
+import type { LectureLiveBridge } from './lecture-live-bridge.js';
 
 const defaultFrontendDir = fileURLToPath(new URL("../../frontend/site/", import.meta.url));
 
@@ -22,7 +23,7 @@ function inside(root: string, path: string) {
   return suffix !== ".." && !suffix.startsWith(`..${sep}`) && !isAbsolute(suffix);
 }
 
-export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets(), lectureService?: LectureService, captureService?: LectureCaptureService) {
+export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets(), lectureService?: LectureService, captureService?: LectureCaptureService, liveBridge?: LectureLiveBridge) {
   const root = resolve(frontendDir);
   let videos = videoService;
   const narration = narrationRoutes(narrationService);
@@ -49,6 +50,8 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     try { path = decodeURIComponent(new URL(request.url).pathname); }
     catch { return Response.json({ detail: "Invalid URL" }, { status: 400 }); }
     if (path.includes("\0")) return Response.json({ detail: "Invalid URL" }, { status: 400 });
+    if (path.startsWith('/api/live-bridge/')) return liveBridge ? liveBridge.handlePlugin(request) : Response.json({ detail: 'Lecture bridge is not configured.' }, { status: 503 });
+    if (/^\/api\/lectures\/[^/]+\/live-bridge$/.test(path)) return liveBridge ? liveBridge.handleOwner(request) : Response.json({ detail: 'Lecture bridge is not configured.' }, { status: 503 });
     if (path.startsWith('/api/capture/')) return captureService ? captureService.handleDevice(request) : Response.json({detail:'Phone capture is not configured.'},{status:503});
     if (path === '/api/lecture-capture/config' || /^\/api\/lectures\/[^/]+\/capture-pairings(?:\/|$)/.test(path)) {
       return captureService ? captureService.handleOwner(request) : Response.json({detail:'Phone capture is not configured.'},{status:503});

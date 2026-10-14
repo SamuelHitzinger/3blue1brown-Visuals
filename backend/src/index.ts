@@ -13,6 +13,8 @@ import { createLectureVisualGenerator } from './agents/lecture-visual.js';
 import { LectureCaptureService } from './lecture-capture.js';
 import { createLectureMediaExtractor } from './lecture-media.js';
 import { createCaptureGateway } from './capture-gateway.js';
+import { LectureLiveBridge } from './lecture-live-bridge.js';
+import { lectureTranscriptionConfig } from './lecture-transcription.js';
 
 const generation = process.env.VIDEO_GENERATOR ?? 'pi';
 if (generation !== 'pi' && generation !== 'simulated') throw new Error('VIDEO_GENERATOR must be pi or simulated.');
@@ -27,11 +29,15 @@ const lectureConfig = config && { ...config, model: process.env.LECTURE_MODEL ??
 const lectureRunner = lectureConfig ? new PiAgentRunner(lectureConfig) : undefined;
 const lectures = new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'),
   lectureRunner ? (input, signal) => generateLectureNotes(lectureRunner, input, signal) : undefined,
-  { visualize: config ? createLectureVisualGenerator(new PiAgentRunner(config), config.dataDir, { preview }) : undefined, synthesisDebounceMs: 1_500 });
+  { visualize: config ? createLectureVisualGenerator(new PiAgentRunner(config), config.dataDir, { preview }) : undefined, synthesisDebounceMs: 3_000 });
+const liveBridge = new LectureLiveBridge(process.env.LIVE_BRIDGE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-live-bridge.sqlite'), lectures);
+const transcription = lectureTranscriptionConfig();
 const captures = new LectureCaptureService(process.env.CAPTURE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-capture.sqlite'), lectures, {
-  extract: lectureRunner ? createLectureMediaExtractor(lectureRunner) : undefined,
+  extract: lectureRunner ? createLectureMediaExtractor(lectureRunner, { transcription }) : undefined,
   publicOrigin: process.env.CAPTURE_PUBLIC_ORIGIN,
-  photo: !!lectureRunner, audio: !!lectureRunner && !!process.env.ELEVENLABS_API_KEY?.trim(),
+  photo: !!lectureRunner, audio: !!lectureRunner && !!transcription.apiKey,
+  transcriptionProvider: transcription.provider === 'deepgram' ? 'Deepgram' : 'ElevenLabs',
+  onPhotoAccepted: (...args) => liveBridge.recordPhoto(...args),
 });
 
 const localNarration = process.env.NODE_ENV !== "production" && process.env.NARRATION_ALLOW_LOCAL === "1";
@@ -39,7 +45,7 @@ const hostname = process.env.HOST ?? (localNarration ? "127.0.0.1" : "0.0.0.0");
 if (localNarration && !["127.0.0.1", "localhost", "::1"].includes(hostname)) {
   throw new Error("NARRATION_ALLOW_LOCAL requires a backend bound to loopback. Disable it when using a shared server.");
 }
-const handler = createHandler(process.env.FRONTEND_DIR || undefined, videos, narration, undefined, lectures, captures);
+const handler = createHandler(process.env.FRONTEND_DIR || undefined, videos, narration, undefined, lectures, captures, liveBridge);
 const server = Bun.serve({
   hostname,
   port: Number(process.env.PORT ?? 8080),
@@ -75,6 +81,7 @@ async function shutdown() {
   server.stop(true);
   captureServer?.stop(true);
   await Promise.all([videos.close(), captures.close()]);
+  liveBridge.close();
   await lectures.close();
   await preview?.close();
   process.exit(0);

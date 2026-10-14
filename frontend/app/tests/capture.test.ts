@@ -285,3 +285,44 @@ test('encoder initialization failure reports capture stopped and releases the mi
     }
   }
 })
+
+test('recorder start errors propagate synchronously before returning an audio window', () => {
+  class BrokenRecorder extends FakeRecorder { start() { throw new Error('start encoder failed') } }
+  assert.throws(() => completeAudioWindow(new BrokenRecorder() as unknown as MediaRecorder, 15_000), /start encoder failed/)
+})
+
+test('next audio window records during a save; stalled storage pauses visibly and retains both clips', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] })
+  const globals = ['window', 'navigator', 'MediaStream', 'MediaRecorder'] as const
+  const original = new Map(globals.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
+  const recorders: FakeRecorder[] = [], saved: string[] = [], paused: string[] = []
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  const track = Object.assign(new EventTarget(), { stop() {} })
+  const stream = { getTracks: () => [track], getAudioTracks: () => [track] }
+  class Recorder extends FakeRecorder {
+    static isTypeSupported() { return true }
+    constructor() { super(); recorders.push(this) }
+  }
+  const replacements = { window: { isSecureContext: true }, navigator: { mediaDevices: { getUserMedia: async () => stream } }, MediaStream: class {}, MediaRecorder: Recorder }
+  const engine = new CaptureEngine({ video: { srcObject: null } as HTMLVideoElement, audio: true, photo: false,
+    photoIntervalMs: 15_000, canCapture: () => true, onSkipped() {}, onPaused(reason) { paused.push(reason) },
+    onMedia: async media => { saved.push(await media.blob.text()); await gate } })
+  try {
+    for (const key of globals) Object.defineProperty(globalThis, key, { configurable: true, value: replacements[key] })
+    await engine.start()
+    t.mock.timers.tick(5)
+    recorders[0].stop()
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(recorders.length, 2, 'Storage must not hold up the next recorder')
+    assert.equal(recorders[1].state, 'recording')
+    t.mock.timers.tick(10_001)
+    assert.match(paused[0] ?? '', /saving audio/i)
+    assert.equal(recorders[1].state, 'inactive')
+    const stopped = engine.stop(); release(); await stopped
+    assert.deepEqual(saved, ['firstfinal', 'firstfinal'])
+  } finally {
+    release(); await engine.stop()
+    for (const key of globals) { const descriptor = original.get(key); if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key) }
+  }
+})
