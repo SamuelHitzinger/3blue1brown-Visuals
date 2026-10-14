@@ -51,7 +51,7 @@ Phone-page UI checks used a temporary loopback-only proxy while account HTTPS
 setup was pending. It was not exposed through Tailscale and is not included in
 the production launcher. This does not prove actual iPhone hardware behavior.
 
-## Remaining device setup
+## Original device setup status
 
 Tailscale is running on the computer, but private Serve is not enabled for its
 account. The launcher printed the account setup link, which was opened for the
@@ -63,3 +63,35 @@ The app explicitly requires foreground capture. Server media validation bounds
 bytes and checks formats; audio duration is client-reported rather than decoded.
 Successful raw bytes are removed from live records, not securely erased from
 SQLite journals or backups. See [operational setup](phone-capture.md).
+
+## Phone controller and live reader follow-up — 2026-10-14
+
+The user subsequently enabled private Tailscale Serve and confirmed the iPhone
+is connected. Their current reading device is the computer; an iPad is optional.
+
+- Final frontend suite: 146 tests passed. Production build and frontend/backend
+  TypeScript checks passed. Existing large-bundle warnings remain.
+- Backend full suite: 436 tests passed before scoped model downloads were added;
+  affected suites passed afterward (16 tests). The final reader/gateway run
+  passed 10 tests, including token encoding, expiry/rotation/revocation, restart,
+  raw-source exclusion, model membership, and revocation during a file read.
+- Browser proof used isolated databases, a synthetic 1600×1200 camera stream,
+  synthetic audio, and deterministic notes. It made no external AI calls.
+- At 390×844, the phone preview, zoom presets, and fixed capture buttons fit.
+  Digital 2× zoom changed the preview; manual photos uploaded; pause flushed
+  final media; resume returned to recording and retained zoom. Browser console
+  reported no errors. Synthetic engine tests verify cropped dimensions without
+  upscaling, matching pixel selection, hardware constraints, and final-photo drain.
+- The computer notebook updated from 13 to 16 sources without reload after
+  phone capture. The separate reader also received live updates and played its
+  embedded animation through the restricted gateway with WebAssembly CSP enabled.
+- The real issued token passed the desktop QR/link panel. Opening the panel
+  preserved the existing link. Explicit replacement stopped the old reader's
+  polling with “Link expired or revoked” while retaining its received notes.
+- Independent reviews caught and resolved token-format disagreement, hidden
+  setup errors, and an automatic link-rotation race.
+
+This validates the browser flow, not physical iPhone Safari zoom support or
+camera/microphone behavior. The real device should reload its paused capture
+page to receive the updated controls. Notes remain incremental batches, not
+word-by-word transcription; reviewed visual generation can take longer.

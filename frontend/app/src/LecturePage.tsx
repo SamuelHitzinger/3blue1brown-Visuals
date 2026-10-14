@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import './lecture-notebook.css'
 import LectureVisual from './LectureVisual'
 import CapturePairingPanel from './CapturePairingPanel'
+import ViewerLinkPanel from './ViewerLinkPanel'
 import { appendLectureSource, deleteLecture, downloadLecture, hasLectureVisual, lectureStatus, mergeLectureSnapshot, patchLecture, sourceRequestKey, synthesizeLecture, visualizeConcept, watchLectureSnapshots } from './lectures'
 
 function readDraft(key: string): string | null { try { return localStorage.getItem(key) } catch { return null } }
@@ -67,6 +68,7 @@ export default function LecturePage({ id, onBack, onCatalog, suspended, courses 
     <button className="learning-back" onClick={() => onBack(session.courseId ?? "__independent__")}><ArrowLeft size={16}/> {courseTitle}</button>
     <div className="lecture-heading"><div><span className="learning-eyebrow">{courseTitle} {'\u00b7'} Lecture notebook</span><EditableTitle title={session.title} busy={!!busy} save={title => act("title", () => patchLecture(id, { title }))}/><div className="lecture-heading-meta"><span className={`lecture-status status-${session.status}`}><span/>{lectureStatus(session)}</span><span>{session.sources.length} {session.sources.length === 1 ? 'source' : 'sources'}</span></div></div><button className="secondary-button" onClick={() => downloadLecture({ ...session, personalNotes })}><FileText size={16}/> Export notes</button></div>
     {(error || loadError) && <p className="learning-error" role="alert">{error || loadError} {loadError && <button onClick={() => setReload(value => value + 1)}>Reconnect</button>}</p>}
+    <ViewerLinkPanel key={id} lectureId={id}/>
     <details className="notebook-tools" ref={sourceDrawer}><summary>Capture & source material <span>{session.sources.length} {session.sources.length === 1 ? 'source' : 'sources'}</span></summary><div className="notebook-tools-body">
         <CapturePairingPanel lectureId={id}/>
         <section className="learning-panel source-composer" aria-labelledby="source-heading"><div className="learning-section-heading"><h2 id="source-heading">Add to the lecture</h2><Plus size={18}/></div><p>Paste a passage, a slide’s text, or what you just heard.</p>

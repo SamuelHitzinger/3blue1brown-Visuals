@@ -17,6 +17,9 @@ and creates reviewed visual explanations using the existing animation catalog.
    and open the link in Safari.
 5. Tap **Start capture** and allow camera and microphone access. Point the rear
    camera at the slides or board. Keep Safari visible and the phone unlocked.
+6. Leave that lecture open on the computer. Its continuous notes page updates
+   automatically as material is processed; visual explanations appear inline.
+   No second device or reader link is needed for this computer-only flow.
 
 The launcher builds the app and renderer, binds the desktop to loopback, and
 forwards only the restricted capture listener through private Tailscale Serve.
@@ -37,6 +40,14 @@ an error. For an existing trusted HTTPS reverse proxy, use
 default `127.0.0.1:8081`. Never forward the unrestricted anonymous desktop API.
 
 ## During a lecture
+
+The phone is a camera controller: use the zoom slider or presets to frame the
+board, **Take photo** to capture an important change immediately, and the fixed
+**Pause** / **Resume capture** button to stop or continue. Zoom affects both the
+preview and the saved photograph. Supported camera zoom is preferred; otherwise
+the page labels it **Digital crop**. Cropped photos are not artificially enlarged.
+Audio, photo interval, and privacy details are under **Capture settings & privacy**;
+upload progress can be expanded separately. Errors remain visible.
 
 Audio is recorded as complete clips of about 20 seconds. Photos default to every
 30 seconds, with 15- and 60-second options. Substantially unchanged frames are
@@ -62,6 +73,23 @@ Notes preserve photo/audio provenance and capture times. Personal notes stay
 separate from AI updates. Visuals retain the existing compiler, readability,
 rendered review, and catalog selection gates. Expect incremental notes in tens
 of seconds and complex reviewed visuals in minutes, depending on provider load.
+
+## Read on another screen
+
+For an iPad or another computer later, connect that device to the same Tailscale
+account. In the desktop lecture, expand **Open live notes** and create a reader
+link. Scan its QR code or open the link on the reading device. This is a separate,
+read-only page: continuous notes, section navigation, and the same inline players.
+It checks for updates about every two seconds, preserves the current reading
+position, and keeps the last notes visible while reconnecting.
+
+Reader links expire after eight hours. Creating a replacement or choosing
+**Revoke reader link** invalidates the old link. Anyone with the link and network access
+can read that lecture's generated and personal notes and visualizations; they
+cannot edit it, upload media, or browse other lectures. Raw captured sources are
+not included. The token travels in a URL fragment, is removed from the address
+bar, and is kept in that reading tab's session storage. The server stores only
+its hash. Imported model downloads require the same lecture-scoped access.
 
 ## Data and limits
 
