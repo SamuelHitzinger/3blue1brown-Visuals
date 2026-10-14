@@ -11,3 +11,7 @@ Landmark coordinates are already in model-local angstrom coordinates with common
 Preserve source URLs, accession, chain selection, units, recorded source hash and source warnings from the publication result. Sources: [RCSB PDB](https://www.rcsb.org/) and the [local molecular API guide](../../docs/molecules.md).
 
 Verify the returned representation can support the exact claim, selected chains remain identifiable, gaps are not silently bridged, and required landmarks are visible. Coordinate agreement alone does not establish dynamics, contact chemistry or biological causation.
+
+## Reuse selection and preparation
+
+Check the machine-readable reuseContract returned with this detail before asset selection. Reuse only the exact structure and representation required by the question. Explicit publish_model pdbRepresentation is mixed (default: protein CA and nucleotide heavy atoms) or backbone (protein CA and nucleotide P anchors). Never infer atomic contacts from backbone. Source hash, CCD hashes, converter version, selected chains and representation identify persistent prepared artifacts; cache reuse does not confer scientific or visual approval. [Rigid subunit motion](../techniques/rigid-molecular-motion.md) supports explicitly authored illustrative or supplied transforms, with no inferred dynamics or folding.

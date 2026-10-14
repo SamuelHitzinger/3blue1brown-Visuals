@@ -1,6 +1,6 @@
 import { loadImage } from '@napi-rs/canvas';
-import { createHash } from 'node:crypto';
-import { mkdir, readFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
+import { mkdir, readFile, open, link, unlink, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { lookup } from 'node:dns/promises';
 import { request as httpsRequest } from 'node:https';
@@ -14,6 +14,32 @@ export interface ModelProvenance { source?: string; license?: string; attributio
 export interface RenderModelAssets { assets:Record<string,ModelAsset>; files:Record<string,string> }
 // Jobs and HTTP uploads use different store instances in the same host process.
 const metadataWrites=new Map<string,Promise<void>>();
+const provenanceLimit=MODEL_LIMITS.bytes;
+function canonical(value:unknown):unknown {
+  if(Array.isArray(value))return value.map(canonical);
+  if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([,item])=>item!==undefined).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,item])=>[key,canonical(item)]));
+  return value;
+}
+function provenanceHash(sha256:string,provenance:ModelProvenance):string {
+  const normalized=structuredClone(provenance);
+  if(normalized.scientific){const {preparedAt: _preparedAt,...identity}=normalized.scientific.provenance;normalized.scientific.provenance={...identity,preparedAt:''};}
+  return createHash('sha256').update(JSON.stringify(canonical({sha256,provenance:normalized}))).digest('hex');
+}
+function validateIdentity(asset:ModelAsset):void {
+  if(!asset.sha256||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.url!==`/api/models/${asset.sha256}.glb`||asset.provenanceSha256!==undefined&&!/^[a-f0-9]{64}$/.test(asset.provenanceSha256))throw new Error('Invalid published model identity');
+}
+async function boundedProvenance(path:string):Promise<string> {
+  const file=await open(path,'r');
+  try {
+    const size=(await file.stat()).size;
+    if(size>provenanceLimit)throw new Error('Published model provenance exceeds limit');
+    const bytes=Buffer.alloc(size+1);let length=0;
+    while(length<bytes.length){const result=await file.read(bytes,length,bytes.length-length,null);if(!result.bytesRead)break;length+=result.bytesRead;}
+    if(length>provenanceLimit)throw new Error('Published model provenance exceeds limit');
+    if(length>size)throw new Error('Published model provenance grew during bounded read');
+    return bytes.subarray(0,length).toString('utf8');
+  } finally {await file.close();}
+}
 export class ModelAssets {
   constructor(readonly directory=resolve(process.env.MODEL_ASSET_DIR??'data/models')){}
   async publish(bytes:Uint8Array,provenance:ModelProvenance={}):Promise<{id:string;asset:ModelAsset}> {
@@ -26,23 +52,40 @@ export class ModelAssets {
     await mkdir(this.directory,{recursive:true,mode:0o700});
     await atomicWrite(join(this.directory,`${sha256}.glb`),bytes);
     const asset:ModelAsset={kind:'model',url:`/api/models/${sha256}.glb`,sha256,metadata};
+    if(provenance.scientific){
+      asset.provenanceSha256=provenanceHash(sha256,provenance);
+      const path=join(this.directory,`${sha256}.${asset.provenanceSha256}.json`),temp=`${path}.${randomUUID()}.tmp`;
+      const body=JSON.stringify({asset,provenance});
+      if(Buffer.byteLength(body)>provenanceLimit)throw new Error('Published model provenance exceeds limit');
+      try {
+        await writeFile(temp,body,{mode:0o600,flag:'wx'});
+        try {await link(temp,path);}catch(error){if((error as NodeJS.ErrnoException).code!=='EEXIST')throw error;}
+        // Reusing the identity preserves the first complete preparation record.
+        await this.provenance({published:asset});
+      }finally{await unlink(temp).catch(()=>{});}
+    }
     const metadataPath=resolve(this.directory,`${sha256}.json`);
     const write=(metadataWrites.get(metadataPath)??Promise.resolve()).catch(()=>undefined).then(async()=>{
       let previous:ModelProvenance={};
       try { previous=JSON.parse(await readFile(metadataPath,'utf8')).provenance??{}; }
       catch(error) { if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error; }
       const supplied=Object.fromEntries(Object.entries(provenance).filter(([,value])=>value!==undefined));
+      // Lessons saved before publication references retain their first scientific context.
+      if(previous.scientific){
+        delete supplied.scientific;
+        if(provenance.scientific)for(const key of Object.keys(previous))delete supplied[key];
+      }
       await atomicWrite(metadataPath,JSON.stringify({asset,provenance:{...previous,...supplied}}));
     });
     metadataWrites.set(metadataPath,write);
     try { await write; }
     finally { if(metadataWrites.get(metadataPath)===write)metadataWrites.delete(metadataPath); }
-    return {id:`model-${sha256}`,asset};
+    return {id:`model-${sha256}${asset.provenanceSha256?`-${asset.provenanceSha256}`:''}`,asset};
   }
   async forRendering(assets:Record<string,ModelAsset>):Promise<RenderModelAssets> {
     const files:Record<string,string>={};
     for(const asset of Object.values(assets)) {
-      if(!asset.sha256||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.url!==`/api/models/${asset.sha256}.glb`)throw new Error('Invalid published model identity');
+      validateIdentity(asset);
       if(files[asset.url])continue;
       const bytes=await readFile(join(this.directory,`${asset.sha256}.glb`));
       if(createHash('sha256').update(bytes).digest('hex')!==asset.sha256)throw new Error('Published model hash mismatch');
@@ -54,12 +97,13 @@ export class ModelAssets {
   async provenance(assets:Record<string,ModelAsset>):Promise<Record<string,ModelProvenance>> {
     const result:Record<string,ModelProvenance>={};
     for(const [id,asset] of Object.entries(assets)){
-      if(!asset.sha256||!/^[a-f0-9]{64}$/.test(asset.sha256)||asset.url!==`/api/models/${asset.sha256}.glb`)throw new Error('Invalid published model identity');
+      validateIdentity(asset);
       try{
-        const saved=JSON.parse(await readFile(join(this.directory,`${asset.sha256}.json`),'utf8'));
-        if(saved.asset?.sha256!==asset.sha256)throw new Error('Published model provenance identity mismatch');
+        const suffix=asset.provenanceSha256?`.${asset.provenanceSha256}`:'';
+        const saved=JSON.parse(await boundedProvenance(join(this.directory,`${asset.sha256}${suffix}.json`)));
+        if(saved.asset?.sha256!==asset.sha256||asset.provenanceSha256&&(saved.asset?.url!==asset.url||saved.asset?.provenanceSha256!==asset.provenanceSha256||provenanceHash(asset.sha256!,saved.provenance??{})!==asset.provenanceSha256))throw new Error('Published model provenance identity mismatch');
         result[id]=saved.provenance??{};
-      }catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')throw error;}
+      }catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT'||asset.provenanceSha256)throw error;}
     }
     return result;
   }

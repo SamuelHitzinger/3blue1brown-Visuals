@@ -145,3 +145,22 @@ test('retains only SEQRES nucleotide HETATM sites explicitly LINK-connected to p
   expect(prepared.context.provenance.selection).toContain('2 nucleotide HETATM');
   expect(prepared.context.origin[0]).toBeLessThan(20);
 });
+test('explicit backbone retains CA/P anchors, omits nucleotide anatomy and separates cache identity',async()=>{
+ await mockSource();const mixed=await prepareMolecularModel({accession:'1ABC'}),backbone=await prepareMolecularModel({accession:'1ABC',representation:'backbone'});
+ const decoded=await parseModelGLB(backbone.bytes);expect(backbone.bytes).not.toEqual(mixed.bytes);
+ expect(decoded.metadata.parts.some(p=>p.name.includes('nucleic-trace'))).toBe(true);
+ expect(decoded.metadata.parts.some(p=>p.name.includes('nucleic-atoms'))).toBe(false);
+ expect(backbone.context.representation).toContain('CA and nucleotide P');
+ expect(backbone.context.provenance.fidelity).toContain('cannot support atomic contacts');
+ const mapping=backbone.context.provenance.converter.options.mapping as Record<string,{id:string}[]>;
+ expect(new Set(Object.values(mapping).flat().map(span=>span.id.split('/').at(-1)))).toEqual(new Set(['CA','P']));
+ expect((await prepareMolecularModel({accession:'1ABC'})).bytes).toEqual(mixed.bytes);
+ await expect(prepareMolecularModel({accession:'1ABC',representation:'surface' as any})).rejects.toThrow('representation');
+});
+test('backbone missing P anchors and author gaps remain disconnected',async()=>{
+ await mockSource(pdb.replace(atom(10,'P','DA','1',2,4.6,4),atom(10,"C1'",'DA','1',2,4.6,4)).replace('\nEND',`\n${atom(12,'P','DA','1',4,8,4)}\nEND`));
+ const prepared=await prepareMolecularModel({accession:'1ABC',chains:['1'],representation:'backbone'}),decoded=await parseModelGLB(prepared.bytes);
+ expect(decoded.metadata.parts.every(p=>p.name.includes('isolated'))).toBe(true);
+ expect(prepared.context.molecular!.chains[0].gapCount).toBeGreaterThan(0);
+ expect(prepared.context.molecular!.chains[0].landmarks!.every(p=>p.atomName==='P')).toBe(true);
+});

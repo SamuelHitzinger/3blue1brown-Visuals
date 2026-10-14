@@ -15,6 +15,8 @@ export interface ModelAsset {
   url: string;
   /** SHA-256 of the immutable GLB; verified by the browser when supplied. */
   sha256?: string;
+  /** Immutable host scientific publication identity; independent of shared geometry bytes. */
+  provenanceSha256?: string;
   metadata: ModelMetadata;
 }
 /** Imported GLB model with its authored hierarchy and materials. */

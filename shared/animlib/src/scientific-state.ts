@@ -16,6 +16,45 @@ export function createScientificStateBuilders(): ScientificStateBuilders {
     return value;
   };
   return {
+    rigidMotion(options){
+      const pivot=vector(options?.pivot,3,'Rigid pivot');
+      const provenance=options?.provenance;
+      const text=(value:unknown,label:string)=>{
+        if(typeof value!=='string'||!value.trim()||value.length>2048)throw new Error(`${label} must be a nonempty string of at most 2048 characters`);
+      };
+      if(!provenance||!['illustrative','supplied'].includes(provenance.kind))throw new Error('Rigid provenance kind must be illustrative or supplied');
+      text(provenance.description,'Rigid provenance description');
+      if(provenance.kind==='supplied'||provenance.source!==undefined)text(provenance.source,'Rigid provenance source');
+      const interpolation=options.interpolation??'linear';
+      if(interpolation!=='linear'&&interpolation!=='smooth')throw new Error('Rigid interpolation must be linear or smooth');
+      const keyframes=Array.from(list(options.keyframes,1,256,'Rigid keyframes'),frame=>({
+        time:finite(frame?.time,'Rigid keyframe time'),translation:vector(frame?.translation,3,'Rigid translation'),rotation:vector(frame?.rotation,3,'Rigid rotation'),
+      }));
+      if(keyframes.some((frame,i)=>i>0&&frame.time<=keyframes[i-1].time))throw new Error('Rigid keyframe times must strictly increase');
+      const rotate=(point:readonly number[],angles:readonly number[]):[number,number,number]=>{
+        const [x,y,z]=point,[rx,ry,rz]=angles;
+        const cx=Math.cos(rx),sx=Math.sin(rx),cy=Math.cos(ry),sy=Math.sin(ry),cz=Math.cos(rz),sz=Math.sin(rz);
+        const y1=cx*y-sx*z,z1=sx*y+cx*z,x2=cy*x+sy*z1,z2=-sy*x+cy*z1;
+        return [cz*x2-sz*y1,sz*x2+cz*y1,z2];
+      };
+      const at=(time:number)=>{
+        finite(time,'Rigid sample time');
+        let low=0,high=keyframes.length-1;
+        while(low<high){const mid=Math.ceil((low+high)/2);if(keyframes[mid].time<=time)low=mid;else high=mid-1;}
+        const a=keyframes[low],b=keyframes[Math.min(low+1,keyframes.length-1)];
+        let u=a===b?0:Math.max(0,Math.min(1,(time-a.time)/(b.time-a.time)));
+        if(interpolation==='smooth')u=u*u*(3-2*u);
+        const rotation=a.rotation.map((v,i)=>v+(b.rotation[i]-v)*u) as [number,number,number];
+        const translation=a.translation.map((v,i)=>v+(b.translation[i]-v)*u);
+        const rotatedPivot=rotate(pivot,rotation);
+        const position=pivot.map((v,i)=>v-rotatedPivot[i]+translation[i]) as [number,number,number];
+        return {position,rotation};
+      };
+      return {at,transformPoint(point,time){
+        const input=vector(point,3,'Rigid landmark'),pose=at(time),rotated=rotate(input,pose.rotation);
+        return rotated.map((v,i)=>v+pose.position[i]) as [number,number,number];
+      }};
+    },
     modalState(options){
       const input=list(options?.modes,1,32,'Modal state modes');
       const dimension=list(input[0]?.shape,1,64,'Mode shape').length;

@@ -9,3 +9,7 @@ The three representations share one recorded origin. Returned model context desc
 Provenance: [fixture record](../../fixtures/biological/README.md), [source lock](../../fixtures/biological/1crn/source-lock.json), [deposited structure data](../../fixtures/biological/1crn/structure.json), and [production preparation](../../../../backend/src/bundled-models.ts). The record attributes RCSB PDB 1CRN and CCD data under CC0.
 
 Verify aligned coordinates under uniform scale and rigid transforms, stable residue selections, source/part mapping and labels at the intended view. Do not animate this structure into an invented measured folding trajectory. Publication success does not establish visual readability or scientific suitability for another protein.
+
+## Reuse selection and preparation
+
+Check the machine-readable reuseContract returned with this detail before asset selection. Reuse only the exact structure and representation required by the question. Explicit publish_model pdbRepresentation is mixed (default: protein CA and nucleotide heavy atoms) or backbone (protein CA and nucleotide P anchors). Never infer atomic contacts from backbone. Source hash, CCD hashes, converter version, selected chains and representation identify persistent prepared artifacts; cache reuse does not confer scientific or visual approval. [Rigid subunit motion](../techniques/rigid-molecular-motion.md) supports explicitly authored illustrative or supplied transforms, with no inferred dynamics or folding.

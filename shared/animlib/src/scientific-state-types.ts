@@ -61,8 +61,27 @@ export interface EventRates {
 }
 
 export interface ScientificStateBuilders {
+  rigidMotion(options: RigidMotionOptions): RigidMotion;
   modalState(options: ModalStateOptions): ModalState;
   conservativeTransport(options: ConservativeTransportOptions): ConservativeTransport;
   complexInterference(options: ComplexInterferenceOptions): ComplexInterference;
   eventRates(options: EventRatesOptions): EventRates;
+}
+
+export interface RigidMotionOptions {
+  pivot: readonly [number,number,number];
+  keyframes: readonly {time:number; translation:readonly [number,number,number]; rotation:readonly [number,number,number]}[];
+  /** Componentwise Euler interpolation; default linear, smooth uses cubic smoothstep. */
+  interpolation?: 'linear'|'smooth';
+  provenance: {kind:'illustrative';description:string;source?:string}|{kind:'supplied';description:string;source:string};
+}
+export interface RigidPose {
+  position: [number,number,number];
+  /** Radians, applied X then Y then Z. */
+  rotation: [number,number,number];
+}
+export interface RigidMotion {
+  /** Holds the endpoint pose outside the keyframe interval. */
+  at(time:number): RigidPose;
+  transformPoint(point:readonly [number,number,number],time:number): [number,number,number];
 }

@@ -1,4 +1,4 @@
-import { open, realpath } from 'node:fs/promises';
+import { open, realpath, stat } from 'node:fs/promises';
 import { isAbsolute, relative, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { CatalogEntry, CatalogIndex, CatalogShard, CatalogSearchInput, CatalogSearchResult, CatalogDetail } from '../../shared/animlib/catalog/types.js';
@@ -27,6 +27,51 @@ async function boundedText(url: URL, limit: number): Promise<string> {
   } finally { await file.close(); }
 }
 const shortText = (value: unknown, max: number): value is string => typeof value === 'string' && !!value.trim() && value.length <= max;
+export function validReuseContract(value: unknown): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const contract = value as Record<string, unknown>;
+  const fields = ['applicableClaims', 'excludedClaims', 'requiredInputs', 'motionLimitations', 'fallbackComposition'];
+  return Object.keys(contract).every(key => [...fields, 'preparationRoute'].includes(key))
+    && shortText(contract.preparationRoute, 600)
+    && fields.every(key => Array.isArray(contract[key]) && contract[key].length > 0 && contract[key].length <= 8
+      && contract[key].every((item: unknown) => shortText(item, 500)));
+}
+/** Every cache hit revalidates containment and nanosecond file identity. */
+export function createCatalogDocumentCache(directory: URL, {maxEntries = 128, maxBytes = 1_048_576} = {}) {
+  if (!Number.isInteger(maxEntries) || maxEntries < 1 || !Number.isInteger(maxBytes) || maxBytes < 1) throw new Error('Invalid cache limits.');
+  const contents = new Map<string, {signature: string; content: string; bytes: number}>();
+  let bytes = 0;
+  const remove = (path: string) => { const prior = contents.get(path); if (prior) { bytes -= prior.bytes; contents.delete(path); } };
+  return {
+    get size() { return {entries: contents.size, bytes}; },
+    async read(document: string): Promise<string> {
+      if (!/^(resources|techniques|foundations)\/[a-z0-9-]+\.md$/.test(document)) throw new Error('Invalid catalog document path.');
+      const [base, file] = await Promise.all([realpath(fileURLToPath(directory)), realpath(fileURLToPath(new URL(document, directory)))]);
+      const path = relative(base, file);
+      if (isAbsolute(path) || path === '..' || path.startsWith('..' + sep)) throw new Error('Catalog document escapes its root.');
+      const info = await stat(file, {bigint: true});
+      if (!info.isFile() || info.size > 16_000n) { remove(document); throw new Error('Catalog file exceeds its size limit.'); }
+      const signature = [file, info.dev, info.ino, info.size, info.mtimeNs, info.ctimeNs].join(':');
+      const prior = contents.get(document);
+      if (prior?.signature === signature) {
+        contents.delete(document); contents.set(document, prior);
+        return prior.content;
+      }
+      remove(document);
+      const content = await boundedText(new URL(document, directory), 16_000);
+      const after = await stat(file, {bigint: true});
+      if ([file, after.dev, after.ino, after.size, after.mtimeNs, after.ctimeNs].join(':') !== signature) throw new Error('Catalog file changed during read.');
+      const length = Buffer.byteLength(content);
+      if (length <= maxBytes) {
+        remove(document);
+        while (contents.size >= maxEntries || bytes + length > maxBytes) remove(contents.keys().next().value!);
+        contents.set(document, {signature, content, bytes: length}); bytes += length;
+      }
+      return content;
+    },
+  };
+}
+const documents = createCatalogDocumentCache(root);
 let pendingIndex: Promise<CatalogSearchIndex> | undefined;
 async function index(): Promise<CatalogSearchIndex> {
   if (!pendingIndex) {
@@ -53,6 +98,7 @@ async function index(): Promise<CatalogSearchIndex> {
           || !strings(entry.tags, 16, 60) || !strings(entry.relatedIds, 12, 80)
           || (entry.aliases !== undefined && !strings(entry.aliases, 24, 100))
           || (entry.capabilities !== undefined && !strings(entry.capabilities, 16, 100))
+          || (entry.reuseContract !== undefined && !validReuseContract(entry.reuseContract))
           || !strings(entry.limitations, 8, 500) || !entry.limitations.length
           || !readinessValues.includes(entry.readiness)
           || !/^(resources|techniques|foundations)\/[a-z0-9-]+\.md$/.test(entry.document)) throw new Error('Invalid catalog entry.');
@@ -168,10 +214,7 @@ export async function searchCatalog(input: CatalogSearchInput = {}): Promise<Cat
 }
 export async function readCatalog(id: string): Promise<CatalogDetail> {
   const entry = await find(id);
-  const [directory, file] = await Promise.all([realpath(fileURLToPath(root)), realpath(fileURLToPath(new URL(entry.document, root)))]);
-  const path = relative(directory, file);
-  if (isAbsolute(path) || path === '..' || path.startsWith('..' + sep)) throw new Error('Catalog document escapes its root.');
-  const content = await boundedText(new URL(entry.document, root), 16_000);
+  const content = await documents.read(entry.document);
   return {...structuredClone(entry), content};
 }
 /** Bounded breadth-first navigation; relationships can point back to earlier entries. */

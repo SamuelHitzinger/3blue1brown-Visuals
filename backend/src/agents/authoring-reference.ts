@@ -164,6 +164,8 @@ export async function loadAuthoringContext(): Promise<ReturnType<typeof buildAut
     { id: 'scientific-conservative-transport', title: 'Conservative transport construction seed', file: 'catalog/recipes/conservative-transport.js' },
     { id: 'scientific-complex-interference', title: 'Complex interference construction seed', file: 'catalog/recipes/complex-interference.js' },
     { id: 'scientific-event-rates', title: 'Event-rate construction seed', file: 'catalog/recipes/event-rates.js' },
+    { id: 'scientific-rigid-motion', title: 'Rigid subunit motion construction seed', file: 'catalog/recipes/rigid-motion.js' },
+    { id: 'scientific-rigid-motion-guide', title: 'Rigid motion coordinates, provenance and limits', file: 'docs/rigid-motion.md' },
     { id: 'scientific-state-guide', title: 'Scientific state contracts, limits and interpretation', file: 'docs/scientific-state.md' },
   ];
   const [reference, ...contents] = await Promise.all([

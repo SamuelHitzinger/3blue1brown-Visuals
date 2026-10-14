@@ -69,13 +69,13 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       const work = publication.then(async () => {
       toolSignal.throwIfAborted();
       if ([input.fixtureId,input.url,input.generated,input.pdbId].filter(value=>value!==undefined).length!==1) throw new Error('Provide exactly one of fixtureId, pdbId, url or generated');
-      if (input.pdbChains !== undefined && input.pdbId === undefined) throw new Error('pdbChains requires pdbId');
+      if ((input.pdbChains !== undefined || input.pdbRepresentation !== undefined) && input.pdbId === undefined) throw new Error('pdbChains and pdbRepresentation require pdbId');
       if (Object.keys(assets).length >= 16) throw new Error('Lesson model limit reached (16)');
       let published;
       const provenance = { license: input.license, attribution: input.attribution };
       if (input.fixtureId!==undefined || input.pdbId!==undefined) {
         const prepared=input.pdbId!==undefined
-          ? await prepareMolecularModel({accession:input.pdbId,chains:input.pdbChains},toolSignal)
+          ? await prepareMolecularModel({accession:input.pdbId,chains:input.pdbChains,representation:input.pdbRepresentation},toolSignal)
           : await prepareBundledModel(input.fixtureId!);
         toolSignal.throwIfAborted();
         const scientific=prepared.context;

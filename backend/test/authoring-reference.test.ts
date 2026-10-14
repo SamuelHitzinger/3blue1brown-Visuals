@@ -43,7 +43,7 @@ test('compact prompt fingerprints recipe changes even when their size stays fixe
 test('loaded context exposes exact canonical scientific recipes without eagerly injecting their code', async () => {
   const context = await loadAuthoringContext();
   const tools = createReferenceTools(context.sections);
-  for (const name of ['modal-state', 'conservative-transport', 'complex-interference', 'event-rates']) {
+  for (const name of ['modal-state', 'conservative-transport', 'complex-interference', 'event-rates', 'rigid-motion']) {
     const content = readFileSync(new URL(`../../shared/animlib/catalog/recipes/${name}.js`, import.meta.url), 'utf8');
     const section = context.sections.find(section => section.id === `scientific-${name}`);
     expect(section?.content).toBe(content);
@@ -166,6 +166,8 @@ test('retains model authoring and agent publication while excluding host loading
   expect(output).not.toContain('### Registering and delivering models');
   expect(output).toContain("assembly.part('Panel')");
   expect(output).toContain('publish_model');
+  expect(output).toContain("pdbRepresentation: 'mixed' | 'backbone'");
+  expect(output).toContain('scientific-rigid-motion-guide');
 });
 
 test('injected molecular example compiles and keeps the batched group at its final pose', async () => {

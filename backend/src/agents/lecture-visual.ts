@@ -67,9 +67,10 @@ export function createLectureVisualGenerator(runner: AgentRunner, root: string, 
         if ([request.fixtureId, request.pdbId].filter(value => value !== undefined).length !== 1 || request.url || request.generated) {
           throw new Error('Lecture visualizations support a bundled fixtureId or a public pdbId. Other model sources are not available in this workspace.');
         }
+        if ((request.pdbChains !== undefined || request.pdbRepresentation !== undefined) && request.pdbId === undefined) throw new Error('pdbChains and pdbRepresentation require pdbId');
         if (Object.keys(assets).length >= 8) throw new Error('Use at most eight molecular assets for one concept.');
         const prepared = request.pdbId
-          ? await prepareMolecularModel({ accession: request.pdbId, chains: request.pdbChains }, toolSignal)
+          ? await prepareMolecularModel({ accession: request.pdbId, chains: request.pdbChains, representation: request.pdbRepresentation }, toolSignal)
           : await prepareBundledModel(request.fixtureId!);
         toolSignal.throwIfAborted();
         const scientific = prepared.context;

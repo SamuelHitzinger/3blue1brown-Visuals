@@ -1,12 +1,46 @@
 import { test,expect } from 'bun:test';
-import { mkdtemp,readFile,rm } from 'node:fs/promises';
+import { mkdtemp,readFile,rm,writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { ModelAssets,publicModelAddress } from '../src/model-assets.js';
 import { createHandler } from '../src/server.js';
-import { createModelGLB } from 'animlib/core';
+import { createModelGLB, MODEL_LIMITS } from 'animlib/core';
 import { prepareBundledModel } from '../src/bundled-models.js';
 const generated=()=>createModelGLB({parts:[{name:'Wing',vertices:[[0,0,0],[1,0,0],[0,1,0]],triangles:[[0,1,2]],baseColor:[1,0,0,1]}]});
+test('scientific publications preserve distinct context for identical geometry and renamed saved assets',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'animlib-scientific-'));
+ try{
+  const store=new ModelAssets(dir),prepared=await prepareBundledModel('1crn-beads');
+  const original=await store.publish(prepared.bytes,{scientific:prepared.context,attribution:'Original source'});
+  const changed={...prepared.context,representation:'mixed'};
+  const later=await store.publish(prepared.bytes,{scientific:changed,attribution:'Later source'});
+  expect(original.id).not.toBe(later.id);
+  expect(original.asset.sha256).toBe(later.asset.sha256);
+  expect(original.asset.url).toBe(later.asset.url);
+  const cloned=JSON.parse(JSON.stringify(original.asset));
+  expect((await new ModelAssets(dir).provenance({customKey:cloned})).customKey.scientific).toEqual(prepared.context);
+  const timestamp={...prepared.context,provenance:{...prepared.context.provenance,preparedAt:'2099-01-01'}};
+  expect((await store.publish(prepared.bytes,{scientific:timestamp,attribution:'Original source'})).id).toBe(original.id);
+  expect((await store.provenance({customKey:cloned})).customKey.scientific).toEqual(prepared.context);
+  const legacy={...original.asset};delete legacy.provenanceSha256;
+  expect((await store.provenance({oldLesson:legacy})).oldLesson.scientific).toEqual(prepared.context);
+  expect((await store.provenance({oldLesson:legacy})).oldLesson.attribution).toBe('Original source');
+  const largeContext={...prepared.context,partMeaning:'x'.repeat(1024*1024+1)};
+  const large=await store.publish(prepared.bytes,{scientific:largeContext});
+  expect((await store.provenance({large:large.asset})).large.scientific).toEqual(largeContext);
+  expect((await store.provenance({oldLesson:legacy})).oldLesson.scientific).toEqual(prepared.context);
+  const unrelated=await store.publish(await generated());
+  await expect(store.provenance({bad:{...unrelated.asset,provenanceSha256:original.asset.provenanceSha256}})).rejects.toThrow();
+  const ref=(original.asset as typeof original.asset & {provenanceSha256:string}).provenanceSha256;
+  expect(ref).toHaveLength(64);
+  await expect(store.provenance({bad:{...original.asset,provenanceSha256:'../bad'} as typeof original.asset})).rejects.toThrow('identity');
+  const path=join(dir,`${original.asset.sha256}.${ref}.json`),saved=JSON.parse(await readFile(path,'utf8'));
+  saved.provenance.scientific.representation='tampered';await writeFile(path,JSON.stringify(saved));
+  await expect(store.provenance({bad:original.asset})).rejects.toThrow('identity');
+  await writeFile(path,' '.repeat(MODEL_LIMITS.bytes+1));
+  await expect(store.provenance({bad:original.asset})).rejects.toThrow('limit');
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
 test('publishes immutable GLBs, metadata, provenance and serves cacheable bytes',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'animlib-models-'));try{const store=new ModelAssets(dir),bytes=await generated(),a=await store.publish(bytes,{license:'CC0',source:'generated'}),b=await store.publish(bytes);
  expect(a).toEqual(b);expect(a.asset.metadata.parts[0].name).toBe('Wing');expect(a.asset.sha256).toHaveLength(64);

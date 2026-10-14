@@ -6,13 +6,15 @@ import type {GeneratedModel,MolecularBackboneResult,ResidueBondTemplate,Structur
 import type {BundledModelContext,MolecularLandmark} from './bundled-models.js';
 import {atomicWrite} from './narration/service.js';
 
-const VERSION='rcsb-deposited-v2';
+import {PreparedArtifactStore} from './prepared-artifacts.js';
+export type PdbRepresentation='mixed'|'backbone';
+const VERSION='rcsb-deposited-v4';
 const LIMIT=16_000_000;
 const protein=new Set('ALA ARG ASN ASP CYS GLN GLU GLY HIS ILE LEU LYS MET PHE PRO SER THR TRP TYR VAL'.split(' '));
 const nucleic=new Set('A C G U I DA DC DG DT DI ATP CTP GTP UTP'.split(' '));
 const elementColors:Record<string,[number,number,number,number]>={C:[.5,.5,.5,1],N:[0,0,1,1],O:[1,0,0,1],P:[1,.35,0,1],S:[1,1,0,1]};
 const builders=createMolecularBackboneBuilders(createMoleculeBuilders());
-const preparations=new Map<string,{bytes:Uint8Array;context:BundledModelContext}>();
+let store:PreparedArtifactStore|undefined;let storeRoot='';
 const digest=(bytes:Uint8Array|string)=>createHash('sha256').update(bytes).digest('hex');
 const directory=()=>resolve(process.env.MOLECULAR_MODEL_CACHE_DIR??'data/molecular-model-cache');
 
@@ -83,11 +85,15 @@ function molecules(text:string):Map<string,string> {
   return result;
 }
 
-async function build(accession:string,chains:string[]|undefined,source:{text:string;hash:string},signal?:AbortSignal){
+async function inputs(chains:string[]|undefined,source:{text:string;hash:string},signal?:AbortSignal){
   const selected=polymerInput(source.text,chains),componentHashes:Record<string,string>={},residueTemplates:Record<string,ResidueBondTemplate>={};
   for(const chain of chains??[])if(!selected.text.split(/\r?\n/).some(line=>line.startsWith('ATOM  ')&&line.slice(21,22).trim()===chain))throw new Error(`Requested PDB chain ${chain} has no selected atoms`);
   await Promise.all(selected.names.map(async name=>{const data=await download(`ccd-${name}`,`https://files.rcsb.org/ligands/download/${name}.cif`,1_000_000,signal);componentHashes[name]=data.hash;residueTemplates[name]=componentTemplate(data.text,name,data.hash);}));
   signal?.throwIfAborted();
+  return {selected,componentHashes,residueTemplates};
+}
+async function build(accession:string,chains:string[]|undefined,source:{text:string;hash:string},prepared:Awaited<ReturnType<typeof inputs>>,representation:PdbRepresentation){
+  const {selected,componentHashes,residueTemplates}=prepared;
   const url=`https://files.rcsb.org/download/${accession}.pdb`;
   const structure=importPDBStructure(selected.text,{source:url,accession,chains,residueTemplates});
   for(const chain of chains??[])if(!structure.residues.some(r=>r.chainId===chain))throw new Error(`Requested PDB chain ${chain} has no selected atoms`);
@@ -116,7 +122,7 @@ async function build(accession:string,chains:string[]|undefined,source:{text:str
   };
   const backboneLinks:{a:string;b:string;source:string}[]=[];
   for(const chain of [...new Set(structure.residues.map(r=>r.chainId))]){
-    signal?.throwIfAborted();const before=parts.length,selectedResidues=structure.residues.filter(r=>r.chainId===chain),proteinResidues=selectedResidues.filter(r=>protein.has(r.name)&&r.anchorId),nucleicResidues=selectedResidues.filter(r=>nucleic.has(r.name));
+    const before=parts.length,selectedResidues=structure.residues.filter(r=>r.chainId===chain),proteinResidues=selectedResidues.filter(r=>protein.has(r.name)&&r.anchorId),nucleicResidues=selectedResidues.filter(r=>nucleic.has(r.name));
     const gaps:{before:string;reason:string}[]=structure.breaks.filter(b=>residues.get(b.before)?.chainId===chain&&!['TER','chain-change','unsupported-polymer'].includes(b.reason));
     if(proteinResidues.length){
       const proteinIds=new Set(proteinResidues.map(r=>r.id)),segments=structure.segments.filter(s=>s.chainId===chain).map(s=>({...s,residueIds:s.residueIds.filter(id=>proteinIds.has(id))})).filter(s=>s.residueIds.length);
@@ -127,7 +133,17 @@ async function build(accession:string,chains:string[]|undefined,source:{text:str
       const linked=new Set(bonds.flat());const isolated=anchors.filter(a=>!linked.has(a.id));
       if(isolated.length)append(builders.molecularBackbone({...props,segments:isolated.map(a=>({id:a.id,chainId:chain,residues:[a]})),bonds:[],representation:'beads',radius:.65,beadDetail:1}),`chain-${chain||'blank'}-protein-isolated`,false);
     }
-    if(nucleicResidues.length){
+    if(nucleicResidues.length&&representation==='backbone'){
+      const anchors=nucleicResidues.map(r=>({r,a:r.atomIds.map(id=>atoms.get(id)!).find(a=>a.name==='P')}));
+      const sites=anchors.filter(site=>site.a),bonds:[string,string][]=[];
+      for(let i=0;i<anchors.length;i++){const b=anchors[i],a=anchors[i-1];if(!b.a)gaps.push({before:b.r.id,reason:'Missing deposited P anchor'});if(!a)continue;
+        if(!a.a||!b.a||a.r.id.split('/')[2]!==b.r.id.split('/')[2]||b.r.authorSequence!==a.r.authorSequence+1||a.r.insertionCode||b.r.insertionCode||dist(a.a,b.a)>10){gaps.push({before:b.r.id,reason:'Missing anchor, author gap, insertion code, TER or P distance above 10 angstrom; no trace bridge'});continue;}bonds.push([a.a.id,b.a.id]);}
+      const props={segments:sites.map(({a})=>({id:a!.id,chainId:chain,residues:[{id:a!.id,position:a!.position,value:0}]})),bonds,origin:structure.center,provenance,initialNormal:[.213,.417,.884] as Vec3};
+      if(bonds.length)append(builders.molecularBackbone({...props,representation:'sticks',radius:.65,radialSegments:6}),`chain-${chain||'blank'}-nucleic-trace`,false);
+      const linked=new Set(bonds.flat()),isolated=sites.filter(site=>!linked.has(site.a!.id));
+      if(isolated.length)append(builders.molecularBackbone({...props,segments:isolated.map(({a})=>({id:a!.id,chainId:chain,residues:[{id:a!.id,position:a!.position,value:0}]})),bonds:[],representation:'beads',radius:.65,beadDetail:1}),`chain-${chain||'blank'}-nucleic-isolated`,false);
+    }
+    if(nucleicResidues.length&&representation==='mixed'){
       const selectedAtoms=nucleicResidues.flatMap(r=>r.atomIds.map(id=>atoms.get(id)!)),ids=new Set(selectedAtoms.map(a=>a.id));
       const bonds:[string,string][]=structure.bonds.filter(b=>ids.has(b.a)&&ids.has(b.b)).map(b=>[b.a,b.b]);
       const seen=new Set(bonds.map(b=>[...b].sort().join('\0')));
@@ -180,19 +196,21 @@ async function build(accession:string,chains:string[]|undefined,source:{text:str
     provenance:{source:url,sourceHash:source.hash,creator:source.text.split(/\r?\n/).filter(l=>l.startsWith('AUTHOR')).map(l=>l.slice(10).trim()).join(' ')||'wwPDB depositors',license:'CC0-1.0',preparedAt:new Date().toISOString(),
       selection:`First deposited model; author chains ${chains?.join(', ')??'all'}; highest-occupancy residue conformer; heavy atoms only. ${selected.promoted} nucleotide HETATM records declared in chain SEQRES and LINK-connected to a deposited polymer retained as polymer atoms. Other HETATM, waters, ions and unsupported residues omitted.`,
       modifications:['Subtract one common bounding-box center; no rotation, rescaling or coordinate replacement.','Protein side chains omitted; fixed-radius CA trace is schematic. Nucleic atom radii are display radii, not van der Waals radii.','Nucleotide intramolecular bonds come from wwPDB CCD by deposited atom name; contiguous O3′–P links use explicit template and distance sanity gate. Missing atoms and gaps remain missing.'],
-      converter:{name:VERSION,version:'2',options:{origin:structure.center,componentHashes,mapping,atoms:structure.atoms.map(({id,residueId,serial,name,element,alt})=>({id,residueId,serial,name,element,alt})),residues:structure.residues.map(({id,chainId,authorSequence,insertionCode,name})=>({id,chainId,authorSequence,insertionCode,name})),backboneLinks,breaks:structure.breaks,diagnostics:structure.diagnostics}},
+      converter:{name:VERSION,version:'4',options:{origin:structure.center,componentHashes,mapping,atoms:structure.atoms.map(({id,residueId,serial,name,element,alt})=>({id,residueId,serial,name,element,alt})),residues:structure.residues.map(({id,chainId,authorSequence,insertionCode,name})=>({id,chainId,authorSequence,insertionCode,name})),backboneLinks,breaks:structure.breaks,diagnostics:structure.diagnostics}},
       fidelity:`Static deposited experimental model${resolution?` at ${resolution} Å resolution`:''}; does not establish atomic precision, catalytic chemistry, dynamic trajectories or processive motion. Protein is a CA trace, not a molecular surface; nucleic coordinates are unchanged. No symmetry mates or biological-assembly transforms applied. ${caveats?`Depositor caveat: ${caveats}`:''}`}};
-  const bytes=await createModelGLB({parts});signal?.throwIfAborted();return {bytes,context};
+  if(representation==='backbone'){context.representation='Deposited protein CA and nucleotide P backbone anchors only; schematic whole-complex geometry, not atomic chemistry, surfaces or dynamics.';context.colorMeaning='Neutral grey schematic backbone; color does not encode atom identity.';context.partMeaning='Named chain parts retain deposited CA/P anchors. Missing anchors and author/TER gaps stay disconnected. Individual residues are recorded in host provenance; parts are chain-level.';context.provenance.modifications=['Subtract one common bounding-box center; no rotation, rescaling or coordinate replacement.','Explicit backbone: protein CA and nucleotide P anchors only. Fixed-radius traces are schematic, not atomic surfaces or van der Waals radii.','Nucleotide P trace links require consecutive author residues, no insertion code, same TER block and deposited P distance at most 10 angstrom. Missing anchors and gaps stay disconnected. No CCD bond geometry is rendered.'];context.provenance.fidelity+=' Backbone cannot support atomic contacts, binding-site chemistry or molecular dynamics claims.';}
+  context.provenance.converter.options.representation=representation;
+  const bytes=await createModelGLB({parts});return {bytes,context};
 }
 
 /** Generic bounded RCSB import. Coordinate arrays stay in host cache and GLB, outside agent context. */
-export async function prepareMolecularModel(input:{accession:string;chains?:string[]},signal?:AbortSignal):Promise<{bytes:Uint8Array;context:BundledModelContext}> {
+export async function prepareMolecularModel(input:{accession:string;chains?:string[];representation?:PdbRepresentation},signal?:AbortSignal):Promise<{bytes:Uint8Array;context:BundledModelContext}> {
   signal?.throwIfAborted();
   if(!input||typeof input.accession!=='string'||! /^[1-9][A-Za-z0-9]{3}$/.test(input.accession))throw new Error('PDB accession must be a four-character legacy PDB identifier');
   if(input.chains!==undefined&&(!Array.isArray(input.chains)||!input.chains.length||input.chains.length>32||input.chains.some(c=>typeof c!=='string'||! /^[A-Za-z0-9]?$/.test(c))))throw new Error('PDB chains must be 1–32 single-character author chain IDs');
   const accession=input.accession.toUpperCase(),chains=input.chains?[...new Set(input.chains)].sort():undefined;
-  const source=await download(`pdb-${accession}`,`https://files.rcsb.org/download/${accession}.pdb`,LIMIT,signal),key=JSON.stringify([directory(),VERSION,source.hash,chains]);
-  let prepared=preparations.get(key);
-  if(!prepared){prepared=await build(accession,chains,source,signal);preparations.set(key,prepared);while(preparations.size>8)preparations.delete(preparations.keys().next().value!);}
-  signal?.throwIfAborted();return {bytes:prepared.bytes.slice(),context:structuredClone(prepared.context)};
+  const representation=input.representation??'mixed';if(!['mixed','backbone'].includes(representation))throw new Error('PDB representation must be mixed or backbone');
+  const source=await download(`pdb-${accession}`,`https://files.rcsb.org/download/${accession}.pdb`,LIMIT,signal),prepared=await inputs(chains,source,signal);signal?.throwIfAborted();
+  const root=join(directory(),'prepared');if(!store||storeRoot!==root){storeRoot=root;store=new PreparedArtifactStore({directory:root,maxArtifactBytes:64_000_000,maxContextBytes:16_000_000,maxMemoryBytes:64_000_000});}
+  return store.prepare('rcsb-pdb',VERSION,{accession,sourceHash:source.hash,componentHashes:prepared.componentHashes,chains:chains??null,representation},()=>build(accession,chains,source,prepared,representation),signal);
 }

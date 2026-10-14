@@ -4,6 +4,16 @@ import { catalogRoutes, searchCatalog, readCatalog, catalogEntryExists, relatedC
 import { catalogTools, CATALOG_GUIDANCE, summarizeCatalogSearch } from '../src/agents/catalog.js';
 import * as catalog from '../src/visualization-catalog.js';
 import type { CatalogEntry } from '../../shared/animlib/catalog/types.js';
+test('illustrative molecule reuse contracts require their actual builder inputs',async()=>{
+ for(const id of ['peptide-motion-data','nucleic-example-inputs','nucleic-mechanisms']){
+  const detail=await readCatalog(id);
+  const contract=detail.reuseContract!;
+  expect(contract.requiredInputs.join(' ')).toContain('sequence');
+  expect(contract.requiredInputs.join(' ')).not.toContain('PDB accession');
+  expect(contract.motionLimitations.join(' ')).not.toContain('s.rigidMotion');
+  expect(contract.requiredInputs.join(' ')).toContain(id==='peptide-motion-data'?'torsion':'pairing');
+ }
+});
 
 test('catalog filters discovery by domain and readiness and recognizes disciplinary aliases', async () => {
   const biological = await searchCatalog({domain: 'biology', readiness: 'host-preparation', limit: 20});
@@ -144,4 +154,79 @@ test('catalog HTTP API returns public metadata, rejects invalid requests and nev
   expect((await get('/missing')).status).toBe(404);
   for (const suffix of ['?limit=500', '?offset=1.5', '?tier=unknown', '/..%2fpackage.json']) expect((await get(suffix)).status).toBe(400);
   expect((await route(new Request('http://localhost/api/visualization-catalog', { method: 'POST' }))).status).toBe(405);
+});
+import {mkdtemp, writeFile, mkdir, rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {pathToFileURL} from 'node:url';
+
+test('molecular reuse contracts survive detail retrieval but stay out of model discovery', async () => {
+  const detail = await catalogTools.read('pdb-structures', new AbortController().signal);
+  expect(detail.reuseContract?.excludedClaims).toContain('Measured molecular dynamics or folding trajectories.');
+  expect(detail.reuseContract?.requiredInputs.length).toBeGreaterThan(0);
+  expect(detail.reuseContract?.fallbackComposition.length).toBeGreaterThan(0);
+  detail.reuseContract!.requiredInputs.push('mutated');
+  expect((await readCatalog('pdb-structures')).reuseContract?.requiredInputs).not.toContain('mutated');
+  expect((await catalogTools.search({query: 'pdb-structures'}, new AbortController().signal)).entries[0]).not.toHaveProperty('reuseContract');
+  expect(Buffer.byteLength(JSON.stringify(detail))).toBeLessThanOrEqual(28_000);
+  expect((await searchCatalog({query: 'rigid subunit motion'})).entries.some(e => e.id === 'rigid-molecular-motion')).toBe(true);
+});
+
+test('document cache bounds resident bytes, detects edits and rejects paths', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'catalog-cache-'));
+  try {
+    await mkdir(join(dir, 'resources'));
+    await writeFile(join(dir, 'resources/a.md'), 'first');
+    await writeFile(join(dir, 'resources/b.md'), 'second');
+    const cache = catalog.createCatalogDocumentCache(pathToFileURL(dir + '/'), {maxEntries: 1, maxBytes: 20});
+    expect(await cache.read('resources/a.md')).toBe('first');
+    expect(await cache.read('resources/a.md')).toBe('first');
+    expect(cache.size).toEqual({entries: 1, bytes: 5});
+    await writeFile(join(dir, 'resources/a.md'), 'edited');
+    expect(await cache.read('resources/a.md')).toBe('edited');
+    expect(await cache.read('resources/b.md')).toBe('second');
+    expect(cache.size.entries).toBe(1);
+    for (const path of ['../outside.md', '/resources/a.md', 'resources/../a.md']) await expect(cache.read(path)).rejects.toThrow();
+    await writeFile(join(dir, 'resources/a.md'), 'x'.repeat(16_001));
+    await expect(cache.read('resources/a.md')).rejects.toThrow();
+  } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('reuse contracts reject malformed, empty, oversized and unknown fields', async () => {
+  const contract = (await readCatalog('pdb-structures')).reuseContract!;
+  expect(catalog.validReuseContract(contract)).toBe(true);
+  for (const invalid of [null, {}, {...contract, applicableClaims: []}, {...contract, preparationRoute: 'x'.repeat(601)},
+    {...contract, requiredInputs: Array(9).fill('input')}, {...contract, motionLimitations: ['x'.repeat(501)]},
+    {...contract, geometry: [1, 2, 3]}]) expect(catalog.validReuseContract(invalid)).toBe(false);
+});
+
+test('document cache byte ceiling and concurrent reads retain correct accounting', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'catalog-bytes-'));
+  try {
+    await mkdir(join(dir, 'resources'));
+    await writeFile(join(dir, 'resources/a.md'), '123456');
+    await writeFile(join(dir, 'resources/b.md'), 'abcdef');
+    const cache = catalog.createCatalogDocumentCache(pathToFileURL(dir + '/'), {maxEntries: 10, maxBytes: 10});
+    expect(await Promise.all(Array.from({length: 10}, () => cache.read('resources/a.md')))).toEqual(Array(10).fill('123456'));
+    expect(cache.size).toEqual({entries: 1, bytes: 6});
+    expect(await cache.read('resources/b.md')).toBe('abcdef');
+    expect(cache.size).toEqual({entries: 1, bytes: 6});
+    await writeFile(join(dir, 'resources/a.md'), 'x'.repeat(11));
+    expect(await cache.read('resources/a.md')).toBe('x'.repeat(11));
+    expect(cache.size).toEqual({entries: 1, bytes: 6});
+  } finally { await rm(dir, {recursive: true, force: true}); }
+});
+
+test('document cache rejects a symlink escaping catalog containment', async () => {
+  const {symlink} = await import('node:fs/promises');
+  const parent = await mkdtemp(join(tmpdir(), 'catalog-containment-'));
+  try {
+    const dir = join(parent, 'catalog'), outside = join(parent, 'outside');
+    await mkdir(dir); await mkdir(outside);
+    await writeFile(join(outside, 'secret.md'), 'outside root');
+    await symlink(outside, join(dir, 'resources'), 'junction');
+    const cache = catalog.createCatalogDocumentCache(pathToFileURL(dir + '/'));
+    await expect(cache.read('resources/secret.md')).rejects.toThrow('escapes its root');
+    expect(cache.size).toEqual({entries: 0, bytes: 0});
+  } finally { await rm(parent, {recursive: true, force: true}); }
 });

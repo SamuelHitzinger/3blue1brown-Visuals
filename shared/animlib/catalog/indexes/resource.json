@@ -21,7 +21,8 @@
       "relatedIds": [
         "molecular-structures",
         "pdb-structures",
-        "visual-verification"
+        "visual-verification",
+        "rigid-molecular-motion"
       ],
       "readiness": "ready",
       "document": "resources/crambin-1crn.md",
@@ -29,7 +30,29 @@
       "limitations": [
         "A static deposited conformer does not supply a folding trajectory.",
         "The envelope is schematic; CA beads are residues, not atoms."
-      ]
+      ],
+      "reuseContract": {
+        "applicableClaims": [
+          "Exact pinned 1CRN deposited coordinates in the selected atomic, residue or schematic envelope representation."
+        ],
+        "excludedClaims": [
+          "Measured molecular dynamics or folding trajectories.",
+          "Atomic contacts from backbone anchors; reconstructed missing residues or biological assemblies."
+        ],
+        "requiredInputs": [
+          "Exact asset or PDB accession, selected chains and source identity.",
+          "Explicit representation and scientific question; pivot and supplied or illustrative keyframes for motion."
+        ],
+        "preparationRoute": "Use the existing exact 1CRN fixture publication route and its source lock; generic PDB preparation is a distinct selected representation.",
+        "motionLimitations": [
+          "s.rigidMotion supplies a seekable rigid pose, not molecular deformation or a dynamics solver.",
+          "Label authored transforms illustrative; supplied transforms retain their source and do not alone prove dynamics."
+        ],
+        "fallbackComposition": [
+          "Research and prepare the exact required structure when identity or representation differs.",
+          "Compose annotated schematic primitives for unsupported claims with explicit schematic labels; never silently substitute an asset."
+        ]
+      }
     },
     {
       "id": "pdb-structures",
@@ -50,7 +73,8 @@
       ],
       "relatedIds": [
         "molecular-structures",
-        "crambin-1crn"
+        "crambin-1crn",
+        "rigid-molecular-motion"
       ],
       "readiness": "host-preparation",
       "document": "resources/pdb-structures.md",
@@ -58,7 +82,30 @@
       "limitations": [
         "Requires a researched supported four-character PDB accession and available publication tool.",
         "Returned protein traces and nucleotide geometry do not reconstruct assemblies, dynamics, or missing atoms."
-      ]
+      ],
+      "reuseContract": {
+        "applicableClaims": [
+          "Selected deposited structure and explicitly identified representation.",
+          "Illustrative rigid subunit placement preserving intrapart distances."
+        ],
+        "excludedClaims": [
+          "Measured molecular dynamics or folding trajectories.",
+          "Atomic contacts from backbone anchors; reconstructed missing residues or biological assemblies."
+        ],
+        "requiredInputs": [
+          "Exact asset or PDB accession, selected chains and source identity.",
+          "Explicit representation and scientific question; pivot and supplied or illustrative keyframes for motion."
+        ],
+        "preparationRoute": "Use publish_model for supported PDB inputs; retain source hash, CCD hashes, converter version, exact chains and representation in immutable prepared artifacts.",
+        "motionLimitations": [
+          "s.rigidMotion supplies a seekable rigid pose, not molecular deformation or a dynamics solver.",
+          "Label authored transforms illustrative; supplied transforms retain their source and do not alone prove dynamics."
+        ],
+        "fallbackComposition": [
+          "Research and prepare the exact required structure when identity or representation differs.",
+          "Compose annotated schematic primitives for unsupported claims with explicit schematic labels; never silently substitute an asset."
+        ]
+      }
     },
     {
       "id": "peptide-motion-data",
@@ -87,7 +134,29 @@
       "limitations": [
         "Authored motion is neither a measured folding trajectory nor an energy simulation.",
         "Packing has no general collision-avoidance guarantee."
-      ]
+      ],
+      "reuseContract": {
+        "applicableClaims": [
+          "Explicitly authored peptide torsion staging and stable residue identity."
+        ],
+        "excludedClaims": [
+          "Measured molecular dynamics or folding trajectories.",
+          "Atomic contacts from backbone anchors; reconstructed missing residues or biological assemblies."
+        ],
+        "requiredInputs": [
+          "Explicit amino-acid sequence, stable residue IDs and pinned CCD component inputs.",
+          "Absolute-time torsion samples and held stages; selected rig and staging source/recipe provenance."
+        ],
+        "preparationRoute": "Use the existing peptide host builders with explicit sequence, pinned CCD inputs and prescribed torsions.",
+        "motionLimitations": [
+          "s.peptidePose reconstructs linked geometry from prescribed torsions; Cartesian endpoint interpolation does not preserve bond lengths.",
+          "Terminal chemistry, side-chain frames and carbonyl construction are schematic; no solvent, energetic dynamics or general clash solution."
+        ],
+        "fallbackComposition": [
+          "Prepare a new explicit sequence and torsion schedule with the peptide builders when the bundled rig differs.",
+          "Use annotated schematic primitives for unsupported chemistry; verify links, held stages and reverse seeking."
+        ]
+      }
     },
     {
       "id": "nucleic-example-inputs",
@@ -116,7 +185,29 @@
       "limitations": [
         "Illustrative sequences and kinematic schedules are not deposited reaction measurements.",
         "Scene VM cannot fetch these files; the host must prepare the selected input."
-      ]
+      ],
+      "reuseContract": {
+        "applicableClaims": [
+          "Illustrative nucleic sequence, pairing and prescribed mechanism schedule."
+        ],
+        "excludedClaims": [
+          "Measured molecular dynamics or folding trajectories.",
+          "Atomic contacts from backbone anchors; reconstructed missing residues or biological assemblies."
+        ],
+        "requiredInputs": [
+          "Explicit nucleotide sequence, stable nucleotide IDs, antiparallel strand directions and complementary pairing.",
+          "Selected mechanism and absolute-time event schedule with mechanism-specific parameters, source/recipe provenance and required path/aperture inputs."
+        ],
+        "preparationRoute": "Prepare explicit sequence, pairing and schedule through existing nucleic builders.",
+        "motionLimitations": [
+          "Returned states, anchors and bonds provide schematic kinematics, not reaction dynamics or a general collision solver; translation does not predict protein folding.",
+          "Derive geometry from returned connectivity; verify incorporation, cut/join, transfer, stop/release boundaries, bounded clearance and deterministic reverse seeking."
+        ],
+        "fallbackComposition": [
+          "Prepare a new explicit sequence, pairing and schedule through the chosen transcription, processing or translation builder.",
+          "Use annotated schematic primitives for unsupported mechanisms and separate exact-source evidence for stronger chemistry claims."
+        ]
+      }
     },
     {
       "id": "native-model-packages",

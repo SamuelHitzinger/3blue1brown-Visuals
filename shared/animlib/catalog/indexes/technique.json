@@ -4,8 +4,20 @@
     {
       "id": "linear-algebra-3d",
       "title": "3D linear algebra",
-      "aliases": ["volume-preserving matrix", "signed volume", "eigenvectors", "linear transformation", "three dimensional basis"],
-      "capabilities": ["s.arrow3D", "s.line3D", "s.mesh", "s.view", "s.bind"],
+      "aliases": [
+        "volume-preserving matrix",
+        "signed volume",
+        "eigenvectors",
+        "linear transformation",
+        "three dimensional basis"
+      ],
+      "capabilities": [
+        "s.arrow3D",
+        "s.line3D",
+        "s.mesh",
+        "s.view",
+        "s.bind"
+      ],
       "description": "Explain basis vectors, matrix action, span, projection and determinant with true spatial geometry and shared numerical state.",
       "tier": "technique",
       "domains": [
@@ -37,8 +49,16 @@
     {
       "id": "coordinate-maps-2d",
       "title": "2D coordinate maps and formula correspondence",
-      "aliases": ["coordinate transformation", "matrix multiplication", "basis vectors"],
-      "capabilities": ["s.plane", "s.latex", "s.bind"],
+      "aliases": [
+        "coordinate transformation",
+        "matrix multiplication",
+        "basis vectors"
+      ],
+      "capabilities": [
+        "s.plane",
+        "s.latex",
+        "s.bind"
+      ],
       "description": "Keep grids, vectors, components, labels and named formula terms tied to one explicit transformation.",
       "tier": "technique",
       "domains": [
@@ -98,8 +118,16 @@
     {
       "id": "sampled-trajectories",
       "title": "Sampled state, traces and projected trajectories",
-      "aliases": ["time series", "state-space projection", "multivariate trajectory"],
-      "capabilities": ["s.sampledState", "s.path", "s.bind"],
+      "aliases": [
+        "time series",
+        "state-space projection",
+        "multivariate trajectory"
+      ],
+      "capabilities": [
+        "s.sampledState",
+        "s.path",
+        "s.bind"
+      ],
       "description": "Synchronize plots, growing paths, markers and numeric readouts from aligned samples and an explicit projection.",
       "tier": "technique",
       "domains": [
@@ -151,7 +179,8 @@
         "pdb-structures",
         "peptide-motion-data",
         "spatial-framing",
-        "visual-verification"
+        "visual-verification",
+        "rigid-molecular-motion"
       ],
       "readiness": "ready",
       "document": "techniques/molecular-structures.md",
@@ -159,7 +188,30 @@
       "limitations": [
         "The technique must be adapted to the supplied data and installed host capabilities.",
         "Existing representative proofs do not approve every new scene or scientific claim."
-      ]
+      ],
+      "reuseContract": {
+        "applicableClaims": [
+          "Selected deposited structure and explicitly identified representation.",
+          "Illustrative rigid subunit placement preserving intrapart distances."
+        ],
+        "excludedClaims": [
+          "Measured molecular dynamics or folding trajectories.",
+          "Atomic contacts from backbone anchors; reconstructed missing residues or biological assemblies."
+        ],
+        "requiredInputs": [
+          "Exact asset or PDB accession, selected chains and source identity.",
+          "Explicit representation and scientific question; pivot and supplied or illustrative keyframes for motion."
+        ],
+        "preparationRoute": "Use publish_model for supported PDB inputs; retain source hash, CCD hashes, converter version, exact chains and representation in immutable prepared artifacts.",
+        "motionLimitations": [
+          "s.rigidMotion supplies a seekable rigid pose, not molecular deformation or a dynamics solver.",
+          "Label authored transforms illustrative; supplied transforms retain their source and do not alone prove dynamics."
+        ],
+        "fallbackComposition": [
+          "Research and prepare the exact required structure when identity or representation differs.",
+          "Compose annotated schematic primitives for unsupported claims with explicit schematic labels; never silently substitute an asset."
+        ]
+      }
     },
     {
       "id": "nucleic-mechanisms",
@@ -190,7 +242,87 @@
       "limitations": [
         "The technique must be adapted to the supplied data and installed host capabilities.",
         "Existing representative proofs do not approve every new scene or scientific claim."
-      ]
+      ],
+      "reuseContract": {
+        "applicableClaims": [
+          "Illustrative transcription, pairing, splicing and nucleic mechanism stages from explicit sequence and schedules."
+        ],
+        "excludedClaims": [
+          "Measured molecular dynamics or folding trajectories.",
+          "Atomic contacts from backbone anchors; reconstructed missing residues or biological assemblies."
+        ],
+        "requiredInputs": [
+          "Explicit nucleotide sequence, stable nucleotide IDs, antiparallel strand directions and complementary pairing.",
+          "Selected mechanism and absolute-time event schedule with mechanism-specific parameters, source/recipe provenance and required path/aperture inputs."
+        ],
+        "preparationRoute": "Use existing nucleic builders with explicit sequence, pairing and kinematic schedule; prepared deposited models require exact publication identity separately.",
+        "motionLimitations": [
+          "Returned states, anchors and bonds provide schematic kinematics, not reaction dynamics or a general collision solver; translation does not predict protein folding.",
+          "Derive geometry from returned connectivity; verify incorporation, cut/join, transfer, stop/release boundaries, bounded clearance and deterministic reverse seeking."
+        ],
+        "fallbackComposition": [
+          "Prepare a new explicit sequence, pairing and schedule through the chosen transcription, processing or translation builder.",
+          "Use annotated schematic primitives for unsupported mechanisms and separate exact-source evidence for stronger chemistry claims."
+        ]
+      }
+    },
+    {
+      "id": "rigid-molecular-motion",
+      "title": "Rigid molecular subunit motion",
+      "description": "Seekable pivoted translation and rotation of prepared model parts with explicit illustrative or supplied provenance.",
+      "tier": "technique",
+      "domains": [
+        "biology",
+        "molecular"
+      ],
+      "tags": [
+        "rigid",
+        "subunit",
+        "motion",
+        "pivot",
+        "keyframes"
+      ],
+      "aliases": [
+        "rigid subunit motion",
+        "molecular rigid body"
+      ],
+      "capabilities": [
+        "s.rigidMotion"
+      ],
+      "relatedIds": [
+        "pdb-structures",
+        "molecular-structures",
+        "coherent-motion"
+      ],
+      "readiness": "ready",
+      "document": "techniques/rigid-molecular-motion.md",
+      "provenance": "Original mathematical rigid transform helper; input provenance remains supplied or illustrative.",
+      "limitations": [
+        "Rigid movement preserves intrapart geometry and cannot explain folding or molecular dynamics."
+      ],
+      "reuseContract": {
+        "applicableClaims": [
+          "Selected deposited structure and explicitly identified representation.",
+          "Illustrative rigid subunit placement preserving intrapart distances."
+        ],
+        "excludedClaims": [
+          "Measured molecular dynamics or folding trajectories.",
+          "Atomic contacts from backbone anchors; reconstructed missing residues or biological assemblies."
+        ],
+        "requiredInputs": [
+          "Exact asset or PDB accession, selected chains and source identity.",
+          "Explicit representation and scientific question; pivot and supplied or illustrative keyframes for motion."
+        ],
+        "preparationRoute": "Use publish_model for supported PDB inputs; retain source hash, CCD hashes, converter version, exact chains and representation in immutable prepared artifacts.",
+        "motionLimitations": [
+          "s.rigidMotion supplies a seekable rigid pose, not molecular deformation or a dynamics solver.",
+          "Label authored transforms illustrative; supplied transforms retain their source and do not alone prove dynamics."
+        ],
+        "fallbackComposition": [
+          "Research and prepare the exact required structure when identity or representation differs.",
+          "Compose annotated schematic primitives for unsupported claims with explicit schematic labels; never silently substitute an asset."
+        ]
+      }
     }
   ]
 }

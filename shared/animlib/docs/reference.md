@@ -3730,8 +3730,27 @@ assets for mobile scenes.
 
 ### Scene-agent publication
 
-The backend supplies the scene agent with `publish_model`. It accepts either a
-public HTTPS GLB URL or a `generated` JSON string describing named mesh parts.
+The backend supplies the scene agent with `publish_model`. Provide exactly one
+of a public HTTPS GLB `url`, a `generated` JSON string describing named mesh parts,
+an available `fixtureId`, or a researched RCSB `pdbId`. Molecular publication accepts
+optional author-chain `pdbChains` and explicit `pdbRepresentation: 'mixed' | 'backbone'`.
+The default mixed representation retains protein CA traces and nucleotide heavy
+atoms with CCD bond templates. Backbone retains deposited protein CA/nucleotide P
+anchors for whole-complex spatial claims only. Never choose it automatically to
+fit a budget or use it to explain atomic contacts. Read returned chain mappings,
+landmarks, gaps, provenance and scientific limits before authoring.
+
+Molecular preparation persists exact source/dictionary hashes, converter version,
+chain selection and representation alongside hash-verified immutable geometry.
+Reuse requires a matching scientific claim, not merely a similar appearance.
+Use catalog discovery/details for sources and fallback construction, and
+`read_animlib_reference({id:'scientific-rigid-motion-guide'})` for named subunit
+motion. `s.rigidMotion` preserves each part's internal geometry; authored keyframes
+do not establish measured dynamics, deformation, collision avoidance or kinetics.
+If a premade asset cannot express the requested claim, compose appropriate
+builders/data and instructions instead. Normal compiler and native review gates
+still apply to every scene.
+
 The tool validates and stores immutable bytes, records source/license/attribution,
 and returns the model ID and inventory for `s.model`. Existing assets are provided
 to later scene agents and restored when generation resumes. Each lesson supports

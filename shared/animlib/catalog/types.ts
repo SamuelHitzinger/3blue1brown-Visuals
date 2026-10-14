@@ -1,6 +1,15 @@
 /** Public authoring metadata. These records do not register runtime assets. */
 export type CatalogTier = 'resource' | 'technique' | 'foundation';
 export type CatalogReadiness = 'ready' | 'host-preparation' | 'reference';
+/** Selection constraints, not scientific or visual approval. No binary geometry. */
+export interface CatalogReuseContract {
+  applicableClaims: string[];
+  excludedClaims: string[];
+  requiredInputs: string[];
+  preparationRoute: string;
+  motionLimitations: string[];
+  fallbackComposition: string[];
+}
 export interface CatalogEntry {
   id: string;
   title: string;
@@ -16,6 +25,7 @@ export interface CatalogEntry {
   readiness: CatalogReadiness;
   /** Relative to shared/animlib/catalog; only the host resolves this path. */
   document: string;
+  reuseContract?: CatalogReuseContract;
   provenance: string;
   limitations: string[];
 }
