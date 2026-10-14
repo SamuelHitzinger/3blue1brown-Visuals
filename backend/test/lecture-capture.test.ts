@@ -97,6 +97,21 @@ test('pairing claims are retryable for one token, owner scoped, and expose no le
   expect((await s.capture.handleDevice(deviceRequest('/config', '', 'GET'))).status).toBe(200);
 });
 
+test('automatic QR creation cannot revoke a device claimed or paired by another tab', async () => {
+  const s = await setup();
+  for (const previous of ['none', s.pairing.status.id]) {
+    const request = ownerRequest(s.route, 'POST');
+    request.headers.set('X-Capture-Previous', previous);
+    expect((await s.capture.handleOwner(request)).status).toBe(409);
+    expect((await s.status()).state).toBe('connected');
+  }
+  await s.capture.handleOwner(ownerRequest(`${s.route}/${s.pairing.status.id}`, 'DELETE'));
+  const replace = ownerRequest(s.route, 'POST'); replace.headers.set('X-Capture-Previous', s.pairing.status.id);
+  const fresh = await s.capture.handleOwner(replace); expect(fresh.status).toBe(201);
+  expect((await fresh.json()).status.state).toBe('waiting');
+  expect((await s.capture.handleOwner(replace)).status).toBe(409);
+});
+
 test('durable acceptance normalizes immutable provenance and compares bytes plus metadata on retries', async () => {
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });

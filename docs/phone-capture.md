@@ -14,14 +14,25 @@ and creates reviewed visual explanations using the existing animation catalog.
    Keys stay on the server. No ChatGPT Live session or plugin is needed.
 3. From the repository root, run `npm install`,
    `npm --prefix frontend/app install`, then `npm run phone:start`.
-4. Open `http://127.0.0.1:8080/lectures`, create or open a lecture, and choose
-   **Pair a phone** in **Connect your phone**. Scan its QR code with the iPhone
-   and open the link in Safari.
+4. Open `http://127.0.0.1:8080/lectures`, choose a course, and click **Add lecture**.
+   Leave the title blank for automatic numbering. The lecture page prepares a
+   recording QR automatically. Scan it with a phone or tablet connected to the
+   same Tailscale network, or copy the link to another computer with a camera and
+   microphone. Opening or reloading the lecture page preserves a connected recorder.
 5. Tap **Start capture** and allow camera and microphone access. Point the rear
    camera at the slides or board. Keep Safari visible and the phone unlocked.
 6. Leave that lecture open on the computer. Its continuous notes page updates
    automatically as material is processed; visual explanations appear inline.
    No second device or reader link is needed for this computer-only flow.
+7. When done, tap **Pause** on the recording device. Keep its page open until
+   uploads finish and **Live notes caught up** appears. Click **Finish lecture**
+   on the original lecture page to add a content-based subtitle to its automatic
+   title. Manually chosen titles are preserved.
+
+The QR stays available after a reload in the same browser tab until it expires
+or is used. A different tab can replace an unused QR explicitly; it cannot
+silently disconnect an already connected recording device. If a lecture has
+already finished, choose **Show recording QR code** to connect a device again.
 
 The launcher builds the app and renderer, binds the desktop to loopback, and
 forwards only the restricted capture listener through private Tailscale Serve.

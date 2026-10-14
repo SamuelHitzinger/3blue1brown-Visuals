@@ -274,6 +274,12 @@ export class LectureCaptureService {
         }
         if (request.method !== 'POST') return json({ detail: 'Method Not Allowed' }, 405);
         if (!this.capabilities().available) throw new CaptureError(this.capabilities().detail!, 503);
+        // Automatic page setup must not disconnect a recorder claimed in another tab.
+        const previous = request.headers.get('X-Capture-Previous');
+        if (previous !== null) {
+          const latest = this.db.query('SELECT * FROM capture_pairings WHERE lecture = ? AND owner = ? ORDER BY rowid DESC LIMIT 1').get(lecture, owner) as PairRow | null;
+          if (previous !== (latest?.id ?? 'none') || (latest && this.state(latest) === 'connected')) throw new CaptureError('The recording connection changed. Refresh its status before creating another QR code.', 409);
+        }
         const secret = randomBytes(32).toString('hex'), id = crypto.randomUUID(), now = this.now();
         this.db.transaction(() => {
           this.db.query('UPDATE capture_pairings SET revoked = 1 WHERE lecture = ?').run(lecture);

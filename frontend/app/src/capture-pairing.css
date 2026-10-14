@@ -1,4 +1,4 @@
-.capture-pairing-panel { padding: 22px; min-width: 0; }
+.capture-pairing-panel { padding: 22px; min-width: 0; margin-bottom: 24px; }
 .capture-pairing-panel .learning-section-heading { margin-bottom: 12px; }
 .capture-pairing-panel h2 { font-size: 16px; }
 .capture-pairing-panel .capture-pairing-intro { color: var(--muted); font-size: 12px; margin: 0 0 15px; }
@@ -12,7 +12,12 @@
 .capture-pairing-panel .capture-connection-connected > span { background: #55936b; }
 .capture-pairing-panel .capture-connection-waiting > span { background: #a89656; }
 .capture-pairing-panel .capture-connection-revoked, .capture-pairing-panel .capture-connection-expired { color: var(--muted); }
-.capture-pairing-panel .capture-pairing-link { display: flex; flex-direction: column; align-items: stretch; gap: 11px; }
+.capture-pairing-panel .capture-pairing-link { display: grid; grid-template-columns: minmax(140px, 190px) minmax(0, 1fr); align-items: center; gap: 24px; max-width: 700px; }
+.capture-pairing-instructions { display: flex; flex-direction: column; gap: 11px; min-width: 0; }
+.capture-notes-health { display: flex; flex-direction: column; gap: 5px; font-size: 12px; }
+.capture-notes-health span { color: var(--muted); }
+.capture-receipts > summary { cursor: pointer; font-size: 12px; margin-bottom: 12px; }
+@media(max-width:520px) { .capture-pairing-panel .capture-pairing-link { grid-template-columns: 1fr; gap: 16px; }.capture-pairing-panel .capture-pairing-qr { justify-self: center; } }
 .capture-pairing-panel .capture-pairing-qr { width: min(100%, 216px); height: auto; align-self: center; display: block; border-radius: 10px; background: #fff; }
 .capture-pairing-panel .capture-pairing-link p { color: var(--muted); font-size: 12px; margin: 0; }
 .capture-pairing-panel .capture-pairing-link small { color: var(--muted); font-size: 10px; }

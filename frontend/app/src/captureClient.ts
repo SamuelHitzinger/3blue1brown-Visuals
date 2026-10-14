@@ -21,7 +21,7 @@ const ownerPath = (lectureId: string) => `/api/lectures/${encodeURIComponent(lec
 export const getCaptureCapabilities = (signal?: AbortSignal) => request<CaptureCapabilities>('/api/lecture-capture/config', { signal })
 export const getDeviceCaptureCapabilities = (signal?: AbortSignal) => request<CaptureCapabilities>('/api/capture/config', { signal })
 export const getCapturePairing = (lectureId: string, signal?: AbortSignal) => request<CaptureStatus | null>(ownerPath(lectureId), { signal })
-export const createCapturePairing = (lectureId: string) => request<CapturePairing>(ownerPath(lectureId), { method: 'POST' })
+export const createCapturePairing = (lectureId: string, previousId?: string | null) => request<CapturePairing>(ownerPath(lectureId), { method: 'POST', ...(previousId === undefined ? {} : { headers: { 'X-Capture-Previous': previousId ?? 'none' } }) })
 export const revokeCapturePairing = (lectureId: string, pairingId: string) => request<void>(`${ownerPath(lectureId)}/${encodeURIComponent(pairingId)}`, { method: 'DELETE' })
 export const retryCapturePairing = (lectureId: string, pairingId: string) => request<CaptureStatus>(`${ownerPath(lectureId)}/${encodeURIComponent(pairingId)}/retry`, { method: 'POST' })
 export const claimCapture = (secret: string, deviceToken: string) => request<CaptureClaim>('/api/capture/claim', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ secret, deviceToken }) })

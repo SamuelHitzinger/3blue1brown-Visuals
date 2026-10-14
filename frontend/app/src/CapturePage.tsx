@@ -219,7 +219,7 @@ export default function CapturePage() {
   }
   return <main className="capture-page">
     <header className="capture-heading"><span className="wordmark">Aha!</span><span>Phone capture</span></header>
-    <div className="capture-intro"><h1>{claim?.status.title ?? 'Connect your phone'}</h1><p>Point at the slides. Follow your live notes on your iPad or computer.</p></div>
+    <div className="capture-intro"><h1>{claim?.status.title ?? 'Connect your device'}</h1><p>This device records speech and slide photos. Your notes update on the lecture page where you scanned the QR code.</p></div>
     {loading && <p className="capture-notice" role="status">Connecting to your lecture…</p>}
     {error && <div className="capture-notice capture-error" role="alert"><p>{error}</p>{!claim && <button className="secondary-button" onClick={() => setReload(value => value + 1)}>Try connecting again</button>}</div>}
     {claim && <>
