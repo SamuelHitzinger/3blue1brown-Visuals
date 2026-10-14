@@ -106,6 +106,59 @@ test('revocation halts uploads and preserves pending material', async () => {
   assert.equal(queue.snapshot().blocked, true)
 })
 
+test('server storage exhaustion still halts capture instead of rejecting every new clip', async () => {
+  const store = new MemoryStore()
+  let calls = 0
+  const queue = new CaptureQueue(store, async () => { calls++; throw new CaptureHTTPError('Capture storage is full', 413) }, () => {})
+  await queue.restore(); await queue.enqueue(entry('one')); await queue.enqueue(entry('two', 2))
+  await queue.flush(); await queue.flush()
+  assert.equal(calls, 1)
+  assert.equal(queue.hasCapacity(), false)
+  assert.equal(queue.snapshot().blocked, true)
+  assert.equal(store.entries.length, 2)
+})
+
+test('a rejected audio clip stays on the phone without blocking later capture', async () => {
+  const store = new MemoryStore()
+  const sent: string[] = []
+  let acceptClip = false
+  const queue = new CaptureQueue(store, async item => {
+    sent.push(item.metadata.clientId)
+    if (item.metadata.clientId === 'rejected' && !acceptClip) throw new CaptureHTTPError('Unsupported recording', 415)
+  }, () => {})
+  await queue.restore()
+  await queue.enqueue(entry('rejected'))
+  await queue.enqueue(entry('following', 2))
+  await queue.flush()
+  assert.deepEqual(sent, ['rejected', 'following'])
+  assert.equal(queue.snapshot().blocked, false, 'A media error must not disable Resume')
+  assert.equal(queue.hasCapacity(), true)
+  assert.deepEqual(store.entries.map(item => item.metadata.clientId), ['rejected'])
+  assert.match(queue.snapshot().message, /Unsupported recording/)
+  await queue.flush()
+  assert.deepEqual(sent, ['rejected', 'following'], 'Do not repeatedly send a rejected clip during polling')
+  acceptClip = true
+  await queue.retry()
+  assert.deepEqual(sent, ['rejected', 'following', 'rejected'])
+  assert.equal(queue.snapshot().pending, 0)
+  assert.equal(queue.snapshot().message, '')
+})
+
+test('restoring the queue retains rejected material and accepts new captures', async () => {
+  const store = new MemoryStore()
+  const send = async (item: CaptureEntry) => {
+    if (item.metadata.clientId === 'long-clip') throw new CaptureHTTPError('Audio clip too long', 400)
+  }
+  const queue = new CaptureQueue(store, send, () => {})
+  await queue.restore(); await queue.enqueue(entry('long-clip')); await queue.flush()
+  queue.dispose()
+  const restored = new CaptureQueue(store, send, () => {})
+  await restored.restore(); await restored.enqueue(entry('new-capture', 2)); await restored.flush()
+  assert.equal(restored.snapshot().blocked, false)
+  assert.equal(restored.hasCapacity(), true)
+  assert.deepEqual(store.entries.map(item => item.metadata.clientId), ['long-clip'])
+})
+
 class FakeRecorder extends EventTarget {
   state = 'inactive'
   mimeType = 'audio/mp4'
@@ -137,6 +190,24 @@ test('recorder errors retain their final payload before reporting the interrupti
   const result = await window.done
   assert.equal(await result.blob.text(), 'firstfinal')
   assert.equal(result.interrupted, true)
+})
+
+test('complete audio uses the emitted container type when recorder reports a different type', async () => {
+  class ContainerRecorder extends FakeRecorder {
+    mimeType = 'audio/webm;codecs=opus'
+    stop() {
+      this.state = 'inactive'
+      queueMicrotask(() => {
+        this.dispatchEvent(Object.assign(new Event('dataavailable'), { data: new Blob(['complete MP4'], { type: 'audio/mp4' }) }))
+        this.dispatchEvent(new Event('stop'))
+      })
+    }
+  }
+  const recording = completeAudioWindow(new ContainerRecorder() as unknown as MediaRecorder, 20_000)
+  recording.stop()
+  const result = await recording.done
+  assert.equal(result.blob.type, 'audio/mp4')
+  assert.equal(await result.blob.text(), 'complete MP4')
 })
 
 test('late camera permission is cleaned up after a cancelled start', async () => {

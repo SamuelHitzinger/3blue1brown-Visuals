@@ -24,7 +24,7 @@ export function completeAudioWindow(recorder: MediaRecorder, durationMs: number)
     recorder.addEventListener('dataavailable', event => { if (event.data.size) parts.push(event.data) })
     // Recording errors are followed by dataavailable and stop; keep that final data.
     recorder.addEventListener('error', () => { interrupted = true; clearTimeout(timer) }, { once: true })
-    recorder.addEventListener('stop', () => { clearTimeout(timer); resolve({ blob: new Blob(parts, { type: recorder.mimeType || parts[0]?.type || 'audio/mp4' }), capturedAt: new Date(started).toISOString(), durationMs: (stoppedAt || Date.now()) - started, interrupted }) }, { once: true })
+    recorder.addEventListener('stop', () => { clearTimeout(timer); resolve({ blob: new Blob(parts, { type: parts[0]?.type || recorder.mimeType || 'audio/mp4' }), capturedAt: new Date(started).toISOString(), durationMs: (stoppedAt || Date.now()) - started, interrupted }) }, { once: true })
     recorder.start()
     timer = setTimeout(stop, durationMs)
   })
@@ -75,7 +75,8 @@ export class CaptureEngine {
   private pause(message: string) { if (!this.running) return; this.options.onPaused(message); void this.stop() }
   private async audioLoop() {
     const audio = new MediaStream(this.stream!.getAudioTracks())
-    const mimeType = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/ogg;codecs=opus'].find(type => MediaRecorder.isTypeSupported(type))
+    // Prefer native MP4 recording on iPhone; retain WebM/Ogg fallbacks.
+    const mimeType = ['audio/mp4', 'audio/webm;codecs=opus', 'audio/ogg;codecs=opus'].find(type => MediaRecorder.isTypeSupported(type))
     while (this.running) {
       if (!this.options.canCapture()) { this.pause('Uploads are catching up. Capture is paused; keep this page open.'); break }
       try {

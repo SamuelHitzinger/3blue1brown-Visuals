@@ -48,6 +48,7 @@ export class CaptureQueue {
   private flight: Promise<void> | null = null
   private nextAttempt = 0
   private failures = 0
+  private rejected = new Map<string, string>()
   private blocked = false
   private message = ''
   private disposed = false
@@ -56,7 +57,8 @@ export class CaptureQueue {
   }
   snapshot(): QueueSnapshot {
     const all = [...this.entries, ...this.volatile]
-    return { pending: all.length, bytes: all.reduce((sum, item) => sum + item.blob.size, 0), unsaved: this.volatile.length, uploading: !!this.flight, blocked: this.blocked, message: this.message, maxSequence: Math.max(0, ...all.map(item => item.metadata.sequence)) }
+    const rejection = this.rejected.size ? `${this.rejected.size} ${this.rejected.size === 1 ? 'capture is' : 'captures are'} retained on this phone for retry: ${this.rejected.values().next().value}. Other capture can continue while storage has room.` : ''
+    return { pending: all.length, bytes: all.reduce((sum, item) => sum + item.blob.size, 0), unsaved: this.volatile.length, uploading: !!this.flight, blocked: this.blocked, message: this.message || rejection, maxSequence: Math.max(0, ...all.map(item => item.metadata.sequence)) }
   }
   private notify() { if (!this.disposed) this.changed(this.snapshot()) }
   async restore() { this.entries = await this.store.list(); this.notify() }
@@ -88,7 +90,7 @@ export class CaptureQueue {
   private async drain() {
     await this.operation
     while (!this.disposed) {
-      const item = [...this.entries, ...this.volatile].sort((a, b) => a.metadata.sequence - b.metadata.sequence)[0]
+      const item = [...this.entries, ...this.volatile].filter(item => !this.rejected.has(item.metadata.clientId)).sort((a, b) => a.metadata.sequence - b.metadata.sequence)[0]
       if (!item) { this.message = ''; return }
       try {
         await this.send(item)
@@ -99,6 +101,16 @@ export class CaptureQueue {
         this.notify()
       } catch (error) {
         if (this.disposed) return
+        // Invalid media belongs to this item, not the connection. Keep its bytes
+        // for explicit retry, but allow later captures through. Authentication
+        // and pairing failures still halt the entire sender below.
+        if (error instanceof CaptureHTTPError && [400, 415, 422].includes(error.status)) {
+          this.rejected.set(item.metadata.clientId, error.message)
+          this.failures = 0; this.nextAttempt = 0; this.message = ''
+          this.notify()
+          await this.operation
+          continue
+        }
         const transient = !(error instanceof CaptureHTTPError) || error.status === 408 || error.status === 429 || error.status >= 500
         this.blocked = !transient
         this.message = error instanceof Error ? error.message : 'Connection interrupted. Retrying automatically.'
@@ -108,6 +120,6 @@ export class CaptureQueue {
       await this.operation
     }
   }
-  retry() { this.blocked = false; this.nextAttempt = 0; return this.flush() }
+  retry() { this.blocked = false; this.nextAttempt = 0; this.rejected.clear(); return this.flush() }
   dispose() { this.disposed = true }
 }

@@ -52,12 +52,14 @@ function mediaType(file: File, bytes: Uint8Array, metadata: CaptureMetadata): st
     if (mime !== 'image/jpeg' || bytes[0] !== 255 || bytes[1] !== 216 || bytes[2] !== 255) throw new CaptureError('Capture photos as JPEG images.', 415);
     return mime;
   }
-  const normalized = mime === 'audio/x-wav' ? 'audio/wav' : mime === 'audio/x-m4a' ? 'audio/mp4' : mime;
-  const valid = normalized === 'audio/mp4' ? prefix.toString('ascii', 4, 8) === 'ftyp'
-    : normalized === 'audio/webm' ? prefix.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))
-    : normalized === 'audio/ogg' ? prefix.toString('ascii', 0, 4) === 'OggS'
-    : normalized === 'audio/wav' ? prefix.toString('ascii', 0, 4) === 'RIFF' && prefix.toString('ascii', 8, 12) === 'WAVE' : false;
-  if (!valid) throw new CaptureError('Capture audio as a complete MP4, WebM, Ogg, or WAV clip.', 415);
+  // Browser recorder labels can differ from the emitted container, including
+  // video/mp4 for microphone-only capture. Validate bytes, then normalize the
+  // type used by extraction; a MIME label alone never makes bytes acceptable.
+  const normalized = prefix.toString('ascii', 4, 8) === 'ftyp' ? 'audio/mp4'
+    : prefix.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3])) ? 'audio/webm'
+    : prefix.toString('ascii', 0, 4) === 'OggS' ? 'audio/ogg'
+    : prefix.toString('ascii', 0, 4) === 'RIFF' && prefix.toString('ascii', 8, 12) === 'WAVE' ? 'audio/wav' : undefined;
+  if (!normalized) throw new CaptureError('Capture audio as a complete MP4, WebM, Ogg, or WAV clip.', 415);
   return normalized;
 }
 async function readBody(request: Request, limit: number): Promise<Uint8Array> {

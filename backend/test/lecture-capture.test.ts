@@ -129,6 +129,19 @@ test('media limits match extractor byte limits and Safari M4A uses normalized MP
   expect(extractedType).toBe('audio/mp4');
 });
 
+test('audio uploads normalize browser MIME labels against recognized container bytes', async () => {
+  const types: string[] = [];
+  const s = await setup({ extract: async file => { types.push(file.type); return 'Recorded speech'; } });
+  const mp4 = new Uint8Array(20); mp4.set(new TextEncoder().encode('ftyp'), 4);
+  for (const [id, mime] of [['video-label', 'video/mp4'], ['mismatched-label', 'audio/webm;codecs=opus']]) {
+    const response = await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata(id, 'audio'), mp4, mime)));
+    expect(response.status).toBe(202);
+  }
+  await until(s.status, value => value.processed === 2);
+  expect(types).toEqual(['audio/mp4', 'audio/mp4']);
+  expect((await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata('invalid', 'audio'), jpeg, 'audio/mp4')))).status).toBe(415);
+});
+
 test('failed media retains retry bytes, empty extraction skips, and successful media bytes are removed', async () => {
   const dir = await mkdtemp(join(tmpdir(), 'aha-capture-')); cleanup.push(() => rm(dir, { recursive: true, force: true }));
   let fail = true; const path = join(dir, 'capture.sqlite');
