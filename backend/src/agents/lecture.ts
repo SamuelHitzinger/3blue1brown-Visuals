@@ -63,6 +63,7 @@ Use only the supplied lecture sources for factual claims. Do not search the web 
 The summary must be grounded in the supplied sources and agree with the cited sections. Every section point and concept requires one or more exact sourceIds from the provided chunks. Catalog IDs are visualization references, never evidence for lecture claims.
 Separate open questions from established results. Phrase questions as unresolved, rather than inventing missing answers. If the input is fragmentary, say so.
 Merge overlapping material, retain important earlier facts, and incorporate the newest chunk. Preserve IDs for concepts that already exist. Keep the complete notes concise, not a transcript.
+Captured sources include their actual capture timestamp and device sequence. Use these to understand lecture chronology; upload or extraction order may differ. Photos and audio may overlap. Preserve uncertainty from transcription and unreadable material.
 Identify at most twelve concepts that benefit from visual explanation. For each, give a causal visualizationPrompt for one short scene: what the learner manipulates or observes, what changes, and what construction makes the relationship visible. Specify evidence for a claimed equality or invariant (for example matched lengths, corresponding parts, or unchanged slices), not just a formula or changing caption. Do not add claims beyond the sources or promise a specific unavailable asset.
 Use catalog search/read only when helpful for selecting a representation. Include only catalogIds you have verified through those tools; an empty array is valid.
 Return only JSON: {"summary":"...","sections":[{"id":"stable-id","title":"...","points":[{"text":"...","sourceIds":["exact-source-id"]}]}],"concepts":[{"id":"stable-id","title":"...","explanation":"...","sourceIds":["exact-source-id"],"visualizationPrompt":"...","catalogIds":[]}],"questions":[{"text":"...","sourceIds":["exact-source-id"]}]}.
@@ -80,7 +81,7 @@ export async function generateLectureNotes(runner: AgentRunner, input: LectureSy
   const output = await runWithValidationRecovery(runner, {
     systemPrompt: `${LECTURE_SYNTHESIS_INSTRUCTIONS}\n\n${CATALOG_GUIDANCE}`,
     prompt: JSON.stringify({ lectureTitle: input.title, previousNotes: input.previousNotes,
-      sources: input.sources.map(({ id, sequence, text }) => ({ id, sequence, text })) }),
+      sources: input.sources.map(({ id, sequence, text, capture }) => ({ id, sequence, text, ...(capture ? { capture } : {}) })) }),
     signal, validate, catalogTools, allowWeb: false,
   }, { maxAttempts: 3 });
   signal.throwIfAborted();

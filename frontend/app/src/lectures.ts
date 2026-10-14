@@ -10,6 +10,25 @@ const path = (id: string) => `/api/lectures/${encodeURIComponent(id)}`
 const mutate = (url: string, method: string, body?: unknown, key?: string) => fetch(url, { method, headers: { 'Content-Type': 'application/json', ...(key ? { 'Idempotency-Key': key } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }).then(responseJSON<LectureSession>)
 export const listLectures = (signal?: AbortSignal) => fetch('/api/lectures', { signal, cache: 'no-store' }).then(responseJSON<LectureSummary[]>)
 export const getLecture = (id: string, signal?: AbortSignal) => fetch(path(id), { signal, cache: 'no-store' }).then(responseJSON<LectureSession>)
+/** Idle visible lectures must discover material submitted by a paired phone. */
+export function watchLectureSnapshots(id: string, accept: (session: LectureSession) => void, reportError: (message: string) => void, loaded: () => void = () => {}) {
+  const controller = new AbortController()
+  let refreshing = false
+  const refresh = async (force = false) => {
+    if (controller.signal.aborted || refreshing || (!force && document.visibilityState !== 'visible')) return
+    refreshing = true
+    try {
+      const next = await getLecture(id, AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]))
+      if (!controller.signal.aborted) { accept(next); reportError('') }
+    } catch (error) { if (!controller.signal.aborted) reportError(error instanceof Error ? error.message : 'Could not load your lecture.') }
+    finally { refreshing = false; if (!controller.signal.aborted) loaded() }
+  }
+  const visible = () => { if (document.visibilityState === 'visible') void refresh(true) }
+  void refresh(true)
+  const interval = setInterval(() => { void refresh() }, 3000)
+  window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible)
+  return () => { controller.abort(); clearInterval(interval); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible) }
+}
 export const createLecture = (input: { title: string; courseId?: string }, key: string) => mutate('/api/lectures', 'POST', input, key)
 export const appendLectureSource = (id: string, text: string, key: string) => mutate(`${path(id)}/sources`, 'POST', { text, kind: 'text' }, key)
 export const patchLecture = (id: string, fields: { title?: string; personalNotes?: string }) => mutate(path(id), 'PATCH', fields)

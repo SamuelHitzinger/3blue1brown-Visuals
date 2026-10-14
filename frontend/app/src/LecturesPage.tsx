@@ -49,7 +49,7 @@ export default function LecturesPage({ courses, onOpen }: { courses: CourseSubje
           {createError && <p className="learning-error" role="alert">{createError}</p>}
           <button className="primary-button" disabled={creating || !title.trim()}>{creating ? 'Creating your space…' : 'Start lecture'}<Plus size={17}/></button>
         </form>
-        <div className="lecture-start-note"><FileText size={16}/><span>Start with text. Add more material whenever you need.</span></div>
+        <div className="lecture-start-note"><FileText size={16}/><span>Add text or connect your phone once your lecture starts.</span></div>
       </section>
       <section className="lecture-list-section" aria-labelledby="lecture-list-heading">
         <div className="learning-section-heading"><h2 id="lecture-list-heading">Your lectures <span>{lectures.length}</span></h2><label className="learning-search"><Search size={17}/><input aria-label="Search lectures" placeholder="Find a lecture" value={query} onChange={event => setQuery(event.target.value)}/></label></div>

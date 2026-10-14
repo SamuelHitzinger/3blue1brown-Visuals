@@ -186,6 +186,36 @@ test('stored source text retains its exact whitespace and rejects a changed retr
   expect((await append(s, lecture.id, text.trim())).status).toBe(409);
 });
 
+test('captured source append is owner bounded and a short debounce coalesces a burst', async () => {
+  const sizes: number[] = [];
+  const s = service(async input => { sizes.push(input.sources.length); return makeNotes(input.sources); }, { synthesisDebounceMs: 30 });
+  const lecture = await create(s);
+  expect(() => s.appendSource('user:bob', lecture.id, 'denied', 'Private text')).toThrow('Not Found');
+  for (let index = 0; index < 3; index++) {
+    s.appendSource('user:alice', lecture.id, `capture-${index}`, `Vector fact ${index}`, { kind: 'audio', itemId: `item-${index}`, sequence: index,
+      capturedAt: '2026-10-14T10:00:00.000Z', durationMs: 20_000 });
+  }
+  const done = await until(() => get(s, lecture.id), row => row.synthesizedRevision === 3);
+  expect(sizes).toEqual([3]); expect(done.sources[0].capture?.kind).toBe('audio');
+});
+
+test('one blocked visual leaves capacity for fresh notes across lectures', async () => {
+  let release!: () => void, activeVisuals = 0, peakVisuals = 0;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const s = service(async input => makeNotes(input.sources), { visualize: async () => {
+    activeVisuals++; peakVisuals = Math.max(peakVisuals, activeVisuals);
+    await gate; activeVisuals--; return { source: 'export default scene({}, s => s.wait(1));', duration: 1, catalogIds: [] };
+  } });
+  try {
+    const a = await create(s, 'fair-a'), b = await create(s, 'fair-b');
+    await append(s, a.id); await until(async () => activeVisuals, count => count === 1);
+    await append(s, b.id); await until(() => get(s, b.id), row => row.synthesizedRevision === 1);
+    await append(s, b.id, 'More vector facts.', 'second');
+    await until(() => get(s, b.id), row => row.synthesizedRevision === 2);
+    expect(peakVisuals).toBe(1);
+  } finally { release(); }
+});
+
 test('queued visuals retain the concept and sources that requested them across newer synthesis', async () => {
   let release!: () => void;
   const gate = new Promise<void>(resolve => { release = resolve; });

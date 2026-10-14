@@ -9,6 +9,7 @@ import { proxyUser } from './identity.js';
 import { studyPlanRoutes } from './study-plans.js';
 import { LectureService } from './lectures.js';
 import { catalogRoutes } from './visualization-catalog.js';
+import type { LectureCaptureService } from './lecture-capture.js';
 
 const defaultFrontendDir = fileURLToPath(new URL("../../frontend/site/", import.meta.url));
 
@@ -21,7 +22,7 @@ function inside(root: string, path: string) {
   return suffix !== ".." && !suffix.startsWith(`..${sep}`) && !isAbsolute(suffix);
 }
 
-export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets(), lectureService?: LectureService) {
+export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets(), lectureService?: LectureService, captureService?: LectureCaptureService) {
   const root = resolve(frontendDir);
   let videos = videoService;
   const narration = narrationRoutes(narrationService);
@@ -48,6 +49,10 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     try { path = decodeURIComponent(new URL(request.url).pathname); }
     catch { return Response.json({ detail: "Invalid URL" }, { status: 400 }); }
     if (path.includes("\0")) return Response.json({ detail: "Invalid URL" }, { status: 400 });
+    if (path.startsWith('/api/capture/')) return captureService ? captureService.handleDevice(request) : Response.json({detail:'Phone capture is not configured.'},{status:503});
+    if (path === '/api/lecture-capture/config' || /^\/api\/lectures\/[^/]+\/capture-pairings(?:\/|$)/.test(path)) {
+      return captureService ? captureService.handleOwner(request) : Response.json({detail:'Phone capture is not configured.'},{status:503});
+    }
     if (path === '/api/visualization-catalog' || path.startsWith('/api/visualization-catalog/')) return catalog(request);
     if (path === '/api/lectures' || path.startsWith('/api/lectures/')) {
       lectures ??= new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'));
@@ -62,7 +67,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     if (path === "/api/narrations" || path.startsWith("/api/narrations/")) return narration(request, path);
 
     const api = path === "/api/hello" || path === "/api/me" || path === "/healthz";
-    const page = path === "/" || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
+    const page = path === "/" || path === '/capture' || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
     const asset = path.startsWith("/static/");
     if (!api && !page && !asset) return notFound();
     if (request.method !== "GET" && request.method !== "HEAD") {

@@ -1,0 +1,38 @@
+.capture-pairing-panel { padding: 22px; min-width: 0; }
+.capture-pairing-panel .learning-section-heading { margin-bottom: 12px; }
+.capture-pairing-panel h2 { font-size: 16px; }
+.capture-pairing-panel .capture-pairing-intro { color: var(--muted); font-size: 12px; margin: 0 0 15px; }
+.capture-pairing-panel .capture-pairing-modes { display: flex; flex-wrap: wrap; gap: 7px; color: var(--muted); font-size: 10px; margin: 0 0 14px; }
+.capture-pairing-panel .capture-pairing-unavailable { font-size: 12px; color: var(--muted); padding: 12px; border: 1px dashed var(--line); border-radius: 10px; }
+.capture-pairing-panel > .primary-button { width: 100%; margin-top: 10px; }
+.capture-pairing-panel button:disabled { opacity: .5; cursor: not-allowed; }
+.capture-pairing-panel button:focus-visible, .capture-pairing-panel input:focus-visible { outline: 2px solid var(--lavender, #918bc6); outline-offset: 3px; }
+.capture-pairing-panel .capture-connection { display: flex; align-items: center; gap: 7px; font-size: 12px; margin: 15px 0; }
+.capture-pairing-panel .capture-connection > span { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--muted); }
+.capture-pairing-panel .capture-connection-connected > span { background: #55936b; }
+.capture-pairing-panel .capture-connection-waiting > span { background: #a89656; }
+.capture-pairing-panel .capture-connection-revoked, .capture-pairing-panel .capture-connection-expired { color: var(--muted); }
+.capture-pairing-panel .capture-pairing-link { display: flex; flex-direction: column; align-items: stretch; gap: 11px; }
+.capture-pairing-panel .capture-pairing-qr { width: min(100%, 216px); height: auto; align-self: center; display: block; border-radius: 10px; background: #fff; }
+.capture-pairing-panel .capture-pairing-link p { color: var(--muted); font-size: 12px; margin: 0; }
+.capture-pairing-panel .capture-pairing-link small { color: var(--muted); font-size: 10px; }
+.capture-pairing-panel .capture-pairing-link label { font-size: 11px; margin-top: 2px; }
+.capture-pairing-panel .capture-pairing-link input { width: 100%; min-width: 0; box-sizing: border-box; border: 1px solid var(--line); border-radius: 8px; padding: 10px; background: var(--bg); color: var(--ink); font-size: 11px; }
+.capture-pairing-panel .capture-pairing-link .secondary-button { justify-content: center; }
+.capture-pairing-panel .capture-receipts { margin-top: 19px; padding-top: 16px; border-top: 1px solid var(--line); }
+.capture-pairing-panel .capture-receipts-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.capture-pairing-panel .capture-receipts-heading strong { font-size: 12px; font-weight: 500; }
+.capture-pairing-panel .capture-receipts-heading > span { font-size: 10px; color: var(--muted); }
+.capture-pairing-panel .capture-counts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 13px 0 17px; }
+.capture-pairing-panel .capture-counts > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+.capture-pairing-panel .capture-counts dt { font-size: 10px; color: var(--muted); }
+.capture-pairing-panel .capture-counts dd { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+.capture-pairing-panel .capture-latest { display: grid; gap: 10px; margin: 0; }
+.capture-pairing-panel .capture-latest > div { display: flex; align-items: baseline; justify-content: space-between; gap: 14px; font-size: 10px; }
+.capture-pairing-panel .capture-latest dt { color: var(--muted); }
+.capture-pairing-panel .capture-latest dd { margin: 0; font-variant-numeric: tabular-nums; }
+.capture-pairing-panel .capture-failures { margin-top: 15px; font-size: 11px; }
+.capture-pairing-panel .capture-failures p { margin: 0 0 8px; }
+.capture-pairing-panel .capture-failures ul { padding-left: 17px; color: var(--muted); line-height: 1.6; overflow-wrap: anywhere; }
+.capture-pairing-panel .capture-failures .secondary-button { width: 100%; justify-content: center; }
+.capture-pairing-panel .capture-revoke { margin-top: 17px; text-decoration: underline; text-underline-offset: 3px; }

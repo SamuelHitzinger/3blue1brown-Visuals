@@ -6,13 +6,13 @@ import { AgentError } from './agents/config.js';
 import { parseLectureNotes } from './agents/lecture.js';
 import type { LectureSession, LectureSummary, LectureSource, LectureSynthesizer, LectureVisualGenerator, LectureVisualization, LectureVisualInput } from '../../shared/lecture.js';
 
-const MAX_SOURCE = 40_000, MAX_TOTAL_SOURCE = 250_000, MAX_SOURCES = 200, MAX_BODY_BYTES = 500_000, MAX_VISUALIZATIONS = 24;
+const MAX_SOURCE = 40_000, MAX_TOTAL_SOURCE = 250_000, MAX_SOURCES = 1200, MAX_BODY_BYTES = 500_000, MAX_VISUALIZATIONS = 24;
 const NO_SYNTHESIS = 'Your lecture material is saved. Connect the server AI service, then retry updating the notes.';
 const NO_VISUALIZATION = 'Your notes are saved. Connect the server visualization service, then retry this explanation.';
 type Row = { id: string; owner: string; key: string; input: string; snapshot: string };
 type Work = { id: string; visualId?: string; controller: AbortController; done: Promise<void> };
 type VisualJob = { sourceRevision: number; input: LectureVisualInput };
-class LectureError extends Error { constructor(message: string, readonly status = 400) { super(message); } }
+export class LectureError extends Error { constructor(message: string, readonly status = 400) { super(message); } }
 
 function failureMessage(error: unknown, visual = false): string {
   const subject = visual ? 'visual explanation' : 'notes';
@@ -46,9 +46,11 @@ export class LectureService {
   private stopped = false;
   private closePromise?: Promise<void>;
   private concurrency: number;
+  private synthesisTimers = new Map<string, ReturnType<typeof setTimeout>>();
+  private deleteListeners = new Set<(id: string) => void>();
 
   constructor(path: string, private synthesize?: LectureSynthesizer,
-    private options: { visualize?: LectureVisualGenerator; concurrency?: number; synthesisTimeoutMs?: number; visualizationTimeoutMs?: number } = {}) {
+    private options: { visualize?: LectureVisualGenerator; concurrency?: number; synthesisTimeoutMs?: number; visualizationTimeoutMs?: number; synthesisDebounceMs?: number } = {}) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path, { create: true });
     this.db.exec(`PRAGMA journal_mode=WAL;
@@ -71,6 +73,31 @@ export class LectureService {
   private row(id: string): Row | null { return this.db.query('SELECT * FROM lectures WHERE id = ?').get(id) as Row | null; }
   private decode(row: Row): LectureSession { return JSON.parse(row.snapshot); }
   private snapshot(id: string): LectureSession | undefined { const row = this.row(id); return row ? this.decode(row) : undefined; }
+  /** Host-only access: callers supply the already authenticated storage owner. */
+  getOwned(owner: string, id: string): LectureSession | undefined {
+    if (this.stopped) return undefined;
+    const row = this.row(id); return row?.owner === owner ? this.decode(row) : undefined;
+  }
+  onDelete(listener: (id: string) => void): () => void {
+    this.deleteListeners.add(listener); return () => { this.deleteListeners.delete(listener); };
+  }
+  appendSource(owner: string, id: string, key: string, text: string, capture?: LectureSource['capture']): LectureSession {
+    if (this.stopped) throw new LectureError('The lecture service is restarting. Please try again.', 503);
+    field(key, 'an Idempotency-Key', 128); field(text, 'lecture text', MAX_SOURCE);
+    const session = this.getOwned(owner, id); if (!session) throw new LectureError('Not Found', 404);
+    const prior = this.db.query('SELECT text FROM lecture_source_keys WHERE lecture = ? AND key = ?').get(id, key) as { text: string } | null;
+    if (prior) { if (prior.text !== text) throw new LectureError('This Idempotency-Key was already used for different lecture text.', 409); return session; }
+    if (session.sources.length >= MAX_SOURCES || session.sources.reduce((total, source) => total + source.text.length, 0) + text.length > MAX_TOTAL_SOURCE) throw new LectureError('This lecture is full. Start another session to continue adding material.', 413);
+    const source: LectureSource = { id: crypto.randomUUID(), sequence: session.sourceRevision + 1, kind: 'text', text, createdAt: new Date().toISOString(), ...(capture ? { capture } : {}) };
+    session.sources.push(source); session.sourceRevision++; this.prepareSynthesis(session);
+    this.db.transaction(() => { this.db.query('INSERT INTO lecture_source_keys VALUES (?, ?, ?, ?)').run(id, key, text, source.id); this.save(session); })();
+    const debounce = this.options.synthesisDebounceMs ?? 0;
+    if (debounce > 0) {
+      clearTimeout(this.synthesisTimers.get(id));
+      this.synthesisTimers.set(id, setTimeout(() => { this.synthesisTimers.delete(id); this.kick(); }, debounce));
+    }
+    this.kick(); return session;
+  }
   private trackProvider<T>(work: Promise<T>): Promise<T> {
     const settled = work.then(() => {}, () => {});
     this.pendingProviders.add(settled);
@@ -105,13 +132,18 @@ export class LectureService {
 
   private kick() {
     if (this.stopped) return;
+    // Notes get first choice of capacity; one long visual can never occupy both default workers.
     for (const row of this.rows()) {
       if (this.active.size >= this.concurrency) break;
       const session = this.decode(row), key = `${session.id}:notes`;
-      if (session.status === 'queued' && !this.active.has(key)) this.start(session.id);
+      if (session.status === 'queued' && !this.active.has(key) && !this.synthesisTimers.has(session.id)) this.start(session.id);
+    }
+    if ([...this.active.values()].some(work => work.visualId)) return;
+    for (const row of this.rows()) {
+      if (this.active.size >= this.concurrency) break;
+      const session = this.decode(row);
       for (const visual of session.visualizations) {
-        if (this.active.size >= this.concurrency) break;
-        if (visual.status === 'queued' && !this.active.has(`${session.id}:${visual.id}`)) this.start(session.id, visual.id);
+        if (visual.status === 'queued') { this.start(session.id, visual.id); return; }
       }
     }
   }
@@ -191,6 +223,8 @@ export class LectureService {
   close(): Promise<void> {
     if (this.closePromise) return this.closePromise;
     this.stopped = true;
+    for (const timer of this.synthesisTimers.values()) clearTimeout(timer);
+    this.synthesisTimers.clear();
     for (const work of this.active.values()) work.controller.abort();
     this.closePromise = Promise.all([...this.active.values()].map(work => work.done)).then(async () => {
       // Capacity is released on abort, but provider finally blocks can still be
@@ -260,12 +294,14 @@ export class LectureService {
       if (!match[2]) {
         if (request.method === 'GET') return json(this.decode(row));
         if (request.method === 'DELETE') {
+          clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
           for (const work of this.active.values()) if (work.id === id) work.controller.abort();
           this.db.transaction(() => {
             this.db.query('DELETE FROM lecture_source_keys WHERE lecture = ?').run(id);
             this.db.query('DELETE FROM lecture_visual_inputs WHERE lecture = ?').run(id);
             this.db.query('DELETE FROM lectures WHERE id = ?').run(id);
           })();
+          for (const listener of this.deleteListeners) listener(id);
           return new Response(null, { status: 204, headers });
         }
         if (request.method !== 'PATCH') return method('GET, PATCH, DELETE');
@@ -281,20 +317,14 @@ export class LectureService {
       if (request.method !== 'POST') return method('POST');
       if (match[2] === 'sources') {
         const idempotency = key(), input = await body();
-        if (input.kind !== undefined && input.kind !== 'text') throw new LectureError('Only typed or pasted text is available. Photo and audio capture are not connected yet.');
+        if (input.kind !== undefined && input.kind !== 'text') throw new LectureError('Use this endpoint for typed or pasted text. Connect a phone to add photos or audio.');
         field(input.text, 'lecture text', MAX_SOURCE);
         const text = input.text as string; // Preserve indentation, notation and line breaks exactly as submitted.
-        const session = this.snapshot(id); if (!session) throw new LectureError('Not Found', 404);
-        const prior = this.db.query('SELECT text FROM lecture_source_keys WHERE lecture = ? AND key = ?').get(id, idempotency) as { text: string } | null;
-        if (prior) { if (prior.text !== text) throw new LectureError('This Idempotency-Key was already used for different lecture text.', 409); return json(session, 202); }
-        if (session.sources.length >= MAX_SOURCES || session.sources.reduce((total, source) => total + source.text.length, 0) + text.length > MAX_TOTAL_SOURCE) throw new LectureError('This lecture is full. Start another session to continue adding material.', 413);
-        const source: LectureSource = { id: crypto.randomUUID(), sequence: session.sourceRevision + 1, kind: 'text', text, createdAt: new Date().toISOString() };
-        session.sources.push(source); session.sourceRevision++; this.prepareSynthesis(session);
-        this.db.transaction(() => { this.db.query('INSERT INTO lecture_source_keys VALUES (?, ?, ?, ?)').run(id, idempotency, text, source.id); this.save(session); })();
-        this.kick(); return json(session, 202);
+        return json(this.appendSource(owner, id, idempotency, text), 202);
       }
       const session = this.snapshot(id)!;
       if (match[2] === 'synthesize') {
+        clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
         if (!session.sources.length) throw new LectureError('Add lecture text before updating the notes.');
         this.prepareSynthesis(session);
         this.save(session);

@@ -15,10 +15,10 @@ courses, library, watch links, and video generation remain available.
    is processed. A stale marker distinguishes earlier-source visualizations.
 5. Export notes as Markdown or return later to continue the session.
 
-Camera and microphone capture are deferred. Future capture adapters should send
-stable, idempotent text chunks through the existing source endpoint after OCR or
-transcription. The model, queue, citation, revision, persistence, and visualization
-boundaries are already independent of capture hardware.
+For automatic photos and audio, follow the [iPhone capture setup](phone-capture.md).
+Pair Safari to one lecture through private HTTPS. Captures become immutable text
+sources with timestamps and media provenance, then use the same notes and visual
+pipeline. Keep Safari visible while recording.
 
 ## Runtime and data
 
@@ -55,7 +55,8 @@ use `Idempotency-Key`; reusing a key with different content is a conflict.
 - `POST /api/lectures/:id/synthesize`: retry/rebuild notes from saved material.
 - `POST /api/lectures/:id/concepts/:conceptId/visualize`: request/retry a concept.
 
-Poll snapshots while notes or visualizations are queued/processing. `revision`
+Poll snapshots while a lecture is visible, even when idle, to receive phone
+additions. `revision`
 orders all mutations; `sourceRevision` orders source additions;
 `synthesizedRevision` records the exact source snapshot behind generated notes.
 User edits do not falsely invalidate generated scenes. Source IDs are immutable;

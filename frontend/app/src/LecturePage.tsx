@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LectureConcept, LectureSession } from '../../../shared/lecture'
-import { ArrowLeft, ArrowRight, BookOpen, Camera, Check, FileText, Layers3, Plus, RotateCcw, Trash } from './Icons'
+import { ArrowLeft, ArrowRight, BookOpen, Check, FileText, Layers3, Plus, RotateCcw, Trash } from './Icons'
 import LectureVisual from './LectureVisual'
-import { appendLectureSource, deleteLecture, downloadLecture, getLecture, hasLectureVisual, lecturePending, lectureStatus, mergeLectureSnapshot, patchLecture, sourceRequestKey, synthesizeLecture, visualizeConcept } from './lectures'
+import CapturePairingPanel from './CapturePairingPanel'
+import { appendLectureSource, deleteLecture, downloadLecture, hasLectureVisual, lectureStatus, mergeLectureSnapshot, patchLecture, sourceRequestKey, synthesizeLecture, visualizeConcept, watchLectureSnapshots } from './lectures'
 
 function readDraft(key: string): string | null { try { return localStorage.getItem(key) } catch { return null } }
 function storeDraft(key: string, value: string) { try { if (value) localStorage.setItem(key, value); else localStorage.removeItem(key) } catch { /* The visible draft is retained for this session. */ } }
 
 export default function LecturePage({ id, onBack, onCatalog, suspended }: { id: string; onBack: () => void; onCatalog: (id?: string) => void; suspended: boolean }) {
   const [session, setSession] = useState<LectureSession | null>(null)
-  const current = useRef<LectureSession | null>(null)
-  current.current = session
   const [loading, setLoading] = useState(true)
   const [loadError, setLoadError] = useState('')
   const [error, setError] = useState('')
@@ -31,20 +30,8 @@ export default function LecturePage({ id, onBack, onCatalog, suspended }: { id: 
   const accept = useCallback((next: LectureSession) => setSession(previous => mergeLectureSnapshot(previous, next)), [])
   useEffect(() => {
     mounted.current = true
-    const controller = new AbortController()
-    let refreshing = false
-    const refresh = async (force = false) => {
-      if (refreshing || (!force && current.current && !lecturePending(current.current))) return
-      refreshing = true
-      try { const next = await getLecture(id, controller.signal); if (!controller.signal.aborted) { accept(next); setLoadError('') } }
-      catch (reason) { if (!controller.signal.aborted) setLoadError(reason instanceof Error ? reason.message : 'Could not load your lecture.') }
-      finally { refreshing = false; if (!controller.signal.aborted) setLoading(false) }
-    }
-    void refresh(true)
-    const interval = setInterval(() => { void refresh() }, 2500)
-    const focus = () => { void refresh(true) }
-    window.addEventListener('focus', focus)
-    return () => { mounted.current = false; controller.abort(); clearInterval(interval); window.removeEventListener('focus', focus) }
+    const stop = watchLectureSnapshots(id, accept, setLoadError, () => setLoading(false))
+    return () => { mounted.current = false; stop() }
   }, [id, reload, accept])
   useEffect(() => {
     if (session && !personalDirty.current) setPersonalNotes(session.personalNotes)
@@ -77,8 +64,9 @@ export default function LecturePage({ id, onBack, onCatalog, suspended }: { id: 
     {(error || loadError) && <p className="learning-error" role="alert">{error || loadError} {loadError && <button onClick={() => setReload(value => value + 1)}>Reconnect</button>}</p>}
     <div className="lecture-workspace-grid">
       <aside className="lecture-source-column">
+        <CapturePairingPanel lectureId={id}/>
         <section className="learning-panel source-composer" aria-labelledby="source-heading"><div className="learning-section-heading"><h2 id="source-heading">Add to the lecture</h2><Plus size={18}/></div><p>Paste a passage, a slide’s text, or what you just heard.</p>
-          <div className="lecture-input-tabs" aria-label="Lecture input"><button className="active" aria-pressed="true"><FileText size={14}/> Text</button><button disabled title="Camera input is coming later"><Camera size={14}/> Camera <small>Soon</small></button><button disabled title="Microphone input is coming later">Mic <small>Soon</small></button></div>
+          <div className="lecture-input-tabs" aria-label="Lecture input"><span><FileText size={14}/> Text</span><span>Use phone capture above for photos and audio.</span></div>
           <form onSubmit={event => { event.preventDefault(); const text = sourceText; if (!text.trim()) return; if (request.current.body !== text) request.current = { body: text, key: sourceRequestKey(localStorage, id, text) }; void act('source', () => appendLectureSource(id, text, request.current.key), () => { setSourceText(''); storeDraft(`aha-lecture-source-${id}`, ''); storeDraft(`aha-lecture-request-${id}`, ''); request.current = { body: '', key: crypto.randomUUID() } }) }}>
             <textarea aria-label="Lecture source text" rows={7} value={sourceText} maxLength={40000} disabled={busy === 'source'} placeholder="A linear transformation preserves addition and scaling…" onChange={event => { setSourceText(event.target.value); storeDraft(`aha-lecture-source-${id}`, event.target.value) }}/>
             <button className="primary-button" disabled={!!busy || !sourceText.trim()}>{busy === 'source' ? 'Saving material…' : 'Add material'}<ArrowRight size={16}/></button>

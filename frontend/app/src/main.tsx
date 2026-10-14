@@ -6,6 +6,7 @@ import '@fontsource/dm-sans/600.css'
 import '@fontsource/dm-sans/700.css'
 import '@fontsource/dynapuff/600.css'
 import App from './App'
+import CapturePage from './CapturePage'
 import './styles.css'
 import './interface.css'
 import './plan.css'
@@ -13,4 +14,4 @@ import './artwork.css'
 import './workspace.css'
 import './learning.css'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode><App /></React.StrictMode>)
+ReactDOM.createRoot(document.getElementById('root')!).render(<React.StrictMode>{window.location.pathname === '/capture' ? <CapturePage/> : <App />}</React.StrictMode>)

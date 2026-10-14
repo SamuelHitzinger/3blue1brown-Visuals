@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { appendLectureSource, createLecture, deleteLecture, lectureMarkdown, mergeLectureSnapshot, patchLecture, lecturePending, hasLectureVisual, sourceRequestKey } from '../src/lectures.ts'
+import { appendLectureSource, createLecture, deleteLecture, lectureMarkdown, mergeLectureSnapshot, patchLecture, lecturePending, hasLectureVisual, sourceRequestKey, watchLectureSnapshots } from '../src/lectures.ts'
 import type { LectureSession } from '../../../shared/lecture.ts'
 
 const session = (revision = 1): LectureSession => ({ schemaVersion: 1, id: 'lecture-1', title: 'Linear maps', createdAt: '2026-10-14T10:00:00Z', updatedAt: '2026-10-14T10:00:00Z', revision, sourceRevision: 1, synthesizedRevision: 1, status: 'idle', sources: [{ id: 'source-1', sequence: 1, kind: 'text', text: 'A linear map preserves sums.', createdAt: '2026-10-14T10:00:00Z' }], notes: { summary: 'Maps preserve structure.', sections: [{ id: 'section', title: 'Linearity', points: [{ text: 'Sums are preserved.', sourceIds: ['source-1'] }] }], concepts: [], questions: [{ text: 'What changes under a shear?', sourceIds: ['source-1'] }] }, personalNotes: 'Ask about inverses.', visualizations: [] })
@@ -71,4 +71,25 @@ test('service failures remain actionable and delete accepts an empty 204 respons
     globalThis.fetch = async () => new Response(null, { status: 204 })
     await deleteLecture('lecture-1')
   } finally { globalThis.fetch = original }
+})
+
+test('visible idle lectures discover phone additions; hidden tabs wait until visible', async t => {
+  const original = { fetch: globalThis.fetch, window: globalThis.window, document: globalThis.document }
+  const window = new EventTarget(), document = Object.assign(new EventTarget(), { visibilityState: 'visible' })
+  Object.assign(globalThis, { window, document })
+  t.mock.timers.enable({ apis: ['setInterval'] })
+  let calls = 0
+  const revisions: number[] = []
+  globalThis.fetch = async () => Response.json(session(++calls))
+  const stop = watchLectureSnapshots('lecture-1', next => revisions.push(next.revision), () => {})
+  const settle = () => new Promise(resolve => setImmediate(resolve))
+  try {
+    await settle(); assert.deepEqual(revisions, [1])
+    t.mock.timers.tick(3000); await settle(); assert.deepEqual(revisions, [1, 2])
+    document.visibilityState = 'hidden'
+    t.mock.timers.tick(6000); await settle(); assert.equal(calls, 2)
+    document.visibilityState = 'visible'; document.dispatchEvent(new Event('visibilitychange'))
+    await settle(); assert.deepEqual(revisions, [1, 2, 3])
+    stop(); t.mock.timers.tick(3000); await settle(); assert.equal(calls, 3)
+  } finally { stop(); Object.assign(globalThis, original); t.mock.timers.reset() }
 })

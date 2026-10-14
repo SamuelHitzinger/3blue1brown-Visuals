@@ -5,6 +5,13 @@ export interface LectureSource {
   kind: 'text';
   text: string;
   createdAt: string;
+  capture?: {
+    kind: 'photo' | 'audio';
+    itemId: string;
+    sequence: number;
+    capturedAt: string;
+    durationMs?: number;
+  };
 }
 
 export interface LecturePoint { text: string; sourceIds: string[] }
