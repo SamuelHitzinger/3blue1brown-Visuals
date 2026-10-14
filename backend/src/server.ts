@@ -57,9 +57,9 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
       return captureService ? captureService.handleOwner(request) : Response.json({detail:'Phone capture is not configured.'},{status:503});
     }
     if (path === '/api/visualization-catalog' || path.startsWith('/api/visualization-catalog/')) return catalog(request);
-    if (path === '/api/lecture-view' || path.startsWith('/api/lecture-view/') || path === '/api/lectures' || path.startsWith('/api/lectures/')) {
+    if (path === '/api/lectures' || path.startsWith('/api/lectures/')) {
       lectures ??= new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'));
-      return path.startsWith('/api/lecture-view') ? lectures.handleView(request, models) : lectures.handle(request);
+      return lectures.handle(request);
     }
     if (path === '/api/models' || path.startsWith('/api/models/')) return models.handle(request);
     if (path === '/api/study-plans' || path.startsWith('/api/study-plans/')) return studyPlans(request);
@@ -70,7 +70,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     if (path === "/api/narrations" || path.startsWith("/api/narrations/")) return narration(request, path);
 
     const api = path === "/api/hello" || path === "/api/me" || path === "/healthz";
-    const page = path === "/" || path === '/capture' || /^\/live\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(path) || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/(?:course\/)?[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
+    const page = path === "/" || path === '/capture' || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/(?:course\/)?[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
     const asset = path.startsWith("/static/");
     if (!api && !page && !asset) return notFound();
     if (request.method !== "GET" && request.method !== "HEAD") {

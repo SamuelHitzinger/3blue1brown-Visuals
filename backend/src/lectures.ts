@@ -3,13 +3,10 @@ import { nextLectureTitle } from '../../shared/lectureTitles.js';
 import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { createHash, randomBytes } from 'node:crypto';
 import { proxyUser } from './identity.js';
 import { AgentError } from './agents/config.js';
 import { parseLectureNotes } from './agents/lecture.js';
 import type { LectureSession, LectureSummary, LectureSource, LectureSynthesizer, LectureVisualGenerator, LectureVisualization, LectureVisualInput } from '../../shared/lecture.js';
-import type { LectureLiveSnapshot, LectureViewLink, LectureViewLinkStatus } from '../../shared/lecture-view.js';
-import type { ModelAssets } from './model-assets.js';
 
 const MAX_SOURCE = 40_000, MAX_TOTAL_SOURCE = 250_000, MAX_SOURCES = 1200, MAX_BODY_BYTES = 500_000, MAX_VISUALIZATIONS = 24;
 const NO_SYNTHESIS = 'Your lecture material is saved. Connect the server AI service, then retry updating the notes.';
@@ -17,9 +14,6 @@ const NO_VISUALIZATION = 'Your notes are saved. Connect the server visualization
 type Row = { id: string; owner: string; key: string; input: string; snapshot: string };
 type Work = { id: string; visualId?: string; controller: AbortController; done: Promise<void> };
 type VisualJob = { sourceRevision: number; input: LectureVisualInput };
-type ReaderGrant = { token_hash: string; expires_at: number };
-const READER_TTL_MS = 8 * 60 * 60 * 1000;
-const readerHash = (token: string) => createHash('sha256').update(token).digest('hex');
 export class LectureError extends Error { constructor(message: string, readonly status = 400) { super(message); } }
 
 function failureMessage(error: unknown, visual = false): string {
@@ -267,44 +261,6 @@ export class LectureService {
     return this.closePromise;
   }
 
-  /** Separate capability-only handler: proxy identity never grants reader access. */
-  async handleView(request: Request, models?: Pick<ModelAssets, 'handle'>): Promise<Response> {
-    const headers = { 'Cache-Control': 'private, no-store', Vary: 'Authorization', 'Referrer-Policy': 'no-referrer' };
-    const json = (value: unknown, status = 200) => Response.json(value, { status, headers });
-    try {
-      const path = decodeURIComponent(new URL(request.url).pathname);
-      const match = /^\/api\/lecture-view\/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})(?:\/models\/([a-f0-9]{64})\.glb)?$/.exec(path);
-      if (!match) return json({ detail: 'Not Found' }, 404);
-      if (request.method !== 'GET') return Response.json({ detail: 'Method Not Allowed' }, { status: 405, headers: { ...headers, Allow: 'GET' } });
-      if (this.stopped) return json({ detail: 'The lecture service is restarting. Please try again.' }, 503);
-      const token = /^Bearer ([a-f0-9]{64})$/i.exec(request.headers.get('Authorization') ?? '')?.[1];
-      const readSession = (): LectureSession | undefined => {
-        if (this.stopped || !token) return undefined;
-        const grant = this.db.query('SELECT token_hash, expires_at FROM lecture_view_links WHERE lecture = ? AND token_hash = ?').get(match[1], readerHash(token)) as ReaderGrant | null;
-        return grant && grant.expires_at > Date.now() ? this.snapshot(match[1]) : undefined;
-      };
-      const session = readSession();
-      if (!session) return json({ detail: 'This reader link is unavailable. Ask the lecture owner for a new link.' }, 401);
-      if (match[2]) {
-        const sha = match[2], assetPath = `/api/models/${sha}.glb`;
-        const attached = (lecture: LectureSession) => lecture.visualizations.some(visual => Object.values(visual.assets ?? {}).some(asset => asset.kind === 'model' && asset.sha256 === sha && asset.url === assetPath));
-        if (!models || !attached(session)) return json({ detail: 'Not Found' }, 404);
-        const assetUrl = new URL(assetPath, request.url);
-        const response = await models.handle(new Request(assetUrl, { signal: request.signal }));
-        // Revocation, expiry or lecture changes during the file read must take effect.
-        const current = readSession();
-        if (!current) return json({ detail: 'This reader link is unavailable. Ask the lecture owner for a new link.' }, 401);
-        if (!attached(current)) return json({ detail: 'Not Found' }, 404);
-        for (const [key, value] of Object.entries(headers)) response.headers.set(key, value);
-        return response;
-      }
-      const { id, title, revision, updatedAt, sourceRevision, synthesizedRevision, status, notes, noteEdits, personalNotes, visualizations, error } = session;
-      const snapshot: LectureLiveSnapshot = { id, title, revision, updatedAt, sourceRevision, synthesizedRevision, status, notes, personalNotes, visualizations,
-        ...(noteEdits ? { noteEdits } : {}), ...(error ? { error } : {}) };
-      return json(snapshot);
-    } catch { return json({ detail: 'The live notes are temporarily unavailable. Please retry.' }, 503); }
-  }
-
   async handle(request: Request): Promise<Response> {
     const headers = { 'Cache-Control': 'private, no-store', Vary: 'X-User-Id' };
     const json = (value: unknown, status = 200) => Response.json(value, { status, headers });
@@ -315,7 +271,7 @@ export class LectureService {
     try {
       const url = new URL(request.url), user = proxyUser(request), owner = user ? `user:${user.id}` : 'local';
       let path: string; try { path = decodeURIComponent(url.pathname); } catch { throw new LectureError('Invalid URL.'); }
-      const match = /^\/api\/lectures(?:\/([a-f0-9-]{36})(?:\/(sources|synthesize|concepts|view-link|finish)(?:\/([a-z0-9][a-z0-9_-]{0,79})\/visualize)?)?)?$/.exec(path);
+      const match = /^\/api\/lectures(?:\/([a-f0-9-]{36})(?:\/(sources|synthesize|concepts|finish)(?:\/([a-z0-9][a-z0-9_-]{0,79})\/visualize)?)?)?$/.exec(path);
       if (!['/api/lectures/reorder', '/api/lectures/detach-course'].includes(path) && (!match || (match![2] === 'concepts') !== !!match![3])) return json({ detail: 'Not Found' }, 404);
       if (!['GET', 'HEAD'].includes(request.method)) {
         const origin = request.headers.get('origin'), protocol = request.headers.get('x-forwarded-proto') ?? url.protocol.slice(0, -1);
@@ -390,28 +346,6 @@ export class LectureService {
       }
       const id = match![1], row = this.row(id);
       if (!row || row.owner !== owner) return json({ detail: 'Not Found' }, 404);
-      if (match![2] === 'view-link') {
-        if (request.method === 'GET') {
-          const grant = this.db.query('SELECT token_hash, expires_at FROM lecture_view_links WHERE lecture = ?').get(id) as ReaderGrant | null;
-          const status: LectureViewLinkStatus = grant && grant.expires_at > Date.now() ? { active: true, expiresAt: new Date(grant.expires_at).toISOString() } : { active: false };
-          return json(status);
-        }
-        if (request.method === 'DELETE') {
-          this.db.query('DELETE FROM lecture_view_links WHERE lecture = ?').run(id);
-          return new Response(null, { status: 204, headers });
-        }
-        if (request.method !== 'POST') return method('GET, POST, DELETE');
-        let origin: string;
-        try {
-          const configured = process.env.CAPTURE_PUBLIC_ORIGIN ?? '', url = new URL(configured);
-          if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash || url.pathname !== '/' || configured.replace(/\/$/, '') !== url.origin) throw new Error();
-          origin = url.origin;
-        } catch { throw new LectureError('Live reader links require the private HTTPS receiver to be configured.', 503); }
-        const token = randomBytes(32).toString('hex'), expires = Date.now() + READER_TTL_MS;
-        this.db.query('INSERT INTO lecture_view_links (lecture, token_hash, expires_at) VALUES (?, ?, ?) ON CONFLICT(lecture) DO UPDATE SET token_hash = excluded.token_hash, expires_at = excluded.expires_at').run(id, readerHash(token), expires);
-        const link: LectureViewLink = { url: `${origin}/live/${id}#token=${token}`, expiresAt: new Date(expires).toISOString() };
-        return json(link, 201);
-      }
       // Parse request bodies before taking mutable snapshots; another request can finish during a read.
       if (!match![2]) {
         if (request.method === 'GET') return json(this.decode(row));

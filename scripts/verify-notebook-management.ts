@@ -47,9 +47,7 @@ try {
   await page.waitForSelector('.notebook-title h1');
   assert.equal(await page.$eval('.notebook-title h1', el => el.textContent), 'Lecture 11');
   const id = new URL(page.url()).pathname.split('/').at(-1)!;
-  await page.click('.notebook-tools summary');
-  await page.type('[aria-label="Lecture source text"]', 'Atoms contain nuclei.');
-  await clickText('Add material');
+  await lectures.handle(new Request(`http://localhost/api/lectures/${id}/sources`, { method: 'POST', headers: { 'Idempotency-Key': 'atoms' }, body: JSON.stringify({ text: 'Atoms contain nuclei.' }) }));
   await page.waitForSelector('.generated-notes');
   assert.equal(await page.$eval('.notebook-title h1', el => el.textContent), 'Lecture 11');
   await clickText('Finish lecture');

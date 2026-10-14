@@ -78,7 +78,7 @@ async function main(){
   if(!options.origin&&!reuse)start(tailscale,['serve',`--https=${options.httpsPort}`,'--yes',target]);
   console.log(`\nDesktop: http://127.0.0.1:${options.port}/lectures\nPhone receiver: ${origin}/capture`);
   console.log(options.origin?'Forward this HTTPS origin only to '+target+'.':'Connect your iPhone to the same Tailscale account. This uses private Serve, not public Funnel.');
-  console.log('Open a lecture on the desktop, choose Connect phone, and scan its QR. Keep this command and Safari capture page open. Ctrl+C stops this session.');
+  console.log('Open a lecture on the desktop and scan its recording QR. Live notes appear on that same lecture page. Keep this command and the recording device page open. Ctrl+C stops this session.');
   await backendExit;
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url))main().catch(error=>{console.error(error.message);process.exitCode=1;});

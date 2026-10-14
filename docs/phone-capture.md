@@ -17,13 +17,13 @@ and creates reviewed visual explanations using the existing animation catalog.
 4. Open `http://127.0.0.1:8080/lectures`, choose a course, and click **Add lecture**.
    Leave the title blank for automatic numbering. The lecture page prepares a
    recording QR automatically. Scan it with a phone or tablet connected to the
-   same Tailscale network, or copy the link to another computer with a camera and
-   microphone. Opening or reloading the lecture page preserves a connected recorder.
+   same Tailscale network. The QR also opens the recorder when clicked.
+   Opening or reloading the lecture page preserves a connected recorder.
 5. Tap **Start capture** and allow camera and microphone access. Point the rear
    camera at the slides or board. Keep Safari visible and the phone unlocked.
 6. Leave that lecture open on the computer. Its continuous notes page updates
    automatically as material is processed; visual explanations appear inline.
-   No second device or reader link is needed for this computer-only flow.
+   Live notes stay on this lecture page.
 7. When done, tap **Pause** on the recording device. Keep its page open until
    uploads finish and **Live notes caught up** appears. Click **Finish lecture**
    on the original lecture page to add a content-based subtitle to its automatic
@@ -106,23 +106,6 @@ a single larger source is processed intact) plus previous cited notes. Earlier
 raw sources remain stored for reference. Successful batches advance coverage;
 failed batches retain earlier notes and stop until a retry or new source arrives.
 The three-second batching window is not extended by continuous arrivals.
-
-## Read on another screen
-
-For an iPad or another computer later, connect that device to the same Tailscale
-account. In the desktop lecture, expand **Open live notes** and create a reader
-link. Scan its QR code or open the link on the reading device. This is a separate,
-read-only page: continuous notes, section navigation, and the same inline players.
-It checks for updates about every two seconds, preserves the current reading
-position, and keeps the last notes visible while reconnecting.
-
-Reader links expire after eight hours. Creating a replacement or choosing
-**Revoke reader link** invalidates the old link. Anyone with the link and network access
-can read that lecture's generated and personal notes and visualizations; they
-cannot edit it, upload media, or browse other lectures. Raw captured sources are
-not included. The token travels in a URL fragment, is removed from the address
-bar, and is kept in that reading tab's session storage. The server stores only
-its hash. Imported model downloads require the same lecture-scoped access.
 
 ## Data and limits
 
