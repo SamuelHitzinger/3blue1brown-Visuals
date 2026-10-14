@@ -306,3 +306,79 @@ test('note synthesis supplies source grounding instructions and validates inject
   expect(notes).toEqual(makeNotes(sources)); expect(prompt).toContain('source-1'); expect(system).toMatch(/summary/i); expect(system).toMatch(/untrusted/i);
   expect(web).toBe(false); expect(catalog).toBe(true);
 });
+
+test('course reordering is exact, owned, guarded and persists positions', async () => {
+  const s = service();
+  const a = await create(s, 'order-a'), b = await create(s, 'order-b');
+  expect(a.position).toBe(0); expect(b.position).toBe(1);
+  expect((await s.handle(api('/reorder', 'POST', { lectureIds: [b.id, a.id] }))).status).toBe(200);
+  expect((await (await s.handle(api())).json()).map((item: LectureSession) => item.id)).toEqual([b.id, a.id]);
+  for (const ids of [[a.id], [a.id, a.id], [a.id, b.id, crypto.randomUUID()]]) expect((await s.handle(api('/reorder', 'POST', { lectureIds: ids }))).ok).toBe(false);
+  expect((await s.handle(api('/reorder', 'POST', { lectureIds: [a.id, b.id] }, 'bob'))).status).toBe(409);
+  const cross = api('/reorder', 'POST', { lectureIds: [a.id, b.id] }); cross.headers.set('origin', 'https://foreign.test');
+  expect((await s.handle(cross)).status).toBe(403);
+  expect((await get(s, b.id)).position).toBe(0);
+  expect((await create(s, 'order-c')).position).toBe(2);
+});
+
+test('note overrides merge, reset, reject malformed patches atomically and survive synthesis', async () => {
+  const s = service(async input => makeNotes(input.sources)), lecture = await create(s);
+  expect((await s.handle(api(`/${lecture.id}`, 'PATCH', { noteEdits: { summary: 'My summary', 'section:vectors': 'My bullets' } }))).status).toBe(200);
+  expect((await s.handle(api(`/${lecture.id}`, 'PATCH', { title: 'Bad write', noteEdits: { bad: 'invalid' } }))).status).toBe(400);
+  expect((await get(s, lecture.id)).title).toBe(lecture.title);
+  await append(s, lecture.id);
+  const done = await until(() => get(s, lecture.id), row => row.status === 'idle');
+  expect(done.noteEdits).toEqual({ summary: 'My summary', 'section:vectors': 'My bullets' });
+  await s.handle(api(`/${lecture.id}`, 'PATCH', { noteEdits: { summary: null } }));
+  expect((await get(s, lecture.id)).noteEdits).toEqual({ 'section:vectors': 'My bullets' });
+});
+
+test('AI section identity and optional concept placement validate against supplied sections', () => {
+  const sources: LectureSource[] = [{ id: 'source', sequence: 1, kind: 'text', text: 'Vectors', createdAt: '' }];
+  const notes = makeNotes(sources);
+  const placed = { ...notes, concepts: notes.concepts.map(c => ({ ...c, sectionId: 'vectors' })) };
+  expect(parseLectureNotes(JSON.stringify(placed), sources).concepts[0].sectionId).toBe('vectors');
+  expect(() => parseLectureNotes(JSON.stringify({ ...placed, concepts: placed.concepts.map(c => ({ ...c, sectionId: 'missing' })) }), sources)).toThrow();
+  expect(() => parseLectureNotes(JSON.stringify({ ...notes, sections: notes.sections.map(s => ({ ...s, id: 'changed' })) }), sources, notes)).toThrow();
+});
+
+test('ordering and overrides survive restart and legacy records append chronologically', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'aha-notebook-order-'));
+  const file = join(directory, 'lectures.sqlite');
+  const first = new LectureService(file); services.push(first);
+  try {
+    const a = await create(first, 'a'), b = await create(first, 'b');
+    await first.handle(api('/reorder', 'POST', { lectureIds: [b.id, a.id] }));
+    await first.handle(api(`/${a.id}`, 'PATCH', { noteEdits: { summary: 'Durable override' } }));
+    await first.close();
+    const second = new LectureService(file); services.push(second);
+    expect((await (await second.handle(api())).json()).map((row: LectureSession) => row.id)).toEqual([b.id, a.id]);
+    expect((await get(second, a.id)).noteEdits?.summary).toBe('Durable override');
+    await second.close();
+    const { Database } = await import('bun:sqlite'); const db = new Database(file);
+    for (const row of db.query('SELECT id, snapshot FROM lectures').all() as { id: string; snapshot: string }[]) {
+      const legacy = JSON.parse(row.snapshot); delete legacy.position;
+      legacy.createdAt = row.id === a.id ? '2026-01-01T00:00:00Z' : '2026-01-02T00:00:00Z';
+      db.query('UPDATE lectures SET snapshot = ? WHERE id = ?').run(JSON.stringify(legacy), row.id);
+    }
+    db.close();
+    const third = new LectureService(file); services.push(third);
+    expect((await (await third.handle(api())).json()).map((row: LectureSession) => row.id)).toEqual([a.id, b.id]);
+    const appended = await create(third, 'c');
+    expect(appended.position).toBe(2);
+    expect((await (await third.handle(api())).json()).map((row: LectureSession) => row.id)).toEqual([a.id, b.id, appended.id]);
+    await third.close();
+  } finally { await first.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
+test('course sets exclude unrelated and foreign lectures and malformed overrides never write', async () => {
+  const s = service(), unassigned = await create(s);
+  const course = await (await s.handle(api('', 'POST', { title: 'Course', courseId: 'math' }, 'alice', 'math'))).json() as LectureSession;
+  expect(course.position).toBe(0);
+  expect((await s.handle(api('/reorder', 'POST', { courseId: 'math', lectureIds: [course.id, unassigned.id] }))).status).toBe(409);
+  expect((await s.handle(api('/reorder', 'POST', { courseId: 'math', lectureIds: [course.id] }))).status).toBe(200);
+  for (const noteEdits of [[], { summary: 1 }, { summary: 'x'.repeat(40001) }, { 'section:Bad': 'text' }]) {
+    expect((await s.handle(api(`/${course.id}`, 'PATCH', { title: 'Partial write', noteEdits }))).ok).toBe(false);
+    expect((await get(s, course.id)).title).toBe('Course');
+  }
+});

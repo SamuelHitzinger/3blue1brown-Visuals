@@ -1,3 +1,4 @@
+import { orderLectureSummaries } from '../../shared/lecture.js';
 import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -25,8 +26,8 @@ function field(value: unknown, name: string, max: number, allowEmpty = false): s
   if (value.length > max) throw new LectureError(`${name} must contain at most ${max.toLocaleString('en-US')} characters.`, 413);
   return allowEmpty ? value : value.trim();
 }
-const summary = ({ schemaVersion, id, title, courseId, createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status }: LectureSession): LectureSummary =>
-  ({ schemaVersion, id, title, ...(courseId ? { courseId } : {}), createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status });
+const summary = ({ schemaVersion, id, title, courseId, position, createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status }: LectureSession): LectureSummary =>
+  ({ schemaVersion, id, title, ...(courseId ? { courseId } : {}), ...(position === undefined ? {} : { position }), createdAt, updatedAt, revision, sourceRevision, synthesizedRevision, status });
 
 /** Release worker capacity even if an injected provider ignores the cancellation signal. */
 function abortable<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
@@ -70,6 +71,10 @@ export class LectureService {
   }
 
   private rows(): Row[] { return this.db.query('SELECT * FROM lectures ORDER BY rowid').all() as Row[]; }
+  private ownedSessions(owner: string): LectureSession[] {
+    const sessions = (this.db.query('SELECT * FROM lectures WHERE owner = ? ORDER BY rowid').all(owner) as Row[]).map(row => this.decode(row));
+    return orderLectureSummaries(sessions);
+  }
   private row(id: string): Row | null { return this.db.query('SELECT * FROM lectures WHERE id = ?').get(id) as Row | null; }
   private decode(row: Row): LectureSession { return JSON.parse(row.snapshot); }
   private snapshot(id: string): LectureSession | undefined { const row = this.row(id); return row ? this.decode(row) : undefined; }
@@ -249,7 +254,7 @@ export class LectureService {
       const url = new URL(request.url), user = proxyUser(request), owner = user ? `user:${user.id}` : 'local';
       let path: string; try { path = decodeURIComponent(url.pathname); } catch { throw new LectureError('Invalid URL.'); }
       const match = /^\/api\/lectures(?:\/([a-f0-9-]{36})(?:\/(sources|synthesize|concepts)(?:\/([a-z0-9][a-z0-9_-]{0,79})\/visualize)?)?)?$/.exec(path);
-      if (!match || (match[2] === 'concepts') !== !!match[3]) return json({ detail: 'Not Found' }, 404);
+      if (path !== '/api/lectures/reorder' && (!match || (match![2] === 'concepts') !== !!match![3])) return json({ detail: 'Not Found' }, 404);
       if (!['GET', 'HEAD'].includes(request.method)) {
         const origin = request.headers.get('origin'), protocol = request.headers.get('x-forwarded-proto') ?? url.protocol.slice(0, -1);
         const publicOrigin = process.env.NARRATION_PUBLIC_ORIGIN ?? `${protocol}://${url.host}`;
@@ -274,8 +279,21 @@ export class LectureService {
         if (!value || typeof value !== 'object' || Array.isArray(value)) throw new LectureError('Provide a JSON object.');
         return value as Record<string, unknown>;
       };
-      if (!match[1]) {
-        if (request.method === 'GET') return json((this.db.query('SELECT * FROM lectures WHERE owner = ? ORDER BY rowid DESC').all(owner) as Row[]).map(row => summary(this.decode(row))));
+      if (path === '/api/lectures/reorder') {
+        if (request.method !== 'POST') return method('POST');
+        const input = await body();
+        const courseId = input.courseId === undefined ? undefined : field(input.courseId, 'a course ID', 200);
+        const ids = input.lectureIds;
+        if (!Array.isArray(ids) || ids.length > 5000 || ids.some(id => typeof id !== 'string' || !/^[a-f0-9-]{36}$/.test(id)) || new Set(ids).size !== ids.length) throw new LectureError('Provide distinct lecture IDs.');
+        return json(this.db.transaction(() => {
+          const sessions = this.ownedSessions(owner).filter(session => session.courseId === courseId);
+          if (sessions.length !== ids.length || sessions.some(session => !ids.includes(session.id))) throw new LectureError('The course lectures changed. Refresh and reorder again.', 409);
+          const byId = new Map(sessions.map(session => [session.id, session]));
+          return ids.map((id, position) => { const session = byId.get(id)!; session.position = position; this.save(session); return summary(session); });
+        })());
+      }
+      if (!match![1]) {
+        if (request.method === 'GET') return json(this.ownedSessions(owner).map(summary));
         if (request.method !== 'POST') return method('GET, POST');
         const idempotency = key(), input = await body(), title = field(input.title, 'a lecture title', 200);
         const courseId = input.courseId === undefined ? undefined : field(input.courseId, 'a course ID', 200);
@@ -283,15 +301,17 @@ export class LectureService {
         const prior = this.db.query('SELECT * FROM lectures WHERE owner = ? AND key = ?').get(owner, idempotency) as Row | null;
         if (prior) { if (prior.input !== normalized) throw new LectureError('This Idempotency-Key was already used for a different lecture.', 409); return json(this.decode(prior), 201); }
         const now = new Date().toISOString();
-        const session: LectureSession = { schemaVersion: 1, id: crypto.randomUUID(), title, ...(courseId ? { courseId } : {}),
+        const siblings = this.ownedSessions(owner).filter(session => session.courseId === courseId);
+        const position = siblings.reduce((max, session, index) => Math.max(max, session.position ?? index), -1) + 1;
+        const session: LectureSession = { position, schemaVersion: 1, id: crypto.randomUUID(), title, ...(courseId ? { courseId } : {}),
           createdAt: now, updatedAt: now, revision: 0, sourceRevision: 0, synthesizedRevision: 0, status: 'idle', sources: [], notes: null, personalNotes: '', visualizations: [] };
         this.db.query('INSERT INTO lectures VALUES (?, ?, ?, ?, ?)').run(session.id, owner, idempotency, normalized, JSON.stringify(session));
         return json(session, 201);
       }
-      const id = match[1], row = this.row(id);
+      const id = match![1], row = this.row(id);
       if (!row || row.owner !== owner) return json({ detail: 'Not Found' }, 404);
       // Parse request bodies before taking mutable snapshots; another request can finish during a read.
-      if (!match[2]) {
+      if (!match![2]) {
         if (request.method === 'GET') return json(this.decode(row));
         if (request.method === 'DELETE') {
           clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
@@ -306,16 +326,28 @@ export class LectureService {
         }
         if (request.method !== 'PATCH') return method('GET, PATCH, DELETE');
         const input = await body();
-        if (input.title === undefined && input.personalNotes === undefined) throw new LectureError('Provide a title or personalNotes.');
+        if (input.title === undefined && input.personalNotes === undefined && input.noteEdits === undefined) throw new LectureError('Provide a title, personalNotes or noteEdits.');
         const title = input.title === undefined ? undefined : field(input.title, 'a lecture title', 200);
         const personalNotes = input.personalNotes === undefined ? undefined : field(input.personalNotes, 'personal notes', 100_000, true);
         const session = this.snapshot(id); if (!session) throw new LectureError('Not Found', 404);
+        if (input.noteEdits !== undefined) {
+          if (!input.noteEdits || typeof input.noteEdits !== 'object' || Array.isArray(input.noteEdits)) throw new LectureError('Provide noteEdits as an object.');
+          const entries = Object.entries(input.noteEdits);
+          if (entries.length > 100) throw new LectureError('Too many note edits.', 413);
+          const edits = { ...session.noteEdits };
+          for (const [key, value] of entries) {
+            if (!/^(summary|section:[a-z0-9][a-z0-9_-]{0,79})$/.test(key)) throw new LectureError('Invalid note edit key.');
+            if (value === null) delete edits[key]; else edits[key] = field(value, 'note edit', 40_000, true);
+          }
+          if (Object.keys(edits).length > 100 || Object.values(edits).reduce((total, value) => total + value.length, 0) > 100_000) throw new LectureError('Note edits are too long.', 413);
+          session.noteEdits = edits;
+        }
         if (title !== undefined) session.title = title;
         if (personalNotes !== undefined) session.personalNotes = personalNotes;
         this.save(session); return json(session);
       }
       if (request.method !== 'POST') return method('POST');
-      if (match[2] === 'sources') {
+      if (match![2] === 'sources') {
         const idempotency = key(), input = await body();
         if (input.kind !== undefined && input.kind !== 'text') throw new LectureError('Use this endpoint for typed or pasted text. Connect a phone to add photos or audio.');
         field(input.text, 'lecture text', MAX_SOURCE);
@@ -323,12 +355,12 @@ export class LectureService {
         return json(this.appendSource(owner, id, idempotency, text), 202);
       }
       const session = this.snapshot(id)!;
-      if (match[2] === 'synthesize') {
+      if (match![2] === 'synthesize') {
         clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
         if (!session.sources.length) throw new LectureError('Add lecture text before updating the notes.');
         this.prepareSynthesis(session);
         this.save(session);
-      } else this.db.transaction(() => { this.enqueueVisual(session, match[3]); this.save(session); })();
+      } else this.db.transaction(() => { this.enqueueVisual(session, match![3]); this.save(session); })();
       this.kick(); return json(session, 202);
     } catch (error) {
       if (error instanceof LectureError) return json({ detail: error.message }, error.status);

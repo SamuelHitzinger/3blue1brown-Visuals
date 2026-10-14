@@ -1,3 +1,4 @@
+import { assignLectureConcepts, lectureNoteText } from './lectureDocument.ts'
 import type { LectureSession, LectureSummary, LectureVisualization } from '../../../shared/lecture'
 
 async function responseJSON<T>(response: Response): Promise<T> {
@@ -9,6 +10,7 @@ async function responseJSON<T>(response: Response): Promise<T> {
 const path = (id: string) => `/api/lectures/${encodeURIComponent(id)}`
 const mutate = (url: string, method: string, body?: unknown, key?: string) => fetch(url, { method, headers: { 'Content-Type': 'application/json', ...(key ? { 'Idempotency-Key': key } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }).then(responseJSON<LectureSession>)
 export const listLectures = (signal?: AbortSignal) => fetch('/api/lectures', { signal, cache: 'no-store' }).then(responseJSON<LectureSummary[]>)
+export const reorderLectures = (courseId: string | undefined, lectureIds: string[]): Promise<LectureSummary[]> => fetch('/api/lectures/reorder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...(courseId === undefined ? {} : { courseId }), lectureIds }) }).then(responseJSON<LectureSummary[]>)
 export const getLecture = (id: string, signal?: AbortSignal) => fetch(path(id), { signal, cache: 'no-store' }).then(responseJSON<LectureSession>)
 /** Idle visible lectures must discover material submitted by a paired phone. */
 export function watchLectureSnapshots(id: string, accept: (session: LectureSession) => void, reportError: (message: string) => void, loaded: () => void = () => {}) {
@@ -31,7 +33,7 @@ export function watchLectureSnapshots(id: string, accept: (session: LectureSessi
 }
 export const createLecture = (input: { title: string; courseId?: string }, key: string) => mutate('/api/lectures', 'POST', input, key)
 export const appendLectureSource = (id: string, text: string, key: string) => mutate(`${path(id)}/sources`, 'POST', { text, kind: 'text' }, key)
-export const patchLecture = (id: string, fields: { title?: string; personalNotes?: string }) => mutate(path(id), 'PATCH', fields)
+export const patchLecture = (id: string, fields: { title?: string; personalNotes?: string; noteEdits?: Record<string, string | null> }) => mutate(path(id), 'PATCH', fields)
 export const synthesizeLecture = (id: string) => mutate(`${path(id)}/synthesize`, 'POST')
 export const visualizeConcept = (id: string, conceptId: string) => mutate(`${path(id)}/concepts/${encodeURIComponent(conceptId)}/visualize`, 'POST')
 export async function deleteLecture(id: string) {
@@ -55,9 +57,15 @@ export const lectureStatus = (session: LectureSummary) => session.status === 'fa
 export function lectureMarkdown(session: LectureSession): string {
   const labels = new Map(session.sources.map(source => [source.id, `source-${source.sequence}`]))
   const citations = (ids: string[]) => [...new Set(ids)].flatMap(id => labels.has(id) ? [`[^${labels.get(id)}]`] : []).join(' ')
-  const parts = [`# ${session.title}`, session.notes?.summary || '']
-  for (const section of session.notes?.sections ?? []) parts.push(`## ${section.title}`, section.points.map(point => `- ${point.text} ${citations(point.sourceIds)}`.trimEnd()).join('\n'))
-  if (session.notes?.concepts.length) parts.push('## Concepts', session.notes.concepts.map(concept => `### ${concept.title}\n\n${concept.explanation} ${citations(concept.sourceIds)}`.trimEnd()).join('\n\n'))
+  const parts = [`# ${session.title}`, lectureNoteText(session, 'summary', session.notes?.summary || '')]
+  for (const section of session.notes ? assignLectureConcepts(session.notes) : []) {
+    const aiText = section.points.map(point => `- ${point.text} ${citations(point.sourceIds)}`.trimEnd()).join('\n')
+    parts.push(`## ${section.title}`, lectureNoteText(session, `section:${section.id}`, aiText))
+    for (const concept of section.concepts) {
+      parts.push(`### ${concept.title}`, `${concept.explanation} ${citations(concept.sourceIds)}`.trimEnd())
+      for (const visual of session.visualizations.filter(visual => visual.conceptId === concept.id)) parts.push(`Visual explanation: ${visual.title} (${visual.status}${visual.sourceRevision < session.synthesizedRevision ? ', earlier notes' : ''})`)
+    }
+  }
   if (session.notes?.questions.length) parts.push('## Open questions', session.notes.questions.map(question => `- ${question.text} ${citations(question.sourceIds)}`.trimEnd()).join('\n'))
   parts.push('## My notes', session.personalNotes || '_No personal notes yet._', '## Sources')
   for (const source of session.sources) parts.push(`[^${labels.get(source.id)}]: ${source.text.replace(/\n/g, '\n    ')}`)

@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { appendLectureSource, createLecture, deleteLecture, lectureMarkdown, mergeLectureSnapshot, patchLecture, lecturePending, hasLectureVisual, sourceRequestKey, watchLectureSnapshots } from '../src/lectures.ts'
+import { reorderLectures, appendLectureSource, createLecture, deleteLecture, lectureMarkdown, mergeLectureSnapshot, patchLecture, lecturePending, hasLectureVisual, sourceRequestKey, watchLectureSnapshots } from '../src/lectures.ts'
 import type { LectureSession } from '../../../shared/lecture.ts'
 
 const session = (revision = 1): LectureSession => ({ schemaVersion: 1, id: 'lecture-1', title: 'Linear maps', createdAt: '2026-10-14T10:00:00Z', updatedAt: '2026-10-14T10:00:00Z', revision, sourceRevision: 1, synthesizedRevision: 1, status: 'idle', sources: [{ id: 'source-1', sequence: 1, kind: 'text', text: 'A linear map preserves sums.', createdAt: '2026-10-14T10:00:00Z' }], notes: { summary: 'Maps preserve structure.', sections: [{ id: 'section', title: 'Linearity', points: [{ text: 'Sums are preserved.', sourceIds: ['source-1'] }] }], concepts: [], questions: [{ text: 'What changes under a shear?', sourceIds: ['source-1'] }] }, personalNotes: 'Ask about inverses.', visualizations: [] })
@@ -93,3 +93,28 @@ test('visible idle lectures discover phone additions; hidden tabs wait until vis
     stop(); t.mock.timers.tick(3000); await settle(); assert.equal(calls, 3)
   } finally { stop(); Object.assign(globalThis, original); t.mock.timers.reset() }
 })
+
+test('export places concepts inline and uses edited text without attributing AI citations', () => {
+  const lecture = session(); lecture.noteEdits = { summary: 'My overview', 'section:section': 'My replacement' };
+  lecture.notes!.concepts = [{ id: 'map', sectionId: 'section', title: 'Map figure', explanation: 'Structure', sourceIds: ['source-1'], visualizationPrompt: 'Move', catalogIds: [] }];
+  const markdown = lectureMarkdown(lecture);
+  assert.match(markdown, /My overview/); assert.match(markdown, /My replacement/); assert.doesNotMatch(markdown, /Sums are preserved/);
+  assert.ok(markdown.indexOf('Map figure') > markdown.indexOf('My replacement'));
+  assert.ok(markdown.indexOf('Map figure') < markdown.indexOf('Open questions'));
+});
+
+
+test('reorder and section edits transmit the additive course contract', async () => {
+  const original = globalThis.fetch;
+  const calls: { url: string; options: RequestInit }[] = [];
+  globalThis.fetch = async (url, options = {}) => { calls.push({ url: String(url), options }); return Response.json([]) };
+  try {
+    await reorderLectures('math', ['two', 'one']);
+    await reorderLectures(undefined, ['unassigned']);
+    await patchLecture('lecture-1', { noteEdits: { summary: null, 'section:section': 'My text' } });
+    assert.equal(calls[0].url, '/api/lectures/reorder');
+    assert.deepEqual(JSON.parse(calls[0].options.body as string), { courseId: 'math', lectureIds: ['two', 'one'] });
+    assert.deepEqual(JSON.parse(calls[1].options.body as string), { lectureIds: ['unassigned'] });
+    assert.deepEqual(JSON.parse(calls[2].options.body as string), { noteEdits: { summary: null, 'section:section': 'My text' } });
+  } finally { globalThis.fetch = original }
+});

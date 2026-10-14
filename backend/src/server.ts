@@ -67,7 +67,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     if (path === "/api/narrations" || path.startsWith("/api/narrations/")) return narration(request, path);
 
     const api = path === "/api/hello" || path === "/api/me" || path === "/healthz";
-    const page = path === "/" || path === '/capture' || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
+    const page = path === "/" || path === '/capture' || path === '/videos/new' || path === '/lectures' || path === '/catalog' || /^\/lectures\/(?:course\/)?[^/]+$/.test(path) || path === "/plan" || path === "/courses" || /^\/(?:plan|courses)\/[^/]+$/.test(path) || path === "/library" || path === "/settings" || /^\/watch\/[^/]+$/.test(path);
     const asset = path.startsWith("/static/");
     if (!api && !page && !asset) return notFound();
     if (request.method !== "GET" && request.method !== "HEAD") {

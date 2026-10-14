@@ -1,64 +1,216 @@
-import { useEffect, useRef, useState } from 'react'
-import type { CourseSubject } from './curriculum'
-import type { LectureSummary } from '../../../shared/lecture'
-import { createLecture, lectureStatus, listLectures } from './lectures'
-import { ArrowRight, BookOpen, FileText, Plus, Search } from './Icons'
-
-export const lectureDate = (date: string) => new Date(date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-export default function LecturesPage({ courses, onOpen }: { courses: CourseSubject[]; onOpen: (id: string) => void }) {
-  const [lectures, setLectures] = useState<LectureSummary[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [retry, setRetry] = useState(0)
-  const [title, setTitle] = useState('')
-  const [courseId, setCourseId] = useState('')
-  const [query, setQuery] = useState('')
-  const [creating, setCreating] = useState(false)
-  const [createError, setCreateError] = useState('')
-  const request = useRef({ body: '', key: crypto.randomUUID() })
-  const submitted = useRef(false)
-  const mounted = useRef(true)
-  useEffect(() => { mounted.current = true; return () => { mounted.current = false } }, [])
+import { useEffect, useRef, useState } from 'react';
+import type { CourseSubject } from './curriculum';
+import type { LectureSummary } from '../../../shared/lecture';
+import { createLecture, deleteLecture, lectureStatus, listLectures, patchLecture, reorderLectures } from './lectures';
+import { ArrowRight, BookOpen, Plus, Search } from './Icons';
+import { moveLecture, orderedLectures } from './notebook-order';
+import './notes-dashboard.css';
+export const INDEPENDENT_COURSE_ID = '__independent__';
+export const lectureDate = (date: string) => new Date(date).toLocaleDateString(undefined, {
+  month: 'short',
+  day: 'numeric'
+});
+type Props = {
+  courses: CourseSubject[];
+  onOpen: (id: string) => void;
+  selectedCourseId?: string;
+  onSelectCourse: (id?: string) => void;
+  onAddCourse?: (name: string) => void;
+};
+export default function LecturesPage({
+  courses,
+  onOpen,
+  selectedCourseId,
+  onSelectCourse,
+  onAddCourse
+}: Props) {
+  const [lectures, setLectures] = useState<LectureSummary[]>([]),
+    [loading, setLoading] = useState(true),
+    [error, setError] = useState(''),
+    [retry, setRetry] = useState(0);
+  const [title, setTitle] = useState(''),
+    [courseName, setCourseName] = useState(''),
+    [query, setQuery] = useState(''),
+    [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState<string>(),
+    [rename, setRename] = useState(''),
+    [deleting, setDeleting] = useState<string>(),
+    [dragged, setDragged] = useState<string>();
+  const mutation = useRef(false),
+    mounted = useRef(true),
+    request = useRef({
+      body: '',
+      key: crypto.randomUUID()
+    });
   useEffect(() => {
-    const controller = new AbortController()
-    setLoading(true)
-    setError('')
-    void listLectures(controller.signal).then(setLectures).catch(reason => { if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : 'Could not load lectures.') }).finally(() => { if (!controller.signal.aborted) setLoading(false) })
-    return () => controller.abort()
-  }, [retry])
-  const visible = lectures.filter(lecture => `${lecture.title} ${courses.find(course => course.id === lecture.courseId)?.title ?? ''}`.toLowerCase().includes(query.toLowerCase()))
-  return <main className="learning-page lectures-page">
-    <div className="learning-heading"><span className="learning-eyebrow">Lecture workspace</span><h1>Keep up. Make sense.</h1><p>Bring in what you’re learning. Build clear notes and explore the ideas as they unfold.</p></div>
-    <div className="lectures-layout">
-      <section className="new-lecture-panel learning-panel" aria-labelledby="new-lecture-heading">
-        <span className="learning-panel-icon sage"><BookOpen size={25}/></span>
-        <h2 id="new-lecture-heading">Start a lecture</h2><p>A place for your material, your notes, and the moments that click.</p>
-        <form onSubmit={async event => {
-          event.preventDefault()
-          if (submitted.current || !title.trim()) return
-          submitted.current = true; setCreating(true); setCreateError('')
-          const body = { title: title.trim(), ...(courseId ? { courseId } : {}) }
-          const serialized = JSON.stringify(body)
-          if (request.current.body !== serialized) request.current = { body: serialized, key: crypto.randomUUID() }
-          try { const next = await createLecture(body, request.current.key); if (mounted.current) onOpen(next.id) }
-          catch (reason) { if (mounted.current) setCreateError(reason instanceof Error ? reason.message : 'Could not create your lecture.') }
-          finally { submitted.current = false; if (mounted.current) setCreating(false) }
-        }}>
-          <label htmlFor="lecture-title">Lecture title</label><input id="lecture-title" required maxLength={200} placeholder="e.g. Eigenvectors, finally" value={title} disabled={creating} onChange={event => setTitle(event.target.value)}/>
-          <label htmlFor="lecture-course">Course <span>optional</span></label><select id="lecture-course" value={courseId} disabled={creating} onChange={event => setCourseId(event.target.value)}><option value="">Independent learning</option>{courses.map(course => <option key={course.id} value={course.id}>{course.title}</option>)}</select>
-          {createError && <p className="learning-error" role="alert">{createError}</p>}
-          <button className="primary-button" disabled={creating || !title.trim()}>{creating ? 'Creating your space…' : 'Start lecture'}<Plus size={17}/></button>
-        </form>
-        <div className="lecture-start-note"><FileText size={16}/><span>Add text or connect your phone once your lecture starts.</span></div>
-      </section>
-      <section className="lecture-list-section" aria-labelledby="lecture-list-heading">
-        <div className="learning-section-heading"><h2 id="lecture-list-heading">Your lectures <span>{lectures.length}</span></h2><label className="learning-search"><Search size={17}/><input aria-label="Search lectures" placeholder="Find a lecture" value={query} onChange={event => setQuery(event.target.value)}/></label></div>
-        {loading ? <div className="learning-empty" role="status">Loading your lectures…</div> : error ? <div className="learning-empty"><p role="alert">{error}</p><button className="secondary-button" onClick={() => setRetry(value => value + 1)}>Try again</button></div> : visible.length ? <div className="lecture-list">{visible.map(lecture => <button key={lecture.id} className="lecture-list-row" onClick={() => onOpen(lecture.id)}>
-          <span className={`lecture-row-icon ${courses.find(course => course.id === lecture.courseId)?.color ?? 'sage'}`}><BookOpen size={21}/></span>
-          <span className="lecture-row-body"><strong>{lecture.title}</strong><span>{courses.find(course => course.id === lecture.courseId)?.title ?? 'Independent learning'} · {lectureDate(lecture.updatedAt)}</span></span>
-          <span className={`lecture-status status-${lecture.status}`}>{lectureStatus(lecture)}</span><ArrowRight size={17}/>
-        </button>)}</div> : <div className="learning-empty"><BookOpen size={36}/><h3>{query ? 'No matching lectures' : 'Your next insight starts here'}</h3><p>{query ? 'Try another title or course.' : 'Start a lecture, add your material, and come back to everything in one place.'}</p></div>}
-      </section>
-    </div>
-  </main>
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError('');
+    void listLectures(controller.signal).then(setLectures).catch(reason => {
+      if (!controller.signal.aborted) setError(reason instanceof Error ? reason.message : 'Could not load lectures.');
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    return () => controller.abort();
+  }, [retry]);
+  useEffect(() => {
+    setQuery('');
+    setTitle('');
+    setEditing(undefined);
+    setDeleting(undefined);
+  }, [selectedCourseId]);
+  const selected = selectedCourseId !== undefined,
+    courseId = selectedCourseId === INDEPENDENT_COURSE_ID ? undefined : selectedCourseId;
+  const course = courses.find(item => item.id === courseId),
+    courseTitle = course?.title ?? (courseId ? 'Other course' : 'Independent learning');
+  const ordered = orderedLectures(lectures.filter(item => item.courseId === courseId)),
+    visible = ordered.filter(item => item.title.toLowerCase().includes(query.trim().toLowerCase()));
+  const groups = [...courses.map(item => ({
+    id: item.id,
+    title: item.title,
+    color: item.color
+  })), ...Array.from(new Set(lectures.flatMap(item => item.courseId && !courses.some(course => course.id === item.courseId) ? [item.courseId] : []))).map(id => ({
+    id,
+    title: 'Other course',
+    color: 'sage'
+  })), {
+    id: INDEPENDENT_COURSE_ID,
+    title: 'Independent learning',
+    color: 'sage'
+  }];
+  async function mutate(action: () => Promise<void>) {
+    if (mutation.current) return;
+    mutation.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await action();
+    } catch (reason) {
+      if (mounted.current) {
+        setError(reason instanceof Error ? reason.message : 'Could not save this change.');
+        try {
+          const next = await listLectures();
+          if (mounted.current) setLectures(next);
+        } catch {/* Retain previous list. */}
+      }
+    } finally {
+      mutation.current = false;
+      if (mounted.current) setBusy(false);
+    }
+  }
+  async function reorder(id: string, target: number) {
+    if (query.trim() || busy || mutation.current) return;
+    const next = moveLecture(ordered, id, target),
+      previous = lectures;
+    await mutate(async () => {
+      setLectures([...lectures.filter(item => item.courseId !== courseId), ...next.map((item, position) => ({
+        ...item,
+        position
+      }))]);
+      try {
+        const saved = await reorderLectures(courseId, next.map(item => item.id));
+        if (mounted.current) setLectures(current => [...current.filter(item => item.courseId !== courseId), ...saved]);
+      } catch (reason) {
+        if (mounted.current) setLectures(previous);
+        throw reason;
+      }
+    });
+  }
+  return <main className="learning-page notes-dashboard">
+ {selected && <button className="notebook-back" onClick={() => onSelectCourse()}>← All courses</button>}
+ <div className="learning-heading"><span className="learning-eyebrow">Your notebooks</span><h1>{selected ? courseTitle : 'A place for what you learn.'}</h1><p>{selected ? 'One lecture at a time. Your material, clear notes, and ideas worth keeping.' : 'Choose a course. Pick up where you left off, or start something new.'}</p></div>
+ {error && <div className="notebook-error" role="alert">{error} <button className="secondary-button" disabled={busy} onClick={() => setRetry(value => value + 1)}>Try again</button></div>}
+ {loading ? <div className="learning-empty" role="status">Opening your notebooks…</div> : !selected ? <>
+ <div className="notebook-section-title"><h2>Your courses <span>{groups.length}</span></h2><span>{lectures.length} lectures saved</span></div>
+ <div className="notebook-course-grid">{groups.map(group => {
+          const items = lectures.filter(item => item.courseId === (group.id === INDEPENDENT_COURSE_ID ? undefined : group.id)),
+            latest = [...items].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+          return <button key={group.id} className={'notebook-course-card notebook-' + group.color} onClick={() => onSelectCourse(group.id)}><span className="notebook-course-icon"><BookOpen size={25} /></span><span className="notebook-course-name">{group.title}</span><span className="notebook-course-count">{items.length} {items.length === 1 ? 'lecture' : 'lectures'}</span><span className="notebook-course-footer"><span>{latest ? 'Updated ' + lectureDate(latest.updatedAt) : 'Ready for your first lecture'}</span><ArrowRight size={17} /></span></button>;
+        })}</div>
+ {onAddCourse && <form className="notebook-add-course" onSubmit={event => {
+        event.preventDefault();
+        if (courseName.trim()) {
+          onAddCourse(courseName.trim());
+          setCourseName('');
+        }
+      }}><label htmlFor="notebook-course-name">Make room for a new course</label><div><input id="notebook-course-name" maxLength={200} value={courseName} onChange={event => setCourseName(event.target.value)} placeholder="Course name" required /><button className="secondary-button" disabled={!courseName.trim()}><Plus size={16} /> Add course</button></div></form>}
+ </> : <>
+ <form className="notebook-add-lecture" onSubmit={event => {
+        event.preventDefault();
+        if (!title.trim()) return;
+        void mutate(async () => {
+          const body = {
+              title: title.trim(),
+              ...(courseId ? {
+                courseId
+              } : {})
+            },
+            serialized = JSON.stringify(body);
+          if (request.current.body !== serialized) request.current = {
+            body: serialized,
+            key: crypto.randomUUID()
+          };
+          const created = await createLecture(body, request.current.key);
+          request.current = {
+            body: '',
+            key: crypto.randomUUID()
+          };
+          if (mounted.current) {
+            setTitle('');
+            setLectures(current => [...current.filter(item => item.id !== created.id), created]);
+            onOpen(created.id);
+          }
+        });
+      }}><label htmlFor="notebook-lecture-title">Start a new lecture</label><div><input id="notebook-lecture-title" placeholder="Give your lecture a title" required maxLength={200} disabled={busy} value={title} onChange={event => setTitle(event.target.value)} /><button className="primary-button" disabled={busy || !title.trim()}><Plus size={17} /> {busy ? 'Saving…' : 'Add lecture'}</button></div></form>
+ <div className="notebook-section-title"><h2>Lectures <span>{ordered.length}</span></h2><label className="learning-search"><Search size={17} /><input aria-label="Search lectures" placeholder="Find a lecture" value={query} onChange={event => setQuery(event.target.value)} /></label></div>
+ {ordered.length > 1 && <p className="notebook-order-help">{query.trim() ? 'Clear search to rearrange lectures.' : 'Drag to arrange, or use the up and down buttons.'}</p>}
+ {visible.length ? <ol className="notebook-lecture-list">{visible.map(lecture => {
+          const index = ordered.findIndex(item => item.id === lecture.id);
+          return <li key={lecture.id} className={'notebook-lecture' + (dragged === lecture.id ? ' is-dragging' : '')} draggable={!busy && !query.trim() && !editing && !deleting} onDragStart={event => {
+            event.dataTransfer.setData('text/plain', lecture.id);
+            setDragged(lecture.id);
+          }} onDragEnd={() => setDragged(undefined)} onDragOver={event => {
+            if (dragged && !query.trim() && !busy) event.preventDefault();
+          }} onDrop={event => {
+            event.preventDefault();
+            if (dragged) void reorder(dragged, index);
+            setDragged(undefined);
+          }}>
+ <span className="notebook-lecture-number">{String(index + 1).padStart(2, '0')}</span><div className="notebook-lecture-content">
+ {editing === lecture.id ? <form className="notebook-rename" onSubmit={event => {
+                event.preventDefault();
+                if (rename.trim()) void mutate(async () => {
+                  const saved = await patchLecture(lecture.id, {
+                    title: rename.trim()
+                  });
+                  if (mounted.current) {
+                    setLectures(current => current.map(item => item.id === saved.id ? saved : item));
+                    setEditing(undefined);
+                  }
+                });
+              }}><input aria-label="Lecture title" autoFocus maxLength={200} required disabled={busy} value={rename} onChange={event => setRename(event.target.value)} /><button className="secondary-button" disabled={busy || !rename.trim()}>Save</button><button type="button" disabled={busy} onClick={() => setEditing(undefined)}>Cancel</button></form> : <button className="notebook-open-lecture" onClick={() => onOpen(lecture.id)}><strong>{lecture.title}</strong><span>{lectureStatus(lecture)} · {lectureDate(lecture.updatedAt)}</span></button>}
+ {deleting === lecture.id && <div className="notebook-delete-confirm"><span>Delete this lecture and all its notes?</span><button disabled={busy} onClick={() => void mutate(async () => {
+                  await deleteLecture(lecture.id);
+                  if (mounted.current) {
+                    setLectures(current => current.filter(item => item.id !== lecture.id));
+                    setDeleting(undefined);
+                  }
+                })}>Delete lecture</button><button disabled={busy} onClick={() => setDeleting(undefined)}>Keep lecture</button></div>}</div>
+ <div className="notebook-lecture-actions"><button title="Move up" aria-label={'Move ' + lecture.title + ' up'} disabled={busy || !!query.trim() || index === 0} onClick={() => void reorder(lecture.id, index - 1)}>↑</button><button title="Move down" aria-label={'Move ' + lecture.title + ' down'} disabled={busy || !!query.trim() || index === ordered.length - 1} onClick={() => void reorder(lecture.id, index + 1)}>↓</button><button disabled={busy} onClick={() => {
+                setEditing(lecture.id);
+                setRename(lecture.title);
+                setDeleting(undefined);
+              }}>Rename</button><button disabled={busy} onClick={() => {
+                setDeleting(lecture.id);
+                setEditing(undefined);
+              }}>Delete</button></div></li>;
+        })}</ol> : <div className="learning-empty"><BookOpen size={32} /><h3>{query ? 'No matching lectures' : 'Your notebook is ready.'}</h3><p>{query ? 'Try a different title.' : 'Add your first lecture above. Its notes and material will live here.'}</p></div>}
+ </>}
+ </main>;
 }

@@ -103,7 +103,9 @@ export default function App() {
   const libraryPage = path === '/library'
   const videoWorkspace = path === '/videos/new'
   const lecturePage = path === '/lectures' || path.startsWith('/lectures/')
-  const lectureId = lecturePage ? decodeURIComponent(path.split('/')[2] || '') : ''
+  const lectureCoursePage = path.startsWith('/lectures/course/')
+  const lectureCourseId = lectureCoursePage ? decodeURIComponent(path.split('/')[3] || '') : undefined
+  const lectureId = lecturePage && !lectureCoursePage ? decodeURIComponent(path.split('/')[2] || '') : ''
   const catalogPage = path === '/catalog'
 
   useLayoutEffect(() => {
@@ -120,9 +122,10 @@ export default function App() {
     return () => window.removeEventListener('storage', sync)
   }, [])
   useEffect(() => { if (!toast) return; const timer = setTimeout(() => setToast(''), 3500); return () => clearTimeout(timer) }, [toast])
-  useEffect(() => { document.title = selected ? `${selected.title} — Aha!` : settings ? 'Settings — Aha!' : planning ? 'Courses — Aha!' : libraryPage ? 'Library — Aha!' : videoWorkspace ? 'Create a video — Aha!' : lecturePage ? 'Lectures — Aha!' : catalogPage ? 'Catalog — Aha!' : 'Aha! — Make it click.' }, [selected, settings, planning, libraryPage, videoWorkspace, lecturePage, catalogPage])
+  useEffect(() => { document.title = selected ? `${selected.title} — Aha!` : settings ? 'Settings — Aha!' : planning ? 'Courses — Aha!' : libraryPage ? 'Library — Aha!' : videoWorkspace ? 'Create a video — Aha!' : lecturePage ? 'Notes — Aha!' : catalogPage ? 'Catalog — Aha!' : 'Aha! — Make it click.' }, [selected, settings, planning, libraryPage, videoWorkspace, lecturePage, catalogPage])
 
   const navigate = (url: string, scroll = true) => { window.history.pushState({}, '', url); setPath(window.location.pathname); setMenu(false); if (scroll) window.scrollTo({ top: 0, behavior: 'instant' }) }
+  const goNotesCourse = (id?: string) => navigate(id ? `/lectures/course/${encodeURIComponent(id)}` : '/lectures')
   const goCatalog = (id = '') => { setCatalogItem(id); navigate(`/catalog${id ? `?item=${encodeURIComponent(id)}` : ''}`) }
   const openLesson = (lesson: Lesson) => navigate(`/watch/${encodeURIComponent(lesson.id)}`)
   const onPlayed = useCallback((id: string) => setPlayHistory(old => recordPlayback(old, id)), [])
@@ -130,12 +133,13 @@ export default function App() {
     try { localStorage.setItem(recentPlaybackKey, JSON.stringify(playHistory)) }
     catch { /* Playback history still works for this session. */ }
   }, [playHistory])
-  const createCourse = (name: string, color: SubjectColor) => {
+  const createCourse = (name: string, color: SubjectColor, destination: 'plan' | 'notes' = 'plan') => {
     const next = addCourse(courses, name, color)
     setCourses(next)
     try { localStorage.setItem(coursesKey, JSON.stringify({ version: 2, ...next })); setPlanStorageNote('') }
     catch { setPlanStorageNote('Your new course is available for this session, but the browser could not save it. Keep this page open to retain it.') }
-    navigate(`/courses/${next.subjects[next.subjects.length - 1].id}`, false)
+    const id = next.subjects[next.subjects.length - 1].id
+    navigate(destination === 'notes' ? `/lectures/course/${encodeURIComponent(id)}` : `/courses/${id}`, false)
   }
   const removeCourse = (id: string) => {
     const course = courses.subjects.find(course => course.id === id)
@@ -254,7 +258,7 @@ export default function App() {
     : <div className={`app-shell learning-shell ${settings ? 'settings-shell' : videoWorkspace ? 'workspace-shell' : ''}`}>
       <header className="header">
         <div className="header-start"><div className="menu-anchor"><button className={`icon-button menu-toggle ${menu ? 'is-open' : ''}`} aria-label="Open navigation" aria-expanded={menu} aria-controls="navigation-drawer" onClick={() => setMenu(!menu)}><MenuGlyph/></button>{menuContent}</div><button className="wordmark" onClick={goOverview}>Aha!</button></div>
-        <nav className="learning-top-nav" aria-label="Main navigation">{[{ label: 'Overview', active: path === '/', go: goOverview }, { label: 'Lectures', active: lecturePage, go: () => navigate('/lectures') }, { label: 'Videos', active: videoWorkspace || libraryPage, go: goLibrary }, { label: 'Courses', active: planning, go: () => navigate('/courses') }, { label: 'Catalog', active: catalogPage, go: () => goCatalog() }].map(item => <button key={item.label} className={item.active ? 'active' : ''} aria-current={item.active ? 'page' : undefined} onClick={item.go}>{item.label}</button>)}</nav>
+        <nav className="learning-top-nav" aria-label="Main navigation">{[{ label: 'Overview', active: path === '/', go: goOverview }, { label: 'Notes', active: lecturePage, go: () => navigate('/lectures') }, { label: 'Videos', active: videoWorkspace || libraryPage, go: goLibrary }, { label: 'Courses', active: planning, go: () => navigate('/courses') }, { label: 'Catalog', active: catalogPage, go: () => goCatalog() }].map(item => <button key={item.label} className={item.active ? 'active' : ''} aria-current={item.active ? 'page' : undefined} onClick={item.go}>{item.label}</button>)}</nav>
         <button className="header-create-video" onClick={goWorkspace}>New video <ArrowUpRight size={15}/></button>
       </header>
       {settings ? <SettingsPage theme={theme} onTheme={setTheme}/> : planning ? <CoursesPage curriculum={courses} selectedId={path.split('/')[2]} onSelect={id => navigate(id ? `/courses/${id}` : '/courses', false)} plans={subjectPlans} onAddMaterial={addPlanMaterial} onAddTopic={createTopic} onDeleteTopic={removeTopic} onAddLesson={createPlanLesson} onDeleteLesson={removePlanLesson} pendingLessons={pendingCourseLessons} onMakeVideo={makeTopicVideo} onAddCourse={createCourse} onDeleteCourse={removeCourse} onNewVideo={goWorkspace} recent={overviewLessons(playHistory, activeLessons, courses)} renderVideo={lesson => <VideoThumbnail lesson={lesson} color={lesson.color} onOpen={() => openLesson(lesson)}/>} storageNote={planStorageNote}/> : libraryPage ? <main className="library-page">
@@ -278,7 +282,7 @@ export default function App() {
           </div>)}
           {!visible.length && <div className="empty-library"><h3>{query || filter !== 'All subjects' ? 'No videos found' : libraryView === 'archive' ? 'No archived videos' : libraryView === 'saved' ? 'No saved videos' : 'No videos found'}</h3>{(query || filter !== 'All subjects') && <button className="secondary-button" onClick={() => { setQuery(''); setFilter('All subjects') }}>Clear filters</button>}</div>}
         </section>
-      </main> : lecturePage ? lectureId ? <LecturePage key={lectureId} id={lectureId} onBack={() => navigate('/lectures')} onCatalog={goCatalog} suspended={menu}/> : <LecturesPage courses={courses.subjects} onOpen={id => navigate(`/lectures/${encodeURIComponent(id)}`)}/> : catalogPage ? <CatalogPage selectedId={catalogItem} onSelect={id => { setCatalogItem(id); window.history.replaceState({}, '', `/catalog${id ? `?item=${encodeURIComponent(id)}` : ''}`) }}/> : videoWorkspace ? <>
+      </main> : lecturePage ? lectureId ? <LecturePage key={lectureId} id={lectureId} onBack={goNotesCourse} onCatalog={goCatalog} suspended={menu} courses={courses.subjects}/> : <LecturesPage key={lectureCourseId ?? 'dashboard'} courses={courses.subjects} selectedCourseId={lectureCourseId} onSelectCourse={goNotesCourse} onAddCourse={name => createCourse(name, libraryColors[courses.subjects.length % libraryColors.length], 'notes')} onOpen={id => navigate(`/lectures/${encodeURIComponent(id)}`)}/> : catalogPage ? <CatalogPage selectedId={catalogItem} onSelect={id => { setCatalogItem(id); window.history.replaceState({}, '', `/catalog${id ? `?item=${encodeURIComponent(id)}` : ''}`) }}/> : videoWorkspace ? <>
         {invalidLesson && <div className="not-found"><p>This explanation isn’t in your library yet.</p><button onClick={goLibrary}>Open your library <ArrowRight size={16}/></button></div>}
         <WorkspacePage key={topicRequest ? `${topicRequest.sourceName}:${topicRequest.chapter}:${topicRequest.title}` : 'workspace'} initialTopic={topicRequest} onCreate={createLesson}/>
       </> : invalidLesson ? <div className="not-found"><p>This explanation isn’t in your library yet.</p><button onClick={goLibrary}>Open your library <ArrowRight size={16}/></button></div> : <OverviewPage onVideo={goWorkspace} onLectures={() => navigate('/lectures')} onLecture={id => navigate(`/lectures/${encodeURIComponent(id)}`)} onLibrary={goLibrary} onCatalog={() => goCatalog()} recent={overviewLessons(playHistory, activeLessons, courses)} renderVideo={lesson => <VideoThumbnail lesson={lesson} color={lesson.color} onOpen={() => openLesson(lesson)}/>}/>}
