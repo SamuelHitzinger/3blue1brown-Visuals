@@ -35,10 +35,10 @@
 
 **Interfaces:** `s.compose(prefix, parts)` returns group and local handle lookup; `s.schedule(narration, beats)` consumes named/word/utterance anchors and lowers ordered beats to existing tracks. Export timing packet/cue types and `resolveSpeechCues` for parent integration. Keep existing __narration.start/end(wordId).
 
-- [ ] Write failing equivalence and invalid-window tests, then implement host/VM parity.
-- [ ] Cover custom parts, duplicate IDs, unknown cues, ambiguous phrases, overlap, pause/reveal, final duration, carry and backwards seeks.
-- [ ] Produce three equivalent baseline/candidate fixture sources and report authored bytes, timing-expression counts, compile cost and sampled-state equivalence.
-- [ ] Supply root integration snippet and exact named-cue type before completion.
+- [x] Write failing equivalence and invalid-window tests, then implement host/VM parity.
+- [x] Cover custom parts, duplicate IDs, unknown cues, ambiguous phrases, overlap, pause/reveal, final duration, carry and backwards seeks.
+- [x] Produce three equivalent baseline/candidate fixture sources and report authored bytes, timing-expression counts, compile cost and sampled-state equivalence.
+- [x] Supply root integration snippet and exact named-cue type before completion.
 
 ## Task 2: Resource resolution
 
@@ -48,10 +48,10 @@
 
 **Interfaces:** `resolve_visualization_resource` returns bounded structured result with readiness, true package references, provenance, limits and required input. A constructor accepts existing publishModel callback. Root wires generator/lecture author callbacks. Exact all-of capability filter extends existing search API. Recipe package refs use existing read_animlib_reference IDs.
 
-- [ ] Write failing capability and resolution tests, including unsupported skin/clip/morph requests and missing input.
-- [ ] Implement exact filters, curated intent routing, resolver and runtime tool; preserve catalog budgets.
-- [ ] Cache actual bundled conversions by immutable content; test concurrent/cross-instance reuse and cancellation.
-- [ ] Benchmark real discovery queries, incompatible cases, bytes, latency and actual producer counts. Report unsupported routes honestly.
+- [x] Write failing capability and resolution tests, including unsupported skin/clip/morph requests and missing input.
+- [x] Implement exact filters, curated intent routing, resolver and runtime tool; preserve catalog budgets.
+- [x] Cache actual bundled conversions by immutable content; test concurrent/cross-instance reuse and cancellation.
+- [x] Benchmark real discovery queries, incompatible cases, bytes, latency and actual producer counts. Report unsupported routes honestly.
 
 ## Task 3: Strong bounded review
 
@@ -61,10 +61,10 @@
 
 **Interfaces:** existing reviewGeneratedScene call remains compatible. Default two visual reviews, bounded protocol retries, terminal RECOVERY_EXHAUSTED. Sampling yields stable timestamp/reason metadata and selected native-frame evidence; up to 16 timestamps.
 
-- [ ] First prove current missed short-action/fifth-camera interiors with seeded inputs.
-- [ ] Implement bounded reviews, no wasted last repair, checkpoint-aware cycle guards and clear terminal error.
-- [ ] Include exact prior defect times and readable native evidence, preserving both aspect ratios and approval source hash.
-- [ ] Verify clean/repair/reject/protocol/restart cases and benchmark calls, samples and risk coverage. Distinguish mocked from real-model evidence.
+- [x] First prove current missed short-action/fifth-camera interiors with seeded inputs.
+- [x] Implement bounded reviews, no wasted last repair, checkpoint-aware cycle guards and clear terminal error.
+- [x] Include exact prior defect times and readable native evidence, preserving both aspect ratios and approval source hash.
+- [x] Verify clean/repair/reject/protocol/restart cases and benchmark calls, samples and risk coverage. Distinguish mocked from real-model evidence.
 
 ## Task 4: Shared brief and focused prompt assembly
 
@@ -74,10 +74,10 @@
 
 **Interfaces:** optional ScenePlan.speechCues uses timing owner's exact type. `buildSceneBrief` derives compact acceptance/context packet from plan, narration and existing state. Focused reference selector retains core and requested advanced sections, with full lookup fallback.
 
-- [ ] Add failing brief/selection tests: identity, cue resolution, inherited state, interactions, provenance and API recovery.
-- [ ] Add planned speech cue parsing/validation and integrate resolved cues/scheduling instructions into generation without conflicting old cursor instructions.
-- [ ] Wire resolver with existing publication callback and no reviewer side effects.
-- [ ] Integrate focused reference selection; benchmark prompt bytes and retrieval completeness.
+- [x] Add failing brief/selection tests: identity, cue resolution, inherited state, interactions, provenance and API recovery.
+- [x] Add planned speech cue parsing/validation and integrate resolved cues/scheduling instructions into generation without conflicting old cursor instructions.
+- [x] Wire resolver with existing publication callback and no reviewer side effects.
+- [x] Integrate focused reference selection; benchmark prompt bytes and retrieval completeness.
 
 ## Task 5: Integration, native evidence and continued improvement
 
@@ -85,9 +85,9 @@
 
 **Files:** backend/bench/animation-efficiency.ts aggregate command; docs/validation/animation-efficiency-2026-10-15.md; plan ledger.
 
-- [ ] Capture inherited baseline and component benchmark results with versions/hashes.
-- [ ] Review each workstream independently; repair demonstrated findings.
-- [ ] Run applicable combined tests/typechecks and existing production integration tests.
+- [x] Capture inherited baseline and component benchmark results with versions/hashes.
+- [x] Review each workstream independently; repair demonstrated findings.
+- [x] Run applicable combined tests/typechecks and existing production integration tests.
 - [ ] Generate matched three-domain cases and one holdout using frozen narration/settings, inspect actual native frames and timing; preserve failures.
 - [ ] Compare time to approved scene, source/output tokens, retrieval and review quality. Improve failed targets; do not report deterministic savings as model speedup.
 - [ ] Commit and push verified milestones; audit every spec goal before goal completion.
