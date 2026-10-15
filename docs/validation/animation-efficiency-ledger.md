@@ -33,11 +33,14 @@
 
 ## Progress
 
-- All five workstreams have first-wave implementation. Independent reviews found numeric-alignment and visual-gate resume/endpoint issues; fixes are in progress before candidate benchmarking.
+- All five workstreams have first-wave implementation. Independent reviews found numeric-alignment and visual-gate resume/endpoint issues; all were fixed with regressions and passed independent re-review.
 - Resource work passed independent review with no findings. Root reran 68 resource/runtime checks (14,195 assertions) outside the Windows sandbox so existing hardlink/junction checks can execute. All passed.
 - Deterministic source benchmark: 36–37% less timing/composition boilerplate across three equivalent fixtures, with identical compiled scenes and forward/backward state samples. Timing accounts for the gain; composition alone does not shrink these small examples.
 - Catalog benchmark: top-three covers 10/10 curated supported intents, top-one 9/10, zero false capability matches. Concurrent conversion runs once; disk/new-process reuse avoids conversion. Unsupported external datasets and animated GLB features stay explicit.
 - Native review benchmark rendered 48 frames across both aspect ratios. Two seeded short risk interiors missed by the prior sampler are now included. Scripted reviewers prove budgets, not real-model detection.
 - Live frozen-input baseline binary-search run completed: both scenes approved on first review, 178.9 seconds total. Candidate comparison and remaining domains are pending.
-- Broad backend run: 572 passed; five failures are Windows sandbox hardlink/junction restrictions. Root's elevated resource rerun covers those paths. Animlib: 1,170 passed, one failure under investigation. Initial sandbox-temp import failures were resolved by workspace-local TEMP/TMP.
+- Broad backend run: 572 passed; five failures are Windows sandbox hardlink/junction restrictions. Root's elevated resource rerun covers those paths. Animlib: 1,170 passed; its one sandbox junction failure passed an elevated targeted rerun. Both workspace typechecks passed. Initial sandbox-temp import failures were resolved by workspace-local TEMP/TMP.
+- After the numeric fix, root reran timing/planning/brief checks: 41 passed and one incomplete test fixture failed because its second spoken word lacked timing. Completed that fixture's actual word list; all 10 generator timing integration checks then passed. Independent fix review: three numeric regressions passed.
+- Independent review-gate fix review: ten regression checks passed, including approval reuse after interruption and floating-point endpoint normalization.
+- Pushed resource milestone 49890de and authoring/prompt milestone 2718b71. Next checkpoint contains the reviewed bounded visual gate and experiment harnesses.
 - Completion not established. Model speed, independent rendered quality and holdout evidence remain required.

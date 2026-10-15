@@ -15,6 +15,11 @@ const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(root=>rm(root,{recursive:true,force:true})));});
 const source=`export default scene({audio:'voice',end:'hold'},s=>{s.text('label',{text:'DNA',position:[5,0]});s.wait(4);});`;
 const repair=source.replace('[5,0]','[0,0]');
+async function evidence(directory: string) {
+  const path = join(directory, 'frame-fixture.png'); await writeFile(path, 'Native renderer fixture');
+  return { backend: 'test', frames: [{ path, time: 4, width: 1280, height: 720 }],
+    sheets: [{ path, width: 1280, height: 720, times: [4], columns: 1 }] };
+}
 async function fixture(){const directory=await mkdtemp(join(tmpdir(),'visual-gate-'));roots.push(directory);return {
   recoveryWait:async()=>{},source,directory,index:0,videoId:crypto.randomUUID(),signal:new AbortController().signal,
   task:{systemPrompt:'Same style and complete API.',prompt:'Authoritative narration and request.', catalogTools, referenceTools, allowWeb:false},
@@ -51,7 +56,7 @@ test('image rejection produces an automatically repaired candidate that must be 
   expect(result).toBe(repair);expect(rendered).toEqual([source,repair]);
   expect(tasks.map(task=>task.logContext?.stage)).toEqual(['review','repair','review']);
   tasks.forEach(task => { expect(task.catalogTools).toBe(catalogTools); expect(task.referenceTools).toBe(referenceTools); expect(task.allowWeb).toBe(false); });
-  expect(tasks[0].images).toHaveLength(2);expect(tasks[2].images).toHaveLength(2);
+  expect(tasks[0].images).toHaveLength(3);expect(tasks[2].images).toHaveLength(3);
   expect(tasks[2].prompt).toContain(repair);
   expect(tasks[0].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-verify')}`);
   expect(tasks[1].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-repair')}`);
@@ -59,15 +64,15 @@ test('image rejection produces an automatically repaired candidate that must be 
   const receipt=JSON.parse(await readFile(join(input.directory,'scene-0.visual-review.json'),'utf8'));
   expect(receipt.approved).toBe(true);expect(receipt.attempt).toBe(1);expect(receipt.sourceSha256).toHaveLength(64);
 });
-test('visual review keeps repairing beyond the original limit until approval',async()=>{
+test('an explicit larger budget permits distinct repairs but still requires approval',async()=>{
   const input=await fixture();let renders=0,repairs=0,current=source;
-  const result=await reviewGeneratedScene({...input,renderFrames:async args=>{
-    renders++;current=args.source;return {backend:'test',frames:[],sheets:[]};
+  const result=await reviewGeneratedScene({...input,maxReviewRounds:5,renderFrames:async args=>{
+    renders++;current=args.source;return evidence(input.directory);
   },runner:{async run(task){
     if(task.logContext?.stage==='repair'){
       repairs++;return JSON.stringify({sourceSha256:sourceHash(current),edits:[{finding:0,before:`[${6-repairs},0]`,after:`[${5-repairs},0]`}]});
     }
-    return JSON.stringify(renders>=5?{approved:true,findings:[]}:{approved:false,findings:[{timeSec:4,objectIds:['label'],problem:'Unreadable',fix:'Move left'}]});
+    return JSON.stringify(renders>=5?{approved:true,findings:[]}:{approved:false,findings:[{timeSec:4,objectIds:['label'],problem:`Unreadable on round ${renders}`,fix:'Move left'}]});
   }}});
   expect(result).toBe(source.replace('[5,0]','[1,0]'));expect(renders).toBe(5);expect(repairs).toBe(4);
   const receipt=JSON.parse(await readFile(join(input.directory,'scene-0.visual-review.json'),'utf8'));
@@ -98,7 +103,7 @@ test('caller-owned review policy excludes video guidance and style reference thr
   expect(result).toBe(repair);
   expect(tasks.map(task => task.logContext?.stage)).toEqual(['review', 'repair', 'review']);
   for (const task of tasks) {
-    expect(task.images).toHaveLength(1);
+    expect(task.images).toHaveLength(2);
     expect(task.prompt).not.toContain('Last image is style reference');
     expect(task.systemPrompt).not.toContain(await loadPrompt('scene-verify'));
     expect(task.systemPrompt).not.toContain(await loadPrompt('scene-repair'));
@@ -114,7 +119,7 @@ test('render failures and cancellation never invoke approving reviewer',async()=
 });
 test('verification retries invalid findings without invoking repair or approving them',async()=>{
   const input=await fixture();const stages:string[]=[];
-  const result=await reviewGeneratedScene({...input,renderFrames:async()=>({backend:'test',frames:[],sheets:[]}),runner:{async run(task){
+  const result=await reviewGeneratedScene({...input,renderFrames:async()=>evidence(input.directory),runner:{async run(task){
     stages.push(task.logContext!.stage!);
     if(stages.length===1)return JSON.stringify({approved:false,findings:[{timeSec:4,objectIds:['label'],problem:'Clipped',fix:'Move'}],source:repair});
     expect(task.prompt).toContain('verification never edits');
@@ -124,7 +129,7 @@ test('verification retries invalid findings without invoking repair or approving
 });
 test('invalid patches fall back to full regeneration, which must render and pass review',async()=>{
   const input=await fixture();let renders=0,patches=0,rewrites=0;
-  const result=await reviewGeneratedScene({...input,renderFrames:async()=>{renders++;return {backend:'test',frames:[],sheets:[]};},runner:{async run(task){
+  const result=await reviewGeneratedScene({...input,renderFrames:async()=>{renders++;return evidence(input.directory);},runner:{async run(task){
     expect(task.catalogTools).toBe(catalogTools);
     expect(task.referenceTools).toBe(referenceTools);
     expect(task.allowWeb).toBe(false);
@@ -139,7 +144,7 @@ test('invalid patches fall back to full regeneration, which must render and pass
 
 test('an explicitly bounded visual review fails rather than approving after its last round',async()=>{
   const input=await fixture();let reviews=0;
-  await expect(reviewGeneratedScene({...input,maxReviewRounds:1,renderFrames:async()=>({backend:'test',frames:[],sheets:[]}),runner:{async run(task){
+  await expect(reviewGeneratedScene({...input,maxReviewRounds:1,renderFrames:async()=>evidence(input.directory),runner:{async run(task){
     if(task.logContext?.stage==='repair') return JSON.stringify({sourceSha256:sourceHash(source),edits:[{finding:0,before:'[5,0]',after:'[0,0]'}]});
     reviews++;return JSON.stringify({approved:false,findings:[{timeSec:4,objectIds:['label'],problem:'Clipped',fix:'Move'}]});
   }}})).rejects.toMatchObject({code:'RECOVERY_EXHAUSTED'});
@@ -148,14 +153,14 @@ test('an explicitly bounded visual review fails rather than approving after its 
 test('compiler failure regenerates source within existing limits before review',async()=>{
   const input=await fixture();let rewrites=0,reviews=0;
   const result=await reviewGeneratedScene({...input,source:'export default scene({},s=>{while(true){};});',
-    renderFrames:async()=>({backend:'test',frames:[],sheets:[]}),runner:{async run(task){
+    renderFrames:async()=>evidence(input.directory),runner:{async run(task){
       if(task.logContext?.stage==='repair'){rewrites++;return repair;}
       reviews++;return JSON.stringify({approved:true,findings:[]});
     }}});
   expect(result).toBe(repair);expect(rewrites).toBe(1);expect(reviews).toBe(1);
 });
 test('restart resumes the last rejected candidate at repair without reauthoring',async()=>{
-  const input=await fixture();const renderFrames=async()=>({backend:'test',frames:[],sheets:[]});
+  const input=await fixture();const renderFrames=async()=>evidence(input.directory);
   await expect(reviewGeneratedScene({...input,renderFrames,runner:{async run(task){
     if(task.logContext?.stage==='repair')throw new Error('Interrupted');
     return JSON.stringify({approved:false,findings:[{timeSec:4,objectIds:['label'],problem:'Clipped',fix:'Move'}]});
@@ -171,7 +176,7 @@ test('restart resumes the last rejected candidate at repair without reauthoring'
 });
 test('cancellation during repair prevents re-render and approval',async()=>{
   const input=await fixture(),controller=new AbortController();let renders=0;
-  await expect(reviewGeneratedScene({...input,signal:controller.signal,renderFrames:async()=>{renders++;return {backend:'test',frames:[],sheets:[]};},runner:{async run(task){
+  await expect(reviewGeneratedScene({...input,signal:controller.signal,renderFrames:async()=>{renders++;return evidence(input.directory);},runner:{async run(task){
     if(task.logContext?.stage==='repair'){
       controller.abort(new Error('cancelled during repair'));
       return JSON.stringify({sourceSha256:sourceHash(source),edits:[{finding:0,before:'[5,0]',after:'[0,0]'}]});
@@ -188,8 +193,9 @@ test('sampling includes camera transition interior, end points and a nonzero ope
 
 test('visual cap survives restart without starting round 51',async()=>{
   const input=await fixture();
-  await writeFile(join(input.directory,'scene-0.visual-state.json'),JSON.stringify({contextHash:sourceHash(JSON.stringify(input.input)),source,attempt:50,phase:'review',history:[]}));
+  const policy = { id: 'legacy-budget-test', guidance: 'Verify.', repairGuidance: 'Repair.' };
+  await writeFile(join(input.directory,'scene-0.visual-state.json'),JSON.stringify({contextHash:sourceHash(JSON.stringify({input:input.input,policy,authorContract:input.task.systemPrompt})),source,attempt:50,phase:'review',history:[]}));
   let calls=0;
-  await expect(reviewGeneratedScene({...input,runner:{async run(){calls++;return '';}}})).rejects.toMatchObject({code:'RECOVERY_EXHAUSTED'});
+  await expect(reviewGeneratedScene({...input,policy,runner:{async run(){calls++;return '';}}})).rejects.toMatchObject({code:'RECOVERY_EXHAUSTED'});
   expect(calls).toBe(0);
 });

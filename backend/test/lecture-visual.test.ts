@@ -46,7 +46,7 @@ test('lecture visual generation runs authoritative compiler and mandatory review
       reviewed = true;
       expect(options.runner).toBe(reviewRunner);
       expect(options.source).toBe(scene);
-      expect(options.maxReviewRounds).toBe(3);
+      expect(options.maxReviewRounds).toBe(2);
       expect(options.policy?.id).toBe('lecture-visual');
       expect(options.policy?.styleReference).toBeUndefined();
       expect(options.task.prompt).toContain('src-1');
@@ -66,7 +66,7 @@ test('lecture visual generation runs authoritative compiler and mandatory review
   expect(prefetched.length).toBeLessThanOrEqual(2);
   expect(prefetched.map((entry: any) => entry.id)).toContain('coordinate-maps-2d');
   expect(prefetched[0]).toEqual(await tasks[0].catalogTools!.read(prefetched[0].id, new AbortController().signal));
-  expect(tasks[0].referenceTools).toBeDefined(); expect(tasks[0].outputMode).toBe('submit-only');
+  expect(tasks[0].referenceTools).toBeDefined(); expect(tasks[0].resourceTools).toBeDefined(); expect(tasks[0].outputMode).toBe('submit-only');
   expect(tasks[0].systemPrompt).toContain('read_animlib_reference');
   const recipe = await tasks[0].referenceTools!.read({id:'coordinate-maps-basis-vectors-and-algebra'},new AbortController().signal);
   expect(recipe.content).toContain('```js scene');
