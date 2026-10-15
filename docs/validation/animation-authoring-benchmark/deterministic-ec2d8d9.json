@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "deterministic-host-gates",
+  "revision": "ec2d8d93199f4efe8b686e0ce56f4648f6e7f747",
+  "completedAt": "2026-10-15T21:48:07.308Z",
+  "elapsedMs": 6958.1957,
+  "nativeRendered": true,
+  "gates": {
+    "authoring": true,
+    "resources": true,
+    "evidence": true,
+    "reviewBudget": true,
+    "prompts": true
+  },
+  "passed": true,
+  "summary": {
+    "authoring": [
+      {
+        "id": "binary-search",
+        "boilerplateReduction": 0.3621933621933622,
+        "sourceBytes": {
+          "baseline": 1021,
+          "candidate": 770
+        },
+        "equivalent": true
+      },
+      {
+        "id": "derivative",
+        "boilerplateReduction": 0.36257309941520466,
+        "sourceBytes": {
+          "baseline": 1053,
+          "candidate": 805
+        },
+        "equivalent": true
+      },
+      {
+        "id": "molecular-transport",
+        "boilerplateReduction": 0.36879432624113473,
+        "sourceBytes": {
+          "baseline": 1034,
+          "candidate": 774
+        },
+        "equivalent": true
+      }
+    ],
+    "retrieval": {
+      "top1": 9,
+      "top3": 10,
+      "supported": 10,
+      "falselyCompatible": 0
+    },
+    "preparation": {
+      "fixture": "1crn-beads",
+      "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+      "bytes": 228476,
+      "producerCounts": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "concurrentCold": {
+        "samples": 5,
+        "p50Ms": 13.9227,
+        "p95Ms": 100.5994
+      },
+      "memory": {
+        "samples": 50,
+        "p50Ms": 0.0358,
+        "p95Ms": 0.0575
+      },
+      "freshInstanceDisk": {
+        "samples": 5,
+        "p50Ms": 1.9521,
+        "p95Ms": 2.3779
+      },
+      "freshProcess": {
+        "preparationMs": 73.88739999999999,
+        "conversions": 0,
+        "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+        "bytes": 228476,
+        "processWallMs": 238.4861
+      },
+      "sameJobPublications": 1,
+      "newJobPublications": 1,
+      "modelPacketBytes": 14016
+    },
+    "prompts": [
+      {
+        "mode": "2d",
+        "fullBytes": 134905,
+        "selectedBytes": 99140,
+        "reduction": 0.2651124865646195,
+        "deferredSectionsRestored": 12,
+        "snapshotSha256": "11b800d51ecad80e3b4e0a665ba103116b065352ab7d3b978eef8fa5c0a29a6c"
+      },
+      {
+        "mode": "3d",
+        "fullBytes": 134905,
+        "selectedBytes": 134905,
+        "reduction": 0,
+        "deferredSectionsRestored": 0,
+        "snapshotSha256": "b9c17e18eddc632d763008b492efc9ece51710d930390bf2283ea94bc7e6d7bb"
+      },
+      {
+        "mode": "unknown",
+        "fullBytes": 134905,
+        "selectedBytes": 134905,
+        "reduction": 0,
+        "deferredSectionsRestored": 0,
+        "snapshotSha256": "b9c17e18eddc632d763008b492efc9ece51710d930390bf2283ea94bc7e6d7bb"
+      }
+    ],
+    "review": {
+      "sampling": [
+        {
+          "id": "brief-overlap",
+          "baselineInterior": false,
+          "candidateInterior": true,
+          "samples": 12
+        },
+        {
+          "id": "fifth-camera",
+          "baselineInterior": false,
+          "candidateInterior": true,
+          "samples": 12
+        },
+        {
+          "id": "hidden-equality-morph",
+          "baselineInterior": false,
+          "candidateInterior": true,
+          "samples": 16
+        }
+      ],
+      "gateCases": [
+        {
+          "name": "clean",
+          "status": "approved",
+          "reviews": 1,
+          "repairs": 0,
+          "renders": 1,
+          "images": 4,
+          "nativeImages": 2,
+          "approvedSourceSha256": "870edc733283999878b4d561a39cfb3db4ef7494acfcbd44ca3492126fe0bb80"
+        },
+        {
+          "name": "one-repair",
+          "status": "approved",
+          "reviews": 2,
+          "repairs": 1,
+          "renders": 2,
+          "images": 10,
+          "nativeImages": 6,
+          "approvedSourceSha256": "916dc314cb45883e6389aed442de716d565245fb18d0c4c6a6e486a541f7bf93"
+        },
+        {
+          "name": "rejected",
+          "status": "rejected",
+          "error": "RECOVERY_EXHAUSTED",
+          "reviews": 2,
+          "repairs": 1,
+          "renders": 2,
+          "images": 10,
+          "nativeImages": 6
+        },
+        {
+          "name": "malformed-protocol",
+          "status": "rejected",
+          "error": "RECOVERY_EXHAUSTED",
+          "reviews": 2,
+          "repairs": 0,
+          "renders": 1,
+          "images": 8,
+          "nativeImages": 4
+        }
+      ]
+    }
+  },
+  "limitation": "These gates do not establish generation speed, acoustic alignment, real-model defect detection or visual quality. Run matched live generations and inspect native renders separately."
+}

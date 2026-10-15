@@ -25,6 +25,7 @@ out/
 # Existing tracked validation evidence remains versioned.
 *.log
 *.tsbuildinfo
+/backend/node-compile-cache/
 /exports/
 /plugins/live-lecture/.local/
 # Private local model comparisons served through the existing static route.

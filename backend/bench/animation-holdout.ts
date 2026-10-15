@@ -28,6 +28,7 @@ const save = (path: string, value: unknown) => writeFile(path, JSON.stringify(va
 const json = async (path: string) => JSON.parse(await readFile(path, 'utf8'));
 const PINNED_STRUCTURE_HASH = 'a5ccb3b7356bdcac54bc9ad69d38dc6f0c2d0716d18142a99dd60f74c6c8a607';
 const PINNED_GLB_HASH = 'cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529';
+const acceptanceThresholds = Object.freeze({ minimumTurnDegrees: 10, minimumTranslationFraction: .05 });
 const distance = (a: Vec3, b: Vec3) => Math.hypot(...a.map((value, axis) => value - b[axis]));
 const close = (a: Vec3, b: Vec3, tolerance = 1e-6) => distance(a, b) <= tolerance;
 function requireCheck(condition: unknown, message: string): asserts condition {
@@ -66,11 +67,11 @@ export function buildHoldoutFixture(modelId: string, landmarks: [HoldoutLandmark
     + 'Use one common display scale. Apply the authored rotation/translation to assembly, whose origin is the chosen rotation pivot. The full model and the two markers move rigidly together; never move residues relative to each other or rescale during motion. Keep a static spatial camera during each scene. '
     + 'Place the distance brace outside the silhouette with leaders to the marked sites; its two ends may use the same model-local offset. Label residue representation and illustrative rigid motion concisely. '
     + 'Use s.schedule with the named speech cues. Cue timing comes from the host; do not copy timestamps or compute a manual cursor. Final explicit pause is a static hold.';
-  const first = common + ' At mark-sites, reveal both markers and the distance brace. During turn-whole-structure, rotate the complete assembly through a clearly visible spatial angle, with no translation. '
+  const first = common + ` At mark-sites, reveal both markers and the distance brace. During turn-whole-structure, rotate the complete assembly through a clearly visible spatial angle of at least ${acceptanceThresholds.minimumTurnDegrees} degrees, with no translation. `
     + 'Show the custom turn-indicator ribbon during that motion, then remove it by the end. The measured separation remains fixed. Reveal the conclusion at same-distance. '
     + 'Keep assembly and all its descendants for the next scene. Protein, markers, and bracket must exist from time zero; initially hidden annotations are allowed.';
   const second = common + ' Begin from the exact retained previousFrame, including camera, poses, colors and model child identities. Do not instantiate another protein or reconstruct retained objects. '
-    + 'During slide-whole-structure, translate the assembly visibly sideways with no rotation or scale change. Preserve marker attachment and distance. Reveal the conclusion at shape-unchanged. '
+    + `During slide-whole-structure, translate the assembly visibly sideways by at least ${acceptanceThresholds.minimumTranslationFraction * 100}% of the displayed marked-site separation, with no rotation or scale change. Preserve marker attachment and distance. Reveal the conclusion at shape-unchanged. `
     + 'Do not redraw the turn ribbon. Final picture holds the same protein, two markers, bracket and short conclusion.';
   const markdown = `# ${title}\n\n## Beat 1: Same shape, new orientation\n\nContent needed: ${first}\n\nNarration: This is a residue-level view of deposited crambin. Mark these two sites on the same structure. Turn the whole structure together through a new angle. The marked sites stay the same distance apart.\n\nPause: 2s\n\n## Beat 2: Same shape, new location\n\nContent needed: ${second}\n\nNarration: Keep the same structure from the previous view. Slide the whole structure sideways without changing its orientation. The shape and the marked distance stay unchanged. These are authored rigid motions, not folding trajectories.\n\nPause: 2s`;
   const lesson: PlannedLesson = { schemaVersion: 1, markdown, plan: {
@@ -106,7 +107,7 @@ export function buildHoldoutFixture(modelId: string, landmarks: [HoldoutLandmark
   const validated = parsePlannedLesson(JSON.stringify(lesson), request);
   const pkg = buildSubtitlePackage(parseStoryline(validated.markdown));
   const cues = pkg.scenes.map((scene, i) => resolveSpeechCues(scene, validated.plan.scenes[i].speechCues!));
-  return { request, lesson: validated, pkg, cues, landmarks, timingScope: 'Deterministic subtitle-reading estimates; no acoustic timing or spoken audio evidence.' };
+  return { request, lesson: validated, pkg, cues, landmarks, acceptanceThresholds, timingScope: 'Deterministic subtitle-reading estimates; no acoustic timing or spoken audio evidence.' };
 }
 
 const visibleState = (frame: Frame, ids: string[]) => ids.map(id => {
@@ -115,16 +116,83 @@ const visibleState = (frame: Frame, ids: string[]) => ids.map(id => {
   const { persistent: _persistent, transient: _transient, ...state } = element;
   return state;
 });
-const pose = (frame: Frame) => {
+const pose = (frame: Frame, id = 'assembly', relativeTo?: string) => {
   const spatial = new SpatialFrame(frame);
-  const origin = spatial.world('assembly');
+  requireCheck(spatial.elements.has(id), `pose target ${id} missing`);
+  const pointInFrame = (point: Vec3) => relativeTo ? spatial.local(relativeTo, spatial.world(id, point)) : spatial.world(id, point);
+  const origin = pointInFrame([0, 0, 0]);
   return { origin, basis: ([[1, 0, 0], [0, 1, 0], [0, 0, 1]] as Vec3[])
-    .map(point => spatial.world('assembly', point).map((value, axis) => value - origin[axis]) as Vec3) };
+    .map(point => pointInFrame(point).map((value, axis) => value - origin[axis]) as Vec3) };
 };
-const samePose = (a: ReturnType<typeof pose>, b: ReturnType<typeof pose>) => close(a.origin, b.origin)
-  && a.basis.every((axis, i) => close(axis, b.basis[i]));
+const poseScale = (p: ReturnType<typeof pose>) => p.basis.map(axis => Math.hypot(...axis));
+const normalizedBasis = (p: ReturnType<typeof pose>) => p.basis.map(axis => {
+  const length = Math.hypot(...axis);
+  requireCheck(Number.isFinite(length) && length > 0, 'pose has invalid display scale');
+  return axis.map(value => value / length) as Vec3;
+});
+const sameOrientation = (a: ReturnType<typeof pose>, b: ReturnType<typeof pose>) => {
+  const axes = normalizedBasis(b);
+  return normalizedBasis(a).every((axis, i) => close(axis, axes[i]));
+};
+const sameScale = (a: ReturnType<typeof pose>, b: ReturnType<typeof pose>) => {
+  const scales = poseScale(b);
+  return poseScale(a).every((scale, i) => scale > 0 && Number.isFinite(scales[i]) && Math.abs(scales[i] / scale - 1) < 1e-6);
+};
+const samePose = (a: ReturnType<typeof pose>, b: ReturnType<typeof pose>, tolerance = 1e-6) => close(a.origin, b.origin, tolerance)
+  && sameOrientation(a, b) && sameScale(a, b);
 const cameras = (frame: Frame) => ({ camera: frame.camera,
   views: frame.views?.map(({ cameraAnimated: _animated, ...view }) => view) });
+
+/** Pure acceptance on compiled samples; thresholds do not depend on arbitrary display units. */
+export function checkHoldoutMotion(frames: ReadonlyMap<number, Frame>, motion: { startSec: number; endSec: number },
+  kind: 'turn' | 'slide', landmarks: readonly [HoldoutLandmark, HoldoutLandmark]) {
+  const initial = frames.get(0), start = frames.get(motion.startSec), end = frames.get(motion.endSec);
+  requireCheck(initial && start && end, 'missing initial or motion-boundary samples');
+  const startPose = pose(start), endPose = pose(end), attachedPose = pose(initial, 'protein', 'assembly');
+  const spatial = new SpatialFrame(start);
+  const markedSiteDisplaySeparation = distance(spatial.world('protein', landmarks[0].localPosition), spatial.world('protein', landmarks[1].localPosition));
+  requireCheck(Number.isFinite(markedSiteDisplaySeparation) && markedSiteDisplaySeparation > 0, 'invalid displayed landmark separation');
+  const positionTolerance = markedSiteDisplaySeparation * 1e-6;
+  for (const [time, frame] of frames) {
+    const spatial = new SpatialFrame(frame);
+    for (const id of ['protein', 'marker-a', 'marker-b']) {
+      requireCheck(spatial.elements.has(id) && spatial.chain(id).some(parent => parent.id === 'assembly'), `${id} must descend from assembly at ${time}`);
+    }
+    requireCheck(samePose(attachedPose, pose(frame, 'protein', 'assembly')), `protein pose relative to assembly changed at ${time}`);
+    const current = pose(frame);
+    requireCheck(sameScale(startPose, current), `display scale changed at ${time}`);
+    if (time <= motion.startSec) requireCheck(samePose(current, startPose, positionTolerance), `assembly moved before cue at ${time}`);
+    if (time >= motion.endSec) requireCheck(samePose(current, endPose, positionTolerance), `assembly moved after cue at ${time}`);
+    if (kind === 'turn') requireCheck(close(current.origin, startPose.origin, positionTolerance), `turn cue translated its pivot at ${time}`);
+    else requireCheck(sameOrientation(current, startPose), `slide cue changed orientation at ${time}`);
+  }
+  const firstAxes = normalizedBasis(startPose), lastAxes = normalizedBasis(endPose);
+  const trace = firstAxes.reduce((sum, axis, i) => sum + axis.reduce((dot, value, j) => dot + value * lastAxes[i][j], 0), 0);
+  const rotationDegrees = Math.acos(Math.max(-1, Math.min(1, (trace - 1) / 2))) * 180 / Math.PI;
+  const translationFraction = distance(startPose.origin, endPose.origin) / markedSiteDisplaySeparation;
+  if (kind === 'turn') requireCheck(rotationDegrees + 1e-8 >= acceptanceThresholds.minimumTurnDegrees,
+    `turn cue must rotate at least ${acceptanceThresholds.minimumTurnDegrees} degrees`);
+  else requireCheck(translationFraction + 1e-10 >= acceptanceThresholds.minimumTranslationFraction,
+    `slide cue must translate at least ${acceptanceThresholds.minimumTranslationFraction * 100}% of displayed marked-site separation`);
+  return { rotationDegrees, translationFraction, markedSiteDisplaySeparation };
+}
+
+/** Resolution is an authoring choice; the native review judges the ribbon's visible shape. */
+export function isNondegenerateHoldoutRibbon(frame: Frame): boolean {
+  const mesh = frame.elements.find(element => element.id === 'turn-indicator/ribbon')?.geometry;
+  if (mesh?.kind !== 'mesh' || !mesh.vertices || mesh.vertices.length < 3 || !mesh.triangles?.length) return false;
+  const vertices = mesh.vertices.map(point => [point[0], point[1], point[2] ?? 0] as Vec3);
+  if (vertices.some(point => !point.every(Number.isFinite))) return false;
+  return mesh.triangles.every(triangle => {
+    if (triangle.length !== 3 || triangle.some(index => !Number.isInteger(index) || index < 0 || index >= vertices.length)) return false;
+    const [a, b, c] = triangle.map(index => vertices[index]);
+    const u = b.map((value, i) => value - a[i]), v = c.map((value, i) => value - a[i]);
+    const scale = Math.max(...u.map(Math.abs), ...v.map(Math.abs));
+    if (!Number.isFinite(scale) || scale === 0) return false;
+    const [ux, uy, uz] = u.map(value => value / scale), [vx, vy, vz] = v.map(value => value / scale);
+    return Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) > 0;
+  });
+}
 
 export async function runAnimationHoldout(trial: string) {
   if (!/^[a-z0-9][a-z0-9-]{0,63}$/.test(trial ?? '')) throw new Error('Use a fresh lowercase TRIAL name.');
@@ -297,16 +365,7 @@ export async function runAnimationHoldout(trial: string) {
           }
         }
         requireCheck(maxMarkerError < 1e-5 && maxInternalPoseError < 1e-5, 'markers detached or model parts moved internally');
-        const startPose = pose(frames.get(motion.startSec)!), endPose = pose(frames.get(motion.endSec)!);
-        const scale = (p: ReturnType<typeof pose>) => p.basis.map(axis => Math.hypot(...axis));
-        for (const [time, frame] of frames) {
-          const current = pose(frame);
-          requireCheck(scale(startPose).every((value, axis) => Math.abs(value - scale(current)[axis]) < 1e-6), `display scale changed at ${time}`);
-          if (time <= motion.startSec) requireCheck(samePose(current, startPose), `assembly moved before cue at ${time}`);
-          if (time >= motion.endSec) requireCheck(samePose(current, endPose), `assembly moved after cue at ${time}`);
-          if (index === 0) requireCheck(close(current.origin, startPose.origin), `turn cue translated its pivot at ${time}`);
-          else requireCheck(current.basis.every((axis, i) => close(axis, startPose.basis[i])), `slide cue changed orientation at ${time}`);
-        }
+        const motionChecks = checkHoldoutMotion(frames, motion, index === 0 ? 'turn' : 'slide', landmarks);
         for (const pause of scene.pauses) {
           const before = frames.get(pause.startSec)!;
           const ids = before.elements.map(element => element.id);
@@ -316,17 +375,7 @@ export async function runAnimationHoldout(trial: string) {
               && isDeepStrictEqual(before.camera, frame.camera), `explicit pause changed at ${time}`);
           }
         }
-        requireCheck(samePose(pose(initial), startPose), 'protein moved before the named motion cue');
-        requireCheck(samePose(endPose, pose(final)), 'protein moved after the named motion cue');
-        if (index === 0) {
-          requireCheck(close(startPose.origin, endPose.origin), 'turn cue unexpectedly translated protein');
-          requireCheck(startPose.basis.some((axis, i) => distance(axis, endPose.basis[i]) > .05), 'turn cue produced no meaningful rotation');
-          requireCheck([...frames.values()].some(frame => frame.elements.some(element => element.id === 'turn-indicator/ribbon'
-            && element.geometry.kind === 'mesh' && (element.geometry.vertices?.length ?? 0) >= 12 && (element.geometry.triangles?.length ?? 0) >= 8)), 'custom triangulated turn ribbon missing');
-        } else {
-          requireCheck(distance(startPose.origin, endPose.origin) > .1, 'slide cue produced no meaningful translation');
-          requireCheck(startPose.basis.every((axis, i) => close(axis, endPose.basis[i])), 'slide cue changed orientation');
-        }
+        if (index === 0) requireCheck([...frames.values()].some(isNondegenerateHoldoutRibbon), 'valid nondegenerate turn ribbon missing');
         let retainedIds: string[] = [];
         if (previous) {
           retainedIds = previous.elements.filter(element => element.persistent).map(element => element.id);
@@ -337,7 +386,7 @@ export async function runAnimationHoldout(trial: string) {
           { times: times.slice(0, 24), objectIds: ['protein', 'marker-a', 'marker-b', 'distance-brace'], includeAnimating: true });
         previousFrame = structuredClone(final);
         await save(join(root, `scene-${index}.inspection.json`), inspection);
-        return { times, deterministicSeek: true, maxMarkerError, maxInternalPoseError, retainedIds,
+        return { times, deterministicSeek: true, maxMarkerError, maxInternalPoseError, retainedIds, motionChecks,
           modelPrimitiveCount: firstModels.length, cueMotionChecked: motion, advisoryWarnings: inspection.warnings.length };
       });
       result.scenes.push({ index, sourceSha256: hash(output.scene.source), sourceBytes: Buffer.byteLength(output.scene.source),
