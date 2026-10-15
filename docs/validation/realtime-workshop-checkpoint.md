@@ -65,7 +65,55 @@ Ignored local evidence lives under `data/realtime-workshop/`. Exact prompts,
 source hashes, response events, failure outcomes, source media hashes and new
 render directories are retained. Raw private media is not committed.
 
-## Next acceptance work
+## Structured submission and local speech checkpoint
+
+The next probe uses one forced strict tool submission, separating commentary from
+source. It records both completed tool arguments and provider termination; source
+is accepted only after they agree. This removes text/code parsing ambiguity, not
+JavaScript or scientific errors. The renderer verifies exact accepted source
+hashes before compilation, without repair.
+
+A matched MIT restoring-acceleration pair shares one model-generated causal brief,
+public source frame, past-only public ASR excerpt, model settings and visual timing.
+The first pair failed because the supplied API prompt incorrectly advertised
+`GRAY`; the native palette requires `GREY`. Both failures remain immutable. The
+corrected second pair compiles and renders unchanged for eight seconds.
+
+| Stage | Baseline | Helper-guided candidate |
+| --- | ---: | ---: |
+| Shared causal brief, provider termination | 5.233 s | 5.233 s |
+| Authoring, provider termination | 8.524 s | 8.342 s |
+| Sum of model stages | 13.758 s | 13.576 s |
+| Offline compile | 40.6 ms | 15.2 ms |
+
+The 182 ms authoring gap is a single observation, not established speedup. Neither
+output used compose/schedule; both used native time callbacks. Model-stage sums
+exclude ingestion, orchestration gaps, rendering and presentation, and both exceed
+ten seconds. Priority was requested; actual service tier remained default.
+Evidence: `data/realtime-workshop/tool-probes/mit-{baseline,compact}-02` and
+`mit-causal-brief-01`; native renders at `rendered/2026-10-15T23-26-00.764Z`.
+
+Local CPU speech recognition now has measured past-only four-second windows;
+see [local ASR checkpoint](local-asr-checkpoint.md). Actual public speech phrase
+resolution produced source times 894.12–896.72 seconds in approximately 0.9 ms.
+Phrase selection was manual in this probe; timestamp arithmetic was automatic.
+ASR accuracy and overlapping-window stabilization remain unresolved. No private
+audio or transcript was uploaded or included in tracked documentation.
+
+The timestamped evidence scheduler prevents future-frame leakage, cancels work
+whose evidence is corrected, preserves unrelated changes, and retains each changed
+event's deadline. Earlier contradictory duplicate-arrival timestamps reject rather
+than silently extending latency budgets. It remains an isolated component, not
+an integrated live ingestion pipeline.
+
+The persistent world now resolves internal attachment/connector bindings after
+host property edits. Regression tests cover moving labels, retained rotation,
+collapsed connector recovery, missing sources, and atomic rejection of writes to
+binding-owned properties. Cross-program bindings remain unsupported. Forty-nine
+focused tests and strict TypeScript checking passed for this checkpoint. Native
+rendering and component tests still do not establish visual parity.
+
+## Remaining acceptance work
 
 Connect timestamped media ingestion, bounded reliable submissions, automatic
 speech alignment and asset resolution to the persistent world. Test novel

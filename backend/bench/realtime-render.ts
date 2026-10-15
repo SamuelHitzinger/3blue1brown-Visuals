@@ -7,23 +7,45 @@ import { evaluateScene } from '../../shared/animlib/src/timeline.js';
 import { renderSceneFrames } from '../src/agents/frame-renderer.js';
 import { lowerOperations } from './realtime-probe/lower.js';
 
+/** Select the recorded artifact, never prose, a fallback file, or a repaired source. */
+export async function loadProbeSource(directory: string) {
+  const metadataBytes = await readFile(join(directory, 'result.json'));
+  const meta = JSON.parse(metadataBytes.toString('utf8'));
+  if (meta.status !== 'complete' || meta.action !== 'create') throw new Error('Requires a complete create response.');
+  const structured = meta.evidenceKind === 'single-structured-model-submission';
+  if (structured) {
+    if (meta.schemaVersion !== 1 || meta.kind !== 'scene' || meta.format !== 'native-js'
+      || meta.providerComplete !== true || meta.submissionAccepted !== true || meta.completedToolCalls !== 1) {
+      throw new Error('Requires an accepted, complete structured scene submission.');
+    }
+  } else if (meta.evidenceKind !== 'model-stream-only' || !['native-js', 'ops'].includes(meta.format)) {
+    throw new Error('Unsupported probe evidence kind or source format.');
+  }
+  const sourceFilename = structured ? 'source.js' : 'output.txt';
+  const bytes = await readFile(join(directory, sourceFilename));
+  const rawSha256 = createHash('sha256').update(bytes).digest('hex');
+  if (rawSha256 !== (structured ? meta.submissionSha256 : meta.sourceSha256)) throw new Error('Recorded output hash mismatch.');
+  if (structured && bytes.length !== meta.submissionBytes) throw new Error('Recorded submission byte count mismatch.');
+  const raw = bytes.toString('utf8');
+  if (!Buffer.from(raw).equals(bytes)) throw new Error('Source artifact is not valid UTF-8.');
+  return { source: meta.format === 'ops' ? lowerOperations(raw) : raw, rawSha256, sourceFilename,
+    sourceEvidenceKind: meta.evidenceKind as string,
+    probeResultSha256: createHash('sha256').update(metadataBytes).digest('hex') };
+}
+
+export async function main(inputs = process.argv.slice(2)) {
 Object.defineProperty(globalThis, 'Worker', { configurable: true, writable: true, value: undefined });
-if (process.argv.length < 3) throw new Error('Pass one or more completed create-probe directories.');
+if (!inputs.length) throw new Error('Pass one or more completed create-probe directories.');
 const root = resolve('data/realtime-workshop/rendered', new Date().toISOString().replaceAll(':', '-'));
 await mkdir(root, { recursive: true });
 const reports: unknown[] = [];
-for (const input of process.argv.slice(2)) {
+for (const input of inputs) {
   const directory = resolve(input), name = basename(directory), compiler = new SourceCompiler();
   const report: Record<string, unknown> = { name, directory, evidenceKind: 'offline-render-only',
     limitation: 'Offline rendering excludes media ingestion and model latency. This is not a live presentation or quality verdict.' };
   try {
-    const meta = JSON.parse(await readFile(join(directory, 'result.json'), 'utf8'));
-    if (meta.status !== 'complete' || meta.action !== 'create') throw new Error('Requires a complete create response.');
-    const raw = await readFile(join(directory, 'output.txt'), 'utf8');
-    const sha = createHash('sha256').update(raw).digest('hex');
-    if (sha !== meta.sourceSha256) throw new Error('Recorded output hash mismatch.');
-    const source = meta.format === 'ops' ? lowerOperations(raw) : raw;
-    report.rawSha256 = sha;
+    const { source, ...provenance } = await loadProbeSource(directory);
+    Object.assign(report, provenance);
     const start = performance.now();
     const scene = await compiler.compile(source);
     report.compileMs = performance.now() - start;
@@ -44,3 +66,6 @@ for (const input of process.argv.slice(2)) {
 }
 await writeFile(join(root, 'result.json'), JSON.stringify(reports, null, 2), { flag: 'wx' });
 console.log(JSON.stringify({ report: join(root, 'result.json') }));
+}
+
+if (import.meta.main) await main();

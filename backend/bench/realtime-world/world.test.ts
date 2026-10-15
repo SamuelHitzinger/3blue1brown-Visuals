@@ -153,3 +153,67 @@ test('transition epoch and native timeline origin use publication time after val
   expect(commit.originSampledAt).toBe(2);expect(commit.committedAt).toBe(4);
   expect(element(await world.sample(5),'cube').position[0]).toBe(6);
 });
+
+const connected=`export default scene({mode:'3d',end:'hold'},s=>{
+  const body=s.box('body'),other=s.sphere('other',{position:[10,0,0]});
+  const label=s.text('label',{text:'Body'}),edge=s.line3D('edge',{});
+  s.attach(label,body,{offset:[0,1,0]});s.connect(edge,body,other,{endpoints:'center'});
+  s.bind(body,[s.time],t=>({rotation:[0,t,0]}));s.wait(60);
+});`;
+
+test('internal labels and connectors follow host transitions while original rotation continues',async()=>{
+  let now=0;const world=new LiveWorld({clock:()=>now});worlds.push(world);
+  await world.addProgram({id:'connected',source:connected,baseRevision:0},0);
+  now=2;await world.apply({baseRevision:1,changes:[{id:'body',props:{position:[4,0,0],fill:'RED'},duration:2}]},now);
+  const middle=await world.sample(3),end=await world.sample(4);
+  expect(element(middle,'body').rotation[1]).toBe(3);
+  expect(element(middle,'label').position).toEqual([2,1,0]);
+  expect(element(middle,'edge').geometry.points).toEqual([[2,0,0],[10,0,0]]);
+  expect(element(end,'label').position).toEqual([4,1,0]);
+  expect(element(end,'edge').geometry.points).toEqual([[4,0,0],[10,0,0]]);
+  now=4;await world.addProgram({id:'extra',source:dot('extra'),baseRevision:2},now);
+  expect(element(await world.sample(5),'body').rotation[1]).toBe(5);
+  now=5;await world.apply({baseRevision:3,changes:[{id:'label',props:{opacity:1}}],remove:['body']},now);
+  const removed=await world.sample(6);
+  expect(removed.elements.some(e=>e.id==='body')).toBe(false);
+  expect(element(removed,'label').opacity).toBe(0);
+  expect(element(removed,'edge').opacity).toBe(0);
+});
+
+test('rejects sets and tweens of binding-owned properties without partially publishing a patch',async()=>{
+  const world=new LiveWorld({clock:()=>0});worlds.push(world);
+  await world.addProgram({id:'connected',source:connected,baseRevision:0},0);
+  const before=await world.sample(2);
+  for(const duration of [0,1])for(const change of [
+    {id:'label',props:{position:[1,2,0] as [number,number,number]}},
+    {id:'edge',props:{points:[[0,0,0],[4,0,0]] as [number,number,number][]}},
+  ]){
+    await expect(world.apply({baseRevision:1,changes:[{id:'body',props:{fill:'RED'}},{...change,duration}]},2)).rejects.toThrow(/binding-owned/i);
+    expect(world.revision).toBe(1);expect(await world.sample(2)).toEqual(before);
+  }
+});
+
+test('resolves bindings after overrides so an initially collapsed connector becomes visible',async()=>{
+  const world=new LiveWorld({clock:()=>0});worlds.push(world);
+  await world.addProgram({id:'overlap',source:`export default scene({},s=>{
+    const a=s.circle('a'),b=s.circle('b'),edge=s.line('edge');
+    s.connect(edge,a,b,{endpoints:'center'});s.wait(60);
+  });`,baseRevision:0},0);
+  expect(element(await world.sample(0),'edge').opacity).toBe(0);
+  await world.apply({baseRevision:1,changes:[{id:'b',props:{position:[4,0,0]}}]},1);
+  const frame=await world.sample(2);
+  expect(element(frame,'edge').opacity).toBe(1);
+  expect(element(frame,'edge').geometry.points).toEqual([[0,0,0],[4,0,0]]);
+});
+
+test('rejects cross-program and cyclic attachment dependencies without publishing',async()=>{
+  const world=new LiveWorld({clock:()=>0});worlds.push(world);
+  await world.addProgram({id:'one',source:dot('existing'),baseRevision:0},0);
+  for(const body of [
+    `const label=s.text('new',{text:'New'});s.attach(label,{id:'existing'});`,
+    `const a=s.circle('new-a'),b=s.circle('new-b');s.attach(a,b);s.attach(b,a);`,
+  ]){
+    await expect(world.addProgram({id:'bad',source:`export default scene({},s=>{${body}s.wait(60)});`,baseRevision:1},0)).rejects.toThrow();
+    expect(world.revision).toBe(1);expect((await world.sample(0)).elements.map(e=>e.id)).toEqual(['existing']);
+  }
+});

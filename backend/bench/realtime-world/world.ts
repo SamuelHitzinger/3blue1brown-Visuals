@@ -7,6 +7,7 @@
 import { SourceCompiler } from '../../../shared/animlib/src/compiler-client.js';
 import { validateCompiledScene } from '../../../shared/animlib/src/compiler.js';
 import { evaluateScene } from '../../../shared/animlib/src/timeline.js';
+import { applyBindings } from '../../../shared/animlib/src/bindings.js';
 import { applyReactiveProperties, mergeReactiveUpdates, validateReactiveProperties } from '../../../shared/animlib/src/reactive.js';
 import { SceneAssets } from '../../../shared/animlib/src/scene-assets.js';
 import { paletteResolver } from '../../../shared/animlib/src/palette.js';
@@ -121,7 +122,9 @@ export class LiveWorld {
     check(scene.controls.length===0,'Controls are not implemented by the experimental world');
     check(!scene.options.audio,'Audio is not implemented by the experimental world');
     check(!scene.views?.length&&!scene.tracks.some(track=>track.action.type==='camera'),'Program camera/view authoring is not implemented');
-    check(!scene.behaviors?.length&&!scene.bindings?.length,'Behaviors and attachment bindings are not implemented');
+    check(!scene.behaviors?.length,'Behaviors are not implemented');
+    // validateCompiledScene has already checked binding references, spaces and
+    // dependency cycles within this program. Disjoint IDs prevent cross-program access.
     const all=[...scene.initial,...scene.lifecycle.flatMap(event=>event.elements??[])];
     const ids=new Set<string>();let vertices=0;
     for(const element of all){id(element.id);ids.add(element.id);vertices+=(element.geometry.vertices?.length??0)+(element.geometry.points?.length??0);}
@@ -172,7 +175,7 @@ export class LiveWorld {
     return Promise.all([...this.programs.values()].filter(program=>program.epoch<=nowSeconds).map(program=>this.sampleProgram(program,nowSeconds)));
   }
   private compose(samples:Sample[],nowSeconds:number):Frame{
-    const elements=samples.flatMap(({program,scene})=>evaluateScene(scene,Math.max(0,nowSeconds-program.epoch)).elements)
+    const elements=samples.flatMap(({program,scene})=>evaluateScene(scene,Math.max(0,nowSeconds-program.epoch),{bindings:false}).elements)
       .filter(element=>!this.removed.has(element.id));
     for(const element of elements){
       if(element.geometry.children)element.geometry.children=element.geometry.children.filter(key=>!this.removed.has(key));
@@ -183,7 +186,11 @@ export class LiveWorld {
       }
       if(Object.keys(properties).length)applyReactiveProperties(element,properties as ReactiveProperties);
     }
-    return {elements,camera:structuredClone(this.camera),cameraAnimated:false,views:[],...(this.renderOptions.lighting!==undefined?{lighting:structuredClone(this.renderOptions.lighting)}:{})};
+    // Resolve against the final host-adjusted pose. Starting unbound also lets
+    // connectors recover from a formerly collapsed pose; missing sources retain
+    // native binding behavior (hide their directly dependent targets).
+    return applyBindings({elements,camera:structuredClone(this.camera),cameraAnimated:false,views:[],...(this.renderOptions.lighting!==undefined?{lighting:structuredClone(this.renderOptions.lighting)}:{})},
+      samples.flatMap(({scene})=>scene.bindings??[]));
   }
   async sample(nowSeconds:number):Promise<Frame>{
     this.alive();time(nowSeconds);
@@ -212,6 +219,10 @@ export class LiveWorld {
       id(change.id);check(!changed.has(change.id),'Duplicate changed ID');changed.add(change.id);
       const element=byId.get(change.id),owner=this.owners.get(change.id);check(element&&owner,'Unknown or invisible target ID');
       const duration=change.duration??0;check(Number.isFinite(duration)&&duration>=0&&duration<=60,'Invalid transition duration');
+      for(const binding of owner.scene.bindings??[])if(binding.target===change.id){
+        const owned=binding.type==='attach'?'position':'points';
+        check(!Object.hasOwn(change.props??{},owned),`Cannot override binding-owned property: ${owned}`);
+      }
       validateReactiveProperties(change.props,element,owner.scene);
       const overrides=new Map(nextOverrides.get(change.id));
       for(const [rawKey,value] of Object.entries(change.props)){
@@ -259,7 +270,7 @@ export class LiveWorld {
   summary(){return {revision:this.version,disposed:this.stopped,pendingPrograms:this.pending.size,
     programs:[...this.programs.values()].map(program=>({id:program.id,epoch:program.epoch,duration:program.scene.duration,ids:[...program.ids].filter(key=>!this.removed.has(key))})),
     entityIds:[...this.owners.keys()].filter(key=>!this.removed.has(key)),reservedIdCount:this.reserved.size,
-    limitations:['No controls, behavior/input, attachments, audio, or per-program views/camera animation','First committed program chooses world camera; later program camera defaults are ignored',
+    limitations:['No controls, behavior/input, cross-program attachments, audio, or per-program views/camera animation','First committed program chooses world camera; later program camera defaults are ignored',
       'Time callbacks stop at the authored program duration','Animated edits to time-callback-owned properties require a separate rebase policy','No history replay before committed mutations']};}
   dispose(){if(this.stopped)return;this.stopped=true;for(const candidate of this.pending){candidate.controller.abort(new Error('World disposed'));candidate.compiler.dispose();}
     for(const program of this.programs.values())this.retire(program);this.programs.clear();this.owners.clear();this.overrides.clear();this.assetGeometry.dispose();}

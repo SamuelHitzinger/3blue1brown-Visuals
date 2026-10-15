@@ -24,3 +24,19 @@ Reject missing geometry, detached annotations, unreadable scale, unexplained
 equation changes, camera resets, identity loss, decorative motion and scene cards
 that substitute for a causal construction. Runtime correctness and speed do not
 establish visual quality. Fresh reviewers inspect actual native motion evidence.
+
+## Matched public-lecture proof
+
+The source-grounded model brief from the MIT frame at 900 seconds selects the
+restoring-acceleration sign relation. Both authoring arms receive the same brief,
+frame, uncertain past-only ASR excerpt, model settings, and eight-second timing.
+A fixed zero, one persistent marker, displacement arrow, and acceleration arrow
+own the frame. Displacement and acceleration keep distinct stable colors. Moving
+the marker across zero must reverse acceleration and shrink it at the crossing.
+Local labels follow their objects. Establish for one second, compare positions
+for five seconds, then retain the consequence for two seconds. Positive k/m is
+an explicit assumption; this position sweep is not a physical time trajectory.
+Reject arrows that miss zero or reverse incorrectly, detached labels, illegible
+conditions, unexplained algebra, and decorative slide framing. Synthetic visual
+windows do not establish speech synchronization. Compare unchanged rendered
+sources, including intermediate motion, before claiming quality preservation.
