@@ -27,10 +27,11 @@ const videos = new VideoService(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite
   config ? createThumbnailGenerator(new PiAgentRunner(thumbnailAgentConfig())) : undefined);
 const lectureConfig = config && { ...config, model: process.env.LECTURE_MODEL ?? 'gpt-6.1-sol', thinking: 'medium' as const };
 const lectureRunner = lectureConfig ? new PiAgentRunner(lectureConfig) : undefined;
+const liveLectureRunner = lectureConfig ? new PiAgentRunner({ ...lectureConfig, thinking: 'minimal' }) : undefined;
 const lectures = new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'),
-  lectureRunner ? (input, signal) => generateLectureNotes(lectureRunner, input, signal) : undefined,
+  lectureRunner ? (input, signal) => generateLectureNotes(input.previousNotes && input.previousSourceRevision ? liveLectureRunner! : lectureRunner, input, signal) : undefined,
   { visualize: config ? createLectureVisualGenerator(new PiAgentRunner({ ...config, thinking: 'medium' }), config.dataDir,
-    { preview, reviewRunner: new PiAgentRunner(config) }) : undefined, synthesisDebounceMs: 3_000 });
+    { preview, reviewRunner: new PiAgentRunner(config) }) : undefined, synthesisDebounceMs: 150, concurrency: 3 });
 const liveBridge = new LectureLiveBridge(process.env.LIVE_BRIDGE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-live-bridge.sqlite'), lectures);
 const transcription = lectureTranscriptionConfig();
 const captures = new LectureCaptureService(process.env.CAPTURE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-capture.sqlite'), lectures, {

@@ -66,6 +66,42 @@ test('retained photo snippets are cropped, owner-scoped, and removed with the le
   expect((await s.capture.handleOwner(ownerRequest(path))).status).toBe(404);
 });
 
+test('slow photos leave extraction capacity for newly arriving audio', async () => {
+  const started: string[] = [];
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const s = await setup({ extract: async (_file, meta) => { started.push(meta.clientId); if (meta.kind === 'photo') await gate; return 'A new fact'; } });
+  await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata('photo-1'))));
+  await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata('photo-2'))));
+  const audio = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0]);
+  await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata('audio', 'audio'), audio, 'audio/webm')));
+  await Bun.sleep(20);
+  try { expect(started).toEqual(['photo-1', 'audio']); }
+  finally { release(); }
+  await until(s.status, value => value.processed === 3);
+});
+
+test('two stalled transcriptions and a photo do not block fresh speech', async () => {
+  const started: string[] = [];
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const s = await setup({ extract: async (_file, meta) => {
+    started.push(meta.clientId);
+    if (meta.clientId !== 'fresh') await gate;
+    return 'A new fact';
+  } });
+  const audio = new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0]);
+  try {
+    await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata('photo'))));
+    for (const id of ['slow-1', 'slow-2', 'fresh']) {
+      await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata(id, 'audio'), audio, 'audio/webm')));
+    }
+    await until(s.status, value => value.processed === 1);
+    expect(started).toEqual(['photo', 'slow-1', 'slow-2', 'fresh']);
+  } finally { release(); }
+  await until(s.status, value => value.processed === 4);
+});
+
 test('invalid optional crop retains text and diagram evidence without exposing the full frame', async () => {
   const s = await setup({ extract: async () => ({ text: 'Readable text', visualEvidence: 'Arrow points right', photoSnippet: { crop: { x: 0, y: 0, width: 1, height: 1 }, description: 'Full frame' } }) });
   await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()));
@@ -314,6 +350,13 @@ test('pending capacity bounds accepted uploads without rejecting idempotent retr
   expect((await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()))).status).toBe(202);
   expect((await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()))).status).toBe(202);
   expect((await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form({ ...metadata('item-2'), sequence: 2 })))).status).toBe(429);
+});
+
+test('photo admission leaves pending room for live audio', async () => {
+  const s = await setup({ maxPendingPerLecture: 3, maxPendingGlobal: 4, extract: async () => new Promise<string>(() => {}) });
+  for (let i = 0; i < 3; i++) await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata(`photo-${i}`))));
+  const response = await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata('audio', 'audio'), new Uint8Array([0x1a, 0x45, 0xdf, 0xa3, 0]), 'audio/webm')));
+  expect(response.status).toBe(202);
 });
 
 test('a timed-out extractor releases capacity and its late result cannot append a source', async () => {

@@ -1,4 +1,4 @@
-import type { LectureConcept, LectureNotes, LectureSession } from '../../../shared/lecture'
+import type { LectureConcept, LectureNotes, LectureSession, LecturePoint } from '../../../shared/lecture'
 export function assignLectureConcepts(notes: LectureNotes) {
   const sections = notes.sections.map(section => ({ ...section, concepts: [] as LectureConcept[] }))
   if (!sections.length && notes.concepts.length) sections.push({ id: 'concepts', title: 'Ideas in this lecture', points: [], concepts: [] })
@@ -22,6 +22,41 @@ export function lectureNoteText(session: Pick<LectureSession, 'noteEdits'>, key:
 
 /** AI IDs occupy their own namespace, separate from overview/questions/personal roles. */
 export function notebookSectionKey(id: string) { return `section-${id}` }
+
+export function groupNotebookPoints(points: LecturePoint[]) {
+  const groups: { title?: string; points: LecturePoint[] }[] = []
+  for (const point of points) {
+    let group = groups.at(-1)
+    if (!group || group.title !== point.group) { group = { title: point.group, points: [] }; groups.push(group) }
+    group.points.push(point)
+  }
+  return groups
+}
+
+/** Preserve all visible conditions/headings when a structured section becomes a personal edit. */
+export function notebookEditText(points: LecturePoint[]) {
+  return groupNotebookPoints(points).map(group => [group.title, ...group.points.map(point => point.label ? `${point.label}: ${point.text}` : point.text)].filter(Boolean).join('\n')).join('\n\n')
+}
+
+export function noteLineKind(point: LecturePoint): NonNullable<LecturePoint['kind']> {
+  if (point.kind) return point.kind
+  if (/[→↔⇒↑↓]/u.test(point.text)) return 'relation'
+  if (/[=≡]/u.test(point.text)) return 'equation'
+  return 'note'
+}
+
+/** Plain-text legacy equations: render scripts as text nodes, never interpret markup. */
+export function splitNoteScripts(text: string) {
+  const parts: { text: string; script?: 'sub' | 'sup' }[] = []
+  let cursor = 0
+  for (const match of text.matchAll(/([_^])(?:\{([^{}]+)\}|([+-]?\d+|[\p{L}\p{N}]+))/gu)) {
+    if (match.index! > cursor) parts.push({ text: text.slice(cursor, match.index) })
+    parts.push({ text: match[2] ?? match[3], script: match[1] === '_' ? 'sub' : 'sup' })
+    cursor = match.index! + match[0].length
+  }
+  if (cursor < text.length) parts.push({ text: text.slice(cursor) })
+  return parts
+}
 
 /** Match complete terms; a symbol such as v must not color every v inside prose. */
 export function findNoteTerm(text: string, term: string, from: number): number {

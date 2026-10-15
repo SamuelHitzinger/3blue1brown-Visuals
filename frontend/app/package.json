@@ -19,6 +19,7 @@
     "jsqr": "^1.4.0",
     "lucide-react": "^0.468.0",
     "mammoth": "^1.13.0",
+    "mathjax-full": "^3.2.2",
     "pdfjs-dist": "^6.4.299",
     "qrcode-generator": "^2.0.4",
     "react": "^19.0.0",

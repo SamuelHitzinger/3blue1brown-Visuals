@@ -35,7 +35,7 @@ export class IndexedCaptureStore implements CaptureStore {
   close() { void this.db.then(db => db.close()).catch(() => {}) }
 }
 
-/** One sender, durable IDs, and a two-item emergency reserve for the final audio/photo. */
+/** Independent audio/photo senders, durable IDs, and a two-item emergency reserve. */
 export class CaptureQueue {
   private store: CaptureStore
   private send: (item: CaptureEntry) => Promise<unknown>
@@ -45,24 +45,25 @@ export class CaptureQueue {
   private entries: CaptureEntry[] = []
   private volatile: CaptureEntry[] = []
   private operation: Promise<void> = Promise.resolve()
-  private flight: Promise<void> | null = null
-  private nextAttempt = 0
-  private failures = 0
+  private flights = new Map<string, Promise<void>>()
+  private nextAttempt = { audio: 0, photo: 0 }
+  private failures = { audio: 0, photo: 0 }
   private rejected = new Map<string, string>()
   private blocked = false
   private message = ''
   private disposed = false
   private lastUploadedAt = 0
-  constructor(store: CaptureStore, send: (item: CaptureEntry) => Promise<unknown>, changed: (state: QueueSnapshot) => void, limits = { maxItems: 30, maxBytes: 40 * 1024 * 1024 }) {
+  constructor(store: CaptureStore, send: (item: CaptureEntry) => Promise<unknown>, changed: (state: QueueSnapshot) => void, limits = { maxItems: 240, maxBytes: 40 * 1024 * 1024 }) {
     this.store = store; this.send = send; this.changed = changed; this.maxItems = limits.maxItems; this.maxBytes = limits.maxBytes
   }
   snapshot(): QueueSnapshot {
     const all = [...this.entries, ...this.volatile]
     const rejection = this.rejected.size ? `${this.rejected.size} ${this.rejected.size === 1 ? 'capture is' : 'captures are'} retained on this phone for retry: ${this.rejected.values().next().value}. Other capture can continue while storage has room.` : ''
-    return { pending: all.length, bytes: all.reduce((sum, item) => sum + item.blob.size, 0), unsaved: this.volatile.length, uploading: !!this.flight, blocked: this.blocked, message: this.message || rejection, maxSequence: Math.max(0, ...all.map(item => item.metadata.sequence)), lastUploadedAt: this.lastUploadedAt }
+    return { pending: all.length, bytes: all.reduce((sum, item) => sum + item.blob.size, 0), unsaved: this.volatile.length, uploading: this.flights.size > 0, blocked: this.blocked, message: this.message || rejection, maxSequence: Math.max(0, ...all.map(item => item.metadata.sequence)), lastUploadedAt: this.lastUploadedAt }
   }
   private notify() { if (!this.disposed) this.changed(this.snapshot()) }
   async restore() { this.entries = await this.store.list(); this.notify() }
+  pendingPhotos() { return [...this.entries, ...this.volatile].filter(item => item.metadata.kind === 'photo').length }
   hasCapacity() { const state = this.snapshot(); return !state.blocked && !state.unsaved && state.pending < this.maxItems - 2 && state.bytes < this.maxBytes - 12 * 1024 * 1024 }
   enqueue(item: CaptureEntry): Promise<void> {
     const action = this.operation.then(async () => {
@@ -83,23 +84,27 @@ export class CaptureQueue {
     return action
   }
   flush(): Promise<void> {
-    if (this.flight) return this.flight
-    if (this.disposed || this.blocked || Date.now() < this.nextAttempt) return Promise.resolve()
-    this.flight = this.drain().finally(() => { this.flight = null; this.notify() })
-    this.notify(); return this.flight
+    if (this.disposed || this.blocked) return Promise.resolve()
+    for (const kind of ['audio', 'photo'] as const) {
+      if (this.flights.has(kind) || Date.now() < this.nextAttempt[kind]) continue
+      const flight = this.drain(kind).finally(() => { this.flights.delete(kind); this.notify() })
+      this.flights.set(kind, flight)
+    }
+    this.notify(); return Promise.all(this.flights.values()).then(() => {})
   }
-  private async drain() {
+  private async drain(kind: 'audio' | 'photo') {
     await this.operation
-    while (!this.disposed) {
-      const item = [...this.entries, ...this.volatile].filter(item => !this.rejected.has(item.metadata.clientId)).sort((a, b) => a.metadata.sequence - b.metadata.sequence)[0]
-      if (!item) { this.message = ''; return }
+    while (!this.disposed && !this.blocked) {
+      const item = [...this.entries, ...this.volatile].filter(item => item.metadata.kind === kind && !this.rejected.has(item.metadata.clientId)).sort((a, b) => a.metadata.sequence - b.metadata.sequence)[0]
+      if (!item) return
       try {
         await this.send(item)
         this.lastUploadedAt = Date.now()
         if (this.entries.includes(item)) await this.store.remove(item.metadata.clientId)
         this.entries = this.entries.filter(entry => entry !== item)
         this.volatile = this.volatile.filter(entry => entry !== item)
-        this.failures = 0; this.nextAttempt = 0; this.message = ''
+        this.failures[kind] = 0; this.nextAttempt[kind] = 0
+        if (!this.blocked && !Object.values(this.nextAttempt).some(at => at > Date.now())) this.message = ''
         this.notify()
       } catch (error) {
         if (this.disposed) return
@@ -108,20 +113,20 @@ export class CaptureQueue {
         // and pairing failures still halt the entire sender below.
         if (error instanceof CaptureHTTPError && [400, 415, 422].includes(error.status)) {
           this.rejected.set(item.metadata.clientId, error.message)
-          this.failures = 0; this.nextAttempt = 0; this.message = ''
+          this.failures[kind] = 0; this.nextAttempt[kind] = 0
           this.notify()
           await this.operation
           continue
         }
         const transient = !(error instanceof CaptureHTTPError) || error.status === 408 || error.status === 429 || error.status >= 500
-        this.blocked = !transient
+        this.blocked ||= !transient
         this.message = error instanceof Error ? error.message : 'Connection interrupted. Retrying automatically.'
-        this.nextAttempt = Date.now() + Math.max(error instanceof CaptureHTTPError ? error.retryAfterMs : 0, Math.min(30_000, 1000 * 2 ** Math.min(this.failures++, 5)) + Math.random() * 400)
+        this.nextAttempt[kind] = Date.now() + Math.max(error instanceof CaptureHTTPError ? error.retryAfterMs : 0, Math.min(30_000, 1000 * 2 ** Math.min(this.failures[kind]++, 5)) + Math.random() * 400)
         this.notify(); return
       }
       await this.operation
     }
   }
-  retry() { this.blocked = false; this.nextAttempt = 0; this.rejected.clear(); return this.flush() }
+  retry() { this.blocked = false; this.nextAttempt = { audio: 0, photo: 0 }; this.rejected.clear(); return this.flush() }
   dispose() { this.disposed = true }
 }

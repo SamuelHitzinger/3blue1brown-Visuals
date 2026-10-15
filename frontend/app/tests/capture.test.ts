@@ -84,6 +84,31 @@ test('queue replays the same persisted item after ambiguous network failure', as
   assert.equal(store.entries.length, 0)
 })
 
+test('a slow photo does not block audio arriving during its upload', async () => {
+  const store = new MemoryStore(), sent: string[] = []
+  let release!: () => void
+  const gate = new Promise<void>(resolve => { release = resolve })
+  const queue = new CaptureQueue(store, async item => { sent.push(item.metadata.clientId); if (item.metadata.kind === 'photo') await gate }, () => {})
+  const photo = entry('photo'); photo.metadata.kind = 'photo'
+  await queue.restore(); await queue.enqueue(photo)
+  const first = queue.flush()
+  await new Promise(resolve => setImmediate(resolve))
+  await queue.enqueue(entry('audio', 2)); const second = queue.flush()
+  await new Promise(resolve => setImmediate(resolve))
+  try { assert.deepEqual(sent, ['photo', 'audio']); assert.deepEqual(store.entries.map(x => x.metadata.clientId), ['photo']) }
+  finally { release(); await Promise.all([first, second]) }
+})
+
+test('photo retry delay does not delay fresh audio', async () => {
+  const store = new MemoryStore(), sent: string[] = []
+  const queue = new CaptureQueue(store, async item => { sent.push(item.metadata.clientId); if (item.metadata.kind === 'photo') throw new CaptureHTTPError('Busy', 429, 30000) }, () => {})
+  const photo = entry('photo'); photo.metadata.kind = 'photo'
+  await queue.restore(); await queue.enqueue(photo); await queue.flush()
+  await queue.enqueue(entry('audio', 2)); await queue.flush()
+  assert.deepEqual(sent, ['photo', 'audio'])
+  assert.deepEqual(store.entries.map(x => x.metadata.clientId), ['photo'])
+})
+
 test('capacity pauses capture but retains the final audio in memory until accepted', async () => {
   const store = new MemoryStore()
   const queue = new CaptureQueue(store, async () => {}, () => {}, { maxItems: 1, maxBytes: 100 })
@@ -323,6 +348,57 @@ test('next audio window records during a save; stalled storage pauses visibly an
     assert.deepEqual(saved, ['firstfinal', 'firstfinal'])
   } finally {
     release(); await engine.stop()
+    for (const key of globals) { const descriptor = original.get(key); if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key) }
+  }
+})
+
+for (const singleEncoder of [false, true, 'async', 'async-stall'] as const) test(`audio windows preserve boundary context and drain on stop (single encoder: ${singleEncoder})`, async t => {
+  t.mock.timers.enable({ apis: ['setTimeout', 'Date'] })
+  const globals = ['window', 'navigator', 'MediaStream', 'MediaRecorder'] as const
+  const original = new Map(globals.map(key => [key, Object.getOwnPropertyDescriptor(globalThis, key)]))
+  const recorders: FakeRecorder[] = [], saved: { capturedAt: string; durationMs?: number }[] = []
+  let release!: () => void
+  const saving = new Promise<void>(resolve => { release = resolve })
+  const asyncFailure = typeof singleEncoder === 'string'
+  const track = Object.assign(new EventTarget(), { stop() {} })
+  const stream = { getTracks: () => [track], getAudioTracks: () => [track] }
+  class Recorder extends FakeRecorder {
+    static isTypeSupported() { return true }
+    start() {
+      const concurrent = recorders.some(recorder => recorder.state === 'recording')
+      if (singleEncoder === true && concurrent) throw new Error('Only one encoder supported')
+      super.start(); recorders.push(this)
+      if (asyncFailure && concurrent) queueMicrotask(() => { this.dispatchEvent(new Event('error')); this.stop() })
+    }
+  }
+  const replacements = { window: { isSecureContext: true }, navigator: { mediaDevices: { getUserMedia: async () => stream } }, MediaStream: class {}, MediaRecorder: Recorder }
+  const engine = new CaptureEngine({ video: { srcObject: null } as HTMLVideoElement, audio: true, photo: false,
+    photoIntervalMs: 5_000, canCapture: () => true, onSkipped() {}, onPaused(reason) { assert.fail(reason) },
+    onMedia: async media => { saved.push(media); if (singleEncoder === 'async-stall' && saved.length === 1) await saving } })
+  try {
+    for (const key of globals) Object.defineProperty(globalThis, key, { configurable: true, value: replacements[key] })
+    await engine.start()
+    t.mock.timers.tick(1_000)
+    assert.equal(recorders.filter(recorder => recorder.state === 'recording').length, singleEncoder === true ? 1 : 2)
+    await new Promise(resolve => setImmediate(resolve))
+    t.mock.timers.tick(1_000)
+    await new Promise(resolve => setImmediate(resolve))
+    assert.equal(saved[0].durationMs, 2_000)
+    assert.equal(recorders.length, asyncFailure ? 3 : 2)
+    assert.equal(recorders.at(-1)?.state, 'recording', 'A sequential replacement must record during a stalled save after overlap failure')
+    release(); await new Promise(resolve => setImmediate(resolve))
+    if (!singleEncoder) t.mock.timers.tick(100)
+    t.mock.timers.tick(500)
+    const stopped = engine.stop()
+    assert.ok(recorders.every(recorder => recorder.state === 'inactive'), 'Stop must immediately stop both overlapping encoders')
+    await stopped
+    assert.equal(saved.length, singleEncoder ? 2 : 3, 'Every final clip must reach durable storage')
+    assert.equal(Date.parse(saved[1].capturedAt) - Date.parse(saved[0].capturedAt), singleEncoder ? 2_000 : 1_000)
+    const count = recorders.length
+    t.mock.timers.tick(10_000)
+    assert.equal(recorders.length, count, 'No scheduled recorder may restart after stop')
+  } finally {
+    release(); const stopped = engine.stop(); t.mock.timers.tick(10_000); await stopped
     for (const key of globals) { const descriptor = original.get(key); if (descriptor) Object.defineProperty(globalThis, key, descriptor); else Reflect.deleteProperty(globalThis, key) }
   }
 })

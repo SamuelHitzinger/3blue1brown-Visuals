@@ -6,6 +6,15 @@ export function zoomFrame(zoom: number, frame: CaptureFrame = fullFrame): Captur
   return { x: frame.x + (frame.width - width) / 2, y: frame.y + (frame.height - height) / 2, width, height }
 }
 
+/** Camera zoom is centered, so the furthest edge (not just the board's size)
+ * limits magnification. Leave additional room for movement and round down. */
+export function boardZoom(frame: CaptureFrame, current: number, min: number, max: number, step: number): number {
+  const extent = Math.max(1 - 2 * frame.x, 2 * (frame.x + frame.width) - 1,
+    1 - 2 * frame.y, 2 * (frame.y + frame.height) - 1)
+  const target = Math.max(min, Math.min(max, current * .94 / extent))
+  return Math.max(min, Math.min(max, min + Math.floor((target - min) / step + 1e-9) * step))
+}
+
 /** Conservative rectangle proposal, not semantic recognition. Runs on a small local frame.
  * Require four continuous contrasting borders; leave uncertain views unchanged. */
 export function detectBoard(image: { width: number; height: number; data: Uint8ClampedArray }): CaptureFrame | null {
@@ -40,7 +49,7 @@ export function detectBoard(image: { width: number; height: number; data: Uint8C
     for (let c = 0; c < ys.length; c++) for (let d = c + 1; d < ys.length; d++) {
       const left = xs[a], right = xs[b], top = ys[c], bottom = ys[d]
       const width = right - left, height = bottom - top, area = width * height / (w * h), aspect = width / height
-      if (area < .12 || area > .88 || aspect < 1.05 || aspect > 3.8 || height < h * .18) continue
+      if (area < .04 || area > .88 || aspect < 1.05 || aspect > 3.8 || height < h * .1) continue
       const borders = [border(left, top, right, top, true), border(left, bottom, right, bottom, true), border(left, top, left, bottom, false), border(right, top, right, bottom, false)]
       if (borders.some(edge => edge.support < .75 || edge.contrast < 25)) continue
       const score = area * borders.reduce((sum, edge) => sum + edge.support, 0)

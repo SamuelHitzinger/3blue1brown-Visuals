@@ -4,7 +4,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createAssistantMessageEventStream } from '@earendil-works/pi-ai';
-import type { AssistantMessage, Context } from '@earendil-works/pi-ai';
+import type { AssistantMessage, Context, JsonObject } from '@earendil-works/pi-ai';
 import { createModelRuntime } from '../src/agents/auth.js';
 import { agentConfig } from '../src/agents/config.js';
 import { PiAgentRunner } from '../src/agents/runtime.js';
@@ -20,7 +20,7 @@ function reply(text: string, stopReason: AssistantMessage['stopReason'] = 'stop'
       cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } }, stopReason, timestamp: Date.now(),
     ...(stopReason === 'error' ? { errorMessage: '401 secret-provider-details' } : {}) };
 }
-function call(name: string, output: string, id = 'call-1') {
+function call(name: string, output: string | JsonObject, id = 'call-1') {
   const result = reply('', 'toolUse');
   result.content = [{ type: 'toolCall', id, name, arguments: { output } }];
   return result;
@@ -30,8 +30,10 @@ async function harness(outputs: AssistantMessage[], wait?: (ms: number, signal?:
   const config = agentConfig({ PI_CODING_AGENT_DIR: root, AGENT_AUTH_MODE: 'api-key', OPENAI_API_KEY: 'fake-test-key' });
   const runtime = await createModelRuntime(config);
   const contexts: Context[] = [];
-  runtime.streamSimple = (_model, context) => {
+  const sessionIds: (string | undefined)[] = [];
+  runtime.streamSimple = (_model, context, options) => {
     contexts.push(structuredClone(context));
+    sessionIds.push(options?.sessionId);
     const stream = createAssistantMessageEventStream();
     const message = outputs.shift() ?? reply('', 'error');
     queueMicrotask(() => {
@@ -41,9 +43,31 @@ async function harness(outputs: AssistantMessage[], wait?: (ms: number, signal?:
     });
     return stream;
   };
-  return { runner: new PiAgentRunner(config, async () => runtime, wait), contexts, runtime };
+  return { runner: new PiAgentRunner(config, async () => runtime, wait), contexts, runtime, sessionIds };
 }
 const base = { systemPrompt: 'Author a complete scene.', prompt: 'Generate a scene.' };
+
+test('lecture cache affinity reuses routing without retaining prior conversation content', async () => {
+  const { runner, contexts, sessionIds } = await harness([reply('first'), reply('second'), reply('third')]);
+  await runner.run({ ...base, prompt: 'first-private-payload', cacheKey: 'lecture-notes:one', allowWeb: false });
+  await runner.run({ ...base, prompt: 'second-payload', cacheKey: 'lecture-notes:one', allowWeb: false });
+  await runner.run({ ...base, prompt: 'third-payload', cacheKey: 'lecture-notes:two', allowWeb: false });
+  expect(sessionIds).toEqual(['lecture-notes:one', 'lecture-notes:one', 'lecture-notes:two']);
+  expect(JSON.stringify(contexts[1])).not.toContain('first-private-payload');
+  expect(JSON.stringify(contexts[2])).not.toContain('second-payload');
+});
+
+test('structured submission avoids escaped JSON while keeping validation and repair', async () => {
+  const patch = { patch: { sections: [{ updateId: 'vectors', appendPoints: [['|v| = 5', ['s1']]] }] } };
+  const { runner, contexts } = await harness([call('submit_output', { wrong: true }), call('submit_output', patch)]);
+  const checked: unknown[] = [];
+  const result = await runner.run({ ...base, allowWeb: false, outputMode: 'submit-only', structuredOutput: true,
+    validate: async output => { const value = JSON.parse(output); checked.push(value); if (!value.patch) throw new Error('Expected a patch'); } });
+  expect(JSON.parse(result)).toEqual(patch);
+  expect(checked).toEqual([{ wrong: true }, patch, patch]);
+  expect(contexts).toHaveLength(2);
+  expect(JSON.stringify(contexts[1])).toContain('Expected a patch');
+});
 
 test('live notes finish with one validated submission without repeating the notebook', async () => {
   const notes = { summary: '', sections: [{ id: 'vectors', title: 'Vectors', points: [{ text: 'Vector: magnitude + direction', sourceIds: ['s1'] }] }], concepts: [], questions: [] };

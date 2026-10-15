@@ -78,11 +78,19 @@ Audio, photo interval, available cameras, privacy, and upload details are under
 the settings icon. Errors remain visible. Available camera choices appear after
 camera permission is granted; pause to switch cameras.
 
-**Frame board** experimentally finds a contrasting rectangular screen/board and
-crops both preview and saved photos. Detection runs locally without AI charges.
-Check its edges and use **Reset frame** to undo. This is a one-time framing aid,
-not tracking or perspective correction: other rectangles can be mistaken for a
-board, and angled, obscured, or low-contrast boards may require manual zoom.
+**Auto frame** starts on. Before each photo, it detects a contrasting whiteboard,
+blackboard, or presentation, adjusts supported camera zoom while keeping all edges
+visible with a safety margin, and crops the photo before upload and note extraction.
+Off-center boards limit camera zoom so edge writing stays visible. Without camera
+zoom support, it crops at the available resolution without enlarging pixels.
+Detection runs locally without AI charges and refreshes after camera movement.
+Uncertain or failed detection clears the old crop and sends the whole photo,
+without automatic cropping. Camera zoom widens when supported.
+Pinch, presets, or the slider switch to manual framing; **Auto frame: Off** enables
+automatic framing again. The selected mode survives pause/resume on the page.
+Check the preview: detection is a rectangle heuristic, not semantic recognition or
+perspective correction. Other rectangles can be mistaken for a board; angled,
+obscured, or low-contrast boards may require manual framing.
 
 Audio is recorded as complete clips of about 15 seconds. Photos default to every
 15 seconds, with 10-, 30- and 60-second options. Substantially unchanged frames are
@@ -111,8 +119,11 @@ extracted source is available to the lecture; note generation may still be in
 progress. Desktop refreshes automatically, including sessions previously idle.
 Notes preserve photo/audio provenance and capture times. Personal notes stay
 separate from AI updates. Visuals retain the existing compiler, readability,
-rendered review, and catalog selection gates. Expect incremental notes in tens
-of seconds and complex reviewed visuals in minutes, depending on provider load.
+rendered review, and catalog selection gates. A controlled browser test measured
+10.6 seconds on average for incremental notes and basic sketches, including
+capture and display (17.1 seconds slowest). Phone/network conditions and provider
+load can increase this; below-ten-second delivery is not guaranteed. Full note
+refreshes and complex reviewed visuals can take substantially longer.
 
 The phone shows local upload backlog, server processing, notes coverage, and the
 age of the oldest extracted source still waiting for notes. This age excludes

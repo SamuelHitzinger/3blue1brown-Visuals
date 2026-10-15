@@ -10,12 +10,12 @@ import { parseLectureNotes } from './agents/lecture.js';
 import { logStage } from './logging.js';
 import type { LectureSession, LectureSummary, LectureSource, LectureSynthesizer, LectureVisualGenerator, LectureVisualization, LectureVisualInput } from '../../shared/lecture.js';
 
-const MAX_SOURCE = 40_000, MAX_TOTAL_SOURCE = 250_000, MAX_SOURCES = 1200, MAX_BODY_BYTES = 500_000, MAX_VISUALIZATIONS = 24;
+const MAX_SOURCE = 40_000, MAX_TOTAL_SOURCE = 250_000, MAX_SOURCES = 12000, MAX_BODY_BYTES = 500_000, MAX_VISUALIZATIONS = 24;
 const NOTES_FORMAT_VERSION = 3;
 const NO_SYNTHESIS = 'Your lecture material is saved. Connect the server AI service, then retry updating the notes.';
 const NO_VISUALIZATION = 'Your notes are saved. Connect the server visualization service, then retry this explanation.';
 type Row = { id: string; owner: string; key: string; input: string; snapshot: string };
-type Work = { id: string; visualId?: string; controller: AbortController; done: Promise<void> };
+type Work = { id: string; visualId?: string; sourceRevision?: number; refresh?: boolean; failed?: boolean; controller: AbortController; done: Promise<void> };
 type VisualJob = { sourceRevision: number; input: LectureVisualInput };
 export class LectureError extends Error { constructor(message: string, readonly status = 400) { super(message); } }
 
@@ -61,7 +61,7 @@ export class LectureService {
   private deleteListeners = new Set<(id: string) => void>();
 
   constructor(path: string, private synthesize?: LectureSynthesizer,
-    private options: { visualize?: LectureVisualGenerator; concurrency?: number; synthesisTimeoutMs?: number; visualizationTimeoutMs?: number; synthesisDebounceMs?: number } = {}) {
+    private options: { visualize?: LectureVisualGenerator; concurrency?: number; liveSynthesisConcurrency?: number; synthesisTimeoutMs?: number; visualizationTimeoutMs?: number; synthesisDebounceMs?: number } = {}) {
     if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path, { create: true });
     this.db.exec(`PRAGMA journal_mode=WAL;
@@ -129,7 +129,7 @@ export class LectureService {
     this.db.query('UPDATE lectures SET snapshot = ? WHERE id = ?').run(JSON.stringify(session), session.id);
   }
   private prepareSynthesis(session: LectureSession) {
-    session.status = this.synthesize ? (this.active.has(`${session.id}:notes`) ? 'processing' : 'queued') : 'failed';
+    session.status = this.synthesize ? (this.noteWork(session.id).length ? 'processing' : 'queued') : 'failed';
     if (this.synthesize) delete session.error; else session.error = NO_SYNTHESIS;
   }
   private enqueueVisual(session: LectureSession, conceptId: string): LectureVisualization {
@@ -156,8 +156,14 @@ export class LectureService {
     // Notes get first choice of capacity; one long visual can never occupy both default workers.
     for (const row of this.rows()) {
       if (this.active.size >= this.concurrency) break;
-      const session = this.decode(row), key = `${session.id}:notes`;
-      if (session.status === 'queued' && !this.active.has(key) && !this.synthesisTimers.has(session.id)) this.start(session.id);
+      const session = this.decode(row), active = this.noteWork(session.id);
+      if (this.synthesisTimers.has(session.id)) continue;
+      if (!active.length) { if (session.status === 'queued') this.start(session.id); continue; }
+      // A second immutable snapshot can cover new speech while an older model
+      // call is slow. Full rewrites remain serial; coverage only moves forward.
+      if ((session.status === 'processing' || session.status === 'queued') && active.length < Math.min(2, this.options.liveSynthesisConcurrency ?? 1)
+        && session.notes && session.notesFormatVersion === NOTES_FORMAT_VERSION && !session.notesRefreshRequested && !active.some(work => work.refresh)
+        && this.noteRevision(session) > Math.max(...active.map(work => work.sourceRevision ?? 0))) this.start(session.id);
     }
     if ([...this.active.values()].some(work => work.visualId)) return;
     for (const row of this.rows()) {
@@ -168,8 +174,18 @@ export class LectureService {
       }
     }
   }
+  private noteWork(id: string) { return [...this.active.values()].filter(work => work.id === id && !work.visualId); }
+  private noteRevision(session: LectureSession) {
+    if (session.notesRefreshRequested || (!!session.notes && session.notesFormatVersion !== NOTES_FORMAT_VERSION)) return session.sourceRevision;
+    let chars = 0, count = 0, revision = session.synthesizedRevision;
+    for (const source of session.sources.filter(source => source.sequence > session.synthesizedRevision)) {
+      if (count && (count >= 12 || chars + source.text.length > 24_000)) break;
+      chars += source.text.length; count++; revision = source.sequence;
+    }
+    return revision;
+  }
   private start(id: string, visualId?: string) {
-    const key = `${id}:${visualId ?? 'notes'}`, controller = new AbortController();
+    const key = `${id}:${visualId ?? `notes:${crypto.randomUUID()}`}`, controller = new AbortController();
     const work: Work = { id, visualId, controller, done: Promise.resolve() };
     this.active.set(key, work);
     work.done = Promise.resolve().then(async () => {
@@ -179,32 +195,30 @@ export class LectureService {
       // Full refreshes re-read the complete lecture and may need validation recovery;
       // keep the shorter deadline for ordinary incremental capture updates.
       const fullRefresh = session.notesRefreshRequested || (!!session.notes && session.notesFormatVersion !== NOTES_FORMAT_VERSION);
+      if (!visualId) { work.sourceRevision = this.noteRevision(session); work.refresh = !!fullRefresh; }
       const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(visualId ? (this.options.visualizationTimeoutMs ?? 6 * 60_000) : (this.options.synthesisTimeoutMs ?? (fullRefresh ? 6 : 2) * 60_000))]);
-      if (visualId) await this.runVisual(id, visualId, signal); else await this.runNotes(id, signal);
+      if (visualId) await this.runVisual(id, visualId, signal); else await this.runNotes(id, signal, work);
     }).catch(() => {
       // Storage failures must not become unhandled rejections or expose source/provider details.
       if (!this.stopped && !controller.signal.aborted) {
+        work.failed = true;
         const session = this.snapshot(id);
         if (session) {
           if (visualId) { const visual = session.visualizations.find(item => item.id === visualId); if (visual) { visual.status = 'failed'; visual.error = failureMessage(undefined, true); } }
+          else if (this.noteWork(id).some(other => other !== work && !other.failed && !other.controller.signal.aborted) || (!work.refresh && session.synthesizedRevision >= (work.sourceRevision ?? 0))) return;
           else { session.status = 'failed'; session.error = failureMessage(undefined); }
           this.save(session);
         }
       }
     }).finally(() => { this.active.delete(key); this.kick(); });
   }
-  private async runNotes(id: string, signal: AbortSignal) {
+  private async runNotes(id: string, signal: AbortSignal, work: Work) {
     const initial = this.snapshot(id)!;
     const refresh = initial.notesRefreshRequested || (!!initial.notes && initial.notesFormatVersion !== NOTES_FORMAT_VERSION);
     delete initial.notesRefreshRequested;
     initial.status = 'processing'; delete initial.error; this.save(initial);
     // Bound each incremental update; only mark the batch covered after success.
-    let chars = 0, count = 0, revision = initial.synthesizedRevision;
-    for (const source of initial.sources.filter(source => source.sequence > initial.synthesizedRevision)) {
-      if (count && (count >= 12 || chars + source.text.length > 24_000)) break;
-      chars += source.text.length; count++; revision = source.sequence;
-    }
-    if (refresh) revision = initial.sourceRevision;
+    const revision = refresh ? initial.sourceRevision : this.noteRevision(initial);
     const sources = initial.sources.filter(source => source.sequence <= revision);
     try {
       if (!this.synthesize) throw new AgentError('CONFIG', NO_SYNTHESIS);
@@ -214,11 +228,12 @@ export class LectureService {
         signal.throwIfAborted();
         return parseLectureNotes(JSON.stringify(result), sources, initial.notes);
       });
-      if (this.stopped) return;
+      if (this.stopped || work.controller.signal.aborted) return;
       const current = this.snapshot(id); if (!current) return;
-      const previousIds = new Set(initial.notes?.concepts.map(concept => concept.id) ?? []);
+      if (!refresh && current.synthesizedRevision >= revision) return;
+      const previousIds = new Set(current.notes?.concepts.map(concept => concept.id) ?? []);
       for (const visual of current.visualizations) {
-        if (JSON.stringify(initial.notes?.concepts.find(concept => concept.id === visual.conceptId)) !== JSON.stringify(notes.concepts.find(concept => concept.id === visual.conceptId))) visual.stale = true;
+        if (JSON.stringify(current.notes?.concepts.find(concept => concept.id === visual.conceptId)) !== JSON.stringify(notes.concepts.find(concept => concept.id === visual.conceptId))) visual.stale = true;
       }
       current.notes = notes; current.synthesizedRevision = revision; current.notesFormatVersion = NOTES_FORMAT_VERSION;
       current.status = current.sourceRevision > revision || current.notesRefreshRequested ? 'queued' : 'idle'; delete current.error;
@@ -227,9 +242,16 @@ export class LectureService {
       const firstNew = current.visualizations.length < MAX_VISUALIZATIONS
         ? notes.concepts.find(concept => concept.visualKind !== 'static' && !previousIds.has(concept.id) && !current.visualizations.some(visual => visual.conceptId === concept.id)) : undefined;
       this.db.transaction(() => { if (firstNew) this.enqueueVisual(current, firstNew.id); this.save(current); })();
+      // A published snapshot changes the baseline. Cancel every competing
+      // candidate so it cannot reintroduce old wording/IDs or hide new edits.
+      // Any still-uncovered sources restart immediately from the winning notes.
+      for (const other of this.noteWork(id)) if (other !== work) other.controller.abort();
     } catch (error) {
-      if (this.stopped || !this.row(id)) return;
+      if (this.stopped || work.controller.signal.aborted || !this.row(id)) return;
       const current = this.snapshot(id)!;
+      work.failed = true;
+      if (!refresh && current.synthesizedRevision >= revision) return;
+      if (this.noteWork(id).some(other => other !== work && !other.failed && !other.controller.signal.aborted)) return;
       current.status = 'failed';
       if (current.status === 'failed') current.error = this.synthesize ? failureMessage(error) : NO_SYNTHESIS;
       this.save(current);
@@ -375,7 +397,12 @@ export class LectureService {
       if (!row || row.owner !== owner) return json({ detail: 'Not Found' }, 404);
       // Parse request bodies before taking mutable snapshots; another request can finish during a read.
       if (!match![2]) {
-        if (request.method === 'GET') return json(this.decode(row));
+        if (request.method === 'GET') {
+          const session = this.decode(row), etag = `"${session.id}:${session.revision}"`;
+          const responseHeaders = { ...headers, ETag: etag };
+          return request.headers.get('If-None-Match') === etag ? new Response(null, { status: 304, headers: responseHeaders })
+            : Response.json(session, { headers: responseHeaders });
+        }
         if (request.method === 'DELETE') {
           clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
           for (const work of this.active.values()) if (work.id === id) work.controller.abort();

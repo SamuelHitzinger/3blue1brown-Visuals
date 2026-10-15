@@ -18,18 +18,21 @@ export const getLecture = (id: string, signal?: AbortSignal) => fetch(path(id), 
 export function watchLectureSnapshots(id: string, accept: (session: LectureSession) => void, reportError: (message: string) => void, loaded: () => void = () => {}) {
   const controller = new AbortController()
   let refreshing = false
+  let etag: string | null = null
   const refresh = async (force = false) => {
     if (controller.signal.aborted || refreshing || (!force && document.visibilityState !== 'visible')) return
     refreshing = true
     try {
-      const next = await getLecture(id, AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]))
-      if (!controller.signal.aborted) { accept(next); reportError('') }
+      const response = await fetch(path(id), { cache: 'no-store', signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]), ...(etag ? { headers: { 'If-None-Match': etag } } : {}) })
+      if (response.status === 304) { if (!controller.signal.aborted) reportError(''); return }
+      const next = await responseJSON<LectureSession>(response)
+      if (!controller.signal.aborted) { etag = response.headers.get('etag'); accept(next); reportError('') }
     } catch (error) { if (!controller.signal.aborted) reportError(error instanceof Error ? error.message : 'Could not load your lecture.') }
     finally { refreshing = false; if (!controller.signal.aborted) loaded() }
   }
   const visible = () => { if (document.visibilityState === 'visible') void refresh(true) }
   void refresh(true)
-  const interval = setInterval(() => { void refresh() }, 3000)
+  const interval = setInterval(() => { void refresh() }, 500)
   window.addEventListener('focus', visible); document.addEventListener('visibilitychange', visible)
   return () => { controller.abort(); clearInterval(interval); window.removeEventListener('focus', visible); document.removeEventListener('visibilitychange', visible) }
 }

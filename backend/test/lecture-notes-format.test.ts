@@ -19,13 +19,21 @@ test('section photos require a validated photo candidate cited by the section an
   expect(() => parseLectureNotes(JSON.stringify({ ...notes, sections: [notes.sections[0], { ...notes.sections[0], id: 'again' }] }), evidence)).toThrow(/photo/i);
   const unrelated = { ...sources[0], id: 's2' };
   expect(() => parseLectureNotes(JSON.stringify({ ...notes, sections: [{ ...notes.sections[0], points: [{ text: 'Other material', sourceIds: ['s2'] }] }] }), [...evidence, unrelated])).toThrow(/photo/i);
-  const fourSources = Array.from({ length: 4 }, (_, index) => ({ ...evidence[0], id: `photo-${index}` }));
+  const fourSources = Array.from({ length: 7 }, (_, index) => ({ ...evidence[0], id: `photo-${index}` }));
   const fourSections = fourSources.map(source => ({ ...notes.sections[0], id: source.id, points: [{ text: 'Measured trace', sourceIds: [source.id] }], photo: { ...photo, sourceId: source.id } }));
-  expect(() => parseLectureNotes(JSON.stringify({ ...notes, sections: fourSections }), fourSources)).toThrow(/three/i);
+  expect(parseLectureNotes(JSON.stringify({ ...notes, sections: fourSections.slice(0, 6) }), fourSources).sections).toHaveLength(6);
+  expect(() => parseLectureNotes(JSON.stringify({ ...notes, sections: fourSections }), fourSources)).toThrow(/six/i);
 });
 
 test('question-only material does not require invented learning notes; static setup survives', () => {
   expect(parseLectureNotes(JSON.stringify(questionOnly), sources)).toEqual(questionOnly);
+});
+
+test('notebook structure preserves equations, conditions and meaningful groups without changing exact questions', () => {
+  const point = { text: 'ΔS_surr = −ΔH_sys/T', sourceIds: ['s1'], kind: 'equation' as const, label: 'Constant pressure', group: 'Surroundings', math: '\\Delta S_{surr} = -\\frac{\\Delta H_{sys}}{T}' };
+  const value = { ...questionOnly, sections: [{ id: 'entropy', title: 'Entropy', points: [point] }] };
+  expect(parseLectureNotes(JSON.stringify(value), sources).sections[0].points[0]).toEqual(point);
+  expect(() => parseLectureNotes(JSON.stringify({ ...value, sections: [{ ...value.sections[0], points: [{ ...point, kind: 'script' }] }] }), sources)).toThrow();
 });
 
 test('assigned questions must retain source wording rather than become invented study prompts', () => {
@@ -64,6 +72,18 @@ test('full refresh reauthors old prose from all sources; incremental updates ret
   expect(payloads[0].sources).toHaveLength(1);
   expect(payloads[1].revisionMode).toBe('incremental');
   expect(payloads[1].sources).toHaveLength(0);
+});
+
+test('short audio updates retain only bounded preceding speech for sentence continuity', async () => {
+  const evidence = Array.from({ length: 6 }, (_, i) => ({ id: `a${i}`, sequence: i + 1, kind: 'text' as const, text: i === 4 ? 'x'.repeat(2000) : `fragment ${i}`, createdAt: '2026-10-15T00:00:00Z',
+    capture: { kind: 'audio' as const, itemId: `item-${i}`, sequence: i + 1, capturedAt: '2026-10-15T00:00:00Z', durationMs: 2000 } }));
+  const previous: LectureNotes = { summary: '', sections: [], concepts: [], questions: [] };
+  let payload: any;
+  await generateLectureNotes({ run: async task => { payload = JSON.parse(task.prompt); return '{"patch":{}}'; } },
+    { title: 'Continuity', sources: evidence, previousNotes: previous, previousSourceRevision: 5 }, new AbortController().signal);
+  expect(payload.sources.map((s: any) => s.id)).toEqual(['a5']);
+  expect(payload.continuitySources.map((s: any) => s.id)).toEqual(['a2', 'a3', 'a4']);
+  expect(payload.continuitySources[2].text.length).toBe(800);
 });
 
 test('generation retries paragraph notes while leaving exact assignment wording untouched', async () => {

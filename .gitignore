@@ -12,6 +12,7 @@ node_modules/
 dist/
 coverage/
 .tmp/
+.tmp-tests/
 .idea/
 .vscode/
 data/

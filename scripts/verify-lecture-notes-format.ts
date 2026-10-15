@@ -31,9 +31,10 @@ const lectures = new LectureService(':memory:', async input => {
   inputs.push(input);
   const refs = [input.sources[0].id];
   return { summary: '', sections: [{ id: 'vectors', title: 'Vectors & components', points: [
-    { text: 'Vector v: magnitude + direction', sourceIds: refs },
-    { text: 'Components → displacement along each axis', sourceIds: refs },
-    { text: 'λ > 0: length × λ; direction unchanged', sourceIds: refs },
+    { text: 'v = (3, 4)', kind: 'equation', math: '\\vec v = \\begin{pmatrix}3\\\\4\\end{pmatrix}', label: 'Components', group: 'Vector', sourceIds: refs },
+    { text: 'Vector v: magnitude + direction', kind: 'note', group: 'Vector', sourceIds: refs },
+    { text: 'Components → displacement along each axis', kind: 'relation', group: 'Vector', sourceIds: refs },
+    { text: 'λ > 0: length × λ; direction unchanged', kind: 'relation', group: 'Scaling', sourceIds: refs },
   ], photo: { sourceId: refs[0], caption: 'Board notation: v = (3, 4)' } }], concepts: [
     { id: 'components', sectionId: 'vectors', title: 'Components', explanation: 'v → horizontal + vertical', sourceIds: refs, visualizationPrompt: 'Show the vector and its components.', catalogIds: [], visualKind: 'static', diagram, terms: [{ text: 'v', color: 'blue' }, { text: 'Components', color: 'teal' }] },
     { id: 'scale', sectionId: 'vectors', title: 'Scaling a vector', explanation: 'The direction stays fixed as the length changes.', sourceIds: refs, visualizationPrompt: 'Scale a vector.', catalogIds: [], visualKind: 'animation' },
@@ -76,6 +77,10 @@ try {
   assert.ok(!(await page.$eval('.generated-notes', el => el.textContent ?? '')).includes(question));
   assert.ok(!(await page.$eval('body', el => el.textContent ?? '')).includes('TRANSCRIPT_SENTINEL'));
   assert.equal(await page.$$('.note-citation').then(items => items.length), 0);
+  assert.equal(await page.$$('.generated-notes ul').then(items => items.length), 0);
+  assert.equal(await page.$$('.notebook-group-title').then(items => items.length), 2);
+  await page.waitForFunction(() => [...document.querySelectorAll<HTMLImageElement>('.notebook-equation')].some(image => image.complete && image.naturalWidth > 0));
+  assert.equal(await page.$eval('.notebook-equation', image => image.getAttribute('alt')), 'v = (3, 4)');
   assert.ok(await page.evaluate(() => document.fonts.check('18px Libron')));
   assert.ok(await page.$eval('.generated-notes', el => getComputedStyle(el).fontFamily.includes('Libron')));
   assert.ok(await page.evaluate(() => document.querySelector('.notebook-questions')!.getBoundingClientRect().left > document.querySelector('.notebook-paper')!.getBoundingClientRect().right));
@@ -87,6 +92,7 @@ try {
   await page.reload();
   await page.waitForFunction(() => (document.querySelector('#note-instructions-input') as HTMLTextAreaElement)?.value === 'German; shorter notes; fewer visuals.');
   await clickText('Update notes');
+  console.log('Notebook rendering and instructions verified; checking refresh and scene playback.');
   await page.waitForFunction(() => !document.querySelector('.lecture-progress'));
   assert.equal(inputs.at(-1)?.instructions, 'German; shorter notes; fewer visuals.');
   assert.equal(inputs.at(-1)?.previousSourceRevision, 0);
@@ -107,4 +113,8 @@ try {
   assert.ok(await page.evaluate(() => document.querySelector('.notebook-questions')!.getBoundingClientRect().top >= document.querySelector('.notebook-paper')!.getBoundingClientRect().bottom));
   assert.deepEqual(errors, []);
   console.log(JSON.stringify({ passed: true, checks: ['separate exact questions', 'no transcripts', 'Libron loaded', 'static diagrams', 'source-associated photo snippet loaded', 'animation controls', 'interactive without timeline', 'global instructions survive reload', 'full refresh uses preferences', 'desktop/right and mobile/stacked layout'], screenshots: output }));
+} catch (error) {
+  await page.screenshot({ path: resolve(output, 'failure.png'), fullPage: true });
+  console.error(JSON.stringify({ errors, status: await page.$$eval('[role="status"], [role="alert"]', items => items.map(item => item.textContent)) }));
+  throw error;
 } finally { await browser.close(); server.stop(true); await lectures.close(); }

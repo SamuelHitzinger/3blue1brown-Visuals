@@ -51,7 +51,7 @@ test('digital zoom crops the same centered region for change detection and captu
     await fixture.engine.setZoom(2)
     await fixture.engine.takePhoto()
     assert.deepEqual(fixture.images[0], { width: 960, height: 540, draw: [480, 270, 960, 540, 0, 0, 960, 540] })
-    assert.deepEqual(fixture.draws[0], [480, 270, 960, 540, 0, 0, 128, 96])
+    assert.ok(fixture.draws.some(draw => JSON.stringify(draw) === JSON.stringify([480, 270, 960, 540, 0, 0, 128, 96])))
     assert.equal(fixture.zooms.at(-1).digitalScale, 2)
     assert.equal(fixture.zooms.at(-1).mode, 'digital')
     await fixture.engine.setZoom(99)
@@ -84,7 +84,7 @@ test('automatic board framing crops saved photos to preview, and manual zoom/res
     assert.deepEqual(fixture.images.at(-1)!.draw.slice(0, 4), [480, 270, 960, 540])
     assert.equal(await fixture.engine.frameBoard(), true)
     fixture.engine.resetFrame()
-    assert.equal(fixture.frames.at(-1).width, .5)
+    assert.equal(fixture.frames.at(-1).width, 1, 'Automatic framing clears manual digital zoom to recover the entire board')
     await fixture.engine.stop()
     assert.equal(await fixture.engine.frameBoard(), false)
   } finally { await fixture.cleanup() }

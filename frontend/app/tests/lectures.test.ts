@@ -94,6 +94,24 @@ test('visible idle lectures discover phone additions; hidden tabs wait until vis
   } finally { stop(); Object.assign(globalThis, original); t.mock.timers.reset() }
 })
 
+test('fast polling uses conditional snapshots and accepts a later changed revision', async t => {
+  const original = { fetch: globalThis.fetch, window: globalThis.window, document: globalThis.document }
+  Object.assign(globalThis, { window: new EventTarget(), document: Object.assign(new EventTarget(), { visibilityState: 'visible' }) })
+  t.mock.timers.enable({ apis: ['setInterval'] })
+  const requests: RequestInit[] = [], revisions: number[] = []
+  globalThis.fetch = async (_url, options = {}) => {
+    requests.push(options)
+    return requests.length === 2 ? new Response(null, { status: 304 }) : Response.json(session(requests.length), { headers: { ETag: `"v${requests.length}"` } })
+  }
+  const stop = watchLectureSnapshots('lecture-1', next => revisions.push(next.revision), message => assert.equal(message, '', '304 must not report an error'))
+  const settle = () => new Promise(resolve => setImmediate(resolve))
+  try {
+    await settle(); t.mock.timers.tick(500); await settle()
+    assert.equal(new Headers(requests[1].headers).get('If-None-Match'), '"v1"'); assert.deepEqual(revisions, [1])
+    t.mock.timers.tick(500); await settle(); assert.deepEqual(revisions, [1, 3])
+  } finally { stop(); Object.assign(globalThis, original); t.mock.timers.reset() }
+})
+
 test('export places concepts inline and uses edited text without attributing AI citations', () => {
   const lecture = session(); lecture.noteEdits = { summary: 'My overview', 'section:section': 'My replacement' };
   lecture.notes!.concepts = [{ id: 'map', sectionId: 'section', title: 'Map figure', explanation: 'Structure', sourceIds: ['source-1'], visualizationPrompt: 'Move', catalogIds: [] }];

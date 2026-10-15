@@ -29,7 +29,7 @@ export default function CapturePage() {
   const [note, setNote] = useState('')
   const [audio, setAudio] = useState(true)
   const [photo, setPhoto] = useState(true)
-  const [interval, setIntervalValue] = useState(15)
+  const [interval, setIntervalValue] = useState(5)
   const [lastStatusAt, setLastStatusAt] = useState(0)
   const [now, setNow] = useState(Date.now)
   const [skipped, setSkipped] = useState(0)
@@ -41,6 +41,7 @@ export default function CapturePage() {
   const [previewRatio, setPreviewRatio] = useState(4 / 3)
   const [frame, setFrame] = useState<CaptureFrame>(fullFrame)
   const [framed, setFramed] = useState(false)
+  const [autoFraming, setAutoFraming] = useState(true)
   const [framing, setFraming] = useState(false)
   const [connecting, setConnecting] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
@@ -177,12 +178,14 @@ export default function CapturePage() {
     busy.current = true; setState('starting'); setError(''); setNote('')
     const sender = queue.current
     const capture = new CaptureEngine({
-      video: video.current, audio, photo, photoIntervalMs: interval * 1000, deviceId: deviceId || undefined,
+      video: video.current, audio, photo, autoFrame: autoFraming, photoIntervalMs: interval * 1000, deviceId: deviceId || undefined,
+      canCapturePhoto: () => sender.pendingPhotos() < 2,
       canCapture: () => sender.hasCapacity(),
       onPaused: reason => { void stop(reason) },
       onSkipped: () => { if (mounted.current) setSkipped(value => value + 1) },
       onZoomChanged: value => { if (mounted.current && engine.current === capture) { setZoom(value); setZoomValue(value.value) } },
       onFrameChanged: (value, automatic) => { if (mounted.current && engine.current === capture) { setFrame(value); setFramed(automatic) } },
+      onAutoFrameChanged: enabled => { if (mounted.current && engine.current === capture) setAutoFraming(enabled) },
       onMedia: async media => {
         sequence.current++
         try { localStorage.setItem(sequenceKey(claim.status.id), String(sequence.current)) } catch { /* Durable queue metadata also restores the sequence. */ }
@@ -196,7 +199,7 @@ export default function CapturePage() {
       const running = await capture.start()
       if (engine.current !== capture) { await capture.stop(); return }
       if (!running || !mounted.current || document.visibilityState !== 'visible') { await stop(); return }
-      if (photo && zoomValue !== 1) await capture.setZoom(zoomValue).catch(error => { if (mounted.current) setError(message(error)) })
+      if (photo && !autoFraming && zoomValue !== 1) await capture.setZoom(zoomValue).catch(error => { if (mounted.current) setError(message(error)) })
       if (engine.current !== capture) { await capture.stop(); return }
       if (!busy.current || !mounted.current || document.visibilityState !== 'visible') { await stop(); return }
       started.current = Date.now(); setElapsed(0); setState('recording')
@@ -241,12 +244,13 @@ export default function CapturePage() {
     catch (error) { setError(message(error)) }
   }
   const autoFrame = async () => {
-    if (framed) { engine.current?.resetFrame(); setNote('Manual view restored.'); return }
+    if (autoFraming) { engine.current?.resetFrame(); setNote('Automatic framing off. Use pinch zoom or the slider.'); return }
+    const capture = engine.current
     setFraming(true)
     try {
-      const found = await engine.current?.frameBoard()
-      if (mounted.current) setNote(found ? 'Board framed. Check the edges; tap Reset frame to undo.' : 'No clear board edges found. Use pinch zoom or move closer.')
-    } catch { setNote('Could not frame this view. Use pinch zoom instead.') }
+      const found = await capture?.frameBoard()
+      if (mounted.current && engine.current === capture) setNote(found ? 'Automatic framing on. Board edges are checked before each photo.' : 'Automatic framing on. Using the whole photo until clear board edges are visible.')
+    } catch { if (mounted.current) setNote('Could not frame this view. Use pinch zoom instead.') }
     finally { if (mounted.current) setFraming(false) }
   }
   const pointerEnd = (id: number) => { pointers.current.delete(id); pinch.current = null }
@@ -283,7 +287,7 @@ export default function CapturePage() {
         {state !== 'recording' && <div className="capture-preview-placeholder"><Camera size={42}/><p>{state === 'starting' ? 'Opening camera…' : state === 'stopping' ? 'Saving…' : ended ? 'Connect a new lecture' : 'Ready to record'}</p></div>}
         {state === 'recording' && !photo && <div className="capture-preview-placeholder"><span className="capture-mic-glyph">◉</span><p>Audio only</p></div>}
         <div className={`capture-live-status ${state === 'recording' ? 'is-recording' : ''}`} role="status"><span/>{state === 'recording' ? clockText : state === 'ready' ? 'Ready' : state === 'paused' ? 'Paused' : 'Please wait'}</div>
-        {photo && state === 'recording' && <button className="capture-frame-button" disabled={framing} onClick={() => { void autoFrame() }}><Maximize size={16}/>{framing ? 'Finding…' : framed ? 'Reset frame' : 'Frame board'}</button>}
+        {photo && state === 'recording' && <button className="capture-frame-button" aria-pressed={autoFraming} disabled={framing} onClick={() => { void autoFrame() }}><Maximize size={16}/>{framing ? 'Finding…' : `Auto frame: ${autoFraming ? 'On' : 'Off'}`}</button>}
       </section>
       {photo && <section className="capture-zoom" aria-label="Camera zoom">
         <div className="capture-zoom-presets">{[1,2,3].filter(value => value >= (zoom?.min ?? 1) && value <= (zoom?.max ?? 4)).map(value => <button key={value} aria-label={`Zoom ${value}×`} aria-pressed={!framed && Math.abs(zoomValue-value)<.05} disabled={state !== 'recording'} onClick={() => changeZoom(value)}>{value}×</button>)}<span>{framed ? 'Framed' : `${zoomValue.toFixed(1)}×`}</span></div>
@@ -316,7 +320,7 @@ export default function CapturePage() {
       <div className="capture-settings-heading"><h2>Settings</h2><button className="capture-text-button" onClick={() => setSettingsOpen(false)}>Done</button></div>
       {claim && <>
         <div className="capture-switches"><label><input type="checkbox" checked={photo} disabled={active || !capabilities?.photo} onChange={event=>setPhoto(event.target.checked)}/> Camera</label><label><input type="checkbox" checked={audio} disabled={active || !capabilities?.audio} onChange={event=>setAudio(event.target.checked)}/> Microphone</label></div>
-        <label className="capture-setting">Photo interval<select value={interval} disabled={active || !photo} onChange={event=>setIntervalValue(Number(event.target.value))}>{[10,15,30,60].map(value=><option key={value} value={value}>{value} seconds</option>)}</select></label>
+        <label className="capture-setting">Photo interval<select value={interval} disabled={active || !photo} onChange={event=>setIntervalValue(Number(event.target.value))}>{[5,10,15,30,60].map(value=><option key={value} value={value}>{value} seconds</option>)}</select></label>
         {cameras.length > 1 && <label className="capture-setting">Camera<select value={deviceId} disabled={active} onChange={event=>{setDeviceId(event.target.value);setZoomValue(1)}}><option value="">Automatic rear camera</option>{cameras.map((camera,index)=><option key={camera.deviceId} value={camera.deviceId}>{camera.label || `Camera ${index+1}`}</option>)}</select></label>}
         <p>Pause to change camera or microphone. Pinch preview to zoom. {zoom?.mode === 'camera' ? 'Camera zoom available.' : 'Digital zoom crops the image; it cannot restore missing detail.'}</p>
         <button className="capture-button" disabled={active || (!ended && !!queueState.pending) || !!queueState.unsaved || loading} onClick={()=>{setConnecting(true);setSettingsOpen(false)}}>Connect another lecture</button>
@@ -324,7 +328,7 @@ export default function CapturePage() {
         <details className="capture-details"><summary><Check size={14}/> Upload details</summary><p>{queueState.pending} on phone · {claim.status.pending} processing · {claim.status.processed} saved · {skipped+claim.status.skipped} unchanged or empty</p><p>{health?.detail}</p></details>
       </>}
       <div className="capture-install"><h3>Add to Home Screen</h3><p>In Safari: Share → Add to Home Screen → Open as Web App. Open Recorder from its icon, then scan a lecture QR inside the app.</p><p>Same address every time: <a href="/capture">{location.origin}/capture</a>. Keep Tailscale connected.</p></div>
-      <details className="capture-details"><summary>Framing & privacy</summary><p>Frame board is experimental. It looks for a clear rectangle on this phone and crops captured photos to that area. It can mistake other rectangles for a board. Check the result; angled, obscured, or low-contrast boards may need manual zoom. It does not track a moving camera. No extra AI request is used for framing.</p><p>Audio and photos go to this lecture’s configured providers. Successful raw captures are deleted after text is saved; failures remain for retry. Unsent media stays on this device. Start only with permission to record.</p></details>
+      <details className="capture-details"><summary>Framing & privacy</summary><p>Auto frame starts on. It checks for a whiteboard, blackboard, or presentation before each photo, adjusts supported camera zoom to keep the whole board visible, and crops the photo before sending it for notes. If framing is unavailable or edges are unclear, it sends the whole photo without cropping. Pinch or use the zoom slider to switch to manual framing; tap Auto frame to turn it back on. Check the preview: other rectangles can be mistaken for a board, and angled, obscured, or low-contrast boards may need manual framing. Detection runs on this device without extra AI requests.</p><p>Audio and photos go to this lecture’s configured providers. Successful raw captures are deleted after text is saved; failures remain for retry. Unsent media stays on this device. Start only with permission to record.</p></details>
     </section>}
     {!claim && !settingsOpen && <p className="capture-install-hint">Save this page to your Home Screen for next time.</p>}
   </main>

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { LectureConcept, LectureSession } from '../../../shared/lecture'
 import { ArrowLeft, BookOpen, Check, RotateCcw } from './Icons'
-import { assignLectureConcepts, lectureNoteText, notebookSectionKey } from './lectureDocument'
+import { assignLectureConcepts, lectureNoteText, notebookSectionKey, notebookEditText } from './lectureDocument'
 import type { CourseSubject } from './curriculum'
 import type { ReactNode } from 'react'
 import './lecture-notebook.css'
 import LectureVisual from './LectureVisual'
 import LecturePhoto from './LecturePhoto'
+import NotebookLines from './NotebookLines'
 import LectureDiagram, { ConceptText } from './LectureDiagram'
 import NoteInstructions from './NoteInstructions'
 import CapturePairingPanel from './CapturePairingPanel'
@@ -71,11 +72,10 @@ export default function LecturePage({ id, onBack, suspended, courses = [] }: { i
           {!sections.length && <p className="learning-muted">New concepts will appear here as they are taught.</p>}
           {sections.map(section => <section id={`notebook-${notebookSectionKey(section.id)}`} className="notebook-section" key={section.id}>
             <h3>{section.title}</h3>
-            <div className={`notebook-section-body${section.concepts.some(concept => concept.visualKind === 'static') ? ' has-sketch' : ''}`}>
-            <EditableNote lectureId={id} noteKey={`section:${section.id}`} aiText={section.points.map(point => point.text).join('\n')} session={session} busy={!!busy} save={value => act('edit-section', () => patchLecture(id, { noteEdits: { [`section:${section.id}`]: value } }))}><ul>{section.points.map((point,index) => <li key={index}><ConceptText text={point.text} terms={section.concepts.flatMap(concept => concept.terms ?? [])}/></li>)}</ul></EditableNote>
-            {section.concepts.some(concept => concept.visualKind === 'static') && <div className="notebook-sketches">{section.concepts.filter(concept => concept.visualKind === 'static').map(concept => <ConceptFigure key={concept.id} concept={concept} session={session} suspended={suspended} busy={!!busy} update={() => { void act('visualize', () => visualizeConcept(id, concept.id)) }}/>)}</div>}
+            <div className={`notebook-section-body${section.concepts.some(concept => concept.visualKind === 'static') || section.photo ? ' has-sketch' : ''}`}>
+            <EditableNote lectureId={id} noteKey={`section:${section.id}`} aiText={notebookEditText(section.points)} session={session} busy={!!busy} save={value => act('edit-section', () => patchLecture(id, { noteEdits: { [`section:${section.id}`]: value } }))}><NotebookLines points={section.points} terms={section.concepts.flatMap(concept => concept.terms ?? [])}/></EditableNote>
+            {(section.concepts.some(concept => concept.visualKind === 'static') || section.photo) && <div className="notebook-sketches">{section.photo && <LecturePhoto key={section.photo.sourceId} photo={section.photo} session={session}/>}{section.concepts.filter(concept => concept.visualKind === 'static').map(concept => <ConceptFigure key={concept.id} concept={concept} session={session} suspended={suspended} busy={!!busy} update={() => { void act('visualize', () => visualizeConcept(id, concept.id)) }}/>)}</div>}
             </div>
-            {section.photo && <LecturePhoto key={section.photo.sourceId} photo={section.photo} session={session}/>}
             {section.concepts.filter(concept => concept.visualKind !== 'static').map(concept => <ConceptFigure key={concept.id} concept={concept} session={session} suspended={suspended} busy={!!busy} update={() => { void act('visualize', () => visualizeConcept(id, concept.id)) }}/>) }
           </section>)}
         </div> : !notesPending && <div className="learning-empty compact"><p>Scan the QR code and start recording. Notes appear here automatically.</p></div>}

@@ -22,7 +22,15 @@ export interface LectureSource {
   };
 }
 
-export interface LecturePoint { text: string; sourceIds: string[] }
+export interface LecturePoint {
+  text: string; sourceIds: string[];
+  /** Optional presentation metadata; old notebooks remain readable. */
+  kind?: 'note' | 'equation' | 'relation' | 'caveat';
+  group?: string;
+  label?: string;
+  /** TeX for the same equation as text, without display delimiters. */
+  math?: string;
+}
 export type LectureColor = 'blue' | 'teal' | 'amber' | 'ink';
 /** Deliberately limited drawing vocabulary: no markup, scripts or external resources. */
 export interface LectureDiagram {

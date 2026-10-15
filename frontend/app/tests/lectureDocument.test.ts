@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { assignLectureConcepts, lectureNoteText, notebookSectionKey, findNoteTerm } from '../src/lectureDocument.ts'
+import { assignLectureConcepts, lectureNoteText, notebookSectionKey, findNoteTerm, groupNotebookPoints, noteLineKind, splitNoteScripts, notebookEditText } from '../src/lectureDocument.ts'
 import type { LectureConcept, LectureNotes } from '../../../shared/lecture.ts'
 const concept = (id: string, sourceIds: string[], sectionId?: string): LectureConcept => ({ id, title: id, explanation: '', sourceIds, sectionId, visualizationPrompt: '', catalogIds: [] })
 test('semantic colors match complete terms and symbols, never letters inside words', () => {
@@ -32,5 +32,24 @@ test('generated section identifiers cannot collide with fixed notebook roles', (
   const keys = ['summary','questions','personal','role-summary'].map(notebookSectionKey)
   assert.equal(new Set(keys).size, keys.length)
   assert.ok(keys.every(key => !fixed.has(key)))
+})
+
+test('notebook groups keep equations and their conditions together without losing original line order', () => {
+  const points = [
+    { text: 'ΔS = q/T', sourceIds: ['a'], group: 'Surroundings', kind: 'equation' as const },
+    { text: 'Constant T', sourceIds: ['a'], group: 'Surroundings', kind: 'caveat' as const },
+    { text: 'q < 0 → S ↓', sourceIds: ['b'], group: 'Interpretation', kind: 'relation' as const },
+  ]
+  const groups = groupNotebookPoints(points)
+  assert.deepEqual(groups.map(group => group.title), ['Surroundings', 'Interpretation'])
+  assert.deepEqual(groups.flatMap(group => group.points), points)
+  assert.equal(noteLineKind(points[0]), 'equation')
+  assert.equal(noteLineKind({text:'ΔH = q',sourceIds:[]}), 'equation')
+  assert.equal(noteLineKind({text:'Heat → surroundings',sourceIds:[]}), 'relation')
+  assert.deepEqual(splitNoteScripts('ΔS_{sys} + q_surr/T'), [{text:'ΔS'}, {text:'sys',script:'sub'}, {text:' + q'}, {text:'surr',script:'sub'}, {text:'/T'}])
+  assert.deepEqual(splitNoteScripts('<script>'), [{text:'<script>'}])
+  assert.deepEqual(splitNoteScripts('x^2+y'), [{text:'x'}, {text:'2',script:'sup'}, {text:'+y'}])
+  assert.deepEqual(splitNoteScripts('q_A+q_B'), [{text:'q'}, {text:'A',script:'sub'}, {text:'+q'}, {text:'B',script:'sub'}])
+  assert.equal(notebookEditText([{...points[0],label:'Constant temperature'},points[1]]), 'Surroundings\nConstant temperature: ΔS = q/T\nConstant T')
 })
 

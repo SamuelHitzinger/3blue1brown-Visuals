@@ -10,6 +10,8 @@ courses, library, watch links, and video generation remain available.
 2. Pair a phone for photos/audio, or append lecture text. Input is saved before AI work starts.
 3. Read compact fragments, formulas, and sketches. Assigned problems appear in
    Questions; transcripts stay out of the notebook. Personal edits remain attached.
+   Related lines share small subheadings. Equations use mathematical typesetting,
+   relationships use arrow lines, and conditions/caveats remain visually distinct.
 4. Static sketches render with notes. The first new dynamic concept receives an
    automatic visualization; request others from their concept cards. Completed
    scenes remain available while later material is processed.
@@ -33,6 +35,11 @@ whether it adds enough value to include. Only validated cropped JPEGs are retain
 after successful processing, served through the lecture owner's access boundary.
 Older successful captures whose image bytes were already removed cannot gain photo
 snippets retroactively. Existing notes and personal edits remain compatible.
+Readable classroom diagrams, annotated equations and worked steps qualify as
+useful crops; they need not contain detail impossible to redraw. Up to six distinct
+crops can appear, one per section, alongside related notation or a complementary
+sketch. New photos use these selection rules; discarded older pixels cannot be
+recovered.
 
 ## Runtime and data
 
@@ -69,8 +76,9 @@ use `Idempotency-Key`; reusing a key with different content is a conflict.
 - `POST /api/lectures/:id/synthesize`: retry/rebuild notes from saved material.
 - `POST /api/lectures/:id/concepts/:conceptId/visualize`: request/retry a concept.
 
-Poll snapshots while a lecture is visible, even when idle, to receive phone
-additions. `revision`
+Poll snapshots every 500 ms while a lecture is visible, even when idle, to receive phone
+additions. Owner-checked ETags return 304 for unchanged snapshots so this does not
+retransmit the growing source history every tick. `revision`
 orders all mutations; `sourceRevision` orders source additions;
 `synthesizedRevision` records the exact source snapshot behind generated notes.
 User edits do not falsely invalidate generated scenes. Source IDs are immutable;
@@ -89,11 +97,60 @@ metrics include elapsed time, provider calls, and validation failures without
 logging lecture content. These reduce avoidable work but do not guarantee a fixed
 update time.
 
-Incremental updates can reference unchanged sections and concepts by ID. The host
+Live capture uses complete two-second audio files started every second;
+the one-second overlap protects words at clip boundaries. At most two encoders
+run at once, with sequential two-second files on devices that reject concurrent
+encoders. Slow local saves suppress additional overlaps, and stopping drains both
+final clips. Photos are sampled every five seconds by default.
+Audio/photo uploads have independent serial lanes and retry backoff;
+four extraction workers, at most one active photo, and pending-photo quotas leave
+capacity for speech even when two transcription requests stall. Two unsent
+phone photos pause further photo sampling while audio continues. Already captured
+material remains durable; the 40 MiB phone and 64 MiB server byte limits remain.
+Shorter clips have proportionally larger item budgets (240 phone items, 16,000
+server captures and 12,000 sources per lecture; source text still capped at 250k).
+
+Live Sol 6.1 updates use minimal reasoning and a 150 ms scheduling delay; full
+rewrites and photo extraction retain medium reasoning. Up to three preceding
+audio fragments (800 characters each) supply sentence continuity across clip
+boundaries. Advanced visual authoring/review settings remain separate.
+An opaque per-lecture cache identity lets the provider reuse prompt caches and
+connections. Every update still starts with a fresh, explicitly supplied context;
+unrelated lectures have different identities. The pinned SDK expires idle reused
+connections after five minutes.
+
+Production notes remain serial per lecture: a real browser comparison measured
+10.6 seconds per changed note/sketch with serial updates versus 12.7 seconds with
+competing updates. The optional `liveSynthesisConcurrency: 2` strategy is disabled
+by default. When enabled, the first validated result cancels other candidates
+based on old notes, and remaining sources restart from its published baseline.
+Full rewrites always remain serial. The global notes/visual worker limit is three,
+with at most one advanced visual job. Overlapping audio increases transcription
+traffic; durable retries retain their existing limits.
+
+The full capture benchmark measured 10.4 seconds for text updates and 11.1 seconds
+for basic sketch updates (10.6 seconds combined; 17.1-second maximum). It used a
+110-second synthetic vector lesson, real browser audio/JPEG capture, configured
+transcription, Sol 6.1, and actual DOM rendering. All 112 uploads succeeded without
+429 retries. Timing starts at the newest cited capture's start, including recording,
+upload, extraction, notes and display. This is a local-network measurement, not a
+phone/Tailscale guarantee; the below-ten-second combined target is not yet met.
+
+Incremental updates prefer sparse patches: omitted sections, concepts, questions
+and metadata survive exactly; explicit removals are validated. Compact point and
+basic-sketch tuples reduce generated JSON without changing the stored schema.
+Notes submit native JSON objects through the validation tool, avoiding a second
+layer of JSON string encoding; legacy string submission remains supported.
+Incremental updates can also reference unchanged sections and concepts by ID. The host
 expands them to exact prior content before running the same full validator;
 changed items and full refreshes still require complete content. Short model-only
 source aliases reduce repeated UUID output, then resolve to durable source IDs.
 Neither optimization changes saved notes, citations, diagrams, or API responses.
+Changed sections can also append just new lines or reuse prior line indices when
+reordering/replacing a subset. The host expands and validates the complete result
+before publishing. Live updates preserve unchanged formatting; explicit refreshes
+reorganize the whole notebook. The production coalescing delay is 150 ms.
+Photo extraction now finishes with one validated submission as well.
 
 Dynamic visual jobs start with cited source chunks and their immediate neighbors;
 the full lecture remains available through paginated reference retrieval. Advanced

@@ -12,7 +12,7 @@ import type { LectureSource } from '../../shared/lecture.js';
 import type { CaptureCapabilities, CaptureExtractor, CaptureItem, CaptureMetadata, CaptureStatus } from '../../shared/lecture-capture.js';
 
 const MAX_ITEM_BYTES = 5_000_000, MAX_PHOTO_BYTES = 2_000_000;
-const MAX_STORED_BYTES = 64 * 1024 * 1024, MAX_ITEMS_PER_LECTURE = 2000;
+const MAX_STORED_BYTES = 64 * 1024 * 1024, MAX_ITEMS_PER_LECTURE = 16000;
 const PAIR_TTL = 10 * 60_000, DEVICE_TTL = 4 * 60 * 60_000;
 const FAILURE = 'This capture could not be read. Its recording is saved; retry processing it.';
 const headers = { 'Cache-Control': 'private, no-store', Vary: 'Authorization, X-User-Id', 'Referrer-Policy': 'no-referrer' };
@@ -108,7 +108,7 @@ export class LectureCaptureService {
   private stopped = false;
   private closePromise?: Promise<void>;
   private unsubscribe: () => void;
-  private active = new Map<string, { lecture: string; controller: AbortController; done: Promise<void> }>();
+  private active = new Map<string, { lecture: string; kind: 'audio' | 'photo'; controller: AbortController; done: Promise<void> }>();
   private now: () => number;
   constructor(path: string, private lectures: LectureService, private options: LectureCaptureOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -194,12 +194,16 @@ export class LectureCaptureService {
     if (!pair || this.state(pair) !== 'connected' || !this.lectures.getOwned(pair.owner, pair.lecture)) throw new CaptureError('This phone connection has ended. Connect it again from the lecture page.', 401);
     return pair;
   }
-  private pending(lecture?: string) {
-    return (this.db.query(`SELECT COUNT(*) AS count FROM capture_items WHERE status IN ('queued','processing')${lecture ? ' AND lecture = ?' : ''}`)
+  private pending(lecture?: string, photoOnly = false) {
+    return (this.db.query(`SELECT COUNT(*) AS count FROM capture_items WHERE status IN ('queued','processing')${photoOnly ? " AND json_extract(metadata, '$.kind') = 'photo'" : ''}${lecture ? ' AND lecture = ?' : ''}`)
       .get(...(lecture ? [lecture] : [])) as { count: number }).count;
   }
-  private checkCapacity(lecture: string, extra = 1) {
-    if (this.pending(lecture) + extra > (this.options.maxPendingPerLecture ?? 12) || this.pending() + extra > (this.options.maxPendingGlobal ?? 48)) throw new CaptureError('Processing is catching up. Keep this phone open and retry shortly.', 429);
+  private checkCapacity(lecture: string, kind: 'photo' | 'audio') {
+    const local = this.options.maxPendingPerLecture ?? 12, global = this.options.maxPendingGlobal ?? 48;
+    if (this.pending(lecture) + 1 > local || this.pending() + 1 > global
+      || (kind === 'photo' && (this.pending(lecture, true) >= Math.max(1, Math.min(2, local - 1)) || this.pending(undefined, true) >= Math.max(1, Math.min(8, global - 1))))) {
+      throw new CaptureError('Processing is catching up. Keep this phone open and retry shortly.', 429);
+    }
   }
   private removeLecture(id: string) {
     for (const work of this.active.values()) if (work.lecture === id) work.controller.abort();
@@ -210,11 +214,14 @@ export class LectureCaptureService {
   }
   private kick() {
     if (this.stopped) return;
-    const concurrency = Math.max(1, Math.min(2, Math.floor(this.options.concurrency ?? 2)));
-    for (const row of this.db.query("SELECT id, lecture FROM capture_items WHERE status = 'queued' ORDER BY rowid").all() as ItemRow[]) {
+    const concurrency = Math.max(1, Math.min(4, Math.floor(this.options.concurrency ?? 4)));
+    for (const row of this.db.query("SELECT id, lecture, metadata FROM capture_items WHERE status = 'queued' ORDER BY rowid").all() as ItemRow[]) {
       if (this.active.size >= concurrency) break;
       if (this.active.has(row.id)) continue;
-      const controller = new AbortController(), work = { lecture: row.lecture, controller, done: Promise.resolve() };
+      const kind: 'audio' | 'photo' = JSON.parse(row.metadata).kind;
+      // One slow vision request must not consume the slot needed by live speech.
+      if (kind === 'photo' && [...this.active.values()].some(work => work.kind === 'photo')) continue;
+      const controller = new AbortController(), work = { lecture: row.lecture, kind, controller, done: Promise.resolve() };
       this.active.set(row.id, work);
       work.done = Promise.resolve().then(() => this.process(row.id, controller.signal)).catch(() => {
         if (!this.stopped && !controller.signal.aborted && this.item(row.id)) this.db.query("UPDATE capture_items SET status = 'failed', error = ? WHERE id = ?").run(FAILURE, row.id);
@@ -326,8 +333,8 @@ export class LectureCaptureService {
       if (!pairing || pairing.owner !== owner || pairing.lecture !== lecture) return json({ detail: 'Not Found' }, 404);
       if (match[3]) {
         if (request.method !== 'POST') return json({ detail: 'Method Not Allowed' }, 405);
-        const failed = this.db.query("SELECT id FROM capture_items WHERE pairing = ? AND status = 'failed' AND bytes IS NOT NULL ORDER BY rowid").all(pairing.id) as Pick<ItemRow, 'id'>[];
-        for (const row of failed) { try { this.checkCapacity(lecture); } catch { break; } this.db.query("UPDATE capture_items SET status = 'queued', error = NULL WHERE id = ?").run(row.id); }
+        const failed = this.db.query("SELECT id, metadata FROM capture_items WHERE pairing = ? AND status = 'failed' AND bytes IS NOT NULL ORDER BY rowid").all(pairing.id) as Pick<ItemRow, 'id' | 'metadata'>[];
+        for (const row of failed) { try { this.checkCapacity(lecture, JSON.parse(row.metadata).kind); } catch { continue; } this.db.query("UPDATE capture_items SET status = 'queued', error = NULL WHERE id = ?").run(row.id); }
         this.kick(); return json(this.status(pairing), 202);
       }
       if (request.method === 'GET') return json(this.status(pairing));
@@ -370,7 +377,7 @@ export class LectureCaptureService {
         const row = this.item(retry[1]); if (!row || row.pairing !== pair.id) return json({ detail: 'Not Found' }, 404);
         if (row.status === 'failed') {
           if (!row.bytes) throw new CaptureError('This recording is no longer available.', 409);
-          this.checkCapacity(pair.lecture); this.db.query("UPDATE capture_items SET status = 'queued', error = NULL WHERE id = ?").run(row.id);
+          this.checkCapacity(pair.lecture, JSON.parse(row.metadata).kind); this.db.query("UPDATE capture_items SET status = 'queued', error = NULL WHERE id = ?").run(row.id);
         }
         this.kick(); return json(this.publicItem(this.item(row.id)!), 202);
       }
@@ -397,7 +404,7 @@ export class LectureCaptureService {
         return json(this.publicItem(prior), 202);
       }
       if (!this.capabilities()[metadata.kind]) throw new CaptureError('This capture type is not connected on the computer.', 503);
-      this.checkCapacity(pair.lecture);
+      this.checkCapacity(pair.lecture, metadata.kind);
       const retained = (this.db.query('SELECT COALESCE(SUM(COALESCE(length(bytes), 0) + COALESCE(length(snippet), 0)), 0) AS size FROM capture_items').get() as { size: number }).size;
       if (retained + media.length > MAX_STORED_BYTES) throw new CaptureError('Capture storage is full. Retry failed recordings or delete an old lecture before continuing.', 413);
       const count = (this.db.query('SELECT COUNT(*) AS count FROM capture_items WHERE lecture = ?').get(pair.lecture) as { count: number }).count;

@@ -2,6 +2,7 @@ import { afterEach, expect, test } from 'bun:test';
 import { mkdtemp, readdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { Database } from 'bun:sqlite';
 import { LectureService } from '../src/lectures.js';
 import { parseLectureNotes, generateLectureNotes } from '../src/agents/lecture.js';
 import { createLectureVisualGenerator } from '../src/agents/lecture-visual.js';
@@ -26,6 +27,32 @@ async function until<T>(read: () => Promise<T>, check: (value: T) => boolean): P
   for (let i = 0; i < 300; i++) { const value = await read(); if (check(value)) return value; await Bun.sleep(5); }
   throw new Error('Lecture work did not finish');
 }
+
+test('conditional snapshots avoid retransmitting unchanged lecture sources without bypassing ownership', async () => {
+  const s = service(), lecture = await create(s);
+  const first = await s.handle(api(`/${lecture.id}`)), etag = first.headers.get('etag');
+  expect(etag).toBeTruthy();
+  const poll = api(`/${lecture.id}`); poll.headers.set('If-None-Match', etag!);
+  expect((await s.handle(poll)).status).toBe(304);
+  await append(s, lecture.id);
+  const changed = await s.handle(poll);
+  expect(changed.status).toBe(200); expect(changed.headers.get('etag')).not.toBe(etag);
+  const other = api(`/${lecture.id}`, 'GET', undefined, 'bob'); other.headers.set('If-None-Match', etag!);
+  expect((await s.handle(other)).status).toBe(404);
+});
+
+test('short audio windows can continue past eighty minutes of capture', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aha-long-capture-')), path = join(dir, 'lecture.sqlite');
+  const s = new LectureService(path);
+  try {
+    const lecture = await create(s);
+    lecture.sources = Array.from({ length: 1200 }, (_, i) => ({ id: crypto.randomUUID(), sequence: i + 1, kind: 'text' as const, text: 'Saved speech', createdAt: lecture.createdAt }));
+    lecture.sourceRevision = 1200;
+    const db = new Database(path); db.query('UPDATE lectures SET snapshot = ? WHERE id = ?').run(JSON.stringify(lecture), lecture.id); db.close();
+    const response = await append(s, lecture.id, 'Next new fact', 'next');
+    expect(response.status).toBe(202); expect((await response.json()).sourceRevision).toBe(1201);
+  } finally { await s.close(); await rm(dir, { recursive: true, force: true }); }
+});
 
 test('lecture creation and sources are idempotent, owner-scoped and retained without AI', async () => {
   const s = service(), lecture = await create(s);
@@ -61,6 +88,107 @@ test('append during inference triggers a second revision while preserving person
   expect(sizes).toEqual([1, 2]); expect(done.sources).toHaveLength(2);
   expect(done.title).toBe('Lecture two'); expect(done.personalNotes).toBe('Ask about basis changes.');
   expect(done.sourceRevision).toBe(2); expect(done.notes?.sections[0].points[0].sourceIds).toEqual([done.sources[0].id]);
+});
+
+for (const failOlder of [false, true]) test(`overlapping live updates publish newer coverage without waiting for stale work (older failure: ${failOlder})`, async () => {
+  const jobs = new Map<number, { release: () => void; signal: AbortSignal; previous?: number; sources: LectureSource[] }>();
+  const s = service(async (input, signal) => {
+    const revision = input.sources.at(-1)!.sequence;
+    if (revision > 1) await new Promise<void>(resolve => jobs.set(revision, { release: resolve, signal, previous: input.previousSourceRevision, sources: input.sources }));
+    if (revision === 2 && failOlder) throw new Error('Stale provider failure');
+    return { summary: '', sections: [{ id: 'facts', title: 'Facts', points: input.sources.map(source => ({ text: source.text, sourceIds: [source.id] })) }], concepts: [], questions: [] };
+  }, { concurrency: 2, liveSynthesisConcurrency: 2 });
+  try {
+    const lecture = await create(s); await append(s, lecture.id, 'First fact', '1');
+    await until(() => get(s, lecture.id), value => value.synthesizedRevision === 1 && value.status === 'idle');
+    await append(s, lecture.id, 'Second fact', '2'); await until(async () => jobs.has(2), Boolean);
+    await append(s, lecture.id, 'Third fact', '3'); await until(async () => jobs.has(3), Boolean);
+    expect(jobs.get(3)!.previous).toBe(1);
+    expect(jobs.get(3)!.sources.map(source => source.sequence)).toEqual([1, 2, 3]);
+    await append(s, lecture.id, 'Fourth fact', '4'); await Bun.sleep(10);
+    expect(jobs.has(4)).toBe(false);
+    await s.handle(api(`/${lecture.id}`, 'PATCH', { personalNotes: 'Keep my annotation' }));
+    jobs.get(3)!.release();
+    await until(() => get(s, lecture.id), value => value.synthesizedRevision === 3);
+    await until(async () => jobs.has(4), Boolean);
+    expect(jobs.get(2)!.signal.aborted).toBe(true);
+    jobs.get(4)!.release();
+    await until(() => get(s, lecture.id), value => value.synthesizedRevision === 4 && value.status === 'idle');
+    jobs.get(2)!.release(); await Bun.sleep(10);
+    const final = await get(s, lecture.id);
+    expect(final.synthesizedRevision).toBe(4); expect(final.status).toBe('idle');
+    expect(final.notes!.sections[0].points.map(point => point.text)).toEqual(['First fact', 'Second fact', 'Third fact', 'Fourth fact']);
+    expect(final.personalNotes).toBe('Keep my annotation');
+  } finally { for (const job of jobs.values()) job.release(); }
+});
+
+test('one live job failing does not fail a newer active job; full refresh stays serial', async () => {
+  let fail!: () => void, finish!: () => void, refresh!: () => void;
+  let calls = 0, refreshStarted = false;
+  const s = service(async input => {
+    calls++;
+    if (input.previousNotes && input.previousSourceRevision === 0) { refreshStarted = true; await new Promise<void>(resolve => { refresh = resolve; }); }
+    else if (input.sources.length === 2) { await new Promise<void>(resolve => { fail = resolve; }); throw new Error('One failed job'); }
+    else if (input.sources.length === 3 && input.previousSourceRevision === 1) await new Promise<void>(resolve => { finish = resolve; });
+    return { ...makeNotes(input.sources), summary: '', concepts: [] };
+  }, { concurrency: 3, liveSynthesisConcurrency: 2 });
+  try {
+    const lecture = await create(s); await append(s, lecture.id, 'First fact', '1');
+    await until(() => get(s, lecture.id), row => row.status === 'idle');
+    await append(s, lecture.id, 'Second fact', '2'); await until(async () => !!fail, Boolean);
+    await append(s, lecture.id, 'Third fact', '3'); await until(async () => !!finish, Boolean);
+    fail(); await Bun.sleep(10);
+    expect((await get(s, lecture.id)).status).toBe('processing');
+    finish(); await until(() => get(s, lecture.id), row => row.synthesizedRevision === 3 && row.status === 'idle');
+    await s.handle(api(`/${lecture.id}/synthesize`, 'POST'));
+    await until(async () => refreshStarted, Boolean);
+    const before = calls;
+    await append(s, lecture.id, 'Fourth fact', '4'); await Bun.sleep(10);
+    expect(calls).toBe(before);
+    refresh();
+    await until(() => get(s, lecture.id), row => row.synthesizedRevision === 4 && row.status === 'idle');
+  } finally { fail?.(); finish?.(); refresh?.(); }
+});
+
+test('simultaneous live failures cannot strand processing with no workers', async () => {
+  const release: (() => void)[] = [];
+  const s = service(async input => {
+    if (input.sources.length > 1) { await new Promise<void>(resolve => release.push(resolve)); throw new Error('Provider failed'); }
+    return { ...makeNotes(input.sources), summary: '', concepts: [] };
+  }, { concurrency: 2, liveSynthesisConcurrency: 2 });
+  const lecture = await create(s); await append(s, lecture.id, 'First fact', '1');
+  await until(() => get(s, lecture.id), row => row.status === 'idle');
+  await append(s, lecture.id, 'Second fact', '2'); await until(async () => release.length, n => n === 1);
+  await append(s, lecture.id, 'Third fact', '3'); await until(async () => release.length, n => n === 2);
+  release.forEach(resolve => resolve());
+  const final = await until(() => get(s, lecture.id), row => row.status === 'failed');
+  expect(final.synthesizedRevision).toBe(1); expect(final.sourceRevision).toBe(3);
+});
+
+for (const simultaneous of [false, true]) test(`an older winner cancels stale baselines before replacing IDs or edits (simultaneous: ${simultaneous})`, async () => {
+  const jobs: { revision: number; previous?: number; signal: AbortSignal; release: () => void }[] = [];
+  const s = service(async (input, signal) => {
+    const revision = input.sources.length;
+    if (revision > 1) await new Promise<void>(resolve => jobs.push({ revision, previous: input.previousSourceRevision, signal, release: resolve }));
+    const previous = input.previousNotes?.sections.find(section => section.title === 'New topic');
+    return { summary: '', sections: [{ id: 'base', title: 'Base', points: [{ text: 'First fact', sourceIds: [input.sources[0].id] }] },
+      ...(revision > 1 ? [{ id: previous?.id ?? `new-${revision}`, title: 'New topic', points: [{ text: 'New learning', sourceIds: [input.sources[1].id] }] }] : [])], concepts: [], questions: [] };
+  }, { concurrency: 2, liveSynthesisConcurrency: 2 });
+  try {
+    const lecture = await create(s); await append(s, lecture.id, 'First fact', '1');
+    await until(() => get(s, lecture.id), row => row.status === 'idle');
+    await append(s, lecture.id, 'Second fact', '2'); await until(async () => jobs.length, n => n === 1);
+    await append(s, lecture.id, 'Third fact', '3'); await until(async () => jobs.length, n => n === 2);
+    jobs[0].release();
+    if (simultaneous) jobs[1].release();
+    await until(() => get(s, lecture.id), row => row.synthesizedRevision === 2);
+    await s.handle(api(`/${lecture.id}`, 'PATCH', { noteEdits: { 'section:new-2': 'My section edit' } }));
+    await until(async () => jobs.length, n => n === 3);
+    expect(jobs[1].signal.aborted).toBe(true); expect(jobs[2].previous).toBe(2);
+    jobs[1].release(); jobs[2].release();
+    const final = await until(() => get(s, lecture.id), row => row.synthesizedRevision === 3 && row.status === 'idle');
+    expect(final.notes!.sections[1].id).toBe('new-2'); expect(final.noteEdits?.['section:new-2']).toBe('My section edit');
+  } finally { const closing = s.close(); jobs.forEach(job => job.release()); await closing; }
 });
 
 test('failed synthesis preserves successful notes, sanitizes errors and can retry', async () => {
