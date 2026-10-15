@@ -54,10 +54,14 @@ Eight blinded, fresh reviewer conversations compared inherited and current evide
 
 The first protein holdout run failed a benchmark check after scene0 received native approval. Diagnosis found a checker defect: it counted a separately published custom ribbon as another part of the pinned protein. All 46 protein primitives were present. A separate corrected assessment checks the unchanged source, actual asset bytes, saved frames and boundary; the original failed result remains immutable.
 
-Completion of the second scene and final two-scene holdout acceptance remain pending. The holdout uses explicitly labeled subtitle-reading estimates, so it cannot establish acoustic synchronization. Its result will be recorded in [spatial holdout evidence](animation-authoring-holdout.md).
+Fresh trial2 completed both scenes in 257.828 seconds with 7,591 output tokens. Rotation passed after one targeted visual repair; translation passed initial review. Both preserved all 46 pinned primitives, attached markers, exact cue windows, pause holds and deterministic reverse/repeated seeks. The turn measured 27.502 degrees; translation covered 25.84% of the displayed landmark separation with no orientation change. Retained state and camera matched exactly across the scene boundary. Root inspected both progression sheets and native final frames. One invalid author submission in scene1 was corrected before visual review.
+
+The fixed fixture/package hashes match trial1; no acceptance threshold was weakened. This completes the novel spatial/custom-geometry/carry case. It is correctness evidence, not a baseline speed comparison. The holdout uses explicitly labeled subtitle-reading estimates, so it cannot establish acoustic synchronization. See [spatial holdout evidence](animation-authoring-holdout.md) and [raw trial2 result](animation-authoring-benchmark/holdout-trial2.json).
 
 ## Validation and limits
 
 Component owners and independent reviewers covered source/cue integrity, rollback, carry/seek behavior, exact asset compatibility, cache/job isolation, review termination, approval reuse, candidate edits and prompt completeness. Backend and animlib suites passed their applicable checks; Windows hardlink/junction cases passed targeted runs outside the restricted sandbox. Both workspace typechecks passed. Details and counts are preserved in the [implementation ledger](animation-efficiency-ledger.md).
 
 Scope remains deliberate: static GLBs, supported scientific construction/data packages and curated resource intents. Skeletal clips, morph-target animation, arbitrary external data ingestion and general scientific retrieval are not implemented by this resolver. Still-frame evidence cannot certify every transition, motion feel or perceptual audio synchronization. No additional asset families or unrelated production changes are required to finish this iteration.
+
+All five declared component gates and the representative three-domain plus novel holdout acceptance are now supported. The iteration is complete within this scope; results do not promise universal speedups or flawless first-pass animation.

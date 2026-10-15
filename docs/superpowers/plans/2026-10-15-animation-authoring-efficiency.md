@@ -88,6 +88,6 @@
 - [x] Capture inherited baseline and component benchmark results with versions/hashes.
 - [x] Review each workstream independently; repair demonstrated findings.
 - [x] Run applicable combined tests/typechecks and existing production integration tests.
-- [ ] Generate matched three-domain cases and one holdout using frozen narration/settings, inspect actual native frames and timing; preserve failures.
-- [ ] Compare time to approved scene, source/output tokens, retrieval and review quality. Improve failed targets; do not report deterministic savings as model speedup.
-- [ ] Commit and push verified milestones; audit every spec goal before goal completion.
+- [x] Generate matched three-domain cases and one holdout using frozen narration/settings, inspect actual native frames and timing; preserve failures.
+- [x] Compare time to approved scene, source/output tokens, retrieval and review quality. Improve failed targets; do not report deterministic savings as model speedup.
+- [x] Commit and push verified milestones; audit every spec goal before goal completion.

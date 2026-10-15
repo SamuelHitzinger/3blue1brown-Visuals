@@ -1,0 +1,798 @@
+{
+  "schemaVersion": 1,
+  "trial": "trial2",
+  "videoId": "29cfb9fc-6856-4d4f-a829-b9736e4b7058",
+  "directory": "C:\\Users\\samue\\Stuff\\3yellow3white\\data\\animation-efficiency\\holdout\\trial2\\29cfb9fc-6856-4d4f-a829-b9736e4b7058",
+  "status": "complete",
+  "startedAt": "2026-10-15T22:13:44.972Z",
+  "elapsedMs": 257827.8964,
+  "generationElapsedMs": 257477.6619,
+  "timingScope": "Subtitle-reading estimates. This run provides no acoustic synchronization evidence.",
+  "nativeVisualScope": "Production native frame review, not continuous playback or interactive/orbit validation.",
+  "reviewRoundCap": 2,
+  "metrics": [
+    {
+      "stage": "scene",
+      "scene": 0,
+      "promptBytes": 199495,
+      "metrics": {
+        "elapsedMs": 105919.10859999999,
+        "providerCalls": 8,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 2495.5664,
+            "providerMs": 2491.2147,
+            "stopReason": "toolUse",
+            "inputTokens": 49208,
+            "outputTokens": 27,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 44
+          },
+          {
+            "index": 2,
+            "elapsedMs": 1983.0612999999994,
+            "providerMs": 1981.0285999999996,
+            "stopReason": "toolUse",
+            "inputTokens": 523,
+            "outputTokens": 24,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 49024,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 31
+          },
+          {
+            "index": 3,
+            "elapsedMs": 2165.5222000000003,
+            "providerMs": 2163.5344000000005,
+            "stopReason": "toolUse",
+            "inputTokens": 1180,
+            "outputTokens": 25,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 49408,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 38
+          },
+          {
+            "index": 4,
+            "elapsedMs": 2782.6680000000006,
+            "providerMs": 2781.5652,
+            "stopReason": "toolUse",
+            "inputTokens": 512,
+            "outputTokens": 38,
+            "reasoningTokens": 10,
+            "cacheReadTokens": 50432,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 21
+          },
+          {
+            "index": 5,
+            "elapsedMs": 4340.8032,
+            "providerMs": 4339.839900000001,
+            "stopReason": "toolUse",
+            "inputTokens": 1371,
+            "outputTokens": 38,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 50816,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 67
+          },
+          {
+            "index": 6,
+            "elapsedMs": 66689.58039999999,
+            "providerMs": 64179.87330000001,
+            "stopReason": "toolUse",
+            "inputTokens": 339,
+            "outputTokens": 2559,
+            "reasoningTokens": 950,
+            "cacheReadTokens": 52096,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 4376
+          },
+          {
+            "index": 7,
+            "elapsedMs": 23476.049700000003,
+            "providerMs": 21414.993099999992,
+            "stopReason": "toolUse",
+            "inputTokens": 6268,
+            "outputTokens": 670,
+            "reasoningTokens": 414,
+            "cacheReadTokens": 52352,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 773
+          },
+          {
+            "index": 8,
+            "elapsedMs": 1960.661500000002,
+            "providerMs": 1959.9900000000052,
+            "stopReason": "stop",
+            "inputTokens": 3160,
+            "outputTokens": 12,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 58496,
+            "cacheWriteTokens": 0,
+            "textChars": 29,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 1194.9425999999949,
+            "valid": true
+          },
+          {
+            "kind": "tool",
+            "elapsedMs": 1004.2670999999973,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.5242999999900348,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "review",
+      "scene": 0,
+      "promptBytes": 218056,
+      "metrics": {
+        "elapsedMs": 22515.089299999992,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 22143.593699999983,
+            "providerMs": 22141.825999999986,
+            "stopReason": "toolUse",
+            "inputTokens": 66462,
+            "outputTokens": 690,
+            "reasoningTokens": 382,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 1449
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 0.1374000000068918,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.02629999999771826,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "repair",
+      "scene": 0,
+      "promptBytes": 212309,
+      "metrics": {
+        "elapsedMs": 44086.57819999999,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 43683.263399999996,
+            "providerMs": 42694.73389999999,
+            "stopReason": "toolUse",
+            "inputTokens": 65173,
+            "outputTokens": 1401,
+            "reasoningTokens": 996,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 1138
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 987.0530000000144,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.0076000000117346644,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "review",
+      "scene": 0,
+      "promptBytes": 219907,
+      "metrics": {
+        "elapsedMs": 8821.699400000012,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 8388.51430000001,
+            "providerMs": 8387.397100000002,
+            "stopReason": "toolUse",
+            "inputTokens": 69441,
+            "outputTokens": 113,
+            "reasoningTokens": 85,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 48
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 0.016699999978300184,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.006999999983236194,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "scene",
+      "scene": 1,
+      "promptBytes": 241867,
+      "metrics": {
+        "elapsedMs": 56938.55189999999,
+        "providerCalls": 6,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 3146.2544000000053,
+            "providerMs": 3144.98060000001,
+            "stopReason": "toolUse",
+            "inputTokens": 64312,
+            "outputTokens": 26,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 34
+          },
+          {
+            "index": 2,
+            "elapsedMs": 2582.8938999999955,
+            "providerMs": 2581.639599999995,
+            "stopReason": "toolUse",
+            "inputTokens": 462,
+            "outputTokens": 24,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 64128,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 31
+          },
+          {
+            "index": 3,
+            "elapsedMs": 2019.6879999999946,
+            "providerMs": 2018.1660000000265,
+            "stopReason": "toolUse",
+            "inputTokens": 1247,
+            "outputTokens": 38,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 64384,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 67
+          },
+          {
+            "index": 4,
+            "elapsedMs": 27656.19809999998,
+            "providerMs": 26650.162299999996,
+            "stopReason": "toolUse",
+            "inputTokens": 343,
+            "outputTokens": 976,
+            "reasoningTokens": 344,
+            "cacheReadTokens": 65536,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 2087
+          },
+          {
+            "index": 5,
+            "elapsedMs": 19810.47319999998,
+            "providerMs": 18043.654300000024,
+            "stopReason": "toolUse",
+            "inputTokens": 1185,
+            "outputTokens": 787,
+            "reasoningTokens": 170,
+            "cacheReadTokens": 65792,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 1988
+          },
+          {
+            "index": 6,
+            "elapsedMs": 1718.3849000000046,
+            "providerMs": 1717.708500000008,
+            "stopReason": "stop",
+            "inputTokens": 4968,
+            "outputTokens": 12,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 66816,
+            "cacheWriteTokens": 0,
+            "textChars": 29,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 1004.7418999999936,
+            "valid": false
+          },
+          {
+            "kind": "tool",
+            "elapsedMs": 729.7562000000034,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.6304999999993015,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "review",
+      "scene": 1,
+      "promptBytes": 257581,
+      "metrics": {
+        "elapsedMs": 9199.62950000001,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 8766.076099999977,
+            "providerMs": 8764.57190000001,
+            "stopReason": "toolUse",
+            "inputTokens": 81763,
+            "outputTokens": 131,
+            "reasoningTokens": 103,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 48
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 0.04020000001764856,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.00830000001587905,
+            "valid": true
+          }
+        ]
+      }
+    }
+  ],
+  "scenes": [
+    {
+      "index": 0,
+      "sourceSha256": "29c72a5248417ce306bfa7bd5861589e9afd81e7a6eacde7e8063334904d37bd",
+      "sourceBytes": 8706,
+      "approvedAttempt": 1,
+      "checks": {
+        "times": [
+          0,
+          3.7323333333333335,
+          3.7333333333333334,
+          5.333333333333334,
+          6.932333333333333,
+          6.933333333333334,
+          8.733333333333334,
+          10.532333333333334,
+          10.533333333333333,
+          12.133333333333333,
+          13.733333333333334,
+          14.733333333333334,
+          15.733333333333334,
+          16.534
+        ],
+        "deterministicSeek": true,
+        "maxMarkerError": 5.438959822042073e-16,
+        "maxInternalPoseError": 3.972054645195637e-15,
+        "retainedIds": [],
+        "motionChecks": {
+          "rotationDegrees": 27.50197416627952,
+          "translationFraction": 0,
+          "markedSiteDisplaySeparation": 4.643497462559875
+        },
+        "modelPrimitiveCount": 46,
+        "cueMotionChecked": {
+          "id": "turn-whole-structure",
+          "phrase": "Turn the whole structure together through a new angle",
+          "utteranceId": "beat-1.u1",
+          "wordIds": [
+            "beat-1.u1.w17",
+            "beat-1.u1.w18",
+            "beat-1.u1.w19",
+            "beat-1.u1.w20",
+            "beat-1.u1.w21",
+            "beat-1.u1.w22",
+            "beat-1.u1.w23",
+            "beat-1.u1.w24",
+            "beat-1.u1.w25"
+          ],
+          "startSec": 6.933333333333334,
+          "endSec": 10.533333333333333
+        },
+        "advisoryWarnings": 0
+      },
+      "nativeEvidenceReceipt": "C:\\Users\\samue\\Stuff\\3yellow3white\\data\\animation-efficiency\\holdout\\trial2\\29cfb9fc-6856-4d4f-a829-b9736e4b7058\\scene-0.visual-review.json"
+    },
+    {
+      "index": 1,
+      "sourceSha256": "e2c7a83b464a4228feea81b3483d4dae8d8a93f2fa56bd5bf97ee0ea7dadca13",
+      "sourceBytes": 5759,
+      "approvedAttempt": 0,
+      "checks": {
+        "times": [
+          0,
+          3.599,
+          3.6,
+          5.866666666666666,
+          8.132333333333333,
+          8.133333333333333,
+          9.766666666666666,
+          11.399999999999999,
+          15.333333333333332,
+          16.333333333333332,
+          17.333333333333332,
+          18.134
+        ],
+        "deterministicSeek": true,
+        "maxMarkerError": 5.438959822042073e-16,
+        "maxInternalPoseError": 3.972054645195637e-15,
+        "retainedIds": [
+          "protein/primitive-45",
+          "protein/node-45",
+          "protein/primitive-44",
+          "protein/node-44",
+          "protein/primitive-43",
+          "protein/node-43",
+          "protein/primitive-42",
+          "protein/node-42",
+          "protein/primitive-41",
+          "protein/node-41",
+          "protein/primitive-40",
+          "protein/node-40",
+          "protein/primitive-39",
+          "protein/node-39",
+          "protein/primitive-38",
+          "protein/node-38",
+          "protein/primitive-37",
+          "protein/node-37",
+          "protein/primitive-36",
+          "protein/node-36",
+          "protein/primitive-35",
+          "protein/node-35",
+          "protein/primitive-34",
+          "protein/node-34",
+          "protein/primitive-33",
+          "protein/node-33",
+          "protein/primitive-32",
+          "protein/node-32",
+          "protein/primitive-31",
+          "protein/node-31",
+          "protein/primitive-30",
+          "protein/node-30",
+          "protein/primitive-29",
+          "protein/node-29",
+          "protein/primitive-28",
+          "protein/node-28",
+          "protein/primitive-27",
+          "protein/node-27",
+          "protein/primitive-26",
+          "protein/node-26",
+          "protein/primitive-25",
+          "protein/node-25",
+          "protein/primitive-24",
+          "protein/node-24",
+          "protein/primitive-23",
+          "protein/node-23",
+          "protein/primitive-22",
+          "protein/node-22",
+          "protein/primitive-21",
+          "protein/node-21",
+          "protein/primitive-20",
+          "protein/node-20",
+          "protein/primitive-19",
+          "protein/node-19",
+          "protein/primitive-18",
+          "protein/node-18",
+          "protein/primitive-17",
+          "protein/node-17",
+          "protein/primitive-16",
+          "protein/node-16",
+          "protein/primitive-15",
+          "protein/node-15",
+          "protein/primitive-14",
+          "protein/node-14",
+          "protein/primitive-13",
+          "protein/node-13",
+          "protein/primitive-12",
+          "protein/node-12",
+          "protein/primitive-11",
+          "protein/node-11",
+          "protein/primitive-10",
+          "protein/node-10",
+          "protein/primitive-9",
+          "protein/node-9",
+          "protein/primitive-8",
+          "protein/node-8",
+          "protein/primitive-7",
+          "protein/node-7",
+          "protein/primitive-6",
+          "protein/node-6",
+          "protein/primitive-5",
+          "protein/node-5",
+          "protein/primitive-4",
+          "protein/node-4",
+          "protein/primitive-3",
+          "protein/node-3",
+          "protein/primitive-2",
+          "protein/node-2",
+          "protein/primitive-1",
+          "protein/node-1",
+          "protein/primitive-0",
+          "protein/node-0",
+          "protein",
+          "marker-a",
+          "marker-b",
+          "site-label-a",
+          "site-label-b",
+          "distance-brace/leaderA",
+          "distance-brace/leaderB",
+          "distance-brace/span",
+          "distance-brace/tickA",
+          "distance-brace/tickB",
+          "distance-brace/value",
+          "distance-brace",
+          "assembly"
+        ],
+        "motionChecks": {
+          "rotationDegrees": 0,
+          "translationFraction": 0.2584258976505312,
+          "markedSiteDisplaySeparation": 4.643497462559876
+        },
+        "modelPrimitiveCount": 46,
+        "cueMotionChecked": {
+          "id": "slide-whole-structure",
+          "phrase": "Slide the whole structure sideways without changing its orientation",
+          "utteranceId": "beat-2.u1",
+          "wordIds": [
+            "beat-2.u1.w9",
+            "beat-2.u1.w10",
+            "beat-2.u1.w11",
+            "beat-2.u1.w12",
+            "beat-2.u1.w13",
+            "beat-2.u1.w14",
+            "beat-2.u1.w15",
+            "beat-2.u1.w16",
+            "beat-2.u1.w17"
+          ],
+          "startSec": 3.6,
+          "endSec": 8.133333333333333
+        },
+        "advisoryWarnings": 0
+      },
+      "nativeEvidenceReceipt": "C:\\Users\\samue\\Stuff\\3yellow3white\\data\\animation-efficiency\\holdout\\trial2\\29cfb9fc-6856-4d4f-a829-b9736e4b7058\\scene-1.visual-review.json"
+    }
+  ],
+  "toolCalls": [
+    {
+      "task": 0,
+      "tool": "resolve_visualization_resource",
+      "input": {
+        "catalogId": "rigid-molecular-motion"
+      },
+      "status": "ready",
+      "packageIds": [
+        "scientific-rigid-motion"
+      ],
+      "elapsedMs": 0.6833999999998923
+    },
+    {
+      "task": 0,
+      "tool": "resolve_visualization_resource",
+      "input": {
+        "catalogId": "crambin-1crn",
+        "selection": {
+          "fixtureId": "1crn-beads"
+        }
+      },
+      "status": "preparation-required",
+      "packageIds": [],
+      "elapsedMs": 0.39870000000155414
+    },
+    {
+      "task": 4,
+      "tool": "resolve_visualization_resource",
+      "input": {
+        "catalogId": "crambin-1crn",
+        "selection": {
+          "fixtureId": "1crn-beads"
+        }
+      },
+      "status": "preparation-required",
+      "packageIds": [],
+      "elapsedMs": 0.48170000000391155
+    }
+  ],
+  "revision": "51a40139e94d8f07ddcde123b98f653c394d6727",
+  "sourceHashes": {
+    "backend/bench/animation-holdout.ts": "51add1807d47cd94638a0dcec960d7900915fac89a1cf4e169271fb362c315b8",
+    "backend/src/agents/generator.ts": "63125676fde9fdf6f62bbb919a9bc0dc0bd229ad1ddc5badf90dead139228127",
+    "backend/src/agents/runtime.ts": "3432b231d1ab05210d73eaa1c23b9921d8ad8ad1ea2d54a650abdf28b9552a17",
+    "backend/src/agents/visual-gate.ts": "92a22c9dd411c1c0935be3762ef7bda37b4b89d425447a0db33f57fa9562d04b",
+    "backend/src/agents/visual-evidence.ts": "1d97b1336284e01d5020be94c98842bd6e516658e55c3bc4d0dfb95017f0beca",
+    "backend/src/agents/timing-prelude.ts": "91c247ff0a0049d3b90b910442e44de23a97d773461e07d83d68dbdbb4acca58",
+    "backend/src/agents/authoring-reference.ts": "8cb357e0474f821b1d4aa82ceaed0379f80985f32068e60b90b7f45d56fd7178",
+    "backend/src/visualization-resolver.ts": "e1c3dd0471e12f353bd211a7e28503946ef70e2a5458deb0ce4dde528b5fcd71",
+    "backend/src/bundled-models.ts": "9d283689a7bd264f6083adc141684550fd55745c63ac22844f48ef69a8220ee9",
+    "backend/src/narration/subtitles.ts": "c72f911d2c5c47e6ae121e37355be138ac56dcafdc8bf615a756f4f8db61d0fc",
+    "backend/prompts/scene-craft.md": "a9079e2e513f7b87cf32d2a960b0370f05adae4467327645141c330ffa215d44",
+    "backend/prompts/scene-verify.md": "bfce84a14c97edce4552c9950d8886f63a89f28d9ef8a445e353dea8f5d221e5",
+    "shared/animlib/docs/reference.md": "82fffbd9c238468c8fa4b1ac08ab0578305771c5ed6df62f24566354b9c83788",
+    "shared/animlib/dist/core.js": "b3cea713e34c48f2063c1ec6b9a9ce03597169bb1d0499831044ead4a310f456",
+    "shared/animlib/dist/compiler.js": "d20c66d3ced7ab85ffd40399455eb6edd8e7cb9aa7a00ca349a6bcda408e8d66",
+    "shared/animlib/dist/runtime.js": "6b9a474e8dc7d02ba9f7eaefe828141d9d3e378ffd05932cd6fb3214032ada3a",
+    "shared/animlib/dist/authoring.js": "10fb2ed12339be4e8706d10c8c9bf5a04f09882aafc3e55dfe4fe3ff0668f3c6",
+    "shared/animlib/src/spatial.ts": "75901b41a78969e37bc5ac4f57fa1d3f23a61838f933dc55131cf8e50698973b"
+  },
+  "preparation": {
+    "coldMs": 114.34820000000002,
+    "diskReuseMs": 0.7705999999999449,
+    "publications": 1,
+    "conversions": 1,
+    "freshPreparerConversions": 0,
+    "separatePublications": 1,
+    "modelId": "model-cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529-10cee24fd4678af6259f5d5a274235a7994b173804dca444993050dbe10fe097",
+    "glbSha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+    "provenanceSha256": "10cee24fd4678af6259f5d5a274235a7994b173804dca444993050dbe10fe097",
+    "triangles": 7328
+  },
+  "fixtureHash": "b2e51e4fb4e27415d2a64186f7cca3877a121f1bc92d18afa3b8d7480dfdcf8b",
+  "packageHash": "4c876cac730a5f0ba7242fd9b10d92b83eb593105b7d13ec6db0e448bb090daa",
+  "structureHash": "a5ccb3b7356bdcac54bc9ad69d38dc6f0c2d0716d18142a99dd60f74c6c8a607",
+  "cues": [
+    {
+      "mark-sites": {
+        "id": "mark-sites",
+        "phrase": "Mark these two sites on the same structure",
+        "utteranceId": "beat-1.u1",
+        "wordIds": [
+          "beat-1.u1.w9",
+          "beat-1.u1.w10",
+          "beat-1.u1.w11",
+          "beat-1.u1.w12",
+          "beat-1.u1.w13",
+          "beat-1.u1.w14",
+          "beat-1.u1.w15",
+          "beat-1.u1.w16"
+        ],
+        "startSec": 3.7333333333333334,
+        "endSec": 6.933333333333334
+      },
+      "turn-whole-structure": {
+        "id": "turn-whole-structure",
+        "phrase": "Turn the whole structure together through a new angle",
+        "utteranceId": "beat-1.u1",
+        "wordIds": [
+          "beat-1.u1.w17",
+          "beat-1.u1.w18",
+          "beat-1.u1.w19",
+          "beat-1.u1.w20",
+          "beat-1.u1.w21",
+          "beat-1.u1.w22",
+          "beat-1.u1.w23",
+          "beat-1.u1.w24",
+          "beat-1.u1.w25"
+        ],
+        "startSec": 6.933333333333334,
+        "endSec": 10.533333333333333
+      },
+      "same-distance": {
+        "id": "same-distance",
+        "phrase": "The marked sites stay the same distance apart",
+        "utteranceId": "beat-1.u1",
+        "wordIds": [
+          "beat-1.u1.w26",
+          "beat-1.u1.w27",
+          "beat-1.u1.w28",
+          "beat-1.u1.w29",
+          "beat-1.u1.w30",
+          "beat-1.u1.w31",
+          "beat-1.u1.w32",
+          "beat-1.u1.w33"
+        ],
+        "startSec": 10.533333333333333,
+        "endSec": 13.733333333333334
+      }
+    },
+    {
+      "slide-whole-structure": {
+        "id": "slide-whole-structure",
+        "phrase": "Slide the whole structure sideways without changing its orientation",
+        "utteranceId": "beat-2.u1",
+        "wordIds": [
+          "beat-2.u1.w9",
+          "beat-2.u1.w10",
+          "beat-2.u1.w11",
+          "beat-2.u1.w12",
+          "beat-2.u1.w13",
+          "beat-2.u1.w14",
+          "beat-2.u1.w15",
+          "beat-2.u1.w16",
+          "beat-2.u1.w17"
+        ],
+        "startSec": 3.6,
+        "endSec": 8.133333333333333
+      },
+      "shape-unchanged": {
+        "id": "shape-unchanged",
+        "phrase": "The shape and the marked distance stay unchanged",
+        "utteranceId": "beat-2.u1",
+        "wordIds": [
+          "beat-2.u1.w18",
+          "beat-2.u1.w19",
+          "beat-2.u1.w20",
+          "beat-2.u1.w21",
+          "beat-2.u1.w22",
+          "beat-2.u1.w23",
+          "beat-2.u1.w24",
+          "beat-2.u1.w25"
+        ],
+        "startSec": 8.133333333333333,
+        "endSec": 11.399999999999999
+      }
+    }
+  ],
+  "settings": {
+    "provider": "openai-codex",
+    "model": "gpt-6-astra",
+    "thinking": "high",
+    "outputMode": "validated-reference",
+    "timingMode": "host",
+    "narrationMode": "subtitles",
+    "allowWeb": false,
+    "sceneTimeoutMs": 900000
+  },
+  "acceptance": "Exact-source native review and deterministic spatial/cue/carry checks passed; continuous playback and acoustic review remain outside this fixture.",
+  "finishedAt": "2026-10-15T22:18:02.799Z",
+  "tokenTotals": {
+    "inputTokens": 417917,
+    "outputTokens": 7591,
+    "cacheReadTokens": 689280,
+    "cacheWriteTokens": 0
+  }
+}

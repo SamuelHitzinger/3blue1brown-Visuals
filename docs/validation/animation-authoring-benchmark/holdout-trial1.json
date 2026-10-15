@@ -1,0 +1,452 @@
+{
+  "schemaVersion": 1,
+  "trial": "trial1",
+  "videoId": "9da3d144-cfc6-43d1-bace-b70999bc4790",
+  "directory": "C:\\Users\\samue\\Stuff\\3yellow3white\\data\\animation-efficiency\\holdout\\trial1\\9da3d144-cfc6-43d1-bace-b70999bc4790",
+  "status": "failed",
+  "startedAt": "2026-10-15T21:54:34.357Z",
+  "elapsedMs": 285429.18929999997,
+  "generationElapsedMs": 285049.1153,
+  "timingScope": "Subtitle-reading estimates. This run provides no acoustic synchronization evidence.",
+  "nativeVisualScope": "Production native frame review, not continuous playback or interactive/orbit validation.",
+  "reviewRoundCap": 2,
+  "metrics": [
+    {
+      "stage": "scene",
+      "scene": 0,
+      "promptBytes": 199495,
+      "metrics": {
+        "elapsedMs": 233126.0195,
+        "providerCalls": 9,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 3057.0042000000003,
+            "providerMs": 3052.1051,
+            "stopReason": "toolUse",
+            "inputTokens": 49208,
+            "outputTokens": 28,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 54
+          },
+          {
+            "index": 2,
+            "elapsedMs": 2201.6766000000002,
+            "providerMs": 2199.7481,
+            "stopReason": "toolUse",
+            "inputTokens": 524,
+            "outputTokens": 24,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 49024,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 31
+          },
+          {
+            "index": 3,
+            "elapsedMs": 2400.6705,
+            "providerMs": 2398.8650000000007,
+            "stopReason": "toolUse",
+            "inputTokens": 1181,
+            "outputTokens": 43,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 49408,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 83
+          },
+          {
+            "index": 4,
+            "elapsedMs": 40340.470400000006,
+            "providerMs": 40339.062000000005,
+            "stopReason": "toolUse",
+            "inputTokens": 410,
+            "outputTokens": 1061,
+            "reasoningTokens": 1034,
+            "cacheReadTokens": 50432,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 38
+          },
+          {
+            "index": 5,
+            "elapsedMs": 47896.3332,
+            "providerMs": 47884.81960000001,
+            "stopReason": "toolUse",
+            "inputTokens": 138,
+            "outputTokens": 1049,
+            "reasoningTokens": 576,
+            "cacheReadTokens": 52096,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 860
+          },
+          {
+            "index": 6,
+            "elapsedMs": 53961.9344,
+            "providerMs": 52636.7445,
+            "stopReason": "toolUse",
+            "inputTokens": 581,
+            "outputTokens": 2278,
+            "reasoningTokens": 815,
+            "cacheReadTokens": 52864,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 4080
+          },
+          {
+            "index": 7,
+            "elapsedMs": 50620.140199999994,
+            "providerMs": 48782.56910000002,
+            "stopReason": "toolUse",
+            "inputTokens": 2596,
+            "outputTokens": 2086,
+            "reasoningTokens": 619,
+            "cacheReadTokens": 53248,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 4081
+          },
+          {
+            "index": 8,
+            "elapsedMs": 30915.72279999999,
+            "providerMs": 29026.5417,
+            "stopReason": "toolUse",
+            "inputTokens": 6079,
+            "outputTokens": 958,
+            "reasoningTokens": 622,
+            "cacheReadTokens": 55680,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 943
+          },
+          {
+            "index": 9,
+            "elapsedMs": 1703.3395000000019,
+            "providerMs": 1702.6089999999967,
+            "stopReason": "stop",
+            "inputTokens": 2351,
+            "outputTokens": 12,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 61568,
+            "cacheWriteTokens": 0,
+            "textChars": 29,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 1322.9386999999988,
+            "valid": false
+          },
+          {
+            "kind": "tool",
+            "elapsedMs": 844.8481999999785,
+            "valid": true
+          },
+          {
+            "kind": "tool",
+            "elapsedMs": 954.2054000000062,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.4586999999883119,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "review",
+      "scene": 0,
+      "promptBytes": 218490,
+      "metrics": {
+        "elapsedMs": 24663.655300000013,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 24191.040999999997,
+            "providerMs": 24189.1667,
+            "stopReason": "toolUse",
+            "inputTokens": 67924,
+            "outputTokens": 632,
+            "reasoningTokens": 516,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 416
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 0.13030000001890585,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.013200000015785918,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "repair",
+      "scene": 0,
+      "promptBytes": 211378,
+      "metrics": {
+        "elapsedMs": 15150.6109,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 14691.705499999982,
+            "providerMs": 13686.671099999978,
+            "stopReason": "toolUse",
+            "inputTokens": 66334,
+            "outputTokens": 369,
+            "reasoningTokens": 220,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 380
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 1003.4784000000218,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.011500000022351742,
+            "valid": true
+          }
+        ]
+      }
+    },
+    {
+      "stage": "review",
+      "scene": 0,
+      "promptBytes": 218970,
+      "metrics": {
+        "elapsedMs": 6573.12089999998,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 6119.220299999986,
+            "providerMs": 6117.821799999976,
+            "stopReason": "toolUse",
+            "inputTokens": 32950,
+            "outputTokens": 79,
+            "reasoningTokens": 51,
+            "cacheReadTokens": 36352,
+            "cacheWriteTokens": 0,
+            "textChars": 0,
+            "toolArgumentChars": 48
+          }
+        ],
+        "validations": [
+          {
+            "kind": "tool",
+            "elapsedMs": 0.024199999985285103,
+            "valid": true
+          },
+          {
+            "kind": "final",
+            "elapsedMs": 0.011499999964144081,
+            "valid": true
+          }
+        ]
+      }
+    }
+  ],
+  "scenes": [],
+  "toolCalls": [
+    {
+      "task": 0,
+      "tool": "resolve_visualization_resource",
+      "input": {
+        "catalogId": "crambin-1crn",
+        "selection": {
+          "fixtureId": "1crn-beads"
+        },
+        "prepare": false
+      },
+      "status": "preparation-required",
+      "packageIds": [],
+      "elapsedMs": 0.4272999999993772
+    },
+    {
+      "task": 0,
+      "tool": "resolve_visualization_resource",
+      "input": {
+        "catalogId": "rigid-molecular-motion"
+      },
+      "status": "ready",
+      "packageIds": [
+        "scientific-rigid-motion"
+      ],
+      "elapsedMs": 0.7318000000013853
+    }
+  ],
+  "revision": "406d45b287f86afabee018fa42e01a2c7e3f75b1",
+  "sourceHashes": {
+    "backend/bench/animation-holdout.ts": "071d52590b4087757ba8edf8cb57a06438bc4feb92ac04590847bf3c8a4b1ae0",
+    "backend/src/agents/generator.ts": "63125676fde9fdf6f62bbb919a9bc0dc0bd229ad1ddc5badf90dead139228127",
+    "backend/src/agents/runtime.ts": "3432b231d1ab05210d73eaa1c23b9921d8ad8ad1ea2d54a650abdf28b9552a17",
+    "backend/src/agents/visual-gate.ts": "92a22c9dd411c1c0935be3762ef7bda37b4b89d425447a0db33f57fa9562d04b",
+    "backend/src/agents/visual-evidence.ts": "1d97b1336284e01d5020be94c98842bd6e516658e55c3bc4d0dfb95017f0beca",
+    "backend/src/agents/timing-prelude.ts": "91c247ff0a0049d3b90b910442e44de23a97d773461e07d83d68dbdbb4acca58",
+    "backend/src/agents/authoring-reference.ts": "8cb357e0474f821b1d4aa82ceaed0379f80985f32068e60b90b7f45d56fd7178",
+    "backend/src/visualization-resolver.ts": "e1c3dd0471e12f353bd211a7e28503946ef70e2a5458deb0ce4dde528b5fcd71",
+    "backend/src/bundled-models.ts": "9d283689a7bd264f6083adc141684550fd55745c63ac22844f48ef69a8220ee9",
+    "backend/src/narration/subtitles.ts": "c72f911d2c5c47e6ae121e37355be138ac56dcafdc8bf615a756f4f8db61d0fc",
+    "backend/prompts/scene-craft.md": "a9079e2e513f7b87cf32d2a960b0370f05adae4467327645141c330ffa215d44",
+    "backend/prompts/scene-verify.md": "bfce84a14c97edce4552c9950d8886f63a89f28d9ef8a445e353dea8f5d221e5",
+    "shared/animlib/docs/reference.md": "82fffbd9c238468c8fa4b1ac08ab0578305771c5ed6df62f24566354b9c83788",
+    "shared/animlib/dist/core.js": "b3cea713e34c48f2063c1ec6b9a9ce03597169bb1d0499831044ead4a310f456",
+    "shared/animlib/dist/compiler.js": "d20c66d3ced7ab85ffd40399455eb6edd8e7cb9aa7a00ca349a6bcda408e8d66",
+    "shared/animlib/dist/runtime.js": "6b9a474e8dc7d02ba9f7eaefe828141d9d3e378ffd05932cd6fb3214032ada3a",
+    "shared/animlib/dist/authoring.js": "10fb2ed12339be4e8706d10c8c9bf5a04f09882aafc3e55dfe4fe3ff0668f3c6",
+    "shared/animlib/src/spatial.ts": "75901b41a78969e37bc5ac4f57fa1d3f23a61838f933dc55131cf8e50698973b"
+  },
+  "preparation": {
+    "coldMs": 125.17670000000001,
+    "diskReuseMs": 0.8394999999999868,
+    "publications": 1,
+    "conversions": 1,
+    "freshPreparerConversions": 0,
+    "separatePublications": 1,
+    "modelId": "model-cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529-10cee24fd4678af6259f5d5a274235a7994b173804dca444993050dbe10fe097",
+    "glbSha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+    "provenanceSha256": "10cee24fd4678af6259f5d5a274235a7994b173804dca444993050dbe10fe097",
+    "triangles": 7328
+  },
+  "fixtureHash": "b2e51e4fb4e27415d2a64186f7cca3877a121f1bc92d18afa3b8d7480dfdcf8b",
+  "packageHash": "4c876cac730a5f0ba7242fd9b10d92b83eb593105b7d13ec6db0e448bb090daa",
+  "structureHash": "a5ccb3b7356bdcac54bc9ad69d38dc6f0c2d0716d18142a99dd60f74c6c8a607",
+  "cues": [
+    {
+      "mark-sites": {
+        "id": "mark-sites",
+        "phrase": "Mark these two sites on the same structure",
+        "utteranceId": "beat-1.u1",
+        "wordIds": [
+          "beat-1.u1.w9",
+          "beat-1.u1.w10",
+          "beat-1.u1.w11",
+          "beat-1.u1.w12",
+          "beat-1.u1.w13",
+          "beat-1.u1.w14",
+          "beat-1.u1.w15",
+          "beat-1.u1.w16"
+        ],
+        "startSec": 3.7333333333333334,
+        "endSec": 6.933333333333334
+      },
+      "turn-whole-structure": {
+        "id": "turn-whole-structure",
+        "phrase": "Turn the whole structure together through a new angle",
+        "utteranceId": "beat-1.u1",
+        "wordIds": [
+          "beat-1.u1.w17",
+          "beat-1.u1.w18",
+          "beat-1.u1.w19",
+          "beat-1.u1.w20",
+          "beat-1.u1.w21",
+          "beat-1.u1.w22",
+          "beat-1.u1.w23",
+          "beat-1.u1.w24",
+          "beat-1.u1.w25"
+        ],
+        "startSec": 6.933333333333334,
+        "endSec": 10.533333333333333
+      },
+      "same-distance": {
+        "id": "same-distance",
+        "phrase": "The marked sites stay the same distance apart",
+        "utteranceId": "beat-1.u1",
+        "wordIds": [
+          "beat-1.u1.w26",
+          "beat-1.u1.w27",
+          "beat-1.u1.w28",
+          "beat-1.u1.w29",
+          "beat-1.u1.w30",
+          "beat-1.u1.w31",
+          "beat-1.u1.w32",
+          "beat-1.u1.w33"
+        ],
+        "startSec": 10.533333333333333,
+        "endSec": 13.733333333333334
+      }
+    },
+    {
+      "slide-whole-structure": {
+        "id": "slide-whole-structure",
+        "phrase": "Slide the whole structure sideways without changing its orientation",
+        "utteranceId": "beat-2.u1",
+        "wordIds": [
+          "beat-2.u1.w9",
+          "beat-2.u1.w10",
+          "beat-2.u1.w11",
+          "beat-2.u1.w12",
+          "beat-2.u1.w13",
+          "beat-2.u1.w14",
+          "beat-2.u1.w15",
+          "beat-2.u1.w16",
+          "beat-2.u1.w17"
+        ],
+        "startSec": 3.6,
+        "endSec": 8.133333333333333
+      },
+      "shape-unchanged": {
+        "id": "shape-unchanged",
+        "phrase": "The shape and the marked distance stay unchanged",
+        "utteranceId": "beat-2.u1",
+        "wordIds": [
+          "beat-2.u1.w18",
+          "beat-2.u1.w19",
+          "beat-2.u1.w20",
+          "beat-2.u1.w21",
+          "beat-2.u1.w22",
+          "beat-2.u1.w23",
+          "beat-2.u1.w24",
+          "beat-2.u1.w25"
+        ],
+        "startSec": 8.133333333333333,
+        "endSec": 11.399999999999999
+      }
+    }
+  ],
+  "settings": {
+    "provider": "openai-codex",
+    "model": "gpt-6-astra",
+    "thinking": "high",
+    "outputMode": "validated-reference",
+    "timingMode": "host",
+    "narrationMode": "subtitles",
+    "allowWeb": false,
+    "sceneTimeoutMs": 900000
+  },
+  "error": {
+    "code": "HOLDOUT",
+    "message": "Holdout acceptance: expected exactly one full instance of the pinned model"
+  },
+  "finishedAt": "2026-10-15T21:59:19.785Z",
+  "tokenTotals": {
+    "inputTokens": 230276,
+    "outputTokens": 8619,
+    "cacheReadTokens": 460672,
+    "cacheWriteTokens": 0
+  }
+}

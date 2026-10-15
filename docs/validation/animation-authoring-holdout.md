@@ -1,6 +1,6 @@
 # Spatial authoring holdout
 
-`backend/bench/animation-holdout.ts` defines a new case, **Turning a protein is not folding it**. It has two linked scenes, independent of the binary-search, derivative, and RNA matched fixtures. This document records the harness contract, not a successful generated result. No live author or native renderer was run while preparing this harness.
+`backend/bench/animation-holdout.ts` defines a new case, **Turning a protein is not folding it**. It has two linked scenes, independent of the binary-search, derivative, and RNA matched fixtures. Fresh trial2 passed both scenes and all declared checks. The original harness contract and preparation checks are retained below; live results follow at the end.
 
 ## Scene and source contract
 
@@ -46,3 +46,27 @@ Sampled native evidence cannot certify every in-between frame or motion feel. Co
 ## Harness preparation checks
 
 Direct TypeScript checking with backend compiler settings passed. A pure fixture check loaded the pinned structure, validated the planned lesson, built both subtitle scenes, resolved all five positive-duration cue spans, and confirmed the subtitle timing basis. No model generation, model conversion, native rendering or broad test suite was run during these preparation checks.
+
+## Live result and preserved failure
+
+Trial1 generated and visually approved scene0 after one repair, then failed a harness check that counted a published custom ribbon as part of the pinned protein. The original failed result remains unchanged. The [checker correction and separate assessments](animation-holdout-sanity.md) document exact 46-primitive coverage, valid asset-backed ribbon geometry and unchanged-source/seek/boundary reproduction. Independent review found two callback-check edge cases; both were fixed with regressions. Root's final focused run passed 14 tests and 58 assertions. A fresh full run was chosen instead of adding a benchmark-only resume framework.
+
+Trial2 ran at `51a4013` using the same fixture and subtitle-package hashes as trial1. It completed in **257.828 seconds**, with **7,591 output tokens**. Both scene sources received exact-source native approval in 1280×720 and 960×720. Scene0 required one 44.1-second targeted repair for label clearance; scene1 passed its first review after correcting one invalid author submission. Neither scene exceeded two visual reviews.
+
+| Acceptance | Trial2 evidence |
+| --- | --- |
+| Pinned model integrity | Exactly 46 unique protein primitives throughout both scenes |
+| Rigid rotation | 27.501974 degrees inside the declared turn cue; fixed pivot and internal geometry |
+| Translation | 25.8426% of displayed landmark separation inside the slide cue; zero rotation |
+| Landmark attachment | Maximum marker error `5.44e-16` in both scenes |
+| Internal geometry | Maximum relative-pose error `3.98e-15` in both scenes |
+| Custom geometry | Valid triangulated ribbon in actual scoped composition; native shape review passed |
+| Handoff | Every retained object and camera matched exactly at the scene boundary |
+| Timing and seek | Cue/pause checks and reverse/repeated frame sampling passed |
+| Advisory inspection | Zero final warnings in both scenes |
+
+Four concurrent resource resolutions produced one conversion and one publication. Cold preparation took 114.35 ms; a fresh preparer reused disk bytes in 0.77 ms without conversion. A separate job registered the same identity once. These timings describe this local run, not a distribution or general complex-asset guarantee.
+
+Root agent inspected progression sheets and final native frames for both scenes. The repaired rotation keeps residue labels outside the molecule, the brace and its explanatory label separate, and the turn ribbon clear of the header. Translation preserves the same visible molecule and attached measurement. This is agent inspection and bounded native review, not human adjudication or continuous playback review.
+
+Durable raw results: [failed trial1](animation-authoring-benchmark/holdout-trial1.json), [complete trial2](animation-authoring-benchmark/holdout-trial2.json). Full local sources, assets, native images, review receipts and samples remain under `data/animation-efficiency/holdout/trial1` and `trial2`. No trial was overwritten. The holdout supplies novel 3D correctness evidence; it has no matched baseline for a generation-speed claim and no spoken audio for an acoustic-synchronization claim.
