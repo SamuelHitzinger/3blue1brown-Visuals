@@ -40,3 +40,16 @@ Reject arrows that miss zero or reverse incorrectly, detached labels, illegible
 conditions, unexplained algebra, and decorative slide framing. Synthetic visual
 windows do not establish speech synchronization. Compare unchanged rendered
 sources, including intermediate motion, before claiming quality preservation.
+
+## Direct source authoring experiment
+
+The same approved reference and rejection patterns apply across public physics
+and biology inputs. A single structured submission performs evidence selection
+and scene authoring; no earlier generated brief supplies an answer. It must keep
+the source entities visible while applying the explanatory mapping or relation,
+then retain the result. Local algebra and stable colors bind the operation to its
+referents. Essential assumptions belong beside that operation. A detached complete
+equation, center illustration, and permanent footer remain rejected even if the
+sign or category labels are correct. Use no arbitrary axes for nonmetric content.
+The eight-second proof contains a one-second setup, five-second operation, and
+two-second reading hold. These are visual windows, not a speech alignment claim.

@@ -23,7 +23,12 @@ import { applyLabelOcclusion, type LabelAnchor } from './label-occlusion.js';
 import { resolveAssetGeometry } from './asset-geometry.js';
 import type { AssetGeometryResolver } from './asset-types.js';
 
-function literalTextTex(text:string):string {return String.raw`\text{`+text.replace(/[\\{}$&#%_^~]/g,c=>({'\\':String.raw`\backslash `,'{':String.raw`\{`,'}':String.raw`\}`,'$':String.raw`\$`,'&':String.raw`\&`,'#':String.raw`\#`,'%':String.raw`\%`,'_':String.raw`\_`,'^':String.raw`\textasciicircum `,'~':String.raw`\textasciitilde `}[c]!))+'}';}
+function literalTextTex(text:string):string {
+  const escaped=text.replace(/[\\{}$&#%_^~]/g,c=>({'\\':String.raw`\backslash `,'{':String.raw`\{`,'}':String.raw`\}`,'$':String.raw`\$`,'&':String.raw`\&`,'#':String.raw`\#`,'%':String.raw`\%`,'_':String.raw`\_`,'^':String.raw`\textasciicircum `,'~':String.raw`\textasciitilde `}[c]!));
+  // Lowercase Greek is bundled in MathJax's math font, not its text font.
+  // Switch only these glyphs to math; retain literal letters and surrounding spaces.
+  return String.raw`\text{`+escaped.replace(/[α-ω]/g,c=>String.raw`\(`+c+String.raw`\)`)+ '}';
+}
 /** Unicode scripts need TeX layout: the bundled font has baseline digits, not
  * standalone superscript/subscript glyphs. Keep literal text escaping intact. */
 export function textTex(text:string):string {
@@ -150,7 +155,9 @@ export function buildDrawItems(frame:Frame,camera:CameraState,width:number,heigh
       const local:ElementState={...element,geometry:primitive.geometry,id:'',view:undefined,position:[0,0,0],rotation:[0,0,0],scale:1,
         opacity,billboard:false,billboardOffset:undefined,viewportOffset:undefined};
       const key=paletteKey+JSON.stringify([(local.geometry as ResolvedModelGeometry)._modelKey ?? local.geometry,local.fill,local.stroke,local.strokeWidth,local.strokeProfile,local.space,opacity,local.strokeStart,local.strokeEnd,local.dashArray,local.dashOffset]);
-      const meshes=retained.get(key,()=>buildDrawItems({...frame,elements:[local]},camera,width,height,palette,undefined,false,undefined,undefined,assetGeometry),element.geometry.kind==='arrow',JSON.stringify([view,element.id]));
+      // Opaque glyphs share one label's style/transform/layer; one mesh avoids a
+      // uniform upload and draw per glyph. Transparency and morphs stay unbatched.
+      const meshes=retained.get(key,()=>buildDrawItems({...frame,elements:[local]},camera,width,height,palette,undefined,false,undefined,undefined,assetGeometry),element.geometry.kind==='arrow'||isText(element.geometry),JSON.stringify([view,element.id]));
       const instanceBasis=primitive.axes.map(p=>p.map((_,axis)=>p.reduce((sum,v,i)=>sum+v*basis[i][axis],0)) as Vec3);
       const instanceOrigin=origin.map((v,axis)=>v+primitive.origin.reduce((sum,p,i)=>sum+p*basis[i][axis],0)) as Vec3;
       const instance=new Float32Array([...instanceBasis[0],0,...instanceBasis[1],0,...instanceBasis[2],0,...instanceOrigin,1,elementIndex,scale*primitive.scale,...viewportOffset]);

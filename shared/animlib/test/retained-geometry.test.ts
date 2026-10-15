@@ -19,6 +19,23 @@ const draw = (cache: RetainedGeometry, frame: Frame, palette = paletteResolver()
   cache.endFrame(); return items;
 };
 describe('retained local geometry',()=>{
+  it.each(['text','latex'])('batches opaque %s glyphs per label with identical expanded vertices',async kind=>{
+    const scene=await compileSource(`export default scene({},s=>{s.${kind}('label',{${kind==='text'?"text:'alpha omega 123'":"tex:'x^2 + y^2 = 1'"},fontSize:.4});s.wait(1);});`);
+    const frame=evaluateScene(scene,0),cache=new RetainedGeometry();
+    const reference=buildDrawItems(frame,frame.camera,800,600,paletteResolver());
+    expect(reference.length).toBeGreaterThan(3);
+    const items=draw(cache,frame);expect(items).toHaveLength(1);expect(items[0].elementId).toBe('label');expect(items[0].component).toBe('content');
+    const mesh=items[0].mesh!,expanded=Array.from(mesh.indices).flatMap(index=>Array.from(mesh.vertices.subarray(index*VERTEX_FLOATS,(index+1)*VERTEX_FLOATS)));
+    expect(expanded).toEqual(reference.flatMap(item=>Array.from(item.vertices)));
+    frame.elements[0].position=[1,2,0];frame.elements[0].rotation=[0,0,.3];
+    const moved=draw(cache,frame);expect(moved[0].mesh).toBe(mesh);expect(moved[0].instance).not.toEqual(items[0].instance);
+    frame.elements[0].opacity=.5;const transparent=draw(cache,frame);
+    expect(transparent.every(item=>!item.mesh&&item.transparent)).toBe(true);
+    expect(transparent).toEqual(buildDrawItems(frame,frame.camera,800,600,paletteResolver()));
+    frame.elements[0].opacity=1;const geometry=frame.elements[0].geometry;
+    frame.elements[0].morph={from:geometry,to:{...geometry,fontSize:.6},progress:.5};
+    expect(draw(cache,frame)).toEqual(buildDrawItems(frame,frame.camera,800,600,paletteResolver()));
+  });
   it('shares an indexed sphere across radii/instances, camera and object transforms, and fresh evaluated frames',async()=>{
     const scene=await compileSource(source), cache=new RetainedGeometry();
     const first=draw(cache,evaluateScene(scene,0)), mesh=first[0].mesh!;

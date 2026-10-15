@@ -3,6 +3,22 @@ import { textTex } from '../src/render-geometry.js';
 import { layoutLatex } from '../src/latex.js';
 
 describe('Unicode scripts in plain text labels', () => {
+  it.each([
+    ['ω² = k/m > 0', String.raw`\text{\(\omega\)}^{\text{2}}\text{ = k/m > 0}`],
+    ['× ω²', String.raw`\text{× \(\omega\)}^{\text{2}}`],
+  ])('renders the original physics label %s with its mathematical glyphs', (text, expected) => {
+    expect(layoutLatex(textTex(text))).toEqual(layoutLatex(expected));
+  });
+
+  it('uses bundled math glyphs for lowercase Greek without replacing the letters or text spacing', () => {
+    const text = 'α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ ς σ τ υ φ χ ψ ω';
+    const names = ['alpha','beta','gamma','delta','varepsilon','zeta','eta','theta','iota','kappa','lambda','mu','nu','xi','omicron','pi','rho','varsigma','sigma','tau','upsilon','varphi','chi','psi','omega'];
+    const expected = String.raw`\text{` + names.map(name => `\\(\\${name}\\)`).join(' ') + '}';
+    expect(layoutLatex(textTex(text))).toEqual(layoutLatex(expected));
+    expect(layoutLatex(textTex('value  ω now'))).toEqual(layoutLatex(String.raw`\text{value  \(\omega\) now}`));
+    expect(textTex('Ω Δ × −')).toBe(String.raw`\text{Ω Δ × −}`);
+  });
+
   it('typesets the original parabola label with a raised exponent', () => {
     const actual = layoutLatex(textTex('y = x²/2'));
     expect(actual).toEqual(layoutLatex(String.raw`\text{y = x}^{\text{2}}\text{/2}`));
