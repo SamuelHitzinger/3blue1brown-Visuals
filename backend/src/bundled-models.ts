@@ -1,6 +1,8 @@
 import { fileURLToPath } from 'node:url';
 import { open } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import {resolve} from 'node:path';
+import {PreparedArtifactStore} from './prepared-artifacts.js';
 import { createModelGLB } from 'animlib/core';
 import type { AssetProvenance, MolecularStructure, PreparedModelInput, Vec3 } from 'animlib/core';
 import { loadModelPackage } from '../../shared/animlib/tools/load-assets.mjs';
@@ -124,10 +126,32 @@ export async function bundledModelCatalog(): Promise<BundledModelDescription[]> 
   return Promise.all(Object.keys(fixtures).map(async id=>describeBundledModel(context(await load(id)))));
 }
 
+const contentIdentities=new WeakMap<PreparedModelInput,string>();
+export const BUNDLED_PUBLICATION_VERSION='bundled-glb-v1-element-colors';
+/** The canonical prepared store verifies bytes/context on disk; job publication remains separate. */
+export function createBundledModelPreparer({directory}:{directory:string}) {
+  const store=new PreparedArtifactStore({directory,maxArtifactBytes:32*1024*1024,maxContextBytes:2*1024*1024,maxMemoryBytes:64*1024*1024});
+  let conversions=0;
+  return {
+    stats:()=>({conversions}),
+    async prepare(fixtureId:string,signal?:AbortSignal):Promise<{bytes:Uint8Array;context:BundledModelContext}>{
+      signal?.throwIfAborted();const model=await load(fixtureId);signal?.throwIfAborted();
+      let contentHash=contentIdentities.get(model);
+      if(!contentHash){contentHash=createHash('sha256').update(JSON.stringify(model)).digest('hex');contentIdentities.set(model,contentHash);}
+      return store.prepare('bundled-model',BUNDLED_PUBLICATION_VERSION,{fixtureId,contentHash,structureHash,elementColors},async()=>{
+        conversions++;
+        const colors=fixtureId==='1crn-sticks'?await stickColors(model):undefined;
+        const bytes=await createModelGLB({parts:model.parts.map((part,index)=>({name:part.id,vertices:part.vertices,triangles:part.triangles,normals:part.normals,vertexColors:colors?.[index],roughness:0.65}))});
+        return {bytes,context:context(model)};
+      },signal);
+    },
+  };
+}
+let preparer:ReturnType<typeof createBundledModelPreparer>|undefined;
+let preparationRoot='';
 /** Preserve prepared geometry and named parts through the existing GLB delivery path. */
-export async function prepareBundledModel(fixtureId: string): Promise<{bytes:Uint8Array;context:BundledModelContext}> {
-  const model=await load(fixtureId);
-  const colors=fixtureId==='1crn-sticks'?await stickColors(model):undefined;
-  const bytes=await createModelGLB({parts:model.parts.map((part,index)=>({name:part.id,vertices:part.vertices,triangles:part.triangles,normals:part.normals,vertexColors:colors?.[index],roughness:0.65}))});
-  return {bytes,context:context(model)};
+export async function prepareBundledModel(fixtureId:string,signal?:AbortSignal):Promise<{bytes:Uint8Array;context:BundledModelContext}>{
+  const directory=resolve(process.env.BUNDLED_MODEL_CACHE_DIR??'data/prepared-bundled');
+  if(!preparer||preparationRoot!==directory){preparationRoot=directory;preparer=createBundledModelPreparer({directory});}
+  return preparer.prepare(fixtureId,signal);
 }

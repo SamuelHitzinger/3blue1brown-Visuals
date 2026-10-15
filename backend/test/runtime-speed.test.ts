@@ -11,6 +11,8 @@ import { PiAgentRunner } from '../src/agents/runtime.js';
 import type { AgentRunMetrics, AgentTask } from '../src/agents/runtime.js';
 import { createReferenceTools } from '../src/agents/reference-tools.js';
 import { generateLectureNotes } from '../src/agents/lecture.js';
+import {createVisualizationResolver} from '../src/visualization-resolver.js';
+import {catalogTools} from '../src/agents/catalog.js';
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(path => rm(path, { recursive: true, force: true }))); });
@@ -46,6 +48,23 @@ async function harness(outputs: AssistantMessage[], wait?: (ms: number, signal?:
   return { runner: new PiAgentRunner(config, async () => runtime, wait), contexts, runtime, sessionIds };
 }
 const base = { systemPrompt: 'Author a complete scene.', prompt: 'Generate a scene.' };
+
+test('resource tools are opt-in, return usable selected references, and exact capability filters reach search',async()=>{
+  const {runner,contexts}=await harness([reply('review complete'),
+    sceneCall('resolve_visualization_resource',{catalogId:'mechanical-modes'}),
+    sceneCall('search_visualization_catalog',{intent:'show two waves cancel each other',capabilities:['s.rigidMotion']}),reply('authored')]);
+  await runner.run({...base,allowWeb:false,catalogTools});
+  const toolNames=(context:Context)=>context.messages.flatMap(message=>message.role==='system'?(message.toolsAdded??[]).map(tool=>tool.name):[]);
+  expect(toolNames(contexts[0])).not.toContain('resolve_visualization_resource');
+  const referenceTools=createReferenceTools([{id:'scientific-modal-state',title:'Modal',content:'export default scene({},s=>{s.wait(1);});'}]);
+  await runner.run({...base,allowWeb:false,catalogTools,referenceTools,resourceTools:createVisualizationResolver({referenceTools})});
+  expect(toolNames(contexts[1])).toContain('resolve_visualization_resource');
+  expect(toolNames(contexts[1])).toContain('read_visualization_resource');
+  expect(JSON.stringify(contexts[2])).toContain('scientific-modal-state');
+  const results=contexts[3].messages.filter(message=>message.role==='toolResult');
+  const search=JSON.parse((results.at(-1)!.content[0] as {text:string}).text);
+  expect(search.entries.every((entry:{id:string})=>entry.id==='rigid-molecular-motion')).toBe(true);
+});
 
 test('lecture cache affinity reuses routing without retaining prior conversation content', async () => {
   const { runner, contexts, sessionIds } = await harness([reply('first'), reply('second'), reply('third')]);

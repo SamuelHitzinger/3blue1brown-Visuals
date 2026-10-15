@@ -127,12 +127,28 @@ export async function catalogEntryExists(id: string): Promise<boolean> {
   return (await index()).has(id);
 }
 function validateSearch(input: CatalogSearchInput) {
-  const {query = '', tier, domain, readiness, offset = 0, limit = 8} = input;
-  if (typeof query !== 'string' || query.length > 240 || (tier !== undefined && !tiers.includes(tier))
+  const {query = '', intent = '', capabilities, tier, domain, readiness, offset = 0, limit = 8} = input;
+  if (typeof query !== 'string' || query.length > 240 || typeof intent !== 'string' || intent.length > 240
+    || (capabilities !== undefined && (!Array.isArray(capabilities) || !capabilities.length || capabilities.length > 16 || !capabilities.every(value => shortText(value, 100))))
+    || (tier !== undefined && !tiers.includes(tier))
     || (domain !== undefined && !shortText(domain, 60)) || (readiness !== undefined && !readinessValues.includes(readiness))
     || !Number.isInteger(offset) || offset < 0 || offset > 256_000
     || !Number.isInteger(limit) || limit < 1 || limit > 20) throw new CatalogError('Invalid catalog query, tier, domain, readiness, offset or limit (1–20).');
-  return {query, tier, domain: domain?.trim().toLowerCase(), readiness, offset, limit};
+  return {query, intent, capabilities, tier, domain: domain?.trim().toLowerCase(), readiness, offset, limit};
+}
+/** Explicit teaching vocabulary, not an embedding or inference about scientific truth. */
+function intentRoutes(text: string): string[] {
+  const value = text.toLowerCase();
+  const routes: [boolean, string[]][] = [
+    [/\b(rigid|fixed shape|without (?:stretching|deforming)|solid (?:body|object))\b/.test(value), ['rigid-molecular-motion']],
+    [/\b(wave|waves|phasor|phasors)\b/.test(value) && /\b(cancel|add|combine|interfer\w*|phase)\b/.test(value), ['waves-interference','signals-fourier']],
+    [/\b(material|mass|stock|stocks|particle|particles)\b/.test(value) && /\b(mov\w*|flow\w*|conserv\w*|container\w*|transport\w*)\b/.test(value), ['reaction-transport','ecological-flows']],
+    [/\b(spring|vibrat\w*|oscillat\w*|ringing|resonan\w*)\b/.test(value), ['mechanical-modes']],
+    [/\b(spike|spikes|event|events|neural|firing)\b/.test(value) && /\b(rate|rates|time|times|frequency)\b/.test(value), ['neural-event-rates']],
+    [/\b(protein|molecule|molecular|deposited|pdb)\b/.test(value) && /\b(structure|coordinates|shape|model|geometry)\b/.test(value), ['pdb-structures','molecular-structures']],
+    [/\b(transcription|splice|splicing|nucleotide|nucleotides)\b/.test(value), ['nucleic-example-inputs','nucleic-mechanisms']],
+  ];
+  return [...new Set(routes.flatMap(([matches, ids]) => matches ? ids : []))];
 }
 const stopwords = new Set('a an and are as at be by for from how in into is it of on or show that the their to using with'.split(' '));
 function tokens(text: string): string[] {
@@ -171,7 +187,7 @@ export function createCatalogSearchIndex(input: readonly CatalogEntry[]): Catalo
       if (!posting) postings.set(term, posting = new Map());
       posting.set(ordinal, Math.max(posting.get(ordinal) ?? 0, weight));
     }
-    for (const facet of new Set([`tier:${entry.tier}`, `readiness:${entry.readiness}`, ...entry.domains.map(domain => `domain:${domain.toLowerCase()}`)])) {
+    for (const facet of new Set([`tier:${entry.tier}`, `readiness:${entry.readiness}`, ...entry.domains.map(domain => `domain:${domain.toLowerCase()}`), ...(entry.capabilities ?? []).map(value => `capability:${value}`)])) {
       const members = facets.get(facet) ?? [];
       members.push(ordinal); facets.set(facet, members);
     }
@@ -180,21 +196,30 @@ export function createCatalogSearchIndex(input: readonly CatalogEntry[]): Catalo
     get(id) { const ordinal = byId.get(id); return ordinal === undefined ? undefined : structuredClone(entries[ordinal]); },
     has(id) { return byId.has(id); },
     search(input = {}) {
-      const {query, tier, domain, readiness, offset, limit} = validateSearch(input);
-      const termList = [...new Set(tokens(query))], phrase = tokens(query).join(' ');
-      const filterLists = [tier && `tier:${tier}`, domain && `domain:${domain}`, readiness && `readiness:${readiness}`]
+      const {query, intent, capabilities, tier, domain, readiness, offset, limit} = validateSearch(input);
+      const searchText = [query, intent].filter(Boolean).join(' ');
+      const termList = [...new Set(tokens(searchText))], phrase = tokens(searchText).join(' ');
+      const filterLists = [tier && `tier:${tier}`, domain && `domain:${domain}`, readiness && `readiness:${readiness}`, ...(capabilities ?? []).map(value => `capability:${value}`)]
         .filter((facet): facet is string => !!facet).map(facet => facets.get(facet) ?? []).sort((a,b) => a.length - b.length);
       const allowed = (ordinal: number) => (!tier || entries[ordinal].tier === tier)
         && (!domain || entries[ordinal].domains.some(value => value.toLowerCase() === domain))
-        && (!readiness || entries[ordinal].readiness === readiness);
+        && (!readiness || entries[ordinal].readiness === readiness)
+        && (!capabilities || capabilities.every(value => entries[ordinal].capabilities?.includes(value)));
       let ordinals: number[];
-      if (!query.trim()) ordinals = (filterLists[0] ?? entries.map((_, i) => i)).filter(allowed);
+      if (!searchText.trim()) ordinals = (filterLists[0] ?? entries.map((_, i) => i)).filter(allowed);
       else {
         const matches = new Map<number, {coverage: number; score: number}>();
         for (const term of termList) for (const [ordinal, weight] of postings.get(term) ?? []) {
           if (!allowed(ordinal)) continue;
           const hit = matches.get(ordinal) ?? {coverage: 0, score: 0};
           hit.coverage++; hit.score += weight; matches.set(ordinal, hit);
+        }
+        for (const [rank, id] of intentRoutes(searchText).entries()) {
+          const ordinal = byId.get(id);
+          if (ordinal !== undefined && allowed(ordinal)) {
+            const hit = matches.get(ordinal) ?? {coverage: 0, score: 0};
+            hit.coverage = termList.length; hit.score += 200 - rank; matches.set(ordinal, hit);
+          }
         }
         const exactId = byId.get(query.trim().toLowerCase());
         if (exactId !== undefined && allowed(exactId) && !matches.has(exactId)) matches.set(exactId, {coverage: termList.length, score: 0});
@@ -241,7 +266,8 @@ export function catalogRoutes() {
       let result: CatalogDetail | CatalogSearchResult;
       if (path === prefix) {
         const number = (name: string) => url.searchParams.has(name) ? Number(url.searchParams.get(name)) : undefined;
-        result = await searchCatalog({query: url.searchParams.get('query') ?? undefined, tier: url.searchParams.get('tier') as CatalogSearchInput['tier'] ?? undefined,
+        result = await searchCatalog({query: url.searchParams.get('query') ?? undefined, intent: url.searchParams.get('intent') ?? undefined,
+          capabilities: url.searchParams.has('capability') ? url.searchParams.getAll('capability') : undefined, tier: url.searchParams.get('tier') as CatalogSearchInput['tier'] ?? undefined,
           domain: url.searchParams.get('domain') ?? undefined, readiness: url.searchParams.get('readiness') as CatalogSearchInput['readiness'] ?? undefined,
           offset: number('offset'), limit: number('limit')});
       } else if (path.startsWith(prefix + '/')) result = await readCatalog(path.slice(prefix.length + 1));

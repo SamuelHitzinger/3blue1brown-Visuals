@@ -1,0 +1,493 @@
+{
+  "kind": "local-resource-efficiency",
+  "runtime": "v26.3.0",
+  "publicationVersion": "bundled-glb-v1-element-colors",
+  "sources": {
+    "src/visualization-catalog.ts": "a2845efd732996800ef82d89f62fd39730e4d788daff61a72dc77626c4cf4fed",
+    "src/visualization-resolver.ts": "e1c3dd0471e12f353bd211a7e28503946ef70e2a5458deb0ce4dde528b5fcd71",
+    "src/bundled-models.ts": "9d283689a7bd264f6083adc141684550fd55745c63ac22844f48ef69a8220ee9",
+    "src/prepared-artifacts.ts": "810ead8a12e416b28787ca44b613d984b0dbb8c8da1c5e89248359a553c7f08a",
+    "../shared/animlib/catalog/types.ts": "e2f3ae5b7292956b66bc3822c1675cd41c552f8d504080b8cc89e01971e4f5fe",
+    "../shared/animlib/catalog/index.json": "f3bd4e22a76679ad52989af9398defcc097fb455e94b0fb4fcacce3e87fa4b48",
+    "../shared/animlib/catalog/navigation.md": "605f707291327c4ea200bdb495b73c54e72a12faef5b3e6939aa107786465b35",
+    "../shared/animlib/catalog/indexes/resource.json": "cf375247e644f89af05259b718f6b4e8a972fddc2238fcfd30bec52a30fbdce6",
+    "../shared/animlib/catalog/indexes/technique.json": "2f2ff3e54caaccb01b5d5cc5c904c42d814e019f92afb575cb137293f6dc580d",
+    "../shared/animlib/catalog/indexes/foundation.json": "e5c76ebb0f556242a163fe47e4a729682a3f37fcb3b62b2f05ed71931d4fc134",
+    "../shared/animlib/catalog/indexes/science.json": "1fcbdf74aa5b3939e3ee616659d08c58c5364cbaf0e255f5c1a67159cd868831",
+    "../shared/animlib/catalog/indexes/data-sources.json": "d242938e0bd7cf52f16d499055e96bfcb6daaa69667efa404b98c7e5d5d327f9",
+    "bench/resource-efficiency.ts": "300aa14e2112ee82c04310105c1beeedcb3d7737e0b79e3f9ea9c938eff67909"
+  },
+  "retrieval": {
+    "supportedCases": 10,
+    "top1": 9,
+    "top3": 10,
+    "falselyCompatible": 0,
+    "unsupportedCapabilityChecks": 5,
+    "queries": [
+      {
+        "intent": "move a fixed shape without stretching it",
+        "expected": "rigid-molecular-motion",
+        "capabilities": [
+          "s.rigidMotion"
+        ],
+        "top3": [
+          "rigid-molecular-motion"
+        ],
+        "top1Correct": true,
+        "bytes": 2031,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0201,
+          "p95Ms": 0.0466
+        }
+      },
+      {
+        "intent": "show two waves cancel each other",
+        "expected": "waves-interference",
+        "capabilities": [
+          "s.complexInterference"
+        ],
+        "top3": [
+          "waves-interference",
+          "signals-fourier"
+        ],
+        "top1Correct": true,
+        "bytes": 2194,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0193,
+          "p95Ms": 0.0812
+        }
+      },
+      {
+        "intent": "keep track of material moving between containers",
+        "expected": "reaction-transport",
+        "capabilities": [
+          "s.conservativeTransport"
+        ],
+        "top3": [
+          "reaction-transport",
+          "ecological-flows"
+        ],
+        "top1Correct": true,
+        "bytes": 2286,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0192,
+          "p95Ms": 0.0305
+        }
+      },
+      {
+        "intent": "show a spring ringing after a push",
+        "expected": "mechanical-modes",
+        "capabilities": [
+          "s.modalState"
+        ],
+        "top3": [
+          "mechanical-modes"
+        ],
+        "top1Correct": true,
+        "bytes": 1132,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0123,
+          "p95Ms": 0.0172
+        }
+      },
+      {
+        "intent": "turn spike times into a firing rate",
+        "expected": "neural-event-rates",
+        "capabilities": [
+          "s.eventRates"
+        ],
+        "top3": [
+          "neural-event-rates"
+        ],
+        "top1Correct": true,
+        "bytes": 1137,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0146,
+          "p95Ms": 0.0204
+        }
+      },
+      {
+        "intent": "use deposited protein coordinates",
+        "expected": "pdb-structures",
+        "capabilities": [
+          "s.model"
+        ],
+        "top3": [
+          "pdb-structures",
+          "crambin-1crn"
+        ],
+        "top1Correct": true,
+        "bytes": 4061,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.021,
+          "p95Ms": 0.0484
+        }
+      },
+      {
+        "intent": "illustrate nucleotide transcription",
+        "expected": "nucleic-example-inputs",
+        "capabilities": [
+          "s.nucleicTranscriptionCycle"
+        ],
+        "top3": [
+          "nucleic-example-inputs"
+        ],
+        "top1Correct": true,
+        "bytes": 2158,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0129,
+          "p95Ms": 0.0205
+        }
+      },
+      {
+        "intent": "combine waves with a different phase",
+        "expected": "waves-interference",
+        "capabilities": [
+          "s.complexInterference"
+        ],
+        "top3": [
+          "waves-interference",
+          "signals-fourier"
+        ],
+        "top1Correct": true,
+        "bytes": 2194,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0166,
+          "p95Ms": 0.0228
+        }
+      },
+      {
+        "intent": "material flow between stocks",
+        "expected": "reaction-transport",
+        "capabilities": [
+          "s.conservativeTransport"
+        ],
+        "top3": [
+          "ecological-flows",
+          "reaction-transport"
+        ],
+        "top1Correct": false,
+        "bytes": 2286,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0156,
+          "p95Ms": 0.0212
+        }
+      },
+      {
+        "intent": "oscillating spring resonance",
+        "expected": "mechanical-modes",
+        "capabilities": [
+          "s.modalState"
+        ],
+        "top3": [
+          "mechanical-modes"
+        ],
+        "top1Correct": true,
+        "bytes": 1132,
+        "latency": {
+          "samples": 30,
+          "p50Ms": 0.0114,
+          "p95Ms": 0.014
+        }
+      }
+    ]
+  },
+  "resolutions": [
+    {
+      "catalogId": "mechanical-modes",
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "code",
+          "id": "scientific-modal-state",
+          "sha256": "a269fc33bb45f13b0db12158e021d07eab78227ff796fd8bd4d93bbed0724b68"
+        }
+      ],
+      "bytes": 1215,
+      "coldMs": 1.6595,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.2129,
+        "p95Ms": 0.2857
+      }
+    },
+    {
+      "catalogId": "reaction-transport",
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "code",
+          "id": "scientific-conservative-transport",
+          "sha256": "c056addbe36cfd27afe3042fbbc8e848a55438717c44a5bf5cc8daecd5313039"
+        }
+      ],
+      "bytes": 1280,
+      "coldMs": 0.5719,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.2128,
+        "p95Ms": 0.2791
+      }
+    },
+    {
+      "catalogId": "ecological-flows",
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "code",
+          "id": "scientific-conservative-transport",
+          "sha256": "c056addbe36cfd27afe3042fbbc8e848a55438717c44a5bf5cc8daecd5313039"
+        }
+      ],
+      "bytes": 1284,
+      "coldMs": 0.5211,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.185,
+        "p95Ms": 0.2331
+      }
+    },
+    {
+      "catalogId": "waves-interference",
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "code",
+          "id": "scientific-complex-interference",
+          "sha256": "c9c5129af01336091eecc2cf04919e0996db5c9bd2353bbe2e71e9efacf733a4"
+        }
+      ],
+      "bytes": 1247,
+      "coldMs": 0.5904,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.2054,
+        "p95Ms": 0.2987
+      }
+    },
+    {
+      "catalogId": "signals-fourier",
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "code",
+          "id": "scientific-complex-interference",
+          "sha256": "c9c5129af01336091eecc2cf04919e0996db5c9bd2353bbe2e71e9efacf733a4"
+        }
+      ],
+      "bytes": 1242,
+      "coldMs": 0.3146,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1795,
+        "p95Ms": 0.2247
+      }
+    },
+    {
+      "catalogId": "neural-event-rates",
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "code",
+          "id": "scientific-event-rates",
+          "sha256": "eff6826cb12d9164570a6179b4c07e4e0e9f246767d786e82ae01544f582813f"
+        }
+      ],
+      "bytes": 1239,
+      "coldMs": 0.4786,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.17,
+        "p95Ms": 0.3809
+      }
+    },
+    {
+      "catalogId": "rigid-molecular-motion",
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "code",
+          "id": "scientific-rigid-motion",
+          "sha256": "8cfbc7b7b0e7cd373a966de086b985d0df82fed4bde0af7869ba348eee951759"
+        }
+      ],
+      "bytes": 1429,
+      "coldMs": 0.4035,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1505,
+        "p95Ms": 0.2081
+      }
+    },
+    {
+      "catalogId": "nucleic-example-inputs",
+      "selection": {
+        "dataId": "transcription-cycle"
+      },
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "data",
+          "id": "transcription-cycle",
+          "sha256": "56db9ebfc65d613b8b6bdcf7475546803bf14021ca1693b0e3e1167f93bf6c8d"
+        }
+      ],
+      "bytes": 1796,
+      "coldMs": 2.7968,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.2076,
+        "p95Ms": 0.3721
+      }
+    },
+    {
+      "catalogId": "nucleic-example-inputs",
+      "selection": {
+        "dataId": "rna-processing-splice"
+      },
+      "status": "ready",
+      "refs": [
+        {
+          "kind": "data",
+          "id": "rna-processing-splice",
+          "sha256": "e763a680df43157acf678099b0d744455cd8ff0db8cc1ec7e3b1e175ead649e4"
+        }
+      ],
+      "bytes": 1783,
+      "coldMs": 1.9115,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.2377,
+        "p95Ms": 0.3276
+      }
+    },
+    {
+      "catalogId": "pdb-structures",
+      "status": "needs-input",
+      "refs": [],
+      "bytes": 1050,
+      "coldMs": 0.4138,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1552,
+        "p95Ms": 0.2138
+      }
+    },
+    {
+      "catalogId": "horizons-ephemerides",
+      "status": "unsupported",
+      "refs": [],
+      "bytes": 740,
+      "coldMs": 0.3278,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1569,
+        "p95Ms": 0.27
+      }
+    },
+    {
+      "catalogId": "usgs-elevation-data",
+      "status": "unsupported",
+      "refs": [],
+      "bytes": 724,
+      "coldMs": 0.3401,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1397,
+        "p95Ms": 0.1849
+      }
+    },
+    {
+      "catalogId": "native-model-packages",
+      "status": "unsupported",
+      "refs": [],
+      "bytes": 682,
+      "coldMs": 0.4064,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1754,
+        "p95Ms": 0.2268
+      }
+    },
+    {
+      "catalogId": "peptide-motion-data",
+      "status": "unsupported",
+      "refs": [],
+      "bytes": 1106,
+      "coldMs": 0.38,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1452,
+        "p95Ms": 0.195
+      }
+    },
+    {
+      "catalogId": "crambin-1crn",
+      "selection": {
+        "fixtureId": "1crn-beads"
+      },
+      "status": "unsupported",
+      "refs": [],
+      "bytes": 1063,
+      "coldMs": 0.3872,
+      "warm": {
+        "samples": 10,
+        "p50Ms": 0.1781,
+        "p95Ms": 0.2329
+      }
+    }
+  ],
+  "preparation": {
+    "fixture": "1crn-beads",
+    "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+    "bytes": 228476,
+    "producerCounts": [
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "concurrentCold": {
+      "samples": 5,
+      "p50Ms": 15.5291,
+      "p95Ms": 100.3518
+    },
+    "memory": {
+      "samples": 50,
+      "p50Ms": 0.0372,
+      "p95Ms": 0.0706
+    },
+    "freshInstanceDisk": {
+      "samples": 5,
+      "p50Ms": 1.3496,
+      "p95Ms": 2.6113
+    },
+    "freshProcess": {
+      "preparationMs": 75.5951,
+      "conversions": 0,
+      "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+      "bytes": 228476,
+      "processWallMs": 233.8396
+    },
+    "sameJobPublications": 1,
+    "newJobPublications": 1,
+    "modelPacketBytes": 14016
+  },
+  "limits": [
+    "Curated actual catalog and ten intent cases; this is not general semantic search recall.",
+    "Cold preparation includes four concurrent waits; later cold samples reuse decoded fixture/source modules. Fresh-process timing includes source decode plus persistent reuse.",
+    "Local original scientific code/data and pinned 1CRN only; external datasets and arbitrary native packages remain unsupported.",
+    "No animated GLB clips, skins or morph targets. Rigid motion seeds are illustrative transforms, not dynamics.",
+    "Host CPU, file and tool-payload measurements exclude model latency, tokens, rendering and scientific/visual review."
+  ]
+}

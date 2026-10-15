@@ -15,6 +15,7 @@ import type { InspectionOptions, InspectionReport, PreviewOptions } from './scen
 import type { PreviewFrame } from './scene-preview.js';
 import type { CatalogTools } from './catalog.js';
 import type { ReferenceTools } from './reference-tools.js';
+import type {VisualizationResourceTools} from '../visualization-resolver.js';
 
 const webAccessExtension = fileURLToPath(import.meta.resolve('pi-web-access/dist/index.js'));
 
@@ -53,6 +54,8 @@ export interface AgentTask {
   catalogTools?: CatalogTools;
   /** Verbatim recipes omitted from the prompt, scoped to its immutable API snapshot. */
   referenceTools?: ReferenceTools;
+  /** Opt-in job-scoped preparation and selected package reads. Omit from reviewer tasks. */
+  resourceTools?: VisualizationResourceTools;
   /** Disable external research for private source processing; defaults to true. */
   allowWeb?: boolean;
   /** Host-owned asset publication, scoped to this generation job. */
@@ -235,8 +238,10 @@ export class PiAgentRunner implements AgentRunner {
       if (task.catalogTools) {
         customTools.push(defineTool({
           name: 'search_visualization_catalog', label: 'Search visualization catalog',
-          description: 'Search local animlib resources, reusable techniques and quality foundations by the visual relationship or data needed. Returns bounded metadata and pagination; read selected IDs for inputs, preparation, provenance and limits. Does not load assets.',
+          description: 'Search local animlib resources, reusable techniques and quality foundations by query or teaching intent. Intent uses curated relationship vocabulary, not scientific inference. capabilities is an exact all-of filter. Returns bounded metadata and pagination; read or resolve selected IDs for actual packages, preparation, provenance and limits. Does not load assets.',
           parameters: Type.Object({query: Type.Optional(Type.String({maxLength:240})),
+            intent: Type.Optional(Type.String({maxLength:240})),
+            capabilities: Type.Optional(Type.Array(Type.String({minLength:1,maxLength:100}),{minItems:1,maxItems:16})),
             tier: Type.Optional(Type.Union([Type.Literal('resource'),Type.Literal('technique'),Type.Literal('foundation')])),
             domain: Type.Optional(Type.String({maxLength:60})),
             readiness: Type.Optional(Type.Union([Type.Literal('ready'),Type.Literal('host-preparation'),Type.Literal('reference')])),
@@ -255,6 +260,25 @@ export class PiAgentRunner implements AgentRunner {
           },
         }));
       }
+      if(task.resourceTools)customTools.push(defineTool({
+        name:'resolve_visualization_resource',label:'Resolve visualization resource',
+        description:'Resolve an exact catalog ID into a usable package, with compatibility, provenance and scientific limits. Code references use read_animlib_reference; selected JSON data uses read_visualization_resource. Model preparation requires prepare:true and an explicit fixtureId or researched pdbId; returned model IDs are published into this job. Status needs-input/preparation-required/unsupported is not a ready asset. Animated GLB clips, skins and morph targets and unimplemented external data imports remain unsupported.',
+        parameters:Type.Object({catalogId:Type.String({pattern:'^[a-z][a-z0-9-]{0,79}$'}),
+          requiredCapabilities:Type.Optional(Type.Array(Type.String({minLength:1,maxLength:100}),{maxItems:16})),prepare:Type.Optional(Type.Boolean()),
+          selection:Type.Optional(Type.Object({fixtureId:Type.Optional(Type.String({maxLength:64})),pdbId:Type.Optional(Type.String({pattern:'^[1-9][A-Za-z0-9]{3}$'})),
+            pdbChains:Type.Optional(Type.Array(Type.String({pattern:'^[A-Za-z0-9]?$',maxLength:1}),{minItems:1,maxItems:32})),
+            pdbRepresentation:Type.Optional(Type.Union([Type.Literal('mixed'),Type.Literal('backbone')])),
+            dataId:Type.Optional(Type.Union([Type.Literal('transcription-cycle'),Type.Literal('rna-processing-splice')]))}))}),
+        async execute(_id,input){try{return {content:[{type:'text',text:JSON.stringify(await task.resourceTools!.resolve(input,signal))}],details:{}};}
+          catch(error){return {content:[{type:'text',text:validationMessage(error)}],details:{},isError:true};}},
+      }),defineTool({
+        name:'read_visualization_resource',label:'Read selected resource data',
+        description:'Read a bounded page of an already resolved local JSON package using its exact returned ID and SHA-256. Follow nextOffset and join content pages before parsing. No paths, external data access, or private lecture source access.',
+        parameters:Type.Object({id:Type.String({maxLength:64}),sha256:Type.String({pattern:'^[a-f0-9]{64}$'}),
+          offset:Type.Optional(Type.Integer({minimum:0,maximum:32000})),limit:Type.Optional(Type.Integer({minimum:1000,maximum:8000}))}),
+        async execute(_id,input){try{return {content:[{type:'text',text:JSON.stringify(await task.resourceTools!.read(input,signal))}],details:{}};}
+          catch(error){return {content:[{type:'text',text:validationMessage(error)}],details:{},isError:true};}},
+      }));
       if (task.sceneTools) {
         if (!task.validate) throw new AgentError('CONFIG', 'Scene inspection requires a host validator.');
         const select = async ({ output, candidateId }: { output?: string; candidateId?: string }) => {

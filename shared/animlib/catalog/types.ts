@@ -30,7 +30,14 @@ export interface CatalogEntry {
   limitations: string[];
 }
 export interface CatalogDetail extends CatalogEntry { content: string }
-export interface CatalogSearchInput { query?: string; tier?: CatalogTier; domain?: string; readiness?: CatalogReadiness; offset?: number; limit?: number }
+export interface CatalogSearchInput {
+  query?: string;
+  /** Teaching intent, matched by a small, auditable vocabulary in addition to lexical search. */
+  intent?: string;
+  /** Exact all-of capability names; never expanded by intent matching. */
+  capabilities?: string[];
+  tier?: CatalogTier; domain?: string; readiness?: CatalogReadiness; offset?: number; limit?: number;
+}
 export interface CatalogSearchResult { entries: CatalogEntry[]; total: number; offset: number; limit: number }
 /** Small model-facing discovery records; full provenance and limits require a read. */
 export type CatalogSummary = Pick<CatalogEntry, 'id' | 'title' | 'description' | 'tier' | 'domains' | 'readiness'>;

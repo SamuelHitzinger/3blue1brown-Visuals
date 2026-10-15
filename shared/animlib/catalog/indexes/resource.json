@@ -3,6 +3,7 @@
   "entries": [
     {
       "id": "crambin-1crn",
+      "capabilities": ["s.model", "model.static", "model.named-parts"],
       "title": "Deposited crambin: 1CRN",
       "description": "Three prepared representations of the same deposited protein: atomic sticks, residue beads and a schematic envelope.",
       "tier": "resource",
@@ -56,6 +57,7 @@
     },
     {
       "id": "pdb-structures",
+      "capabilities": ["s.model", "model.static", "model.named-parts"],
       "title": "RCSB deposited molecular structures",
       "description": "Research and publish a selected protein or nucleic structure through the existing PDB preparation path.",
       "tier": "resource",
@@ -109,6 +111,7 @@
     },
     {
       "id": "peptide-motion-data",
+      "capabilities": ["s.peptidePose", "external-preparation: peptide rig and torsion schedule"],
       "title": "Illustrative peptide rig and staging",
       "description": "Original component templates, stable residue identities and prescribed torsions for staged coil formation and packing.",
       "tier": "resource",
@@ -160,6 +163,7 @@
     },
     {
       "id": "nucleic-example-inputs",
+      "capabilities": ["s.nucleicTranscriptionCycle", "s.nucleicSplice"],
       "title": "Nucleic mechanism inputs",
       "description": "Portable explicit sequence, pairing and schedule inputs for transcription and RNA processing examples.",
       "tier": "resource",
