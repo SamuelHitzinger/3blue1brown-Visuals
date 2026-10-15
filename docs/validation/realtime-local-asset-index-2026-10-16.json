@@ -1,0 +1,421 @@
+{
+  "capturedAt": "2026-10-15T23:44:30.430Z",
+  "scope": "Installed local catalog snapshot; no network or model calls",
+  "inventory": {
+    "records": 52,
+    "formats": {
+      "native-model": 42,
+      "json-data": 3,
+      "native-image": 5,
+      "source-gltf": 1,
+      "published-glb": 1
+    },
+    "animationStatuses": {
+      "none": 49,
+      "present": 0,
+      "unknown": 3
+    }
+  },
+  "selectedQueries": [
+    {
+      "query": {
+        "query": "suzanne textured",
+        "format": "native-model"
+      },
+      "first": {
+        "entries": [
+          {
+            "id": "asset-5c5131ea440fdec33347e53f",
+            "assetId": "suzanne-textured",
+            "kind": "model",
+            "format": "native-model",
+            "title": "suzanne-textured",
+            "assetPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\fixtures\\suzanne\\textured\\suzanne-textured.json",
+            "manifestPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\fixtures\\suzanne\\textured\\suzanne-textured.json",
+            "sha256": "f75bffb55253f2c94afdc63fc89f5ad54de197c2e93e9fc17782246f61676ad6",
+            "packageHash": "9ccbcdbaa5fe1a53848badbdd65cfa46acafe6bf6c86896874ba386c122a94fc",
+            "descriptorHash": "25367deaa71928273d7bec0c8545014bcf9fad7287c079fd4253778f1511ed58",
+            "bytes": 3342,
+            "dimensions": {
+              "bounds": {
+                "min": [
+                  -1.3369139432907104,
+                  -0.9746090173721313,
+                  -0.8007810115814209
+                ],
+                "max": [
+                  1.3369139432907104,
+                  0.9501950144767761,
+                  0.8256840109825134
+                ]
+              },
+              "size": [
+                2.673827886581421,
+                1.9248040318489075,
+                1.6264650225639343
+              ],
+              "units": "metre (glTF 2.0 coordinate convention)",
+              "source": "package-descriptor"
+            },
+            "parts": 1,
+            "triangles": 3936,
+            "provenance": {
+              "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Suzanne",
+              "sourceHash": "7e8ae013010aff530162ef2795cec74c2646019e224af17bcfb691664f0f0aec",
+              "creator": "UX3D / Norbert Nopper (2017)",
+              "license": "CC0-1.0",
+              "fidelity": "Geometry/base-color samples retained; omitted channels and stylized lighting prevent PBR equivalence."
+            },
+            "animation": {
+              "status": "none",
+              "clips": [],
+              "inspection": "native-static-format"
+            },
+            "runtime": {
+              "liveWorld": true,
+              "route": "native-registry",
+              "clipPlayback": false
+            },
+            "limitations": [
+              "Bounds come from existing preparation metadata; selected registry loading revalidates binary hashes and descriptor identity. Static geometry does not supply a motion clip.",
+              "Geometry/base-color samples retained; omitted channels and stylized lighting prevent PBR equivalence."
+            ]
+          },
+          {
+            "id": "asset-aa70e5d8ebc58391e0988c27",
+            "assetId": "suzanne-geometry",
+            "kind": "model",
+            "format": "native-model",
+            "title": "suzanne-geometry",
+            "assetPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\fixtures\\suzanne\\asset.json",
+            "manifestPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\fixtures\\suzanne\\asset.json",
+            "sha256": "136adf6727e641e29fb0f266d97dae4fb73b15fc14165b3bca479331fdc7318a",
+            "packageHash": "e495f4db5776bdb564946a3110b71c1466d6f12a01836bb3e2376bcb99d32062",
+            "descriptorHash": null,
+            "bytes": 2481,
+            "dimensions": null,
+            "parts": 1,
+            "triangles": 3936,
+            "provenance": {
+              "source": "https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/Suzanne",
+              "sourceHash": "c4c95fd543e9092c4cb5e711a9a0d49778c6050b7841601e2fb1c1664cd2e9f0",
+              "creator": "UX3D / Norbert Nopper (2017); Blender Suzanne source model",
+              "license": "CC0-1.0",
+              "fidelity": "All 11808 source vertex tuples and 3936 triangles retained. No coordinate transform, welding, decimation or smoothing. Source appearance fidelity is not claimed."
+            },
+            "animation": {
+              "status": "none",
+              "clips": [],
+              "inspection": "native-static-format"
+            },
+            "runtime": {
+              "liveWorld": true,
+              "route": "native-registry",
+              "clipPlayback": false
+            },
+            "limitations": [
+              "Bounds come from existing preparation metadata; selected registry loading revalidates binary hashes and descriptor identity. Static geometry does not supply a motion clip.",
+              "All 11808 source vertex tuples and 3936 triangles retained. No coordinate transform, welding, decimation or smoothing. Source appearance fidelity is not claimed."
+            ]
+          }
+        ],
+        "total": 2,
+        "offset": 0,
+        "limit": 8,
+        "metrics": {
+          "cacheHit": false,
+          "lookupMs": 0.32799999999997453
+        }
+      },
+      "cachedMetrics": {
+        "cacheHit": true,
+        "lookupMs": 0.017400000000009186
+      }
+    },
+    {
+      "query": {
+        "query": "4YLN",
+        "format": "published-glb"
+      },
+      "first": {
+        "entries": [
+          {
+            "id": "asset-8076536c6413b01e611a4a1d",
+            "assetId": "model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+            "kind": "model",
+            "format": "published-glb",
+            "title": "pdb-4yln-123ABCDEF: E. COLI TRANSCRIPTION INITIATION COMPLEX - 17-BP SPACER AND 4-NT RNA",
+            "assetPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\backend\\data\\models\\b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450.glb",
+            "manifestPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\backend\\data\\models\\b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450.json",
+            "sha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+            "packageHash": null,
+            "descriptorHash": null,
+            "bytes": 3803752,
+            "dimensions": {
+              "bounds": {
+                "min": [
+                  -76.21710968017578,
+                  -77.23799896240234,
+                  -70.96385955810547
+                ],
+                "max": [
+                  77.46558380126953,
+                  75.89015197753906,
+                  69.35081481933594
+                ]
+              },
+              "size": [
+                153.6826934814453,
+                153.1281509399414,
+                140.3146743774414
+              ],
+              "units": "angstrom",
+              "source": "published-metadata"
+            },
+            "parts": 12,
+            "triangles": 90004,
+            "provenance": {
+              "source": "https://files.rcsb.org/download/4YLN.pdb",
+              "sourceHash": "13845741153d9eae815439a8a9be3be4d7c325eef1ac67d5cf6849159179211e",
+              "creator": "Y.ZUO,T.A.STEITZ",
+              "license": "CC0-1.0",
+              "fidelity": "Static deposited experimental model at 5.50 Å resolution; does not establish atomic precision, catalytic chemistry, dynamic trajectories or processive motion. Protein is a CA trace, not a molecular surface; nucleic coordinates are unchanged. No symmetry mates or biological-assembly transforms applied. Depositor caveat: ENTRY CONTAINS IMPROPER NUCLEOTIDE LINKAGES."
+            },
+            "animation": {
+              "status": "none",
+              "clips": [],
+              "inspection": "gltf-json"
+            },
+            "runtime": {
+              "liveWorld": true,
+              "route": "published-models",
+              "clipPlayback": false
+            },
+            "limitations": [
+              "LiveWorld requires host-supplied ModelStore.metadata, a model preparation hook and the renderer ModelStore. Clip, skin and morph-target playback are not supported.",
+              "Static deposited experimental model at 5.50 Å resolution; does not establish atomic precision, catalytic chemistry, dynamic trajectories or processive motion. Protein is a CA trace, not a molecular surface; nucleic coordinates are unchanged. No symmetry mates or biological-assembly transforms applied. Depositor caveat: ENTRY CONTAINS IMPROPER NUCLEOTIDE LINKAGES."
+            ]
+          }
+        ],
+        "total": 1,
+        "offset": 0,
+        "limit": 8,
+        "metrics": {
+          "cacheHit": false,
+          "lookupMs": 0.06589999999999918
+        }
+      },
+      "cachedMetrics": {
+        "cacheHit": true,
+        "lookupMs": 0.01089999999999236
+      }
+    },
+    {
+      "query": {
+        "kind": "data"
+      },
+      "first": {
+        "entries": [
+          {
+            "id": "asset-066f948194f9c185a65efe5a",
+            "assetId": "rna-processing-thread.json",
+            "kind": "data",
+            "format": "json-data",
+            "title": "rna-processing-thread.json",
+            "assetPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\demo\\expansion\\inputs\\rna-processing-thread.json",
+            "manifestPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\demo\\expansion\\inputs\\rna-processing-thread.json",
+            "sha256": "1c54a431df67bd058e176fa6c172a5252aee96594d5e89980b7b4467f4144641",
+            "packageHash": null,
+            "descriptorHash": null,
+            "bytes": 25662,
+            "dimensions": null,
+            "parts": null,
+            "triangles": null,
+            "provenance": {
+              "source": "Exact reviewed revision2 inputs retained by the revision4 proof",
+              "sourceHash": null,
+              "creator": null,
+              "license": null,
+              "fidelity": null
+            },
+            "animation": {
+              "status": "unknown",
+              "clips": [],
+              "inspection": "unavailable"
+            },
+            "runtime": {
+              "liveWorld": false,
+              "route": "data-only",
+              "clipPlayback": false
+            },
+            "limitations": [
+              "Local JSON data, not an executable animation. No scientific or license claims are inferred when provenance is missing."
+            ],
+            "data": {
+              "keys": [
+                "provenance",
+                "props"
+              ]
+            }
+          },
+          {
+            "id": "asset-5a90c0fae7404fb68d76e7de",
+            "assetId": "rna-processing-splice.json",
+            "kind": "data",
+            "format": "json-data",
+            "title": "rna-processing-splice.json",
+            "assetPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\demo\\expansion\\inputs\\rna-processing-splice.json",
+            "manifestPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\demo\\expansion\\inputs\\rna-processing-splice.json",
+            "sha256": "e763a680df43157acf678099b0d744455cd8ff0db8cc1ec7e3b1e175ead649e4",
+            "packageHash": null,
+            "descriptorHash": null,
+            "bytes": 7361,
+            "dimensions": null,
+            "parts": null,
+            "triangles": null,
+            "provenance": {
+              "source": "Exact reviewed revision2 inputs retained by the revision4 proof",
+              "sourceHash": null,
+              "creator": null,
+              "license": null,
+              "fidelity": null
+            },
+            "animation": {
+              "status": "unknown",
+              "clips": [],
+              "inspection": "unavailable"
+            },
+            "runtime": {
+              "liveWorld": false,
+              "route": "data-only",
+              "clipPlayback": false
+            },
+            "limitations": [
+              "Local JSON data, not an executable animation. No scientific or license claims are inferred when provenance is missing."
+            ],
+            "data": {
+              "keys": [
+                "provenance",
+                "props"
+              ]
+            }
+          },
+          {
+            "id": "asset-d632e1ae25b30c787688ac5b",
+            "assetId": "transcription-cycle.json",
+            "kind": "data",
+            "format": "json-data",
+            "title": "transcription-cycle.json",
+            "assetPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\demo\\expansion\\inputs\\transcription-cycle.json",
+            "manifestPath": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\demo\\expansion\\inputs\\transcription-cycle.json",
+            "sha256": "56db9ebfc65d613b8b6bdcf7475546803bf14021ca1693b0e3e1167f93bf6c8d",
+            "packageHash": null,
+            "descriptorHash": null,
+            "bytes": 5813,
+            "dimensions": null,
+            "parts": null,
+            "triangles": null,
+            "provenance": {
+              "source": null,
+              "sourceHash": null,
+              "creator": null,
+              "license": null,
+              "fidelity": null
+            },
+            "animation": {
+              "status": "unknown",
+              "clips": [],
+              "inspection": "unavailable"
+            },
+            "runtime": {
+              "liveWorld": false,
+              "route": "data-only",
+              "clipPlayback": false
+            },
+            "limitations": [
+              "Local JSON data, not an executable animation. No scientific or license claims are inferred when provenance is missing."
+            ],
+            "data": {
+              "keys": [
+                "template",
+                "coding",
+                "pairs",
+                "transcript",
+                "templateDirection",
+                "codingDirection",
+                "axis",
+                "radius",
+                "pitch",
+                "twistPerBase",
+                "baseReach",
+                "window",
+                "start",
+                "cycleDuration",
+                "dockFraction",
+                "opening",
+                "exitFrame",
+                "exitBend",
+                "exitDirection",
+                "rnaLinkLength",
+                "incomingOffset",
+                "incomingAngle"
+              ]
+            }
+          }
+        ],
+        "total": 3,
+        "offset": 0,
+        "limit": 8,
+        "metrics": {
+          "cacheHit": false,
+          "lookupMs": 0.06939999999997326
+        }
+      },
+      "cachedMetrics": {
+        "cacheHit": true,
+        "lookupMs": 0.017499999999984084
+      }
+    }
+  ],
+  "loaded": {
+    "native": {
+      "loadMs": 210.85979999999995,
+      "catalog": [
+        {
+          "id": "suzanne-textured",
+          "kind": "model"
+        },
+        {
+          "id": "suzanne-textured-image-0",
+          "kind": "image"
+        }
+      ]
+    },
+    "published": {
+      "loadMs": 19.0711,
+      "recordId": "asset-8076536c6413b01e611a4a1d",
+      "assetId": "model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+      "url": "/api/models/b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450.glb",
+      "decodedBytes": 3803752,
+      "sha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+      "triangles": 90004
+    }
+  },
+  "metrics": {
+    "metadataReads": 107,
+    "bytesRead": 9490660,
+    "queries": 9,
+    "cacheHits": 3,
+    "nativeLoads": 1,
+    "publishedLoads": 1,
+    "records": 52,
+    "buildMs": 134.58720000000002,
+    "queryCacheEntries": 6,
+    "issues": [
+      {
+        "path": "C:\\Users\\samue\\Stuff\\3yellow3white\\shared\\animlib\\fixtures\\biological\\peptide-staged\\staging.json",
+        "reason": "Asset metadata byte limit exceeded"
+      }
+    ]
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "measuredAt": "2026-10-15T23:46:48.475Z",
+  "assetId": "model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+  "sha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+  "triangles": 90004,
+  "parts": 12,
+  "indexMs": 126.0445,
+  "selectionAndLoadMs": 18.952999999999975,
+  "worldAddMs": 101.21549999999996,
+  "modelPrepareMs": 62.0059,
+  "source": "export default scene({mode:'3d',end:'hold'},s=>{const m=s.model('specimen',{asset:\"model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450\",source:'glb',scale:0.032534567729994066});s.bind(m,[s.time],t=>({rotation:[0,t*.2,0]}));s.wait(60);});",
+  "worldRevision": 2,
+  "rawWorldContainsVertices": false,
+  "persistentRotation": [
+    0,
+    0.6000000000000001,
+    0
+  ],
+  "parentPosition": [
+    1,
+    0,
+    0
+  ],
+  "limitation": "Handwritten host integration probe. No model generation, GPU submission, presented frame, source interpretation or visual quality claim."
+}
