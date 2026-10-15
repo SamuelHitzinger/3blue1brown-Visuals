@@ -4,7 +4,7 @@ import { mkdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import type { Frame } from 'animlib/core';
-import { atomicWrite } from '../narration/service.js';
+import { atomicWrite } from '../atomic-write.js';
 import { AgentError } from './config.js';
 
 export interface FrameEvidence {

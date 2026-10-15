@@ -1,46 +1,12 @@
 import { createHandler } from "./server.js";
-import { VideoService } from './videos.js';
-import { NarrationService } from './narration/service.js';
-import { agentConfig } from './agents/config.js';
-import { PiAgentRunner } from './agents/runtime.js';
-import { createPiGenerator } from './agents/generator.js';
-import { createThumbnailGenerator, thumbnailAgentConfig } from './agents/thumbnail.js';
-import { ChromiumScenePreview } from './agents/scene-preview.js';
-import { dirname, join } from 'node:path';
-import { LectureService } from './lectures.js';
-import { generateLectureNotes } from './agents/lecture.js';
-import { createLectureVisualGenerator } from './agents/lecture-visual.js';
-import { LectureCaptureService } from './lecture-capture.js';
-import { createLectureMediaExtractor } from './lecture-media.js';
 import { createCaptureGateway } from './capture-gateway.js';
-import { LectureLiveBridge } from './lecture-live-bridge.js';
-import { lectureTranscriptionConfig } from './lecture-transcription.js';
+import { createLectureWorkflow } from './lecture-workflow.js';
+import { createVideoWorkflow } from './video-workflow.js';
 
-const generation = process.env.VIDEO_GENERATOR ?? 'pi';
-if (generation !== 'pi' && generation !== 'simulated') throw new Error('VIDEO_GENERATOR must be pi or simulated.');
-const narration = new NarrationService();
-const config = generation === 'pi' ? agentConfig() : undefined;
-const preview = config && process.env.SCENE_PREVIEW !== '0' ? new ChromiumScenePreview() : undefined;
-const videos = new VideoService(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite',
-  config ? createPiGenerator(new PiAgentRunner(config), narration, config.dataDir,
-    { outputMode: config.sceneOutputMode, timingMode: config.sceneTimingMode, preview }) : undefined, generation,
-  config ? createThumbnailGenerator(new PiAgentRunner(thumbnailAgentConfig())) : undefined);
-const lectureConfig = config && { ...config, model: process.env.LECTURE_MODEL ?? 'gpt-6.1-sol', thinking: 'medium' as const };
-const lectureRunner = lectureConfig ? new PiAgentRunner(lectureConfig) : undefined;
-const liveLectureRunner = lectureConfig ? new PiAgentRunner({ ...lectureConfig, thinking: 'minimal' }) : undefined;
-const lectures = new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'),
-  lectureRunner ? (input, signal) => generateLectureNotes(input.previousNotes && input.previousSourceRevision ? liveLectureRunner! : lectureRunner, input, signal) : undefined,
-  { visualize: config ? createLectureVisualGenerator(new PiAgentRunner({ ...config, thinking: 'medium' }), config.dataDir,
-    { preview, reviewRunner: new PiAgentRunner(config) }) : undefined, synthesisDebounceMs: 150, concurrency: 3 });
-const liveBridge = new LectureLiveBridge(process.env.LIVE_BRIDGE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-live-bridge.sqlite'), lectures);
-const transcription = lectureTranscriptionConfig();
-const captures = new LectureCaptureService(process.env.CAPTURE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-capture.sqlite'), lectures, {
-  extract: lectureRunner ? createLectureMediaExtractor(lectureRunner, { transcription }) : undefined,
-  publicOrigin: process.env.CAPTURE_PUBLIC_ORIGIN,
-  photo: !!lectureRunner, audio: !!lectureRunner && !!transcription.apiKey,
-  transcriptionProvider: transcription.provider === 'deepgram' ? 'Deepgram' : 'ElevenLabs',
-  onPhotoAccepted: (...args) => liveBridge.recordPhoto(...args),
-});
+const videoWorkflow = createVideoWorkflow();
+const lectureWorkflow = createLectureWorkflow();
+const { videos, narration } = videoWorkflow;
+const { lectures, captures, liveBridge } = lectureWorkflow;
 
 const localNarration = process.env.NODE_ENV !== "production" && process.env.NARRATION_ALLOW_LOCAL === "1";
 const hostname = process.env.HOST ?? (localNarration ? "127.0.0.1" : "0.0.0.0");
@@ -83,10 +49,7 @@ async function shutdown() {
   stopping = true;
   server.stop(true);
   captureServer?.stop(true);
-  await Promise.all([videos.close(), captures.close()]);
-  liveBridge.close();
-  await lectures.close();
-  await preview?.close();
+  await Promise.all([videoWorkflow.close(), lectureWorkflow.close()]);
   process.exit(0);
 }
 process.on("SIGTERM", shutdown);

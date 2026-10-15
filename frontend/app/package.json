@@ -7,7 +7,7 @@
     "predev": "npm --prefix ../.. run build",
     "dev": "vite --host 0.0.0.0",
     "pretest": "npm --prefix ../.. run build",
-    "test": "node --test tests/*.test.ts",
+    "test": "node --test tests/*.test.ts && bun test .test.tsx",
     "prebuild": "npm --prefix ../.. run build",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0"

@@ -38,7 +38,8 @@ export interface LectureDiagram {
   elements: ( { type: 'text'; x: number; y: number; text: string; color?: LectureColor }
     | { type: 'line'; x1: number; y1: number; x2: number; y2: number; arrow?: boolean; color?: LectureColor }
     | { type: 'circle'; cx: number; cy: number; r: number; color?: LectureColor }
-    | { type: 'rect'; x: number; y: number; width: number; height: number; color?: LectureColor } )[];
+    | { type: 'rect'; x: number; y: number; width: number; height: number; color?: LectureColor }
+    | { type: 'polyline' | 'polygon'; points: [number, number][]; color?: LectureColor } )[];
 }
 export interface LectureQuestion extends LecturePoint { diagram?: LectureDiagram }
 export interface LectureConcept {
@@ -47,6 +48,8 @@ export interface LectureConcept {
   /** Identical terms in notes and drawings carry identical colors. */
   terms?: { text: string; color: LectureColor }[];
   sectionId?: string;
+  /** Anchor the figure beside points with this exact group in its section. */
+  group?: string;
   id: string;
   title: string;
   explanation: string;
@@ -112,6 +115,9 @@ export interface LectureSynthesisInput {
   sources: LectureSource[];
   previousNotes: LectureNotes | null;
   previousSourceRevision?: number;
+  /** Existing note/canvas edit anchors that an editorial rewrite must retain. */
+  preservedSectionIds?: string[];
+  preservedConceptIds?: string[];
 }
 export interface LectureVisualInput {
   title: string;

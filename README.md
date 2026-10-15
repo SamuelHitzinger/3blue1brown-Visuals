@@ -40,12 +40,17 @@ rendering requirements. AI course planning requires model credentials; narrated
 lesson generation also requires ElevenLabs. For a test generator with a test tone,
 start with `VIDEO_GENERATOR=simulated npm run backend:dev` (AI planning is unavailable).
 
-Lecture notes and silent lecture visuals use the same model login and do not need
-ElevenLabs. `LECTURE_MODEL` selects the notes model; visuals use `AGENT_MODEL` and
-must pass rendered review. With the simulated video generator, lecture material
-can still be saved, but AI lecture generation is unavailable. See the
+Lecture notes and silent lecture visuals share the model login, with independent
+workflow configuration and prompts. `LECTURE_MODEL` selects the notes model;
+`LECTURE_VISUAL_MODEL` selects notebook visual authoring and mandatory rendered
+review. `LECTURE_GENERATOR=pi|disabled` and `LECTURE_VISUAL_GENERATOR=pi|disabled`
+control them independently of `VIDEO_GENERATOR`, including simulated video mode.
+Text notes and silent visuals need no speech-synthesis key; audio capture needs
+its configured transcription credentials. See the
 [lecture workspace guide](docs/lecture-workspace.md) and
 [visualization catalog](shared/animlib/catalog/README.md).
+See [notes/video architecture](docs/notes-video-architecture.md) for data flow,
+ownership boundaries and configuration migration details.
 
 **Private website access over Tailscale:** keep the app bound to loopback and
 run `tailscale serve --bg --https=443 http://127.0.0.1:8080` after checking that

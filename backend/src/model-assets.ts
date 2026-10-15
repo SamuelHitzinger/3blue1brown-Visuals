@@ -6,7 +6,7 @@ import { lookup } from 'node:dns/promises';
 import { request as httpsRequest } from 'node:https';
 import { parseModelGLB, MODEL_LIMITS } from 'animlib/core';
 import type { ModelAsset } from 'animlib/core';
-import { atomicWrite } from './narration/service.js';
+import { atomicWrite } from './atomic-write.js';
 import type { BundledModelContext } from './bundled-models.js';
 import { isTrustedAppRequest } from './request-origin.js';
 

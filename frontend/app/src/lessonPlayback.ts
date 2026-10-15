@@ -147,13 +147,14 @@ export class LessonPlayback {
     return this.operations
   }
 
-  load(sources: SceneSource[], initialTime = 0) {
+  load(sources: SceneSource[], initialTime: number | 'end' = 0) {
     return this.run(async () => {
       this.baseSources = sources.map((scene, index) => ({ ...scene, handoffFrom: index ? sources[index - 1].id : null }))
       const result = await this.player.submit({ type: 'load', scenes: this.baseSources })
       if (this.disposed) return
       if (!result.ok) throw new Error(result.diagnostics.map(diagnostic => diagnostic.message).join('\n'))
-      await this.player.seek(scenePosition(this.scenes, initialTime))
+      const start = initialTime === 'end' ? this.scenes.reduce((sum, scene) => sum + scene.duration, 0) : initialTime
+      await this.player.seek(scenePosition(this.scenes, start))
       if (this.disposed) return
       this.update({ ready: true })
       await this.syncPlayback()

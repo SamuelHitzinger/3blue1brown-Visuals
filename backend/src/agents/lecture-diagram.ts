@@ -1,4 +1,7 @@
 import type { LectureColor, LectureDiagram } from '../../../shared/lecture.js';
+import { createCanvas, GlobalFonts } from '@napi-rs/canvas';
+import { fileURLToPath } from 'node:url';
+import { logEvent } from '../logging.js';
 
 export function parseLectureColor(value: unknown): LectureColor {
   if (!['blue', 'teal', 'amber', 'ink'].includes(String(value))) throw new Error('Use blue, teal, amber or ink for diagram colors.');
@@ -34,8 +37,64 @@ export function parseLectureDiagram(value: unknown): LectureDiagram {
         if (x + width > 590 || y + height > 330) throw new Error('Keep rectangles inside the diagram.');
         return { type: 'rect', x, y, width, height, ...color };
       }
-      default: throw new Error('Only text, line, circle and rect diagram elements are allowed.');
+      case 'polyline':
+      case 'polygon': {
+        const minimum = item.type === 'polygon' ? 3 : 2;
+        if (!Array.isArray(item.points) || item.points.length < minimum || item.points.length > 64) throw new Error(`Use ${minimum}–64 points for a ${item.type}.`);
+        const points = item.points.map((point: unknown): [number, number] => {
+          if (!Array.isArray(point) || point.length !== 2 || point.some(value => typeof value !== 'number' || !Number.isFinite(value))
+            || point[0] < 10 || point[0] > 590 || point[1] < 10 || point[1] > 330) throw new Error('Diagram points must be finite [x,y] pairs within the 600×340 canvas.');
+          return [point[0], point[1]];
+        });
+        return { type: item.type, points, ...color };
+      }
+      default: throw new Error('Only text, line, circle, rect, polyline and polygon diagram elements are allowed.');
     }
   });
   return { alt: raw.alt.trim(), elements };
+}
+
+let labelWidth: ((text: string) => number) | null | undefined;
+function measureLabelWidth() {
+  if (labelWidth !== undefined) return labelWidth;
+  // The built site is shipped in production; the public source also supports clean checkouts.
+  for (const path of ['../../../frontend/site/fonts/libron/Libron-Regular.woff2', '../../../frontend/app/public/fonts/libron/Libron-Regular.woff2']) {
+    try {
+      if (!GlobalFonts.registerFromPath(fileURLToPath(new URL(path, import.meta.url)), 'LectureDiagramQA')) continue;
+      const context = createCanvas(600, 340).getContext('2d');
+      context.font = '24px LectureDiagramQA';
+      labelWidth = text => context.measureText(text).width;
+      return labelWidth;
+    } catch { /* Try the other bundled location; never substitute unrelated font metrics. */ }
+  }
+  logEvent('lecture.diagram_font_unavailable', { code: 'LABEL_EXTENTS_SKIPPED' }, 'warn');
+  labelWidth = null;
+  return labelWidth;
+}
+
+/** Generation-only layout gate, separate from legacy-safe schema parsing.
+ * Font metrics catch clipping and clear label collisions, not scientific meaning or geometry crossings.
+ */
+export function validateLectureDiagramLayout(diagram: LectureDiagram): void {
+  const measure = measureLabelWidth();
+  const labels = diagram.elements.filter(element => element.type === 'text');
+  for (const [index, label] of labels.entries()) {
+    const width = measure?.(label.text);
+    // Two pixels of tolerance avoids rejecting harmless glyph overhang/rounding.
+    if (width !== undefined && (label.x - width / 2 < -2 || label.x + width / 2 > 602)) {
+      throw new Error(`Diagram label "${label.text}" extends outside the canvas. Move or shorten the label while preserving its meaning.`);
+    }
+    for (const previous of labels.slice(0, index)) {
+      // Identical overprinting adds no conflicting text; intentional shared labels remain legal.
+      if (previous.text === label.text && previous.x === label.x && previous.y === label.y) continue;
+      const previousWidth = measure?.(previous.text);
+      const horizontalOverlap = width === undefined || previousWidth === undefined
+        ? Math.abs(label.x - previous.x) < 2
+        : Math.min(label.x + width / 2, previous.x + previousWidth / 2) - Math.max(label.x - width / 2, previous.x - previousWidth / 2) > 8;
+      // A narrow central band catches obvious collisions without guessing glyph ascenders/descenders.
+      if (horizontalOverlap && Math.abs(label.y - previous.y) < 16) {
+        throw new Error(`Diagram labels "${previous.text}" and "${label.text}" overlap. Separate their positions without changing the source relationship.`);
+      }
+    }
+  }
 }

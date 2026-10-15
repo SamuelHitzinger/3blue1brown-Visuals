@@ -33,6 +33,41 @@ export function groupNotebookPoints(points: LecturePoint[]) {
   return groups
 }
 
+/** Keep consecutive note groups intact; each figure belongs to exactly one run. */
+export function assignNotebookGroups(points: LecturePoint[], concepts: LectureConcept[]) {
+  const groups = groupNotebookPoints(points).map(group => ({ ...group, concepts: [] as LectureConcept[], fullWidthText: false, supportSplit: 0 }))
+  if (!groups.length && concepts.length) groups.push({ title: undefined, points: [], concepts: [], fullWidthText: false, supportSplit: 0 })
+  for (const concept of concepts) {
+    let target = concept.group ? groups.find(group => group.title === concept.group) : undefined
+    if (!target) {
+      let best = -1
+      for (const group of groups) {
+        const sources = new Set(group.points.flatMap(point => point.sourceIds))
+        const overlap = new Set(concept.sourceIds.filter(id => sources.has(id))).size
+        if (overlap > best) { best = overlap; target = group }
+      }
+    }
+    target?.concepts.push(concept)
+  }
+  let textRun = 0
+  groups.forEach((group, index) => {
+    if (group.concepts.length) { textRun = 0; return }
+    textRun++
+    group.fullWidthText = textRun % 2 === 1 && (!groups[index + 1] || groups[index + 1].concepts.length > 0)
+    // Only separate a leading equation block from trailing explanations/conditions.
+    // Interleaved derivations keep their original single-column sequence.
+    const firstSupport = group.points.findIndex(point => noteLineKind(point) !== 'equation')
+    if (group.fullWidthText && firstSupport > 0 && group.points.slice(firstSupport).every(point => !point.math && ['note', 'caveat', 'relation'].includes(noteLineKind(point)))) group.supportSplit = firstSupport
+  })
+  return groups
+}
+
+export function notebookFigureCaption(session: Pick<LectureSession, 'noteEdits'>, concept: LectureConcept) {
+  const title = lectureNoteText(session, `concept-title:${concept.id}`, concept.title)
+  const explanation = lectureNoteText(session, `concept:${concept.id}`, concept.explanation)
+  return { title, explanation: title.trim() === explanation.trim() ? '' : explanation }
+}
+
 /** Preserve all visible conditions/headings when a structured section becomes a personal edit. */
 export function notebookEditText(points: LecturePoint[]) {
   return groupNotebookPoints(points).map(group => [group.title, ...group.points.map(point => point.label ? `${point.label}: ${point.text}` : point.text)].filter(Boolean).join('\n')).join('\n\n')

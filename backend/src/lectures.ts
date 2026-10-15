@@ -9,7 +9,7 @@ import { isTrustedAppRequest } from './request-origin.js';
 import { AgentError } from './agents/config.js';
 import { parseLectureNotes } from './agents/lecture.js';
 import { logStage } from './logging.js';
-import type { LectureSession, LectureSummary, LectureSource, LectureSynthesizer, LectureVisualGenerator, LectureVisualization, LectureVisualInput } from '../../shared/lecture.js';
+import type { LectureNotes, LectureSession, LectureSummary, LectureSource, LectureSynthesizer, LectureVisualGenerator, LectureVisualization, LectureVisualInput } from '../../shared/lecture.js';
 
 const MAX_SOURCE = 40_000, MAX_TOTAL_SOURCE = 250_000, MAX_SOURCES = 12000, MAX_BODY_BYTES = 500_000, MAX_VISUALIZATIONS = 24;
 const NOTES_FORMAT_VERSION = 3;
@@ -38,6 +38,72 @@ function updateFinishedTitle(session: LectureSession) {
   if (!session.finishedAt || session.titleMode !== 'automatic' || !session.titleBase || !session.notes || session.synthesizedRevision !== session.sourceRevision) return;
   const subtitle = (session.notes.subtitle ?? session.notes.sections[0]?.title ?? '').replace(/\s+/g, ' ').trim().slice(0, 120);
   if (subtitle) session.title = `${session.titleBase}: ${subtitle}`.slice(0, 200);
+}
+
+function editedAnchors(session: LectureSession) {
+  const keys = Object.keys(session.noteEdits ?? {});
+  return {
+    preservedSectionIds: [...new Set([...keys.filter(key => /^(section|heading):/.test(key)).map(key => key.split(':')[1]), ...Object.keys(session.noteCanvas ?? {})])],
+    preservedConceptIds: [...new Set(keys.filter(key => /^(concept|concept-title):/.test(key)).map(key => key.split(':')[1]))],
+  };
+}
+
+/** Edits made while the model was running must still have a visible home. */
+function retainEditedAnchors(notes: LectureNotes, current: LectureSession, sources: LectureSource[]) {
+  const { preservedSectionIds, preservedConceptIds } = editedAnchors(current);
+  const retainSection = (id: string) => {
+    const section = current.notes?.sections.find(section => section.id === id);
+    if (section && !notes.sections.some(section => section.id === id)) notes.sections.push(structuredClone(section));
+  };
+  for (const id of preservedSectionIds) retainSection(id);
+  for (const id of preservedConceptIds) {
+    const concept = current.notes?.concepts.find(concept => concept.id === id);
+    if (concept && !notes.concepts.some(concept => concept.id === id)) {
+      if (concept.sectionId) retainSection(concept.sectionId);
+      if (concept.sectionId && concept.group) {
+        const section = notes.sections.find(section => section.id === concept.sectionId)!;
+        if (!section.points.some(point => point.group === concept.group)) {
+          const original = current.notes?.sections.find(section => section.id === concept.sectionId);
+          const groupPoints = original?.points.filter(point => point.group === concept.group) ?? [];
+          const overlapping = groupPoints.filter(point => point.sourceIds.some(id => concept.sourceIds.includes(id)));
+          // Explicit grouping can connect photo evidence to separately cited
+          // speech. Preserve that named connection even without shared IDs.
+          section.points.push(...structuredClone(overlapping.length ? overlapping : groupPoints));
+        }
+      }
+      notes.concepts.push(structuredClone(concept));
+    }
+  }
+  // Retained objects are still subject to source grounding and size limits.
+  return parseLectureNotes(JSON.stringify(notes), sources, current.notes);
+}
+
+function remapQuestionEdits(notes: LectureNotes, current: LectureSession) {
+  if (!current.noteEdits) return;
+  const edits = Object.fromEntries(Object.entries(current.noteEdits).filter(([key]) => !key.startsWith('question:')));
+  let personalNotes = current.personalNotes;
+  const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
+  const used = new Set<number>();
+  const destinations = current.notes?.questions.map(previous => {
+    const index = notes.questions.findIndex((question, index) => !used.has(index) && normalize(question.text) === normalize(previous.text) && question.sourceIds.some(id => previous.sourceIds.includes(id)));
+    if (index !== -1) used.add(index);
+    return index;
+  }) ?? [];
+  for (const [key, value] of Object.entries(current.noteEdits)) {
+    if (!key.startsWith('question:')) continue;
+    const previousIndex = Number(key.slice('question:'.length));
+    const previous = current.notes?.questions[previousIndex];
+    const index = destinations[previousIndex] ?? -1;
+    if (index === -1) {
+      // A legacy paraphrase may be invalid as an assigned question. Keep the
+      // user's annotation visible without attaching it to a different question.
+      const annotation = `Annotation for original question: ${previous?.text ?? key}\n${value}`;
+      personalNotes += `${personalNotes ? '\n\n' : ''}${annotation}`;
+      if (personalNotes.length > 100_000) throw new Error('Preserving the question annotation exceeds the personal notes limit.');
+    } else edits[`question:${index}`] = value;
+  }
+  current.personalNotes = personalNotes;
+  current.noteEdits = edits;
 }
 
 /** Release worker capacity even if an injected provider ignores the cancellation signal. */
@@ -111,7 +177,11 @@ export class LectureService {
     if (prior) { if (prior.text !== text) throw new LectureError('This Idempotency-Key was already used for different lecture text.', 409); return session; }
     if (session.sources.length >= MAX_SOURCES || session.sources.reduce((total, source) => total + source.text.length, 0) + text.length > MAX_TOTAL_SOURCE) throw new LectureError('This lecture is full. Start another session to continue adding material.', 413);
     const source: LectureSource = { id: crypto.randomUUID(), sequence: session.sourceRevision + 1, kind: 'text', text, createdAt: new Date().toISOString(), ...(capture ? { capture } : {}) };
-    session.sources.push(source); session.sourceRevision++; this.prepareSynthesis(session);
+    session.sources.push(source); session.sourceRevision++;
+    // Accepted capture may complete after Finish. Include it in a new complete
+    // editorial pass rather than appending fragments to the finished notebook.
+    if (session.finishedAt) session.notesRefreshRequested = true;
+    this.prepareSynthesis(session);
     this.db.transaction(() => { this.db.query('INSERT INTO lecture_source_keys VALUES (?, ?, ?, ?)').run(id, key, text, source.id); this.save(session); })();
     const debounce = this.options.synthesisDebounceMs ?? 0;
     if (debounce > 0 && !this.synthesisTimers.has(id)) {
@@ -133,13 +203,13 @@ export class LectureService {
     session.status = this.synthesize ? (this.noteWork(session.id).length ? 'processing' : 'queued') : 'failed';
     if (this.synthesize) delete session.error; else session.error = NO_SYNTHESIS;
   }
-  private enqueueVisual(session: LectureSession, conceptId: string): LectureVisualization {
+  private enqueueVisual(session: LectureSession, conceptId: string, regenerate = false): LectureVisualization {
     const concept = session.notes?.concepts.find(concept => concept.id === conceptId);
     if (!concept) throw new LectureError('This lecture concept is unavailable. Update the notes and try again.', 404);
     if (concept.visualKind === 'static') throw new LectureError('This concept already has a static diagram.');
     const current = session.visualizations.find(visual => visual.conceptId === conceptId);
     if (!current && session.visualizations.length >= MAX_VISUALIZATIONS) throw new LectureError('This lecture has reached its limit of 24 visual explanations. Start another session for more.', 409);
-    if (current && (current.status === 'queued' || current.status === 'processing' || (current.status === 'ready' && current.sourceRevision === session.synthesizedRevision && !current.stale))) return current;
+    if (current && (current.status === 'queued' || current.status === 'processing' || (!regenerate && current.status === 'ready' && current.sourceRevision === session.synthesizedRevision && !current.stale))) return current;
     // Keep the last working scene and its true revision visible during a refresh or failure.
     const visual: LectureVisualization = { ...(current?.source ? current : (concept.visualKind ? { visualKind: concept.visualKind } : {})), id: current?.id ?? crypto.randomUUID(), conceptId, title: concept.title,
       sourceRevision: current?.source ? current.sourceRevision : session.synthesizedRevision, status: this.options.visualize ? 'queued' : 'failed', catalogIds: current?.source ? current.catalogIds : [...concept.catalogIds],
@@ -197,7 +267,8 @@ export class LectureService {
       // keep the shorter deadline for ordinary incremental capture updates.
       const fullRefresh = session.notesRefreshRequested || (!!session.notes && session.notesFormatVersion !== NOTES_FORMAT_VERSION);
       if (!visualId) { work.sourceRevision = this.noteRevision(session); work.refresh = !!fullRefresh; }
-      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(visualId ? (this.options.visualizationTimeoutMs ?? 6 * 60_000) : (this.options.synthesisTimeoutMs ?? (fullRefresh ? 6 : 2) * 60_000))]);
+      // Rich scenes include authoring, rendered review and up to three repairs.
+      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(visualId ? (this.options.visualizationTimeoutMs ?? 12 * 60_000) : (this.options.synthesisTimeoutMs ?? (fullRefresh ? 6 : 2) * 60_000))]);
       if (visualId) await this.runVisual(id, visualId, signal); else await this.runNotes(id, signal, work);
     }).catch(() => {
       // Storage failures must not become unhandled rejections or expose source/provider details.
@@ -216,31 +287,35 @@ export class LectureService {
   private async runNotes(id: string, signal: AbortSignal, work: Work) {
     const initial = this.snapshot(id)!;
     const refresh = initial.notesRefreshRequested || (!!initial.notes && initial.notesFormatVersion !== NOTES_FORMAT_VERSION);
-    delete initial.notesRefreshRequested;
+    // Keep the refresh durable until it succeeds. Failure/restart must not turn
+    // a requested consolidation into an ordinary incremental update.
     initial.status = 'processing'; delete initial.error; this.save(initial);
     // Bound each incremental update; only mark the batch covered after success.
     const revision = refresh ? initial.sourceRevision : this.noteRevision(initial);
     const sources = initial.sources.filter(source => source.sequence <= revision);
     try {
       if (!this.synthesize) throw new AgentError('CONFIG', NO_SYNTHESIS);
-      const notes = await logStage({ lectureId: id, stage: 'lecture-notes', sourceRevision: revision, pendingSources: initial.sourceRevision - initial.synthesizedRevision }, async () => {
+      let notes = await logStage({ lectureId: id, stage: 'lecture-notes', sourceRevision: revision, pendingSources: initial.sourceRevision - initial.synthesizedRevision }, async () => {
         const result = await abortable(this.trackProvider(this.synthesize!({ lectureId: id, title: initial.title, sources, previousNotes: initial.notes,
-          instructions: this.instructions(this.row(id)!.owner), previousSourceRevision: refresh ? 0 : initial.synthesizedRevision }, signal)), signal);
+          instructions: this.instructions(this.row(id)!.owner), ...editedAnchors(initial), previousSourceRevision: refresh ? 0 : initial.synthesizedRevision }, signal)), signal);
         signal.throwIfAborted();
         return parseLectureNotes(JSON.stringify(result), sources, initial.notes);
       });
       if (this.stopped || work.controller.signal.aborted) return;
       const current = this.snapshot(id); if (!current) return;
       if (!refresh && current.synthesizedRevision >= revision) return;
+      notes = retainEditedAnchors(notes, current, sources);
+      remapQuestionEdits(notes, current);
       const previousIds = new Set(current.notes?.concepts.map(concept => concept.id) ?? []);
       for (const visual of current.visualizations) {
         if (JSON.stringify(current.notes?.concepts.find(concept => concept.id === visual.conceptId)) !== JSON.stringify(notes.concepts.find(concept => concept.id === visual.conceptId))) visual.stale = true;
       }
       current.notes = notes; current.synthesizedRevision = revision; current.notesFormatVersion = NOTES_FORMAT_VERSION;
+      if (refresh && (!current.finishedAt || current.sourceRevision === revision)) delete current.notesRefreshRequested;
       current.status = current.sourceRevision > revision || current.notesRefreshRequested ? 'queued' : 'idle'; delete current.error;
       updateFinishedTitle(current);
       // Only one newly discovered concept is automatic. Other concepts remain deliberate requests.
-      const firstNew = current.visualizations.length < MAX_VISUALIZATIONS
+      const firstNew = this.options.visualize && current.visualizations.length < MAX_VISUALIZATIONS
         ? notes.concepts.find(concept => concept.visualKind !== 'static' && !previousIds.has(concept.id) && !current.visualizations.some(visual => visual.conceptId === concept.id)) : undefined;
       this.db.transaction(() => { if (firstNew) this.enqueueVisual(current, firstNew.id); this.save(current); })();
       // A published snapshot changes the baseline. Cancel every competing
@@ -253,6 +328,9 @@ export class LectureService {
       work.failed = true;
       if (!refresh && current.synthesizedRevision >= revision) return;
       if (this.noteWork(id).some(other => other !== work && !other.failed && !other.controller.signal.aborted)) return;
+      if (!refresh && current.notesRefreshRequested) {
+        current.status = 'queued'; delete current.error; this.save(current); return;
+      }
       current.status = 'failed';
       if (current.status === 'failed') current.error = this.synthesize ? failureMessage(error) : NO_SYNTHESIS;
       this.save(current);
@@ -456,11 +534,13 @@ export class LectureService {
         const text = input.text as string; // Preserve indentation, notation and line breaks exactly as submitted.
         return json(this.appendSource(owner, id, idempotency, text), 202);
       }
-      const session = this.snapshot(id)!;
+      let session = this.snapshot(id)!;
       if (match![2] === 'finish') {
+        const firstFinish = !session.finishedAt;
         session.finishedAt ??= new Date().toISOString();
         updateFinishedTitle(session);
-        if (session.sourceRevision > session.synthesizedRevision) {
+        if (firstFinish && session.sources.length) session.notesRefreshRequested = true;
+        if (session.notesRefreshRequested || session.sourceRevision > session.synthesizedRevision) {
           clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
           this.prepareSynthesis(session);
         }
@@ -471,7 +551,15 @@ export class LectureService {
         if (session.synthesizedRevision === session.sourceRevision) session.notesRefreshRequested = true;
         this.prepareSynthesis(session);
         this.save(session);
-      } else this.db.transaction(() => { this.enqueueVisual(session, match![3]); this.save(session); })();
+      } else {
+        const input = request.body ? await body() : {};
+        if (input.regenerate !== undefined && typeof input.regenerate !== 'boolean') throw new LectureError('Provide regenerate as a boolean.');
+        // Sources, edits or generated results may have changed while the body streamed.
+        const latest = this.row(id);
+        if (!latest || latest.owner !== owner) throw new LectureError('Not Found', 404);
+        session = this.decode(latest);
+        this.db.transaction(() => { this.enqueueVisual(session, match![3], input.regenerate === true); this.save(session); })();
+      }
       this.kick(); return json(session, 202);
     } catch (error) {
       if (error instanceof LectureError) return json({ detail: error.message }, error.status);

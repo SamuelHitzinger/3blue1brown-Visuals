@@ -2,7 +2,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { AgentError } from './config.js';
 import { validationMessage } from './runtime.js';
 import type { AgentRunner, AgentTask } from './runtime.js';
-import { atomicWrite } from '../narration/service.js';
+import { atomicWrite } from '../atomic-write.js';
 import { logEvent } from '../logging.js';
 
 export const MAX_REVIEW_ROUNDS = 50;

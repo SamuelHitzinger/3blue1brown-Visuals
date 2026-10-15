@@ -3,9 +3,9 @@ import { ConceptText } from './LectureDiagram'
 import { groupNotebookPoints, noteLineKind, splitNoteScripts } from './lectureDocument'
 import { noteMathImage } from './noteMath'
 
-export default function NotebookLines({ points, terms = [] }: { points: LecturePoint[]; terms?: LectureConcept['terms'] }) {
+export default function NotebookLines({ points, terms = [], showGroupTitles = true }: { points: LecturePoint[]; terms?: LectureConcept['terms']; showGroupTitles?: boolean }) {
   return <div className="notebook-lines">{groupNotebookPoints(points).map((group, index) => <div className="notebook-line-group" key={index}>
-    {group.title && <h4 className="notebook-group-title">{group.title}</h4>}
+    {showGroupTitles && group.title && <h4 className="notebook-group-title">{group.title}</h4>}
     {group.points.map((point, line) => {
       const kind = noteLineKind(point)
       const math = point.math ? noteMathImage(point.math) : null

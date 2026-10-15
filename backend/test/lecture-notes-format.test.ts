@@ -55,6 +55,18 @@ test('static diagrams do not need an unused animation prompt; dynamic visuals st
   expect(() => parseLectureNotes(JSON.stringify({ ...notes, concepts: [{ ...notes.concepts[0], visualKind: 'animation', diagram: undefined, visualizationPrompt: '' }] }), sources)).toThrow();
 });
 
+test('self-contained static diagrams may omit visible captions explicitly while retaining their title and accessible description', () => {
+  const notes = { summary: '', sections: [{ id: 'vectors', title: 'Vectors', points: [{ text: 'v: direction + magnitude', sourceIds: ['s1'] }] }], concepts: [{ id: 'v', sectionId: 'vectors', title: 'Direction', explanation: '', sourceIds: ['s1'], catalogIds: [], visualKind: 'static', diagram }], questions: [] };
+  const concept = parseLectureNotes(JSON.stringify(notes), sources).concepts[0];
+  expect(concept.explanation).toBe('');
+  expect(concept.title).toBe('Direction');
+  expect(concept.diagram?.alt).toBe(diagram.alt);
+  for (const explanation of [undefined, null, false, 0, '   ']) {
+    expect(() => parseLectureNotes(JSON.stringify({ ...notes, concepts: [{ ...notes.concepts[0], explanation }] }), sources)).toThrow();
+  }
+  expect(() => parseLectureNotes(JSON.stringify({ ...notes, concepts: [{ ...notes.concepts[0], visualKind: 'animation', diagram: undefined, visualizationPrompt: 'Rotate the vector.' }] }), sources)).toThrow();
+});
+
 test('global style instructions reach synthesis as preferences separate from evidence', async () => {
   let payload: any;
   await generateLectureNotes({ run: async task => { payload = JSON.parse(task.prompt); return JSON.stringify(questionOnly); } }, { title: 'Vectors', sources, previousNotes: null, instructions: 'German; shorter notes; fewer visuals.' }, new AbortController().signal);
@@ -72,6 +84,35 @@ test('full refresh reauthors old prose from all sources; incremental updates ret
   expect(payloads[0].sources).toHaveLength(1);
   expect(payloads[1].revisionMode).toBe('incremental');
   expect(payloads[1].sources).toHaveLength(0);
+});
+
+test('full refresh exposes stable identities and edited anchors without using unedited prose or diagrams as its template', async () => {
+  const previous: LectureNotes = { ...questionOnly, summary: 'Old summary', sections: [
+    { id: 'old-topic', title: 'Vector direction', points: [{ text: 'Unedited old wording', sourceIds: ['s1'], group: 'Direction' }] },
+    { id: 'edited-topic', title: 'Edited topic', points: [{ text: 'Edited section anchor', sourceIds: ['s1'] }] },
+  ], concepts: [
+    { id: 'old-diagram', sectionId: 'old-topic', group: 'Direction', title: 'Old figure', explanation: 'Unedited old caption', sourceIds: ['s1'], catalogIds: [], visualizationPrompt: '', visualKind: 'static', diagram: { ...diagram, alt: 'Unedited old construction' } },
+    { id: 'edited-diagram', sectionId: 'old-topic', title: 'Edited figure', explanation: '', sourceIds: ['s1'], catalogIds: [], visualizationPrompt: '', visualKind: 'static', diagram },
+  ] };
+  const payloads: any[] = [];
+  const runner = { run: async (task: any) => { payloads.push(JSON.parse(task.prompt)); return JSON.stringify(previous); } };
+  const input = { title: 'Vectors', sources, previousNotes: previous, preservedSectionIds: ['edited-topic'], preservedConceptIds: ['edited-diagram'] };
+  await generateLectureNotes(runner, input, new AbortController().signal);
+  const rewrite = payloads[0];
+  expect(rewrite.previousNotes).toBeUndefined();
+  expect(rewrite.previousStructure).toEqual({ sections: [{ id: 'old-topic', title: 'Vector direction' }, { id: 'edited-topic', title: 'Edited topic' }], concepts: [
+    { id: 'old-diagram', sectionId: 'old-topic', group: 'Direction', title: 'Old figure' },
+    { id: 'edited-diagram', sectionId: 'old-topic', title: 'Edited figure' },
+  ] });
+  expect(rewrite.previousEditedAnchors).toEqual({ sections: [previous.sections[1]], concepts: [previous.concepts[1]] });
+  expect(rewrite.preservedQuestions).toEqual(previous.questions);
+  expect(rewrite.sources[0].text).toBe(sources[0].text);
+  for (const omitted of ['Old summary', 'Unedited old wording', 'Unedited old caption', 'Unedited old construction']) expect(JSON.stringify(rewrite)).not.toContain(omitted);
+  await generateLectureNotes(runner, { ...input, previousSourceRevision: 1 }, new AbortController().signal);
+  expect(payloads[1].previousNotes).toEqual(previous);
+  expect(payloads[1].previousStructure).toBeUndefined();
+  expect(payloads[1].previousEditedAnchors).toBeUndefined();
+  expect(payloads[1].preservedQuestions).toBeUndefined();
 });
 
 test('short audio updates retain only bounded preceding speech for sentence continuity', async () => {

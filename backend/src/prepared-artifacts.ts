@@ -1,7 +1,7 @@
 import {createHash} from 'node:crypto';
 import {mkdir,open} from 'node:fs/promises';
 import {join} from 'node:path';
-import {atomicWrite} from './narration/service.js';
+import {atomicWrite} from './atomic-write.js';
 const hash=(data:string|Uint8Array)=>createHash('sha256').update(data).digest('hex');
 function canonical(value:unknown):string {if(value===null||typeof value!=='object')return JSON.stringify(value);if(Array.isArray(value))return '['+value.map(canonical).join(',')+']';return '{'+Object.keys(value as object).sort().map(k=>JSON.stringify(k)+':'+canonical((value as Record<string,unknown>)[k])).join(',')+'}';}
 export class PreparedArtifactStore {

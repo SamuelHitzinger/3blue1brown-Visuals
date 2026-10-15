@@ -81,6 +81,31 @@ test('initial approval preserves exact source and never calls repair',async()=>{
   }}});
   expect(result).toBe(source);expect(calls).toBe(1);
 });
+
+test('caller-owned review policy excludes video guidance and style reference through repairs', async () => {
+  const input = await fixture(), tasks: AgentTask[] = [];
+  const path = join(input.directory, 'notebook-frame.png');
+  await writeFile(path, 'test');
+  const policy = { id: 'notebook-test', guidance: 'Review only this notebook concept.', repairGuidance: 'Repair only this notebook concept.' };
+  const result = await reviewGeneratedScene({ ...input, policy,
+    renderFrames: async () => ({ backend: 'test', frames: [{ path, time: 4, width: 960, height: 720 }], sheets: [{ path, width: 960, height: 720, times: [4], columns: 1 }] }),
+    runner: { async run(task) {
+      tasks.push(task);
+      if (task.logContext?.stage === 'repair') return JSON.stringify({ sourceSha256: sourceHash(source), edits: [{ finding: 0, before: '[5,0]', after: '[0,0]' }] });
+      return JSON.stringify(tasks.length === 1 ? { approved: false, findings: [{ timeSec: 4, objectIds: ['label'], problem: 'Clipped label', fix: 'Move inside frame' }] } : { approved: true, findings: [] });
+    } },
+  });
+  expect(result).toBe(repair);
+  expect(tasks.map(task => task.logContext?.stage)).toEqual(['review', 'repair', 'review']);
+  for (const task of tasks) {
+    expect(task.images).toHaveLength(1);
+    expect(task.prompt).not.toContain('Last image is style reference');
+    expect(task.systemPrompt).not.toContain(await loadPrompt('scene-verify'));
+    expect(task.systemPrompt).not.toContain(await loadPrompt('scene-repair'));
+  }
+  expect(tasks[0].systemPrompt).toContain(policy.guidance);
+  expect(tasks[1].systemPrompt).toContain(policy.repairGuidance);
+});
 test('render failures and cancellation never invoke approving reviewer',async()=>{
   const input=await fixture();let calls=0;const runner={async run(){calls++;return JSON.stringify({approved:true,findings:[]});}};
   await expect(reviewGeneratedScene({...input,runner,renderFrames:async()=>{throw new Error('GPU unavailable');}})).rejects.toThrow('GPU unavailable');

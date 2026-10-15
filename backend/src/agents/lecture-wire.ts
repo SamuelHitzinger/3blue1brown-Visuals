@@ -56,9 +56,9 @@ export function createLectureWire(sources: LectureSource[], previous: LectureNot
         if (patch.sketches !== undefined) {
           if (!Array.isArray(patch.sketches) || (patch.concepts !== undefined && !Array.isArray(patch.concepts))) throw new Error('Sketches must be a list.');
           patch.concepts = [...(patch.concepts ?? []), ...patch.sketches.map((sketch: unknown) => {
-            if (!Array.isArray(sketch) || sketch.length < 5 || sketch.length > 6) throw new Error('Sketch: [id, sectionId, caption, sourceIds, elements, optional terms].');
-            const [id, sectionId, caption, sourceIds, elements, terms] = sketch;
-            return { id, sectionId, title: caption, explanation: caption, sourceIds, visualKind: 'static', catalogIds: [], visualizationPrompt: '', diagram: { alt: caption, elements }, ...(terms === undefined ? {} : { terms }) };
+            if (!Array.isArray(sketch) || sketch.length < 5 || sketch.length > 7) throw new Error('Sketch: [id, sectionId, caption, sourceIds, elements, optional terms, optional group].');
+            const [id, sectionId, caption, sourceIds, elements, terms, group] = sketch;
+            return { id, sectionId, title: caption, explanation: caption, sourceIds, visualKind: 'static', catalogIds: [], visualizationPrompt: '', diagram: { alt: caption, elements }, ...(terms === undefined ? {} : { terms }), ...(group === undefined ? {} : { group }) };
           })];
         }
         for (const field of ['summary', 'subtitle', 'questions'] as const) if (patch[field] !== undefined) raw[field] = patch[field];

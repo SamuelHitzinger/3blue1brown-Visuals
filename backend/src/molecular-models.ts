@@ -4,7 +4,7 @@ import {join,resolve} from 'node:path';
 import {createMoleculeBuilders,createMolecularBackboneBuilders,createModelGLB,importPDBStructure} from 'animlib/core';
 import type {GeneratedModel,MolecularBackboneResult,ResidueBondTemplate,StructureAtom,Vec3} from 'animlib/core';
 import type {BundledModelContext,MolecularLandmark} from './bundled-models.js';
-import {atomicWrite} from './narration/service.js';
+import {atomicWrite} from './atomic-write.js';
 
 import {PreparedArtifactStore} from './prepared-artifacts.js';
 export type PdbRepresentation='mixed'|'backbone';

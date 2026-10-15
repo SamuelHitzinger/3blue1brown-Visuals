@@ -50,6 +50,7 @@ ARG APP_REVISION
 LABEL org.opencontainers.image.revision=$APP_REVISION
 ENV NODE_ENV=production HOST=0.0.0.0 PORT=8080 APP_REVISION=$APP_REVISION \
     VIDEO_DB_PATH=/data/videos/videos.sqlite NARRATION_DATA_DIR=/data/narration MODEL_ASSET_DIR=/data/videos/models \
+    LECTURE_DB_PATH=/data/videos/lectures.sqlite LECTURE_AGENT_DATA_DIR=/data/agents/lecture-jobs \
     MOLECULAR_MODEL_CACHE_DIR=/data/videos/molecular-model-cache \
     SCENE_PREVIEW_CHROMIUM=/usr/bin/chromium SCENE_PREVIEW_NO_SANDBOX=1
 USER app

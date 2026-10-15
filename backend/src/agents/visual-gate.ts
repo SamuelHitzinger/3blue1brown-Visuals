@@ -10,7 +10,7 @@ import { applyVisualEdits, parseVisualVerification, sourceHash } from './visual-
 import type { VisualVerification } from './visual-edits.js';
 import type { ScenePlan } from './planning.js';
 import { loadPrompt } from './prompts.js';
-import { atomicWrite } from '../narration/service.js';
+import { atomicWrite } from '../atomic-write.js';
 import { logStage, logEvent } from '../logging.js';
 import { AgentError } from './config.js';
 import { validationMessage } from './runtime.js';
@@ -51,6 +51,15 @@ export interface VisualGateInput {
   recoveryWait?: typeof waitForRecovery;
   /** A stricter caller budget never bypasses approval; default remains 50 rounds. */
   maxReviewRounds?: number;
+  /** Caller-owned product policy. Omitted only for the full-video workflow. */
+  policy?: VisualReviewPolicy;
+}
+
+export interface VisualReviewPolicy {
+  id: string;
+  guidance: string;
+  repairGuidance: string;
+  styleReference?: NonNullable<AgentTask['images']>[number];
 }
 
 interface VisualProgress {
@@ -72,11 +81,10 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
   const maxReviewRounds = Number.isFinite(requestedRounds)
     ? Math.max(1, Math.min(MAX_REVIEW_ROUNDS, Math.floor(requestedRounds))) : MAX_REVIEW_ROUNDS;
   signal.throwIfAborted();
-  const [guidance, repairGuidance, style] = await Promise.all([
-    loadPrompt('scene-verify'), loadPrompt('scene-repair'),
-    readFile(new URL('../../prompts/visual-style-reference.jpg', import.meta.url)),
-  ]);
-  const contextHash = sourceHash(JSON.stringify(input));
+  const policy = options.policy ?? await videoReviewPolicy();
+  const { guidance, repairGuidance, styleReference } = policy;
+  // Never resume an approval/repair checkpoint under a different product policy.
+  const contextHash = sourceHash(JSON.stringify(options.policy ? { input, policy, authorContract: options.task.systemPrompt } : input));
   const checkpoint = join(directory, `scene-${index}.visual-state.json`);
   let state: VisualProgress = { contextHash, source: options.source, attempt: 0, phase: 'review', history: [] };
   try {
@@ -133,11 +141,11 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
       if (evidence) {
         signal.throwIfAborted();
         images = await Promise.all(evidence.sheets.map(async sheet => ({ type: 'image' as const, mimeType: 'image/png', data: (await readFile(sheet.path)).toString('base64') })));
-        images.push({ type: 'image', mimeType: 'image/jpeg', data: style.toString('base64') });
+        if (styleReference) images.push(styleReference);
         const sampleMap = evidence.sheets.map((sheet, i) => ({ image: i + 1, width: sheet.width, height: sheet.height, columns: sheet.columns, times: sheet.times }));
         const output = await run({
           systemPrompt: `${authorContract}\n\n${guidance}`,
-          prompt: `Verify these actual native WebGPU frames. Contact sheets read left-to-right, then top-to-bottom; each cell is one whole viewport. Sampling map: ${JSON.stringify(sampleMap)}. Last image is style reference.\nEarlier verification (preserve corrections): ${JSON.stringify(state.history)}\nAuthoritative request and narration:\n${options.task.prompt}\nCurrent candidate source (SHA-256 ${sourceHash(state.source)}):\n${state.source}`,
+          prompt: `Verify these actual native WebGPU frames. Contact sheets read left-to-right, then top-to-bottom; each cell is one whole viewport. Sampling map: ${JSON.stringify(sampleMap)}.${styleReference ? ' Last image is style reference.' : ''}\nEarlier verification (preserve corrections): ${JSON.stringify(state.history)}\nAuthoritative request:\n${options.task.prompt}\nCurrent candidate source (SHA-256 ${sourceHash(state.source)}):\n${state.source}`,
           images, signal, outputMode: 'submit-only', logContext: { videoId, sceneIndex: index, stage: 'review' },
           validate: async output => { parseVisualVerification(output, input.scene.durationSec); },
         }, attemptDirectory, 'review');
@@ -154,7 +162,7 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
       } else {
         state.history = [...state.history, { approved: false, findings: [{ timeSec: null, objectIds: [],
           problem: `The candidate cannot be compiled/rendered reliably: ${renderProblem}`,
-          fix: 'Simplify expensive geometry, loops and timeline construction. Preserve narration, timing, IDs and planned interactions. Use supported animation APIs and keep within the existing compiler resource limits.',
+          fix: 'Simplify expensive geometry, loops and timeline construction. Preserve the authoring contract, timing, IDs and required interactions. Use supported animation APIs and keep within the existing compiler resource limits.',
         }] }].slice(-3);
         state.rewrite = true;
       }
@@ -179,7 +187,7 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
       try {
         const patch = await run({
           systemPrompt: `${authorContract}\n\n${repairGuidance}`,
-          prompt: `Repair these verified findings (zero-based indexes): ${JSON.stringify(review.findings)}.\nPreserve corrections from earlier reviews: ${JSON.stringify(state.history.slice(0, -1))}.\nAuthoritative request and narration:\n${options.task.prompt}\nOriginal candidate sourceSha256: ${sourceHash(originalSource)}\n${originalSource}`,
+          prompt: `Repair these verified findings (zero-based indexes): ${JSON.stringify(review.findings)}.\nPreserve corrections from earlier reviews: ${JSON.stringify(state.history.slice(0, -1))}.\nAuthoritative request:\n${options.task.prompt}\nOriginal candidate sourceSha256: ${sourceHash(originalSource)}\n${originalSource}`,
           images, signal, outputMode: 'submit-only', logContext: { videoId, sceneIndex: index, stage: 'repair' },
           validate: async output => { await validatePatch(output); },
         }, attemptDirectory, 'repair', 3);
@@ -195,7 +203,7 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
     if (state.rewrite) {
       logEvent('scene.regenerating', { videoId, sceneIndex: index, attempt: state.attempt }, 'warn');
       state.source = await run({
-        systemPrompt: `${authorContract}\n\nReturn complete replacement scene JavaScript, without markdown fences. Preserve the authoritative narration, exact duration, inherited IDs, planned controls and earlier corrections.`,
+        systemPrompt: `${authorContract}\n\nReturn complete replacement scene JavaScript, without markdown fences. Preserve the authoritative request, exact duration, inherited IDs, required controls and earlier corrections.`,
         prompt: `Repair this scene with a complete implementation. The targeted patch or rendering path could not finish. Simplify the implementation where needed; do not relax its required behavior.\nFindings: ${JSON.stringify(state.history)}\nAuthoritative request:\n${options.task.prompt}\nCurrent source:\n${originalSource}`,
         signal, outputMode: 'text', logContext: { videoId, sceneIndex: index, stage: 'repair' }, validate: async output => { await options.validate(output); },
       }, attemptDirectory, 'repair');
@@ -206,4 +214,13 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
     state.rewrite = false;
     await save();
   }
+}
+
+async function videoReviewPolicy(): Promise<VisualReviewPolicy> {
+  const [guidance, repairGuidance, style] = await Promise.all([
+    loadPrompt('scene-verify'), loadPrompt('scene-repair'),
+    readFile(new URL('../../prompts/visual-style-reference.jpg', import.meta.url)),
+  ]);
+  return { id: 'full-video', guidance, repairGuidance,
+    styleReference: { type: 'image', mimeType: 'image/jpeg', data: style.toString('base64') } };
 }

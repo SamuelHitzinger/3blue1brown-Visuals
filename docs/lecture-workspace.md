@@ -43,18 +43,33 @@ recovered.
 
 ## Runtime and data
 
-Use `VIDEO_GENERATOR=pi` and the existing Pi model authentication. Notes default to
-`LECTURE_MODEL=gpt-6.1-sol`; visual authors use `AGENT_MODEL`. Lecture visuals are
+Use `LECTURE_GENERATOR=pi` and the existing Pi model authentication. Notes default to
+`LECTURE_MODEL=gpt-6.1-sol`; notebook visual authors use
+`LECTURE_VISUAL_GENERATOR=pi` and `LECTURE_VISUAL_MODEL=gpt-6-astra`.
+`LECTURE_VISUAL_REVIEW_MODEL` optionally selects a separate reviewer; otherwise
+it uses the notebook visual model. Each generator can be `disabled` independently.
+`VIDEO_GENERATOR`, `AGENT_MODEL`, `AGENT_THINKING`, and video scene timing/output
+settings do not configure notes or notebook visuals. Lecture visuals are
 silent, so no ElevenLabs key is needed. The renderer required by video quality
 review is also required by lecture visualizations. If it is unavailable, sources
 and notes remain saved, but unreviewed visuals are not published.
 
-`LECTURE_DB_PATH` defaults to `lectures.sqlite` beside `VIDEO_DB_PATH`, so the
-existing production video-data volume also persists lectures. Include this file
+`LECTURE_DB_PATH` defaults to `data/lectures.sqlite`, independently of
+`VIDEO_DB_PATH`. Docker defaults, inherited by Compose, preserve
+`/data/videos/lectures.sqlite` in the existing persistent volume. Runtime env-file
+overrides remain supported. When upgrading another deployment that previously
+set a custom `VIDEO_DB_PATH` without `LECTURE_DB_PATH`, set `LECTURE_DB_PATH` to
+the existing adjacent `lectures.sqlite` before restarting; no data is moved.
+Capture and live-bridge databases still default beside the lecture database. Include this file
 and its WAL in consistent SQLite backups. Temporary private generation artifacts
-under `AGENT_DATA_DIR/lectures` are removed when each job ends; public scientific
+under `LECTURE_AGENT_DATA_DIR/lectures` (default `data/lecture-agents/lectures`)
+are removed when each job ends; public scientific
 model assets use the existing model store. A lecture never enters the shared
-video library automatically.
+video library automatically. Notebook previews have a separate browser and queue;
+`LECTURE_SCENE_PREVIEW=0` disables their author previews without affecting videos
+or bypassing mandatory rendered review. Browser executable/sandbox settings can
+reuse `SCENE_PREVIEW_CHROMIUM` / `SCENE_PREVIEW_NO_SANDBOX`, or use matching
+`LECTURE_SCENE_PREVIEW_*` overrides.
 
 Graceful shutdown allows up to five seconds for canceled providers to settle and
 remove their temporary files. A hard kill or crashed process can leave job
@@ -169,8 +184,10 @@ passed without repairs. These narrow examples do not predict full-refresh or
 complex-scene latency. Smaller visual context alone reduced input tokens but did
 not reduce measured wall time; medium draft reasoning supplied the observed gain.
 
-Visualizations use the existing animlib reference, scene craft, compiler,
-readability checks, inspection/preview tools, and independent rendered review.
+Visualizations share the animlib API reference, compiler, readability checks and
+inspection/rendering machinery. Their authoring, review and repair prompts belong
+exclusively to notebooks; full-video scene craft, narration policy and default
+video style-reference images are never injected into notebook jobs.
 They explain one relationship in a 12-second scene with a held result and useful
 interaction. A bounded three-round review may fail rather than lower quality.
 The standalone [authoring guide](../backend/prompts/lecture-visual.md) requires a

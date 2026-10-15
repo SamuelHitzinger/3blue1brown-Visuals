@@ -103,5 +103,17 @@ test('compact lines and sketches expand to the same validated notebook without c
   expect(result.concepts[0]).toEqual(notes.concepts[0]);
   expect(result.concepts[1].diagram?.elements[0]).toEqual({ type: 'line', x1: 50, y1: 100, x2: 200, y2: 100, color: 'blue', arrow: true });
   expect(result.concepts[1].sectionId).toBe('force');
+  expect(result.concepts[1].title).toBe('Force direction');
+  expect(result.concepts[1].explanation).toBe('Force direction');
+  expect(result.concepts[1].diagram?.alt).toBe('Force direction');
   expect(() => wire.decode(JSON.stringify({ patch: { sketches: [['bad']] } }))).toThrow();
+});
+
+test('incremental full concept replacements preserve explicit empty captions without emptying titles or alt text', () => {
+  const wire = createLectureWire(sources, notes, true);
+  const concept = { ...notes.concepts[0], explanation: '', sourceIds: ['s1'] };
+  const decoded = wire.decode(JSON.stringify({ patch: { concepts: [concept] } }));
+  const result = parseLectureNotes(JSON.stringify(decoded), sources, notes);
+  expect(result.concepts[0]).toEqual({ ...notes.concepts[0], explanation: '' });
+  expect(result.sections).toEqual(notes.sections);
 });

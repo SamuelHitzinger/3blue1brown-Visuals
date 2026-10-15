@@ -47,6 +47,8 @@ test('lecture visual generation runs authoritative compiler and mandatory review
       expect(options.runner).toBe(reviewRunner);
       expect(options.source).toBe(scene);
       expect(options.maxReviewRounds).toBe(3);
+      expect(options.policy?.id).toBe('lecture-visual');
+      expect(options.policy?.styleReference).toBeUndefined();
       expect(options.task.prompt).toContain('src-1');
       expect(options.task.prompt).toContain(input.concept.visualizationPrompt);
       expect(JSON.parse(options.task.prompt.split('\n').at(-1)!).sources[0].capture.visualEvidence).toBe('Blue v arrow points right from O; tip label unclear.');
@@ -70,6 +72,8 @@ test('lecture visual generation runs authoritative compiler and mandatory review
   expect(recipe.content).toContain('```js scene');
   expect(tasks[0].systemPrompt.includes(recipe.content)).toBe(false);
   expect(tasks[0].systemPrompt).toContain('silent');
+  expect(tasks[0].systemPrompt).not.toContain('## Viewing mode and interaction');
+  expect(tasks[0].systemPrompt).not.toContain('New app videos use');
   expect(await readdir(join(root, 'lectures'))).toEqual([]);
 });
 

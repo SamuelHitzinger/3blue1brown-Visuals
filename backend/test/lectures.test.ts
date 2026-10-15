@@ -28,6 +28,16 @@ async function until<T>(read: () => Promise<T>, check: (value: T) => boolean): P
   throw new Error('Lecture work did not finish');
 }
 
+test('notes-only operation retains dynamic concepts without scheduling unavailable visual jobs', async () => {
+  const s = service(async input => makeNotes(input.sources));
+  const lecture = await create(s);
+  await append(s, lecture.id);
+  const saved = await until(() => get(s, lecture.id), value => value.synthesizedRevision === 1);
+  expect(saved.status).toBe('idle');
+  expect(saved.notes?.concepts).toHaveLength(1);
+  expect(saved.visualizations).toEqual([]);
+});
+
 test('conditional snapshots avoid retransmitting unchanged lecture sources without bypassing ownership', async () => {
   const s = service(), lecture = await create(s);
   const first = await s.handle(api(`/${lecture.id}`)), etag = first.headers.get('etag');
@@ -88,6 +98,205 @@ test('append during inference triggers a second revision while preserving person
   expect(sizes).toEqual([1, 2]); expect(done.sources).toHaveLength(2);
   expect(done.title).toBe('Lecture two'); expect(done.personalNotes).toBe('Ask about basis changes.');
   expect(done.sourceRevision).toBe(2); expect(done.notes?.sections[0].points[0].sourceIds).toEqual([done.sources[0].id]);
+});
+
+test('finish consolidates caught-up notes once and preserves edits, exact questions and citations', async () => {
+  const calls: number[] = [];
+  let release: (() => void) | undefined;
+  const s = service(async input => {
+    calls.push(input.previousSourceRevision ?? -1);
+    if (calls.length > 1) await new Promise<void>(resolve => { release = resolve; });
+    return { ...makeNotes(input.sources), concepts: [], questions: [{ text: 'Find the magnitude.', sourceIds: [input.sources[0].id] }] };
+  });
+  try {
+    const lecture = await create(s); await append(s, lecture.id, 'A vector has direction. Find the magnitude.');
+    await until(() => get(s, lecture.id), row => row.status === 'idle');
+    await s.handle(api(`/${lecture.id}`, 'PATCH', { personalNotes: 'My reasoning', noteEdits: { 'section:vectors': 'My wording', 'question:0': 'My annotation' } }));
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    await until(async () => calls.length, count => count === 2);
+    const finishedAt = (await get(s, lecture.id)).finishedAt;
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    release!();
+    const done = await until(() => get(s, lecture.id), row => row.status === 'idle');
+    await s.handle(api(`/${lecture.id}/finish`, 'POST')); await Bun.sleep(10);
+    expect(calls).toEqual([0, 0]);
+    expect((await get(s, lecture.id)).finishedAt).toBe(finishedAt);
+    expect(done.personalNotes).toBe('My reasoning');
+    expect(done.noteEdits).toEqual({ 'section:vectors': 'My wording', 'question:0': 'My annotation' });
+    expect(done.notes!.questions).toEqual([{ text: 'Find the magnitude.', sourceIds: [done.sources[0].id] }]);
+    expect(done.notes!.sections[0].points[0].sourceIds).toEqual([done.sources[0].id]);
+    expect(done.notesRefreshRequested).toBeUndefined();
+  } finally { release?.(); }
+});
+
+test('finish waits for live synthesis then consolidates again when accepted capture arrives late', async () => {
+  const calls: { previous: number | undefined; sources: number; release: () => void }[] = [];
+  const s = service(async input => {
+    await new Promise<void>(resolve => calls.push({ previous: input.previousSourceRevision, sources: input.sources.length, release: resolve }));
+    return { ...makeNotes(input.sources), concepts: [] };
+  }, { liveSynthesisConcurrency: 2 });
+  try {
+    const lecture = await create(s); await append(s, lecture.id);
+    await until(async () => calls.length, count => count === 1);
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    calls[0].release();
+    await until(async () => calls.length, count => count === 2);
+    await append(s, lecture.id, 'A positive scalar preserves direction.', 'late');
+    await Bun.sleep(10); expect(calls).toHaveLength(2);
+    calls[1].release();
+    await until(async () => calls.length, count => count === 3);
+    expect(calls.map(({ previous, sources }) => ({ previous, sources }))).toEqual([
+      { previous: 0, sources: 1 }, { previous: 0, sources: 1 }, { previous: 0, sources: 2 },
+    ]);
+    calls[2].release();
+    const done = await until(() => get(s, lecture.id), row => row.status === 'idle' && row.synthesizedRevision === 2);
+    expect(done.notesRefreshRequested).toBeUndefined();
+  } finally { for (const call of calls) call.release(); }
+});
+
+test('failed finish consolidation retains its full rewrite request for retry with uncovered sources', async () => {
+  let fail = true;
+  const calls: number[] = [];
+  const s = service(async input => {
+    calls.push(input.previousSourceRevision ?? -1);
+    if (input.sources.length > 1 && fail) throw new Error('Provider unavailable');
+    return { ...makeNotes(input.sources), concepts: [] };
+  }, { synthesisDebounceMs: 1000 });
+  const lecture = await create(s); await append(s, lecture.id);
+  await s.handle(api(`/${lecture.id}/synthesize`, 'POST'));
+  await until(() => get(s, lecture.id), row => row.status === 'idle');
+  await append(s, lecture.id, 'Second fact', 'pending');
+  await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+  const failed = await until(() => get(s, lecture.id), row => row.status === 'failed');
+  expect(failed.notesRefreshRequested).toBe(true);
+  expect(failed.synthesizedRevision).toBe(1);
+  fail = false;
+  await s.handle(api(`/${lecture.id}/synthesize`, 'POST'));
+  await until(() => get(s, lecture.id), row => row.status === 'idle' && row.synthesizedRevision === 2);
+  expect(calls).toEqual([0, 0, 0]);
+});
+
+test('consolidation keeps edited sections and concepts even when edits arrive during inference', async () => {
+  let release: (() => void) | undefined;
+  let calls = 0;
+  const s = service(async input => {
+    calls++;
+    if (calls === 1) return makeNotes(input.sources);
+    await new Promise<void>(resolve => { release = resolve; });
+    return { summary: '', sections: [{ id: 'merged', title: 'Combined explanation', points: [{ text: 'Magnitude and direction.', sourceIds: [input.sources[0].id] }] }], concepts: [], questions: [] };
+  });
+  try {
+    const lecture = await create(s); await append(s, lecture.id);
+    await until(() => get(s, lecture.id), row => row.status === 'idle');
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    await until(async () => !!release, Boolean);
+    await s.handle(api(`/${lecture.id}`, 'PATCH', { noteEdits: { 'section:vectors': 'Keep my section', 'concept:vector': 'Keep my caption' }, noteCanvas: { vectors: { marks: [], offsets: {} } } }));
+    release!();
+    const done = await until(() => get(s, lecture.id), row => row.status === 'idle');
+    expect(done.notes!.sections.map(section => section.id)).toContain('vectors');
+    expect(done.notes!.concepts.map(concept => concept.id)).toContain('vector');
+    expect(done.noteEdits?.['section:vectors']).toBe('Keep my section');
+    expect(done.noteEdits?.['concept:vector']).toBe('Keep my caption');
+    expect(done.noteCanvas?.vectors).toEqual({ marks: [], offsets: {} });
+    expect(done.notes!.sections.find(section => section.id === 'vectors')!.points[0].sourceIds).toEqual([done.sources[0].id]);
+  } finally { release?.(); }
+});
+
+test('a failed live update cannot discard a finish request queued during inference', async () => {
+  let release: (() => void) | undefined;
+  let calls = 0;
+  const s = service(async input => {
+    if (++calls === 1) { await new Promise<void>(resolve => { release = resolve; }); throw new Error('Live update failed'); }
+    expect(input.previousSourceRevision).toBe(0);
+    return { ...makeNotes(input.sources), concepts: [] };
+  });
+  try {
+    const lecture = await create(s); await append(s, lecture.id);
+    await until(async () => !!release, Boolean);
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    release!();
+    const done = await until(() => get(s, lecture.id), row => row.status === 'idle');
+    expect(done.synthesizedRevision).toBe(1); expect(calls).toBe(2);
+  } finally { release?.(); }
+});
+
+for (const disjointSources of [false, true]) test(`an edited concept keeps its explicit group when consolidation replaces section groups (disjoint sources: ${disjointSources})`, async () => {
+  let calls = 0;
+  const s = service(async input => {
+    const notes = makeNotes(input.sources);
+    notes.sections[0].points[0].group = ++calls === 1 ? 'Direction' : 'Combined';
+    if (disjointSources) notes.concepts[0].sourceIds = [input.sources[1].id];
+    if (calls === 1) { notes.concepts[0].sectionId = 'vectors'; notes.concepts[0].group = 'Direction'; }
+    else notes.concepts = [];
+    return notes;
+  }, { synthesisDebounceMs: 1000 });
+  const lecture = await create(s); await append(s, lecture.id);
+  if (disjointSources) await append(s, lecture.id, 'Photo: arrow points right.', 'photo-evidence');
+  await s.handle(api(`/${lecture.id}/synthesize`, 'POST'));
+  await until(() => get(s, lecture.id), row => row.status === 'idle');
+  await s.handle(api(`/${lecture.id}`, 'PATCH', { noteEdits: { 'concept:vector': 'My diagram explanation' } }));
+  await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+  const done = await until(() => get(s, lecture.id), row => row.status === 'idle' || row.status === 'failed');
+  expect(done.status).toBe('idle');
+  expect(done.notes!.concepts[0].group).toBe('Direction');
+  expect(done.notes!.sections[0].points.some(point => point.group === 'Direction' && point.sourceIds.includes(done.sources[0].id))).toBe(true);
+});
+
+for (const editFirst of [false, true]) test(`duplicate questions keep distinct occurrence annotations, including an unedited first occurrence (edit first: ${editFirst})`, async () => {
+  const s = service(async input => ({ ...makeNotes(input.sources), concepts: [], questions: [
+    { text: 'Find x.', sourceIds: [input.sources[0].id], diagram: { alt: 'First setup', elements: [{ type: 'circle', cx: 200, cy: 170, r: 50 }] } },
+    { text: 'Find x.', sourceIds: [input.sources[0].id], diagram: { alt: 'Second setup', elements: [{ type: 'circle', cx: 200, cy: 170, r: 80 }] } },
+  ] }));
+  const lecture = await create(s); await append(s, lecture.id, 'Find x. Find x.');
+  await until(() => get(s, lecture.id), row => row.status === 'idle');
+  const edits: Record<string, string> = editFirst ? { 'question:0': 'First annotation', 'question:1': 'Second annotation' } : { 'question:1': 'Second annotation' };
+  await s.handle(api(`/${lecture.id}`, 'PATCH', { noteEdits: edits }));
+  await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+  const done = await until(() => get(s, lecture.id), row => row.status === 'idle');
+  expect(done.noteEdits).toEqual(edits);
+  expect(done.notes!.questions.map(question => question.diagram!.alt)).toEqual(['First setup', 'Second setup']);
+});
+
+test('question overrides follow exact source identity when a rewrite removes an invalid preceding legacy question', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'aha-question-anchor-')), file = join(directory, 'lectures.sqlite');
+  const s = new LectureService(file, async input => ({ ...makeNotes(input.sources), concepts: [], questions: [{ text: 'Find the magnitude.', sourceIds: [input.sources[0].id] }] })); services.push(s);
+  try {
+    const lecture = await create(s); await append(s, lecture.id, 'Find the magnitude.');
+    const previous = await until(() => get(s, lecture.id), row => row.status === 'idle');
+    previous.notes!.questions.unshift({ text: 'Legacy paraphrase', sourceIds: [previous.sources[0].id] });
+    previous.noteEdits = { 'question:1': 'My answer annotation', 'section:vectors': 'My section' };
+    const db = new Database(file); db.query('UPDATE lectures SET snapshot = ? WHERE id = ?').run(JSON.stringify(previous), lecture.id); db.close();
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    const done = await until(() => get(s, lecture.id), row => row.status === 'idle');
+    expect(done.notes!.questions.map(question => question.text)).toEqual(['Find the magnitude.']);
+    expect(done.noteEdits).toEqual({ 'question:0': 'My answer annotation', 'section:vectors': 'My section' });
+  } finally { await s.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
+for (const full of [false, true]) test(`removed legacy question annotations remain saved without overwriting personal notes (full: ${full})`, async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'aha-question-orphan-')), file = join(directory, 'lectures.sqlite');
+  const s = new LectureService(file, async input => ({ ...makeNotes(input.sources), concepts: [], questions: [] })); services.push(s);
+  try {
+    const lecture = await create(s); await append(s, lecture.id);
+    const previous = await until(() => get(s, lecture.id), row => row.status === 'idle');
+    previous.notes!.questions = [{ text: 'Legacy paraphrase', sourceIds: [previous.sources[0].id] }];
+    previous.noteEdits = { 'question:0': 'My annotation' }; previous.personalNotes = full ? 'x'.repeat(100_000) : 'Existing personal note';
+    const db = new Database(file); db.query('UPDATE lectures SET snapshot = ? WHERE id = ?').run(JSON.stringify(previous), lecture.id); db.close();
+    await s.handle(api(`/${lecture.id}/finish`, 'POST'));
+    const done = await until(() => get(s, lecture.id), row => row.status === 'idle' || row.status === 'failed');
+    if (full) {
+      expect(done.status).toBe('failed'); expect(done.personalNotes).toBe(previous.personalNotes);
+      expect(done.noteEdits).toEqual(previous.noteEdits); expect(done.notes).toEqual(previous.notes);
+      return;
+    }
+    expect(done.status).toBe('idle');
+    expect(done.personalNotes).toBe('Existing personal note\n\nAnnotation for original question: Legacy paraphrase\nMy annotation');
+    expect(done.noteEdits).toEqual({});
+    await s.handle(api(`/${lecture.id}/synthesize`, 'POST'));
+    const again = await until(() => get(s, lecture.id), row => row.status === 'idle');
+    expect(again.personalNotes).toBe(done.personalNotes);
+  } finally { await s.close(); await rm(directory, { recursive: true, force: true }); }
 });
 
 for (const failOlder of [false, true]) test(`overlapping live updates publish newer coverage without waiting for stale work (older failure: ${failOlder})`, async () => {
@@ -397,6 +606,54 @@ test('failed visualization refresh preserves the last working source and its ori
   expect(failed.visualizations[0].source).toBe(initial.visualizations[0].source);
   expect(failed.visualizations[0].sourceRevision).toBe(1);
   expect(failed.visualizations[0].error).not.toContain('private visual provider detail');
+});
+
+test('explicit visual regeneration preserves the working scene and coalesces active requests', async () => {
+  let calls = 0, release!: () => void;
+  const pending = new Promise<void>(resolve => { release = resolve; });
+  const s = service(async input => makeNotes(input.sources), { visualize: async () => {
+    calls++;
+    if (calls === 2) await pending;
+    return { source: `scene version ${calls}`, duration: 12, catalogIds: [] };
+  } });
+  try {
+    const lecture = await create(s); await append(s, lecture.id);
+    const initial = await until(() => get(s, lecture.id), row => row.visualizations[0]?.status === 'ready');
+    const path = `/${lecture.id}/concepts/vector/visualize`;
+    await s.handle(api(path, 'POST'));
+    expect(calls).toBe(1);
+    expect((await s.handle(api(path, 'POST', { regenerate: 'yes' }))).status).toBe(400);
+    await s.handle(api(path, 'POST', { regenerate: true }));
+    await until(() => get(s, lecture.id), row => row.visualizations[0]?.status === 'processing');
+    expect((await get(s, lecture.id)).visualizations[0].source).toBe(initial.visualizations[0].source);
+    await s.handle(api(path, 'POST', { regenerate: true }));
+    expect(calls).toBe(2);
+    release();
+    const done = await until(() => get(s, lecture.id), row => row.visualizations[0]?.status === 'ready');
+    expect(done.visualizations[0].source).toBe('scene version 2');
+    expect(done.visualizations[0].stale).toBe(false);
+    expect(done.notes).toEqual(initial.notes); expect(done.sources).toEqual(initial.sources);
+  } finally { release(); }
+});
+
+test('visual regeneration retains lecture updates received while its request body streams', async () => {
+  const s = service(async input => makeNotes(input.sources), { visualize: async () => ({ source: 'working scene', duration: 12, catalogIds: [] }) });
+  const lecture = await create(s); await append(s, lecture.id);
+  await until(() => get(s, lecture.id), row => row.visualizations[0]?.status === 'ready');
+  let stream!: ReadableStreamDefaultController<Uint8Array>;
+  const body = new ReadableStream<Uint8Array>({ start(controller) { stream = controller; controller.enqueue(new TextEncoder().encode('{"regenerate":')); } });
+  const response = s.handle(new Request(`http://localhost/api/lectures/${lecture.id}/concepts/vector/visualize`, {
+    method: 'POST', headers: { 'x-user-id': 'alice', 'Content-Type': 'application/json' }, body,
+  }));
+  await Bun.sleep(0);
+  await append(s, lecture.id, 'New source during the request.', 'during-request');
+  await until(() => get(s, lecture.id), row => row.synthesizedRevision === 2);
+  stream.enqueue(new TextEncoder().encode('true}')); stream.close();
+  expect((await response).status).toBe(202);
+  const current = await get(s, lecture.id);
+  expect(current.sources).toHaveLength(2);
+  expect(current.sourceRevision).toBe(2);
+  expect(current.synthesizedRevision).toBe(2);
 });
 
 test('automatic visual work has a session-wide bound without blocking newer notes', async () => {

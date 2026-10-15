@@ -42,6 +42,21 @@ class TestPlayer {
 }
 const sources: SceneSource[] = [{ id: 'first', source: '' }, { id: 'second', source: '' }]
 
+test('lecture final hold uses compiled duration, remains paused, and replays from the start', async () => {
+  const player = new TestPlayer(), playback = new LessonPlayback(player, false)
+  await playback.load(sources, 'end')
+  assert.deepEqual(player.calls, ['seek:second:20'])
+  assert.equal(playback.getState().time, 30)
+  assert.equal(playback.getState().ready, true)
+  assert.equal(playback.getState().ended, true)
+  assert.equal(playback.getState().playing, false)
+  await playback.toggle()
+  assert.deepEqual(player.calls, ['seek:second:20', 'seek:first:0', 'play'])
+  assert.equal(playback.getState().ended, false)
+  assert.equal(playback.getState().playing, true)
+  playback.dispose()
+})
+
 test('keeps 3D inspection available during camera motion and pauses without changing scene time', async () => {
   const player = new TestPlayer(), playback = new LessonPlayback(player)
   await playback.load(sources, 4)
