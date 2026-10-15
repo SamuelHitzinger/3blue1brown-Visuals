@@ -1,5 +1,5 @@
 import type { SceneContext, ElementHandle, AnimationAction } from './types.js';
-import type { AuthoringBuilders, TimingAnchor, TimingSpan } from './authoring-types.js';
+import type { AuthoringBuilders, ScheduledStep, TimingAnchor, TimingSpan } from './authoring-types.js';
 
 /** Self-contained: the same factory is serialized into the scene VM. */
 export function createAuthoringBuilders(s: SceneContext, currentTime: () => number): AuthoringBuilders {
@@ -52,6 +52,26 @@ export function createAuthoringBuilders(s: SceneContext, currentTime: () => numb
         interval(map[id], duration, `${key} ${id}`);
         return map[id][anchor.edge==='end'?'endSec':'startSec'];
       };
+      const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+      const effects = (step: ScheduledStep, label: string): AnimationAction[] => {
+        const actions = step.actions === undefined ? [] : Array.isArray(step.actions) ? [...step.actions] : [step.actions];
+        if (step.reveal !== undefined && !Array.isArray(step.reveal)) throw new Error(`${label} reveal must be an array`);
+        for (const target of step.reveal ?? []) {
+          if (!target || typeof target.id !== 'string' || typeof target.fadeIn !== 'function') throw new Error(`${label} has an invalid reveal target`);
+          actions.push(target.fadeIn());
+        }
+        for (const action of actions) {
+          if (!record(action) || !['animate', 'morph', 'camera', 'numbers'].includes(action.type)
+            || !Array.isArray(action.ids) || Array.from(action.ids).some(id => typeof id !== 'string')
+            || (action.properties !== undefined && !record(action.properties))
+            || (action.geometry !== undefined && !record(action.geometry))
+            || (action.type === 'morph' && (!record(action.geometry) || typeof action.geometry.kind !== 'string'))
+            || (action.map !== undefined && !record(action.map))
+            || (action.values !== undefined && !record(action.values))) throw new Error(`${label} has an invalid action`);
+        }
+        if (!actions.length) throw new Error(`${label} requires actions or reveal targets`);
+        return actions;
+      };
       let cursor = currentTime();
       if (cursor > duration + 1e-6) throw new Error('Scene cursor exceeds narration duration');
       const ids = new Set<string>();
@@ -71,16 +91,41 @@ export function createAuthoringBuilders(s: SceneContext, currentTime: () => numb
           if ((startSec < pause.endSec && endSec > pause.startSec)
             || (startSec === endSec && startSec >= pause.startSec && startSec < pause.endSec)) throw new Error(`Operation ${operation.id} changes information during pause ${id}`);
         }
-        const actions: AnimationAction[] = operation.actions===undefined?[]:Array.isArray(operation.actions)?[...operation.actions]:[operation.actions];
-        if (operation.reveal !== undefined && !Array.isArray(operation.reveal)) throw new Error(`Operation ${operation.id} reveal must be an array`);
-        for (const target of operation.reveal ?? []) actions.push(target.fadeIn());
-        if (!actions.length) throw new Error(`Operation ${operation.id} requires actions or reveal targets`);
+        let steps: { endSec: number; actions: AnimationAction[] }[] | undefined;
+        if (operation.steps !== undefined) {
+          if (operation.actions !== undefined || operation.reveal !== undefined) throw new Error(`Operation ${operation.id} steps cannot be combined with top-level actions or reveal`);
+          if (!Array.isArray(operation.steps) || !operation.steps.length || operation.steps.length > 64) throw new Error(`Operation ${operation.id} requires 1–64 steps`);
+          const prepared = Array.from(operation.steps, (step, index) => {
+            const label = `Operation ${operation.id} step ${index + 1}`;
+            if (!record(step) || Object.keys(step).some(key => !['actions', 'reveal', 'weight'].includes(key))) throw new Error(`Invalid ${label}; only actions, reveal and weight are allowed`);
+            const weight = step.weight === undefined ? 1 : step.weight;
+            if (typeof weight !== 'number' || !Number.isFinite(weight) || weight < 0) throw new Error(`${label} weight must be finite and nonnegative`);
+            return { weight, actions: effects(step, label) };
+          });
+          // Normalize first: finite weights may have an overflowing raw sum.
+          const maximum = Math.max(...prepared.map(step => step.weight));
+          if (endSec > startSec && maximum === 0) throw new Error(`Operation ${operation.id} requires positive step weight for a positive window`);
+          const total = maximum ? prepared.reduce((sum, step) => sum + step.weight / maximum, 0) : 0;
+          const lastPositive = prepared.reduce((last, step, index) => step.weight > 0 ? index : last, -1);
+          let cumulative = 0, stepEnd = startSec;
+          steps = prepared.map((step, index) => {
+            if (step.weight > 0) {
+              cumulative += step.weight / maximum;
+              stepEnd = index === lastPositive ? endSec : startSec + (endSec - startSec) * (cumulative / total);
+            }
+            return { endSec: stepEnd, actions: step.actions };
+          });
+        }
+        const actions = steps ? undefined : effects(operation, `Operation ${operation.id}`);
         cursor = endSec;
-        return {id:operation.id,startSec,endSec,actions,ease:operation.ease};
+        return {id:operation.id,startSec,endSec,actions,steps,ease:operation.ease};
       });
       for (const window of windows) {
         s.wait(Math.max(0,window.startSec-currentTime()));
-        s.play(window.actions,{duration:window.endSec-window.startSec,...(window.ease?{ease:window.ease}:{})});
+        const ease = window.ease ? { ease: window.ease } : {};
+        if (window.steps) {
+          for (const step of window.steps) s.play(step.actions, { duration: Math.max(0, step.endSec - currentTime()), ...ease });
+        } else s.play(window.actions!, { duration: window.endSec - window.startSec, ...ease });
       }
       s.wait(Math.max(0,duration-currentTime()));
       return Object.freeze(windows.map(({id,startSec,endSec})=>Object.freeze({id,startSec,endSec})));

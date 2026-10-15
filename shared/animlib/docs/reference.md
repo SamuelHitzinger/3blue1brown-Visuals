@@ -491,12 +491,34 @@ the default edge is `start`. Supply either `through` with another anchor, or
 `duration`. Omitting both creates an instantaneous operation. Do not combine
 the full-span `cue` shorthand with `at`, `through`, or `duration`.
 `actions` accepts one action or an array; `reveal` accepts handles and adds
-their fade-in actions. All actions in an operation share its interval and
-optional `ease`. Use `notBefore` to guard an answer with its reveal utterance
+their fade-in actions. Top-level actions run concurrently over the operation's
+interval. For ordered changes, use `steps` instead of top-level `actions` or
+`reveal`: 1–64 flat entries with `actions`, `reveal`, and optional `weight`.
+Weights must be finite and nonnegative; the default is 1 and zero applies an
+instant update. A positive window needs positive total weight. The host divides
+the measured window proportionally; all steps inherit the operation's `ease`.
+The receipt still describes the whole operation. No timestamp arithmetic or
+nested steps are needed.
+
+LaTeX `morphTo` still requires an explicit map. An empty map crossfades parts;
+for a whole-label replacement, hide the label, update it instantly while hidden,
+then reveal it. This prevents old and new glyphs from overlapping visibly:
+
+```js
+s.schedule(__narration, [{id:'replace-label', cue:'new-value', steps:[
+  {actions:label.fadeOut()},
+  {weight:0, actions:label.morphTo({kind:'latex', tex:'y'}, {map:{}})},
+  {reveal:[label]},
+]}]);
+```
+
+Use `notBefore` to guard an answer with its reveal utterance
 or named answer cue. The scheduler rejects changes inside explicit pauses,
 backwards/overlapping windows, invalid IDs, and operations past the measured
 end. It does not shorten motion, move cues, or change narration to make a
-schedule fit. All windows are checked before adding timeline tracks.
+schedule fit. All windows and step shapes are checked before adding tracks.
+If an action fails runtime validation, the entire schedule restores the prior
+cursor, tracks, touched objects and cameras, then rethrows the original error.
 
 Keep operations in chronological order and combine simultaneous changes in one
 operation. Direct `s.play`/`s.wait` calls before a schedule remain valid if they

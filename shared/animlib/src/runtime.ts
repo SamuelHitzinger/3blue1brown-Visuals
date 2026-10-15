@@ -108,6 +108,9 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
   let building = true;
   let cursor = 0;
   let exiting: ElementHandle | undefined;
+  // Schedule lowering uses the real play() checks. Journal only touched elements
+  // so a later invalid action can roll back without copying untouched geometry.
+  const scheduleJournals: Map<string, ElementState>[] = [];
 
   const descendants = (id: string, path = new Set<string>()): string[] => {
     if (path.has(id)) throw new Error(`Group cycle at ${id}`);
@@ -372,7 +375,23 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     plane: (id,options) => domainFactories.createCoordinateBuilders(context).plane(id,options),
     graph: (id,data,options) => domainFactories.createGraphBuilders(context,algorithms).graph(id,data,options),
     compose: (id,parts) => domainFactories.createAuthoringBuilders(context, () => cursor).compose(id,parts),
-    schedule: (narration,operations) => domainFactories.createAuthoringBuilders(context, () => cursor).schedule(narration,operations),
+    schedule: (narration,operations) => {
+      const savedCursor = cursor, savedTracks = tracks.length, savedCamera = clone(cameraNow);
+      const savedViews = new Map([...viewCameras].map(([id, camera]) => [id, clone(camera)]));
+      const journal = new Map<string, ElementState>();
+      scheduleJournals.push(journal);
+      try {
+        return domainFactories.createAuthoringBuilders(context, () => cursor).schedule(narration,operations);
+      } catch (error) {
+        cursor = savedCursor;
+        tracks.length = savedTracks;
+        cameraNow = savedCamera;
+        viewCameras.clear();
+        for (const [id, camera] of savedViews) viewCameras.set(id, camera);
+        for (const [id, state] of journal) states.set(id, state);
+        throw error;
+      } finally { scheduleJournals.pop(); }
+    },
     collection: (id,items,options) => domainFactories.createCollectionBuilders(context).collection(id,items,options),
     compactQueue: (id,items,options) => domainFactories.createCompactQueueBuilders(context).compactQueue(id,items,options),
     dijkstra: (data,source) => algorithms.dijkstra(data,source),
@@ -415,6 +434,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
           if (action.type !== "camera") {
             const e = states.get(id);
             if (!e) throw new Error(`Element ${id} is missing or was removed`);
+            for (const journal of scheduleJournals) if (!journal.has(id)) journal.set(id, clone(e));
             from[id] = clone(e);
             if (action.fromOpacity !== undefined) from[id].opacity = action.fromOpacity;
           }

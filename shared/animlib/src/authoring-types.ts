@@ -19,6 +19,12 @@ export interface TimingPacket {
 }
 export type TimingAnchor = ({ cue: string } | { word: string } | { utterance: string } | { pause: string })
   & { edge?: 'start' | 'end' };
+export interface ScheduledStep {
+  actions?: AnimationAction | AnimationAction[];
+  reveal?: readonly ElementHandle[];
+  /** Relative share of the operation window; default 1. Zero applies an instant update. */
+  weight?: number;
+}
 export interface ScheduledOperation {
   id: string;
   /** Full named cue span; mutually exclusive with at/through/duration. */
@@ -29,6 +35,8 @@ export interface ScheduledOperation {
   duration?: number;
   actions?: AnimationAction | AnimationAction[];
   reveal?: readonly ElementHandle[];
+  /** 1–64 sequential steps; mutually exclusive with top-level actions/reveal. No nesting. */
+  steps?: readonly ScheduledStep[];
   /** Guard answer-bearing operations with their reveal utterance or named answer cue. */
   notBefore?: TimingAnchor;
   ease?: Ease;
