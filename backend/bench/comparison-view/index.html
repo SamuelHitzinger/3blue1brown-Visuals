@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Derivative — baseline and improved</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#101113;color:#edf0f4;font:15px system-ui,sans-serif}
+main{padding:24px;max-width:2200px;margin:auto}h1{font-size:22px;font-weight:550;margin:0 0 8px}
+.note{color:#b6bdc8;margin:0 0 22px}.panes{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.label{display:flex;justify-content:space-between;gap:10px;align-items:baseline;margin:0 0 10px;font-weight:550}
+.label span{font-weight:400;font-size:13px;color:#b6bdc8}.viewport{position:relative;width:100%;aspect-ratio:16/9;overflow:hidden;background:black}
+iframe{position:absolute;width:1280px;height:720px;border:0;transform-origin:top left;pointer-events:none}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:20px}
+button,select{font:inherit;color:inherit;background:#25282e;border:1px solid #545b66;border-radius:7px;padding:9px 14px;min-height:42px}
+button:disabled{opacity:.45}button,select,input{accent-color:#63d2bf}button{cursor:pointer}.primary{background:#edf0f4;color:#15171b;border-color:#edf0f4}
+.timeline{display:flex;gap:14px;align-items:center;margin-top:16px}input[type=range]{width:100%;min-width:80px}output{white-space:nowrap;font-variant-numeric:tabular-nums}
+#status{min-height:24px;margin:12px 0 0;color:#b6bdc8}.panes[data-focus=baseline] article:last-child,.panes[data-focus=candidate] article:first-child{display:none}.panes[data-focus=baseline],.panes[data-focus=candidate]{grid-template-columns:1fr}
+main:fullscreen{background:#101113;overflow:auto;width:100%;max-width:none;padding:24px}
+@media(max-width:660px){main{padding:14px}.panes{gap:10px}.label{display:block;font-size:13px}.label span{display:block;font-size:11px}.note{font-size:13px}.controls{gap:8px}button,select{padding:8px 10px}}
+</style></head><body><main id="comparison">
+<h1>Derivative: baseline and improved</h1>
+<p class="note">Same narration and playback time · Original approved scenes · Generation: 276.4 s → 166.8 s</p>
+<section class="panes" data-focus="both" aria-label="Synchronized animation comparison">
+<article><p class="label">Baseline <span>Trial 2 · 276.4 s to generate</span></p><div class="viewport"><iframe id="baseline" src="/arm.html?variant=baseline" title="Baseline derivative animation"></iframe></div></article>
+<article><p class="label">Improved <span>Trial 3 · 166.8 s to generate</span></p><div class="viewport"><iframe id="candidate" src="/arm.html?variant=candidate" title="Improved derivative animation"></iframe></div></article>
+</section>
+<div class="controls">
+<button class="primary" id="play" disabled>Play both</button><button id="restart" disabled>Restart</button>
+<label>Speed <select id="speed"><option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option></select></label>
+<label>View <select id="focus"><option value="both">Side by side</option><option value="baseline">Baseline only</option><option value="candidate">Improved only</option></select></label>
+<button id="scene" disabled>Jump to shrinking h</button><button id="full">Full screen</button>
+</div>
+<div class="timeline"><label for="seek">Time</label><input id="seek" type="range" min="0" max="49.604" step="0.01" value="0" disabled><output id="time">0:00.0 / 0:49.6</output></div>
+<p id="status" role="status" aria-live="polite">Loading original scenes…</p>
+</main><script type="module" src="/comparison.ts"></script></body></html>
