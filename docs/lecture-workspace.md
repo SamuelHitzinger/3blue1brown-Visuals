@@ -192,3 +192,43 @@ visualization with horizontal-slice and height evidence took 301.4 seconds,
 including rendered review. The author retrieved three catalog records. These
 are one-run measurements, not latency guarantees: notes update incrementally,
 while quality-reviewed visualizations finish in the background.
+
+### Model and reasoning comparison (2026-10-15)
+
+Thirty-five real provider runs compared the production note prompt and validator
+on one saved chemistry lecture. Each incremental setting used the same three
+12-source cases; four finalists also completed two full 100-source rewrites.
+Requests ran sequentially with rotated order. These are model-only timings,
+including validation repairs, not capture-to-display latency.
+
+| Model | Effort | Incremental mean (s) | Empty updates / 3 | Validation failures | Full rewrite mean (s) |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Sol 6.1 | low | 12.95 | 0 | 0 | 53.10 |
+| Sol 6.1 | medium | 21.44 | 0 | 0 | 59.00 |
+| Sol 6.1 | high | 37.28 | 0 | 0 | — |
+| Sol 6 | low | 12.50 | 0 | 2 | — |
+| Astra | low | 15.95 | 0 | 0 | 86.32 |
+| Astra | medium | 20.36 | 0 | 0 | — |
+| Luna | none | 11.43 | 3 | 7 | — |
+| Luna | low | 10.11 | 1 | 6 | — |
+| Luna | medium | 14.36 | 0 | 5 | 24.64 |
+
+The current split remains the best observed tradeoff: Sol 6.1 low for live
+updates, medium for full rewrites. The SDK maps the current `minimal` live setting
+to Sol 6.1's `low`. Medium retained an important scientific condition in both full
+rewrites that low omitted. Luna's apparent speed came with empty updates,
+validation failures, or unrequested language changes. Astra did not improve note
+latency. Complex visuals were outside this comparison and keep their current
+configuration.
+
+All 35 outputs were rendered with the notebook and diagram components. Automated
+diagram label checks found no clipping or overlaps; semantic review still found
+quality differences. This small, single-lecture sample is not a general model
+ranking. Full rewrites included existing notes, so inherited errors are part of
+the tested workflow. Production notes and configuration were not changed.
+
+Private candidate outputs remain local under `.tmp/model-benchmark/`. For review,
+copy its self-contained `report.html` to the ignored
+`frontend/site/review/model-comparison.html`; the running website serves it at
+`/static/review/model-comparison.html`. Frontend builds clear this local copy, so
+copy it again after a build. Never commit lecture content or candidate outputs.

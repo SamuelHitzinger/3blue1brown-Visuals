@@ -27,3 +27,5 @@ out/
 *.tsbuildinfo
 /exports/
 /plugins/live-lecture/.local/
+# Private local model comparisons served through the existing static route.
+/frontend/site/review/
