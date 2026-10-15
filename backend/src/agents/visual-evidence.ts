@@ -24,7 +24,7 @@ export interface ReviewImage {
   columns: number;
 }
 
-/** Deliberately reserve action interiors before filling temporal coverage gaps. */
+/** Prioritize demonstrated transition risks without claiming complete coverage. */
 export function planReviewEvidence(scene: CompiledScene, history: VisualVerification[] = [],
   speechCues: Record<string, { startSec: number; endSec: number }> = {}): ReviewEvidencePlan {
   const { duration } = scene;
@@ -41,7 +41,7 @@ export function planReviewEvidence(scene: CompiledScene, history: VisualVerifica
   add(0, 'opening'); add(Math.min(0.5, duration / 4), 'visible-opening'); add(duration, 'end-state');
   const selected = new Set(candidates.keys());
   const defects = [...new Set(history.flatMap(review => review.findings.flatMap(finding => finding.timeSec === null ? [] : [finding.timeSec])))];
-  const defectSamples = defects.map(requested => ({ requested, sample: add(requested, 'prior-defect', 4) }));
+  const defectSamples = defects.map(requested => ({ requested, sample: add(requested, 'prior-defect', 100) }));
   for (const { sample } of defectSamples) if (sample !== undefined && selected.size < 16) selected.add(sample);
   for (const [id, cue] of Object.entries(speechCues)) {
     add(cue.startSec, `speech-cue-start:${id}`, 2); add(cue.endSec, `speech-cue-end:${id}`, 2);
@@ -53,6 +53,41 @@ export function planReviewEvidence(scene: CompiledScene, history: VisualVerifica
     if (track.duration > 0) add(track.start + track.duration / 2,
       track.action.type === 'camera' ? 'camera-interior' : 'operation-interior', track.action.type === 'camera' ? 3 : 2);
   }
+  // Text replacement can temporarily draw both geometries, even when a hidden
+  // handle is revealed concurrently. Treat this as an inspection priority, not
+  // a proven defect. Geometry and track state, rather than object names, drive it.
+  const isText = (kind: string | undefined) => kind === 'text' || kind === 'latex';
+  const active = scene.tracks.filter(track => track.duration > 0);
+  const textMorphs = active.filter(track => track.action.type === 'morph'
+    && (isText(track.action.geometry?.kind) || Object.values(track.from).some(element => isText(element.geometry.kind))));
+  const fades = active.flatMap(track => {
+    const properties = track.action.properties;
+    if (track.action.type !== 'animate' || !properties || !('opacity' in properties) || typeof properties.opacity !== 'number') return [];
+    return track.action.ids.flatMap(id => {
+      const from = track.action.fromOpacity ?? track.from[id]?.opacity;
+      return typeof from === 'number' && from !== properties.opacity
+        ? [{ track, id, revealing: properties.opacity! > from, text: isText(track.from[id]?.geometry.kind) }] : [];
+    });
+  });
+  const overlapMidpoint = (a: typeof scene.tracks[number], b: typeof scene.tracks[number]) => {
+    const start = Math.max(a.start, b.start), end = Math.min(a.start + a.duration, b.start + b.duration);
+    return end > start ? start + (end - start) / 2 : undefined;
+  };
+  for (const track of textMorphs) {
+    add(track.start + track.duration / 2, 'text-morph-interior', 5);
+    for (const fade of fades) {
+      if (!fade.revealing || !track.action.ids.includes(fade.id)) continue;
+      const midpoint = overlapMidpoint(track, fade.track);
+      if (midpoint !== undefined) add(midpoint, 'text-morph-reveal-interior', 6);
+    }
+  }
+  for (const hiding of fades.filter(fade => !fade.revealing)) {
+    for (const revealing of fades.filter(fade => fade.revealing)) {
+      if (!hiding.text && !revealing.text) continue;
+      const midpoint = overlapMidpoint(hiding.track, revealing.track);
+      if (midpoint !== undefined) add(midpoint, 'text-hide-reveal-interior', 4);
+    }
+  }
   for (const event of scene.lifecycle) { add(event.time, `lifecycle-${event.type ?? 'change'}`); boundaries.add(event.time); }
   const ordered = [...boundaries].sort((a, b) => a - b);
   for (let i = 1; i < ordered.length; i++) {
@@ -60,7 +95,7 @@ export function planReviewEvidence(scene: CompiledScene, history: VisualVerifica
     if (!scene.tracks.some(track => track.start < midpoint && track.start + track.duration > midpoint)) add(midpoint, 'hold');
   }
   for (let i = 1; i < 12; i++) add(duration * i / 12, 'coverage');
-  const risks = [...candidates].filter(([, candidate]) => candidate.risk >= 2 && candidate.risk < 4);
+  const risks = [...candidates].filter(([, candidate]) => candidate.risk >= 2);
   const target = Math.min(16, Math.max(12, selected.size + risks.length + 2));
   const distance = (time: number) => Math.min(...[...selected].map(other => Math.abs(other - time)));
   const pick = (riskOnly: boolean) => {
@@ -77,14 +112,18 @@ export function planReviewEvidence(scene: CompiledScene, history: VisualVerifica
   while (selected.size < target - 2 && pick(true)) { /* bounded by target */ }
   while (selected.size < target && pick(false)) { /* bounded by target */ }
   const samples = [...selected].sort((a, b) => a - b).map(time => ({ time, reasons: [...candidates.get(time)!.reasons] }));
-  // A repair gets native views of known defects first. Otherwise inspect an
-  // action interior and the settled end state, at both renderer aspect ratios.
+  // Known defects retain native priority. Otherwise spend detail on the highest
+  // semantic risks, not the earliest motion. The end state remains in overview
+  // evidence and fills a spare native slot when fewer than two such risks exist.
+  const ranked = [...candidates].filter(([time]) => selected.has(time))
+    .sort(([a, ca], [b, cb]) => cb.risk - ca.risk || a - b);
+  const semantic = ranked.filter(([, candidate]) => candidate.risk >= 4);
+  const interiors = ranked.filter(([, candidate]) => [...candidate.reasons].some(reason => reason.endsWith('-interior')));
   const nativeTimes = [...new Set([
     ...defectSamples.flatMap(({ sample }) => sample !== undefined && selected.has(sample) ? [sample] : []),
-    ...samples.filter(sample => sample.reasons.includes('camera-interior') || sample.reasons.includes('operation-interior')).map(sample => sample.time),
+    ...(semantic.length ? semantic : interiors.slice(0, 1)).map(([time]) => time),
     duration,
   ])].slice(0, 2);
-  if (!defects.length && nativeTimes.length === 2 && !nativeTimes.includes(duration)) nativeTimes[1] = duration;
   return { coverage: 'partial', samples, nativeTimes,
     omittedOperationInteriors: risks.filter(([time, candidate]) => !selected.has(time)
       && [...candidate.reasons].some(reason => reason.endsWith('-interior'))).length,

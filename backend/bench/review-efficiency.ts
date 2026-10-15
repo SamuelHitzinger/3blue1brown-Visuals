@@ -9,6 +9,7 @@ import { renderSceneFrames } from '../src/agents/frame-renderer.js';
 import { reviewGeneratedScene } from '../src/agents/visual-gate.js';
 import { planReviewEvidence, selectReviewImages } from '../src/agents/visual-evidence.js';
 import { sourceHash } from '../src/agents/visual-edits.js';
+import { transitionCues, transitionOriginalPlan, transitionSource } from './fixtures/review-transition.js';
 
 /** Frozen sampler from inherited checkpoint 6d9798e (unchanged from fba95bd). */
 function baselineTimes(scene: CompiledScene): number[] {
@@ -31,7 +32,8 @@ function baselineTimes(scene: CompiledScene): number[] {
   return [...times].sort((a, b) => a - b);
 }
 
-const seededSources = [
+const seededSources: { id: string; start: number; end: number; source: string;
+  speechCues?: typeof transitionCues; previousCandidate?: typeof transitionOriginalPlan }[] = [
   { id: 'brief-overlap', start: 6.23, end: 6.31, source: `export default scene({},s=>{
     const a=s.circle('a',{position:[-2,0],radius:.6,fill:'BLUE'}),b=s.circle('b',{position:[2,0],radius:.6,fill:'YELLOW'});
     s.text('caption',{text:'Two separate objects',position:[0,2]});s.wait(6.23);
@@ -41,6 +43,8 @@ const seededSources = [
     s.sphere('a',{radius:1,fill:'BLUE'});s.text('caption',{text:'Inspect the complete sphere',position:[0,2]});s.wait(10);
     for(let i=0;i<5;i++){s.play(s.camera.to3D({yaw:(i+1)/5}),{duration:.2});s.wait(9.8);}
   });` },
+  { id: 'hidden-equality-morph', start: 13.479, end: 14.246, source: transitionSource,
+    speechCues: transitionCues, previousCandidate: transitionOriginalPlan },
 ];
 
 export async function runReviewEfficiencyBenchmark(options: { directory?: string; native?: boolean } = {}) {
@@ -50,11 +54,13 @@ export async function runReviewEfficiencyBenchmark(options: { directory?: string
   try {
     const sampling = [];
     for (const fixture of seededSources) {
-      const scene = await compileSource(fixture.source), baseline = baselineTimes(scene), candidate = planReviewEvidence(scene);
+      const scene = await compileSource(fixture.source), baseline = baselineTimes(scene), candidate = planReviewEvidence(scene, [], fixture.speechCues);
       const output = join(directory, fixture.id); await mkdir(output, { recursive: true });
       await writeFile(join(output, 'source.js'), fixture.source);
       const result = { id: fixture.id, sourceSha256: sourceHash(fixture.source), riskInterval: [fixture.start, fixture.end],
         baseline: { times: baseline, interiorCovered: baseline.some(t => t > fixture.start && t < fixture.end) },
+        previousCandidate: fixture.previousCandidate && { ...fixture.previousCandidate,
+          interiorCovered: fixture.previousCandidate.times.some(t => t > fixture.start && t < fixture.end) },
         candidate: { ...candidate, interiorCovered: candidate.samples.some(sample => sample.time > fixture.start && sample.time < fixture.end) },
         nativeEvidence: undefined as unknown };
       if (options.native) {

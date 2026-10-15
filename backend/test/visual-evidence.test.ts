@@ -2,6 +2,33 @@ import { expect, test } from 'bun:test';
 import { compileSource } from 'animlib/core';
 import { planReviewEvidence, selectReviewImages } from '../src/agents/visual-evidence.js';
 import { hasRepeatedFinding } from '../src/agents/visual-gate.js';
+import { transitionCues, transitionSource } from '../bench/fixtures/review-transition.js';
+
+test('measured hidden equality morph and both other text transitions survive competing samples', async () => {
+  const scene = await compileSource(transitionSource);
+  const plan = planReviewEvidence(scene, [], transitionCues);
+  for (const time of [10.275, 13.8625, 15.848]) {
+    expect(plan.samples.some(sample => Math.abs(sample.time - time) < 1e-8)).toBe(true);
+  }
+  expect(plan.samples.find(sample => sample.time === 13.8625)?.reasons).toContain('text-morph-reveal-interior');
+  expect(plan.samples.find(sample => Math.abs(sample.time - 15.848) < 1e-8)?.reasons).toContain('text-hide-reveal-interior');
+  expect(plan.nativeTimes).toEqual([13.8625, 10.275]);
+  expect(plan.samples.length).toBe(16);
+  expect(plan.samples[0].time).toBe(0); expect(plan.samples.at(-1)?.time).toBe(scene.duration);
+  expect(plan.samples.some(sample => sample.time > 22.106 && sample.time < scene.duration)).toBe(true);
+  expect(plan.omittedOperationInteriors).toBeGreaterThan(0);
+});
+
+test('known defects keep exact native priority while semantic risks remain in the overview', async () => {
+  const scene = await compileSource(transitionSource);
+  const times = [10.275, 15.848];
+  const plan = planReviewEvidence(scene, [{ approved: false, findings: times.map(timeSec => ({ timeSec,
+    objectIds: ['compare'], problem: 'Overlapping symbols', fix: 'Sequence replacement' })) }], transitionCues);
+  expect(plan.nativeTimes).toEqual(times);
+  expect(plan.samples.some(sample => sample.time === 13.8625)).toBe(true);
+  expect(plan.uncoveredDefectTimes).toEqual([]);
+  expect(plan.samples.length).toBeLessThanOrEqual(16);
+});
 
 test('named speech boundaries are visible in the bounded review plan', async () => {
   const scene = await compileSource(`export default scene({},s=>s.wait(20));`);

@@ -66,6 +66,26 @@ Fresh review identified two concrete P2 issues. Both were reproduced before impl
 
 Follow-up validation: **39 tests passed, zero failed, 183 assertions** across `review-efficiency`, `visual-evidence` and `visual-gate`; backend `tsc --noEmit` passed. No native or broad test benchmark was rerun during root's active timed baseline. The raw native benchmark above remains unchanged and records its original source hashes.
 
+## Measured trial2 sampling follow-up
+
+The first measured binary candidate exhausted its two-review budget honestly. Initial source `35c1923d85525c3cd88c99ab3da5b65e8353f2a3900849f78d3238bdb2687b0a` had findings at 10.275 s (superimposed comparison formulas) and 15.848 s (incoming interval crossing the outgoing equality). The first 16-sample plan omitted the equality transition at 13.8625 s. After repair, changed sample selection exposed that third defect. Its compiled tracks show a latex morph from a hidden old inequality (`from.opacity = 0`) during 13.479–14.246 s, concurrent with a fade-in on the same `compare` handle. Treating this like ordinary motion lost it to temporal spacing. Selecting the earliest motion for native detail compounded the omission.
+
+The planner now ranks same-handle text/latex morph plus reveal first, other text/latex morphs next, then overlapping text hide/reveal, camera motion, and ordinary operation/cue samples. Overlap candidates use the actual intersection of track windows. These are inspection priorities, not automatic defect findings: no geometry, approval rule, review count or repair budget changed. Known defect timestamps still take precedence, and two slots remain reserved for temporal coverage. Native detail uses the highest semantic priorities instead of the earliest motion; opening and final states remain in all overview plans. Omitted candidate interiors and cue boundaries remain explicit.
+
+`backend/bench/fixtures/review-transition.ts` reduces the measured scene to its relevant geometry and identical competing operation windows. Before the fix it reproduced the complete measured first-review timestamp/native plan; its new inclusion assertion failed. After the fix both the unchanged measured source and compact fixture produce the same 16 timestamps, including all three findings. The regression also verifies exact prior-defect native priority, final state, a later coverage sample, and disclosed omissions. The benchmark includes this third seed alongside the existing overlap/camera seeds.
+
+| Initial measured source | Before priority fix | After priority fix |
+| --- | --- | --- |
+| Equality interior 13.8625 s | Omitted | Included |
+| Native detail times | 8.812 s, final state | 13.8625 s, 10.275 s |
+| Total timestamps | 16 | 16 |
+| Omitted operation interiors | 4 | 2 |
+| Omitted named cue boundaries | 1 | 3 |
+
+The repaired measured source also retains 13.8625 s in the overview while its two native times remain the exact prior defects, 10.275 and 15.848 s. Replanning does not mutate either measured source or the frozen trial.
+
+Validation: **41 tests passed, zero failed, 198 assertions** across the three focused visual review files. Backend `tsc --noEmit` passed immediately after the planner fix; the final shared-workspace check reported only concurrent `shared/animlib/src/authoring.ts:102–113` step-weight narrowing errors, handed to the owning worker. No planner or benchmark type errors were reported. Deterministic benchmark `data/review-efficiency-semantic-20261015/result.json` took 663.76 ms with `nativeRendered: false`; `measured-replans.json` in that directory records both unchanged measured sources' before/after plans. Planner SHA-256: `1d97b1336284e01d5020be94c98842bd6e516658e55c3bc4d0dfb95017f0beca`. Compact fixture SHA-256: `7d55c6c65c439b54fba2f735e35dd9bff17e8b57e773ca0e0f1740bf1d84bc5a`. All three seeded interiors are covered; the hidden equality was missed by both the inherited baseline sampler and the previous candidate sampler. Scripted host cases remain 1 review/0 repairs for clean approval, 2/1 for corrected approval or terminal rejection, and 2/0 for malformed protocol. No native rendering or external model call was performed for this follow-up. Improved real reviewer detection is still unmeasured.
+
 ## Limits and integration
 
 Scripted reviewers prove host control flow and image delivery, not real-model defect detection, false-positive rate, or authoring quality. Native images establish the supplied sampled views, not continuous motion or interactions. Root's matched model-generation and independent visual-review experiments remain necessary for the overall architecture goal.
