@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "kind": "corrected-checker-assessment",
+  "assessedAt": "2026-10-15T22:12:22.581Z",
+  "sourceAssessment": "data/animation-efficiency/holdout-assessments/trial1-scene0-corrected-v2.json",
+  "sourceAssessmentSha256": "18bed254adff27d46a7ec44b7b8b48f74cc98a063e43d1f8c75a07fc8ccb1d95",
+  "historicalTrial": "trial1",
+  "historicalStatus": "failed",
+  "historicalResultSha256": "1e785e0e8e4e1cda512475d8d67619540bcc641f8336af2533657216adfaaaf3",
+  "historicalRevision": "406d45b287f86afabee018fa42e01a2c7e3f75b1",
+  "checkerRevision": "a30b00e3b1be5c07c90f74e0c8d212edd82c130f",
+  "checkerHashes": {
+    "backend/bench/animation-holdout.ts": "51add1807d47cd94638a0dcec960d7900915fac89a1cf4e169271fb362c315b8",
+    "backend/bench/animation-holdout-assess.ts": "5edcbcdffb817fbfee0bfc690433082d93aa496ebb73c50b2520d8b04b144b53"
+  },
+  "sceneIndex": 0,
+  "status": "passed",
+  "fullHoldoutComplete": false,
+  "approvedAttempt": 1,
+  "inputHashes": {
+    "source": "517da89c8b9fd7e00713a6a6a8b625dfa4d920dd17f8e2d041213ac1e113367e",
+    "assets": "09fd1ea1ae10e606dc6a88b31412e8ab96733f2fb07c441d842eee40c27fc6c9",
+    "fixture": "e5b643013c0e0604f9d2c3c7f04e4035de7c1a406153a554c97e54688b132e26",
+    "boundaryFrame": "a68cb7d888186257de441efb53c431401268f9c9245e98b96eb82c9e7c649033"
+  },
+  "fixtureHash": "b2e51e4fb4e27415d2a64186f7cca3877a121f1bc92d18afa3b8d7480dfdcf8b",
+  "packageHash": "4c876cac730a5f0ba7242fd9b10d92b83eb593105b7d13ec6db0e448bb090daa",
+  "nativeReviewReceiptSha256": "3797011c0b2df165321c9a05a3101e6d94a836daad117f3909095076bd1f34c2",
+  "sampledFramesSha256": "4a4bee5edaacb8e04e26c2e89f60dd0efb919517cdbd97d4a0161ba712a27cb5",
+  "assets": {
+    "model-cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529-10cee24fd4678af6259f5d5a274235a7994b173804dca444993050dbe10fe097": {
+      "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+      "primitives": 46
+    },
+    "model-c58cb86f41c9ce06a58809ea10627c63f39c89e0a60e6ade8e1bc6e2ac7856b8": {
+      "sha256": "c58cb86f41c9ce06a58809ea10627c63f39c89e0a60e6ade8e1bc6e2ac7856b8",
+      "primitives": 1
+    }
+  },
+  "deterministicSeek": true,
+  "checks": {
+    "maxMarkerError": 5.438959822042073e-16,
+    "maxInternalPoseError": 5.617333549722722e-15,
+    "retainedIds": [],
+    "motionChecks": {
+      "rotationDegrees": 34.3774677078494,
+      "translationFraction": 0,
+      "markedSiteDisplaySeparation": 4.643497462559876
+    },
+    "modelPrimitiveCount": 46,
+    "cueMotionChecked": {
+      "id": "turn-whole-structure",
+      "startSec": 6.933333333333334,
+      "endSec": 10.533333333333333
+    }
+  },
+  "scope": "Corrected deterministic checks on the unchanged approved source and stored frames; no new generation, native rendering, or acoustic evidence.",
+  "continuation": {
+    "nextSceneIndex": 1,
+    "requiredInputHashes": "inputHashes above",
+    "rule": "Use a fresh labeled continuation directory; verify these hashes, copy the approved source, registry, frozen fixture/package, and exact final frame, then generate only scene 1. Keep original trial result and timings unchanged; report new scene timing separately."
+  }
+}

@@ -7,11 +7,13 @@ import { execFileSync } from 'node:child_process';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
-import { withOfflineScene } from 'animlib/core';
-import type { Frame, ModelAsset, MolecularStructure, Vec3 } from 'animlib/core';
+import { parseModelGLB, withOfflineScene } from 'animlib/core';
+import type { Frame, Geometry, ModelAsset, ModelMetadata, MolecularStructure, Vec3 } from 'animlib/core';
+import ts from 'typescript';
 import { SpatialFrame } from '../../shared/animlib/src/spatial.js';
 import { createBundledModelPreparer, describeBundledModel } from '../src/bundled-models.js';
 import { ModelAssets } from '../src/model-assets.js';
+import type { RenderModelAssets } from '../src/model-assets.js';
 import { createVisualizationResolver } from '../src/visualization-resolver.js';
 import { buildSubtitlePackage } from '../src/narration/subtitles.js';
 import { parseStoryline } from '../src/narration/markdown.js';
@@ -177,9 +179,34 @@ export function checkHoldoutMotion(frames: ReadonlyMap<number, Frame>, motion: {
   return { rotationDegrees, translationFraction, markedSiteDisplaySeparation };
 }
 
-/** Resolution is an authoring choice; the native review judges the ribbon's visible shape. */
-export function isNondegenerateHoldoutRibbon(frame: Frame): boolean {
-  const mesh = frame.elements.find(element => element.id === 'turn-indicator/ribbon')?.geometry;
+/** Count only the pinned asset, while still rejecting duplicate instances anywhere in the frame. */
+export function pinnedHoldoutModels(frame: Frame, modelId: string, metadata: ModelMetadata) {
+  const elements = frame.elements.filter(element => element.geometry.model?.asset === modelId);
+  const indices = elements.map(element => element.geometry.model!.primitive).sort((a, b) => a - b);
+  requireCheck(indices.length === metadata.primitives.length && indices.every((index, i) => index === i),
+    'expected exactly one full instance of the pinned model (unique complete primitive coverage)');
+  const spatial = new SpatialFrame(frame);
+  requireCheck(elements.every(element => spatial.chain(element.id).slice(1).some(parent => parent.id === 'protein')),
+    'every pinned model primitive must descend from protein');
+  return elements;
+}
+
+/** Resolve the exact delivery bytes, never trusting annotation metadata as geometry evidence. */
+export async function loadHoldoutModelGeometry(delivery: RenderModelAssets): Promise<Map<string, Geometry[]>> {
+  const result = new Map<string, Geometry[]>();
+  for (const [id, asset] of Object.entries(delivery.assets)) {
+    const encoded = delivery.files[asset.url];
+    requireCheck(typeof encoded === 'string', `registered model bytes missing for ${id}`);
+    const bytes = Buffer.from(encoded, 'base64');
+    requireCheck(asset.sha256 && hash(bytes) === asset.sha256, `registered model hash mismatch for ${id}`);
+    const data = await parseModelGLB(bytes);
+    requireCheck(isDeepStrictEqual(data.metadata, asset.metadata), `registered model metadata mismatch for ${id}`);
+    result.set(id, data.primitives.map(primitive => primitive.geometry));
+  }
+  return result;
+}
+
+function nondegenerateMesh(mesh: Geometry | undefined): boolean {
   if (mesh?.kind !== 'mesh' || !mesh.vertices || mesh.vertices.length < 3 || !mesh.triangles?.length) return false;
   const vertices = mesh.vertices.map(point => [point[0], point[1], point[2] ?? 0] as Vec3);
   if (vertices.some(point => !point.every(Number.isFinite))) return false;
@@ -192,6 +219,122 @@ export function isNondegenerateHoldoutRibbon(frame: Frame): boolean {
     const [ux, uy, uz] = u.map(value => value / scale), [vx, vy, vz] = v.map(value => value / scale);
     return Math.hypot(uy * vz - uz * vy, uz * vx - ux * vz, ux * vy - uy * vx) > 0;
   });
+}
+
+/** Resolution is an authoring choice; the native review judges the ribbon's visible shape. */
+export function isNondegenerateHoldoutRibbon(frame: Frame, models: ReadonlyMap<string, readonly Geometry[]> = new Map()): boolean {
+  const spatial = new SpatialFrame(frame), root = 'turn-indicator/ribbon';
+  if (!spatial.elements.has(root) || !spatial.chain(root).slice(1)
+    .some(parent => parent.id === 'turn-indicator' && parent.geometry.kind === 'group')) return false;
+  const geometry = frame.elements.filter(element => spatial.chain(element.id).some(parent => parent.id === root))
+    .filter(element => element.geometry.kind !== 'group').map(element => {
+      const reference = element.geometry.model;
+      return reference ? models.get(reference.asset)?.[reference.primitive] : element.geometry;
+    });
+  return geometry.length > 0 && geometry.every(nondegenerateMesh);
+}
+
+/** Detect callback form only; the real compiler enforces returned-handle/scoped-ID ownership.
+ * Accept inline callbacks or locally declared callback/spec bindings; no prescribed callback body.
+ */
+export function hasScopedHoldoutRibbonCallback(source: string): boolean {
+  const file = ts.createSourceFile('holdout.js', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.JS);
+  const resolveBinding = (node: ts.Node, seen = new Set<ts.Node>()): ts.Node => {
+    if (ts.isParenthesizedExpression(node)) return resolveBinding(node.expression, seen);
+    if (!ts.isIdentifier(node) || seen.has(node)) return node;
+    seen.add(node);
+    for (let scope: ts.Node | undefined = node.parent; scope; scope = scope.parent) {
+      if (!ts.isBlock(scope) && !ts.isSourceFile(scope)) continue;
+      for (const statement of scope.statements) {
+        if (ts.isFunctionDeclaration(statement) && statement.name?.text === node.text) return statement;
+        if (!ts.isVariableStatement(statement)) continue;
+        for (const declaration of statement.declarationList.declarations) {
+          if (ts.isIdentifier(declaration.name) && declaration.name.text === node.text && declaration.initializer)
+            return resolveBinding(declaration.initializer, seen);
+        }
+      }
+    }
+    return node;
+  };
+  let found = false;
+  const visit = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'compose'
+      && node.arguments[0] && ts.isStringLiteral(node.arguments[0]) && node.arguments[0].text === 'turn-indicator' && node.arguments[1]) {
+      const spec = resolveBinding(node.arguments[1]);
+      if (ts.isObjectLiteralExpression(spec)) for (const property of spec.properties) {
+        if (!property.name || !(ts.isIdentifier(property.name) || ts.isStringLiteral(property.name)) || property.name.text !== 'ribbon') continue;
+        const callback = ts.isPropertyAssignment(property) ? resolveBinding(property.initializer)
+          : ts.isShorthandPropertyAssignment(property) ? resolveBinding(property.name) : property;
+        found ||= ts.isArrowFunction(callback) || ts.isFunctionExpression(callback) || ts.isFunctionDeclaration(callback) || ts.isMethodDeclaration(callback);
+      }
+    }
+    ts.forEachChild(node, visit);
+  };
+  visit(file);
+  return found;
+}
+
+/** Shared acceptance for a live scene and an immutable saved-scene reassessment. */
+export function checkHoldoutFrames(options: {
+  frames: ReadonlyMap<number, Frame>; source: string; modelId: string; metadata: ModelMetadata;
+  modelGeometry: ReadonlyMap<string, readonly Geometry[]>; landmarks: readonly [HoldoutLandmark, HoldoutLandmark];
+  scene: { durationSec: number; pauses: readonly { startSec: number; endSec: number }[] };
+  motion: { startSec: number; endSec: number }; kind: 'turn' | 'slide'; previous?: Frame;
+}) {
+  const { frames, source, modelId, metadata, modelGeometry, landmarks, scene, motion, kind, previous } = options;
+  const initial = frames.get(0)!, final = frames.get(scene.durationSec)!;
+  requireCheck(initial && final, 'initial/final samples missing');
+  const firstModels = pinnedHoldoutModels(initial, modelId, metadata);
+  requireCheck(['protein', 'assembly'].every(id => initial.elements.some(element => element.id === id)), 'stable protein/assembly root missing');
+  const original = new Map(firstModels.map(element => [element.id, element.geometry]));
+  const baseline = new SpatialFrame(initial);
+  const probes = (element: typeof firstModels[number]): Vec3[] => {
+    const { min, max } = element.geometry.model!.bounds;
+    return [min, [max[0], min[1], min[2]], [min[0], max[1], min[2]], [min[0], min[1], max[2]]];
+  };
+  const relative = new Map(firstModels.map(element => [element.id,
+    probes(element).map(point => baseline.local('protein', baseline.world(element.id, point)))]));
+  let maxMarkerError = 0, maxInternalPoseError = 0;
+  for (const [time, frame] of frames) {
+    const spatial = new SpatialFrame(frame);
+    requireCheck(isDeepStrictEqual(cameras(initial), cameras(frame)), `camera changed during the fixed-view scene at ${time}`);
+    requireCheck(isDeepStrictEqual(pinnedHoldoutModels(frame, modelId, metadata).map(element => element.id), firstModels.map(element => element.id)), `model instance/primitive set changed at ${time}`);
+    for (const element of firstModels) {
+      const actual = spatial.elements.get(element.id);
+      requireCheck(actual && isDeepStrictEqual(actual.geometry, original.get(element.id)), `model primitive identity/geometry changed at ${time}`);
+      for (const [i, point] of probes(element).entries()) maxInternalPoseError = Math.max(maxInternalPoseError,
+        distance(relative.get(element.id)![i], spatial.local('protein', spatial.world(element.id, point))));
+      requireCheck(isDeepStrictEqual(actual.rotation, element.rotation) && actual.scale === element.scale, `a model primitive changed local shape pose at ${time}`);
+    }
+    for (const [i, id] of ['marker-a', 'marker-b'].entries()) {
+      requireCheck(spatial.elements.has(id), `stable landmark ${id} missing`);
+      maxMarkerError = Math.max(maxMarkerError, distance(spatial.world(id), spatial.world('protein', landmarks[i].localPosition)));
+    }
+  }
+  requireCheck(maxMarkerError < 1e-5 && maxInternalPoseError < 1e-5, 'markers detached or model parts moved internally');
+  const motionChecks = checkHoldoutMotion(frames, motion, kind, landmarks);
+  for (const pause of scene.pauses) {
+    const before = frames.get(pause.startSec);
+    requireCheck(before, 'pause start sample missing');
+    const ids = before.elements.map(element => element.id);
+    for (const time of [(pause.startSec + pause.endSec) / 2, pause.endSec]) {
+      const frame = frames.get(time);
+      requireCheck(frame && isDeepStrictEqual(visibleState(before, ids), visibleState(frame, ids))
+        && isDeepStrictEqual(before.camera, frame.camera), `explicit pause changed at ${time}`);
+    }
+  }
+  if (kind === 'turn') {
+    requireCheck(hasScopedHoldoutRibbonCallback(source), 'turn ribbon must use a custom scoped compose callback');
+    requireCheck([...frames.values()].some(frame => isNondegenerateHoldoutRibbon(frame, modelGeometry)), 'valid nondegenerate turn ribbon missing');
+  }
+  let retainedIds: string[] = [];
+  if (previous) {
+    retainedIds = previous.elements.filter(element => element.persistent).map(element => element.id);
+    requireCheck(isDeepStrictEqual(visibleState(previous, retainedIds), visibleState(initial, retainedIds)), 'retained state jumped at scene boundary');
+    requireCheck(isDeepStrictEqual(cameras(previous), cameras(initial)), 'camera jumped at scene boundary');
+  }
+  return { maxMarkerError, maxInternalPoseError, retainedIds, motionChecks,
+    modelPrimitiveCount: firstModels.length, cueMotionChecked: motion };
 }
 
 export async function runAnimationHoldout(trial: string) {
@@ -324,7 +467,7 @@ export async function runAnimationHoldout(trial: string) {
       requireCheck(receipt.approved && receipt.sourceSha256 === hash(output.scene.source), 'approval does not match exact returned source');
       const registered = await json(join(directory, 'model-assets.json')) as Record<string, ModelAsset>;
       requireCheck(registered[modelId]?.sha256 === PINNED_GLB_HASH, 'job lost the pinned asset registration');
-      await store.forRendering(registered); // Hash-check actual local GLB delivery bytes, not metadata alone.
+      const modelGeometry = await loadHoldoutModelGeometry(await store.forRendering(registered));
       const models = Object.fromEntries(Object.entries(registered).map(([id, value]) => [id, value.metadata]));
       const motion = cueMap[index ? 'slide-whole-structure' : 'turn-whole-structure'];
       const times = [...new Set([0, scene.durationSec, ...Object.values(cueMap).flatMap(cue => [Math.max(0, cue.startSec - .001), cue.startSec, (cue.startSec + cue.endSec) / 2, cue.endSec]),
@@ -335,59 +478,13 @@ export async function runAnimationHoldout(trial: string) {
         for (const time of [...times].reverse().concat(times.filter((_, i) => i % 2 === 0))) {
           requireCheck(isDeepStrictEqual(frames.get(time), sampler.sample(time)), `seek changed frame at ${time}`);
         }
-        const initial = frames.get(0)!, final = frames.get(scene.durationSec)!;
-        const firstModels = initial.elements.filter(element => element.geometry.model);
-        requireCheck(firstModels.length === asset.metadata.primitives.length && firstModels.every(element => element.geometry.model!.asset === modelId), 'expected exactly one full instance of the pinned model');
-        requireCheck(['protein', 'assembly'].every(id => initial.elements.some(element => element.id === id)), 'stable protein/assembly root missing');
-        const original = new Map(firstModels.map(element => [element.id, element.geometry]));
-        const baseline = new SpatialFrame(initial);
-        const probes = (element: typeof firstModels[number]): Vec3[] => {
-          const { min, max } = element.geometry.model!.bounds;
-          return [min, [max[0], min[1], min[2]], [min[0], max[1], min[2]], [min[0], min[1], max[2]]];
-        };
-        const relative = new Map(firstModels.map(element => [element.id,
-          probes(element).map(point => baseline.local('protein', baseline.world(element.id, point)))]));
-        let maxMarkerError = 0, maxInternalPoseError = 0;
-        for (const [time, frame] of frames) {
-          const spatial = new SpatialFrame(frame);
-          requireCheck(isDeepStrictEqual(cameras(initial), cameras(frame)), `camera changed during the fixed-view scene at ${time}`);
-          requireCheck(isDeepStrictEqual(frame.elements.filter(element => element.geometry.model).map(element => element.id), firstModels.map(element => element.id)), `model instance/primitive set changed at ${time}`);
-          for (const element of firstModels) {
-            const actual = spatial.elements.get(element.id);
-            requireCheck(actual && isDeepStrictEqual(actual.geometry, original.get(element.id)), `model primitive identity/geometry changed at ${time}`);
-            for (const [i, point] of probes(element).entries()) maxInternalPoseError = Math.max(maxInternalPoseError,
-              distance(relative.get(element.id)![i], spatial.local('protein', spatial.world(element.id, point))));
-            requireCheck(isDeepStrictEqual(actual.rotation, element.rotation) && actual.scale === element.scale, `a model primitive changed local shape pose at ${time}`);
-          }
-          for (const [i, id] of ['marker-a', 'marker-b'].entries()) {
-            requireCheck(spatial.elements.has(id), `stable landmark ${id} missing`);
-            maxMarkerError = Math.max(maxMarkerError, distance(spatial.world(id), spatial.world('protein', landmarks[i].localPosition)));
-          }
-        }
-        requireCheck(maxMarkerError < 1e-5 && maxInternalPoseError < 1e-5, 'markers detached or model parts moved internally');
-        const motionChecks = checkHoldoutMotion(frames, motion, index === 0 ? 'turn' : 'slide', landmarks);
-        for (const pause of scene.pauses) {
-          const before = frames.get(pause.startSec)!;
-          const ids = before.elements.map(element => element.id);
-          for (const time of [(pause.startSec + pause.endSec) / 2, pause.endSec]) {
-            const frame = frames.get(time)!;
-            requireCheck(isDeepStrictEqual(visibleState(before, ids), visibleState(frame, ids))
-              && isDeepStrictEqual(before.camera, frame.camera), `explicit pause changed at ${time}`);
-          }
-        }
-        if (index === 0) requireCheck([...frames.values()].some(isNondegenerateHoldoutRibbon), 'valid nondegenerate turn ribbon missing');
-        let retainedIds: string[] = [];
-        if (previous) {
-          retainedIds = previous.elements.filter(element => element.persistent).map(element => element.id);
-          requireCheck(isDeepStrictEqual(visibleState(previous, retainedIds), visibleState(initial, retainedIds)), 'retained state jumped at scene boundary');
-          requireCheck(isDeepStrictEqual(cameras(previous), cameras(initial)), 'camera jumped at scene boundary');
-        }
+        const spatialChecks = checkHoldoutFrames({ frames, source: output.scene.source, modelId, metadata: asset.metadata,
+          modelGeometry, landmarks, scene, motion, kind: index === 0 ? 'turn' : 'slide', previous });
         const inspection = await inspectScene({ source: output.scene.source, compiled: sampler.scene, previous, models },
           { times: times.slice(0, 24), objectIds: ['protein', 'marker-a', 'marker-b', 'distance-brace'], includeAnimating: true });
-        previousFrame = structuredClone(final);
+        previousFrame = structuredClone(frames.get(scene.durationSec)!);
         await save(join(root, `scene-${index}.inspection.json`), inspection);
-        return { times, deterministicSeek: true, maxMarkerError, maxInternalPoseError, retainedIds, motionChecks,
-          modelPrimitiveCount: firstModels.length, cueMotionChecked: motion, advisoryWarnings: inspection.warnings.length };
+        return { times, deterministicSeek: true, ...spatialChecks, advisoryWarnings: inspection.warnings.length };
       });
       result.scenes.push({ index, sourceSha256: hash(output.scene.source), sourceBytes: Buffer.byteLength(output.scene.source),
         approvedAttempt: receipt.attempt, checks, nativeEvidenceReceipt: join(directory, `scene-${index}.visual-review.json`) });
