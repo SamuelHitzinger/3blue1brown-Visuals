@@ -497,6 +497,22 @@ test('course reordering is exact, owned, guarded and persists positions', async 
   expect((await create(s, 'order-c')).position).toBe(2);
 });
 
+test('canvas drawings and visual positions persist independently and survive synthesis', async () => {
+  const s = service(async input => makeNotes(input.sources)), lecture = await create(s);
+  const canvas: import('../../shared/notebookCanvas').NotebookCanvasData = { marks: [{ id: 'arrow-1', kind: 'arrow', color: 'blue', points: [[10, 20], [90, 80]], text: '' }], offsets: { components: { x: 20, y: 30 } } };
+  expect((await s.handle(api(`/${lecture.id}`, 'PATCH', { noteCanvas: { vectors: canvas } }))).status).toBe(200);
+  await s.handle(api(`/${lecture.id}`, 'PATCH', { noteCanvas: { summary: { marks: [], offsets: {} } } }));
+  expect((await get(s, lecture.id)).noteCanvas?.vectors).toEqual(canvas);
+  expect((await s.handle(api(`/${lecture.id}`, 'PATCH', { noteCanvas: { vectors: canvas } }, 'bob'))).status).toBe(404);
+  for (const invalid of [{ ...canvas, marks: [{ ...canvas.marks[0], kind: 'script' }] }, { ...canvas, offsets: { components: { x: null, y: 2 } } }, { ...canvas, marks: Array(301).fill(canvas.marks[0]) }]) {
+    expect((await s.handle(api(`/${lecture.id}`, 'PATCH', { title: 'Bad canvas', noteCanvas: { vectors: invalid } }))).status).toBe(400);
+  }
+  expect((await get(s, lecture.id)).title).toBe(lecture.title);
+  await append(s, lecture.id);
+  const done = await until(() => get(s, lecture.id), row => row.status === 'idle');
+  expect(done.noteCanvas?.vectors).toEqual(canvas);
+});
+
 test('note overrides merge, reset, reject malformed patches atomically and survive synthesis', async () => {
   const s = service(async input => makeNotes(input.sources)), lecture = await create(s);
   expect((await s.handle(api(`/${lecture.id}`, 'PATCH', { noteEdits: { summary: 'My summary', 'section:vectors': 'My bullets' } }))).status).toBe(200);

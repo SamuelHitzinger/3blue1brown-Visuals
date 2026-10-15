@@ -1,5 +1,6 @@
 import { orderLectureSummaries } from '../../shared/lecture.js';
 import { nextLectureTitle } from '../../shared/lectureTitles.js';
+import { validNotebookCanvas } from '../../shared/notebookCanvas.js';
 import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
@@ -417,17 +418,27 @@ export class LectureService {
         }
         if (request.method !== 'PATCH') return method('GET, PATCH, DELETE');
         const input = await body();
-        if (input.title === undefined && input.personalNotes === undefined && input.noteEdits === undefined) throw new LectureError('Provide a title, personalNotes or noteEdits.');
+        if (input.title === undefined && input.personalNotes === undefined && input.noteEdits === undefined && input.noteCanvas === undefined) throw new LectureError('Provide a title, personalNotes, noteEdits or noteCanvas.');
         const title = input.title === undefined ? undefined : field(input.title, 'a lecture title', 200);
         const personalNotes = input.personalNotes === undefined ? undefined : field(input.personalNotes, 'personal notes', 100_000, true);
         const session = this.snapshot(id); if (!session) throw new LectureError('Not Found', 404);
+        if (input.noteCanvas !== undefined) {
+          if (!input.noteCanvas || typeof input.noteCanvas !== 'object' || Array.isArray(input.noteCanvas)) throw new LectureError('Provide noteCanvas as an object.');
+          const canvas = { ...session.noteCanvas };
+          for (const [key, value] of Object.entries(input.noteCanvas)) {
+            if (!/^[a-z0-9][a-z0-9_-]{0,79}$/.test(key) || !validNotebookCanvas(value)) throw new LectureError('Invalid notebook drawing.');
+            canvas[key] = value;
+          }
+          if (Object.keys(canvas).length > 100 || JSON.stringify(canvas).length > 350_000) throw new LectureError('Notebook drawings are too large.', 413);
+          session.noteCanvas = canvas;
+        }
         if (input.noteEdits !== undefined) {
           if (!input.noteEdits || typeof input.noteEdits !== 'object' || Array.isArray(input.noteEdits)) throw new LectureError('Provide noteEdits as an object.');
           const entries = Object.entries(input.noteEdits);
           if (entries.length > 100) throw new LectureError('Too many note edits.', 413);
           const edits = { ...session.noteEdits };
           for (const [key, value] of entries) {
-            if (!/^(summary|section:[a-z0-9][a-z0-9_-]{0,79})$/.test(key)) throw new LectureError('Invalid note edit key.');
+            if (!/^(summary|(?:section|heading|concept-title|concept|question):[a-z0-9][a-z0-9_-]{0,79})$/.test(key)) throw new LectureError('Invalid note edit key.');
             if (value === null) delete edits[key]; else edits[key] = field(value, 'note edit', 40_000, true);
           }
           if (Object.keys(edits).length > 100 || Object.values(edits).reduce((total, value) => total + value.length, 0) > 100_000) throw new LectureError('Note edits are too long.', 413);

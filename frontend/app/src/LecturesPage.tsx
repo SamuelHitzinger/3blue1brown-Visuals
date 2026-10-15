@@ -225,6 +225,6 @@ export default function LecturesPage({
               }}>Delete</button></div></li>;
         })}</ol> : <div className="learning-empty"><BookOpen size={32} /><h3>{query ? 'No matching lectures' : 'Your notebook is ready.'}</h3><p>{query ? 'Try a different title.' : 'Add your first lecture above. Its notes and material will live here.'}</p></div>}
  </>}
- <NoteInstructions/>
+ {!selected && <NoteInstructions/>}
  </main>;
 }

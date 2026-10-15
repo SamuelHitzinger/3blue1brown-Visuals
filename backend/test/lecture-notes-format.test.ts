@@ -112,3 +112,23 @@ test('global instructions are owner-scoped, bounded, and apply to automatic synt
     expect(instructions).toBe('German, concise.');
   } finally { await service.close(); }
 });
+
+test('global instructions apply to new notes across courses and independent learning', async () => {
+  const received = new Map<string, string | undefined>();
+  const service = new LectureService(':memory:', async input => {
+    received.set(input.title, input.instructions);
+    return { ...questionOnly, questions: [{ text: input.sources[0].text, sourceIds: [input.sources[0].id], diagram }] };
+  });
+  const request = (path: string, value: unknown, method = 'POST', key = path) => service.handle(new Request(`http://localhost/api/lectures${path}`, { method, headers: { 'x-user-id': 'alice', 'Idempotency-Key': key }, body: JSON.stringify(value) }));
+  try {
+    await request('/preferences', { instructions: 'German, concise.' }, 'PATCH');
+    for (const [title, courseId] of [['Algebra', 'math'], ['Mechanics', 'physics'], ['Independent', undefined]]) {
+      const response = await request('', { title, courseId }, 'POST', title!);
+      expect(response.status).toBe(201);
+      const session = await response.json();
+      await request(`/${session.id}/sources`, { text: sources[0].text });
+    }
+    for (let i = 0; i < 100 && received.size < 3; i++) await Bun.sleep(5);
+    expect(Object.fromEntries(received)).toEqual({ Algebra: 'German, concise.', Mechanics: 'German, concise.', Independent: 'German, concise.' });
+  } finally { await service.close(); }
+});

@@ -87,6 +87,7 @@ export interface LectureSession {
   courseId?: string;
   position?: number;
   noteEdits?: Record<string, string>;
+  noteCanvas?: Record<string, import('./notebookCanvas').NotebookCanvasData>;
   createdAt: string;
   updatedAt: string;
   revision: number;
