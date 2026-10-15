@@ -113,6 +113,23 @@ binding-owned properties. Cross-program bindings remain unsupported. Forty-nine
 focused tests and strict TypeScript checking passed for this checkpoint. Native
 rendering and component tests still do not establish visual parity.
 
+The synchronized pair viewer at `http://127.0.0.1:5364/` now loads these exact
+sources with one silent clock. Root verified both WebGPU renderers becoming ready,
+playback advancing through the crossing to the eight-second endpoint, shared seek
+to 3.50 and 2.00 seconds, and identity/timing reveal. This verifies player behavior,
+not independent full-motion quality. The critic could not access a browser in its
+session; its [blind review](mit-pair-blind-review.md) uses native sampled frames.
+Baseline scored 6/10, candidate 5.5/10, both revise: the shared detached equation /
+diagram / footer composition fails the approved reference style, and the candidate
+omits a useful acceleration leader. A preview-tool anomaly was excluded after
+decoded-pixel checks; it was not treated as a renderer defect.
+
+The next architecture experiment should remove the serial perception/authoring
+round trip from the ten-second critical path, while preserving source-grounded
+causal planning inside a single structured submission. That is a hypothesis, not
+measured success. Generic authoring guidance must make an operation and object
+correspondence explicit; merely suggesting helpers did not induce their use here.
+
 ## Remaining acceptance work
 
 Connect timestamped media ingestion, bounded reliable submissions, automatic
