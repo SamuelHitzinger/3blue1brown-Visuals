@@ -1,8 +1,15 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { assignLectureConcepts, lectureNoteText, notebookSectionKey } from '../src/lectureDocument.ts'
+import { assignLectureConcepts, lectureNoteText, notebookSectionKey, findNoteTerm } from '../src/lectureDocument.ts'
 import type { LectureConcept, LectureNotes } from '../../../shared/lecture.ts'
 const concept = (id: string, sourceIds: string[], sectionId?: string): LectureConcept => ({ id, title: id, explanation: '', sourceIds, sectionId, visualizationPrompt: '', catalogIds: [] })
+test('semantic colors match complete terms and symbols, never letters inside words', () => {
+  assert.equal(findNoteTerm('vector v preserves direction', 'v', 0), 7)
+  assert.equal(findNoteTerm('vector preserves direction', 'v', 0), -1)
+  assert.equal(findNoteTerm('A = πr²', 'π', 0), -1)
+  assert.equal(findNoteTerm('v = (3,4)', 'v', 0), 0)
+  assert.equal(findNoteTerm('Components have components.', 'components', 0), 16)
+})
 const notes = (concepts: LectureConcept[]): LectureNotes => ({ summary: '', questions: [], concepts, sections: [{ id: 'first', title: 'First', points: [{ text: 'A', sourceIds: ['a','b'] }] }, { id: 'second', title: 'Second', points: [{ text: 'B', sourceIds: ['b','c'] }] }] })
 test('concept placement prefers explicit section, then unique source overlap, then first tie', () => {
   const placed = assignLectureConcepts(notes([concept('explicit',['a'],'second'),concept('overlap',['b','c']),concept('tie',['b']),concept('none',['unknown']),concept('invalid',['c'],'missing')]))

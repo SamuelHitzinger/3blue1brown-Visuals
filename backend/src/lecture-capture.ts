@@ -3,8 +3,12 @@ import { createHash, randomBytes } from 'node:crypto';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { proxyUser } from './identity.js';
+import { isTrustedAppRequest } from './request-origin.js';
 import { LectureError, LectureService } from './lectures.js';
 import { LectureTranscriptionError } from './lecture-transcription.js';
+import { logStage } from './logging.js';
+import { cropLecturePhoto, visualEvidenceOf } from './lecture-photo.js';
+import type { LectureSource } from '../../shared/lecture.js';
 import type { CaptureCapabilities, CaptureExtractor, CaptureItem, CaptureMetadata, CaptureStatus } from '../../shared/lecture-capture.js';
 
 const MAX_ITEM_BYTES = 5_000_000, MAX_PHOTO_BYTES = 2_000_000;
@@ -17,7 +21,8 @@ class CaptureError extends Error { constructor(message: string, readonly status 
 type PairRow = { id: string; lecture: string; owner: string; secret_hash: string; device_hash: string | null;
   created_at: number; pair_expires: number; device_expires: number | null; revoked: number; last_seen: number | null };
 type ItemRow = { id: string; pairing: string; lecture: string; owner: string; client_id: string; metadata: string;
-  fingerprint: string; mime: string; bytes: Uint8Array | null; status: CaptureItem['status']; error: string | null; normalized: string | null };
+  fingerprint: string; mime: string; bytes: Uint8Array | null; status: CaptureItem['status']; error: string | null; normalized: string | null;
+  extracted_detail: string | null; snippet: Uint8Array | null };
 export interface LectureCaptureOptions {
   extract?: CaptureExtractor;
   publicOrigin?: string;
@@ -128,6 +133,9 @@ export class LectureCaptureService {
       CREATE INDEX IF NOT EXISTS capture_items_lecture ON capture_items(lecture);
       CREATE INDEX IF NOT EXISTS capture_items_queue ON capture_items(status);
       UPDATE capture_items SET status = 'queued' WHERE status = 'processing';`);
+    const columns = new Set((this.db.query('PRAGMA table_info(capture_items)').all() as { name: string }[]).map(column => column.name));
+    if (!columns.has('extracted_detail')) this.db.exec('ALTER TABLE capture_items ADD COLUMN extracted_detail TEXT');
+    if (!columns.has('snippet')) this.db.exec('ALTER TABLE capture_items ADD COLUMN snippet BLOB');
     this.unsubscribe = lectures.onDelete(id => this.removeLecture(id));
     for (const pairing of this.db.query('SELECT * FROM capture_pairings').all() as PairRow[]) {
       if (!lectures.getOwned(pairing.owner, pairing.lecture)) this.removeLecture(pairing.lecture);
@@ -172,9 +180,12 @@ export class LectureCaptureService {
   }
   private checkOrigin(request: Request, device: boolean) {
     if (request.method === 'GET' || request.method === 'HEAD') return;
-    const url = new URL(request.url), origin = request.headers.get('origin');
-    const publicOrigin = device ? this.origin : process.env.NARRATION_PUBLIC_ORIGIN ?? `${request.headers.get('x-forwarded-proto') ?? url.protocol.slice(0, -1)}://${url.host}`;
-    if (request.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== publicOrigin)) throw new CaptureError('Invalid origin.', 403);
+    if (!device) {
+      if (!isTrustedAppRequest(request)) throw new CaptureError('Invalid origin.', 403);
+      return;
+    }
+    const origin = request.headers.get('origin');
+    if (request.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== this.origin)) throw new CaptureError('Invalid origin.', 403);
   }
   private device(request: Request): PairRow {
     const token = /^Bearer ([a-f0-9]{64})$/.exec(request.headers.get('authorization') ?? '')?.[1];
@@ -219,22 +230,37 @@ export class LectureCaptureService {
     try {
       const metadata: CaptureMetadata = JSON.parse(row.metadata);
       let normalized = row.normalized;
+      let detail: Pick<NonNullable<LectureSource['capture']>, 'photoSnippet' | 'visualEvidence'> = row.extracted_detail ? JSON.parse(row.extracted_detail) : {};
       if (normalized === null) {
         if (!this.options.extract || !row.bytes) throw new Error('Capture extraction is unavailable.');
         const extension = row.mime.split('/')[1];
-        normalized = await abortable(this.options.extract(new File([new Uint8Array(row.bytes)], `capture.${extension}`, { type: row.mime }), metadata, signal), signal);
+        const extraction = await logStage({ lectureId: row.lecture, captureId: id, stage: metadata.kind === 'photo' ? 'lecture-photo' : 'lecture-audio' },
+          () => abortable(this.options.extract!(new File([new Uint8Array(row.bytes!)], `capture.${extension}`, { type: row.mime }), metadata, signal), signal));
         signal.throwIfAborted();
+        normalized = typeof extraction === 'string' ? extraction : extraction.text;
         if (typeof normalized !== 'string' || normalized.length > 40_000) throw new Error('Invalid capture extraction.');
+        let snippet: Uint8Array | null = null;
+        if (metadata.kind === 'photo' && normalized.trim() && typeof extraction === 'object') {
+          const evidence = visualEvidenceOf(extraction.visualEvidence);
+          if (evidence) detail.visualEvidence = evidence;
+          const cropped = await cropLecturePhoto(row.bytes, extraction.photoSnippet);
+          signal.throwIfAborted();
+          if (cropped) {
+            const retained = (this.db.query('SELECT COALESCE(SUM(COALESCE(length(bytes), 0) + COALESCE(length(snippet), 0)), 0) AS size FROM capture_items').get() as { size: number }).size;
+            if (retained + cropped.bytes.length <= MAX_STORED_BYTES) { detail.photoSnippet = cropped.photoSnippet; snippet = cropped.bytes; }
+          }
+        }
         if (this.stopped || !this.item(id)) return;
         // Persist the normalization before appending across the two durable stores. A retry
         // after a crash reuses identical text and the same source idempotency key.
-        this.db.query('UPDATE capture_items SET normalized = ? WHERE id = ?').run(normalized, id);
+        this.db.query('UPDATE capture_items SET normalized = ?, extracted_detail = ?, snippet = ? WHERE id = ?').run(normalized, JSON.stringify(detail), snippet, id);
       }
       signal.throwIfAborted();
       if (this.stopped || !this.item(id) || !this.lectures.getOwned(row.owner, row.lecture)) return;
       if (normalized.trim()) this.lectures.appendSource(row.owner, row.lecture, `capture:${id}`, normalized, {
         itemId: id, kind: metadata.kind, sequence: metadata.sequence, capturedAt: metadata.capturedAt,
         ...(metadata.durationMs === undefined ? {} : { durationMs: metadata.durationMs }),
+        ...detail,
       });
       this.db.query('UPDATE capture_items SET status = ?, bytes = NULL, normalized = NULL, error = NULL WHERE id = ?').run(normalized.trim() ? 'ready' : 'skipped', id);
     } catch (error) {
@@ -263,6 +289,15 @@ export class LectureCaptureService {
       if (request.headers.has('authorization')) throw new CaptureError('Device tokens cannot manage lecture connections.', 403);
       const path = new URL(request.url).pathname;
       if (path === '/api/lecture-capture/config' && request.method === 'GET') return json(this.capabilities());
+      const photo = /^\/api\/lectures\/([a-f0-9-]{36})\/sources\/([a-f0-9-]{36})\/photo-snippet$/.exec(path);
+      if (photo) {
+        if (request.method !== 'GET') return json({ detail: 'Method Not Allowed' }, 405);
+        const owner = ownerOf(request), session = this.lectures.getOwned(owner, photo[1]);
+        const source = session?.sources.find(source => source.id === photo[2]);
+        const item = source?.capture?.kind === 'photo' && source.capture.photoSnippet ? this.item(source.capture.itemId) : null;
+        if (!item || item.owner !== owner || item.lecture !== photo[1] || !item.snippet) return json({ detail: 'Not Found' }, 404);
+        return new Response(new Uint8Array(item.snippet), { headers: { ...headers, 'Content-Type': 'image/jpeg', 'X-Content-Type-Options': 'nosniff' } });
+      }
       const match = /^\/api\/lectures\/([a-f0-9-]{36})\/capture-pairings(?:\/([a-f0-9-]{36})(\/retry)?)?$/.exec(path);
       if (!match) return json({ detail: 'Not Found' }, 404);
       const owner = ownerOf(request), lecture = match[1];
@@ -363,7 +398,7 @@ export class LectureCaptureService {
       }
       if (!this.capabilities()[metadata.kind]) throw new CaptureError('This capture type is not connected on the computer.', 503);
       this.checkCapacity(pair.lecture);
-      const retained = (this.db.query('SELECT COALESCE(SUM(length(bytes)), 0) AS size FROM capture_items').get() as { size: number }).size;
+      const retained = (this.db.query('SELECT COALESCE(SUM(COALESCE(length(bytes), 0) + COALESCE(length(snippet), 0)), 0) AS size FROM capture_items').get() as { size: number }).size;
       if (retained + media.length > MAX_STORED_BYTES) throw new CaptureError('Capture storage is full. Retry failed recordings or delete an old lecture before continuing.', 413);
       const count = (this.db.query('SELECT COUNT(*) AS count FROM capture_items WHERE lecture = ?').get(pair.lecture) as { count: number }).count;
       if (count >= MAX_ITEMS_PER_LECTURE) throw new CaptureError('This lecture has reached its capture limit. Start another lecture.', 413);

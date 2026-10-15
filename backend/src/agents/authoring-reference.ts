@@ -131,6 +131,36 @@ export function buildAuthoringReference(reference: string): string {
 
 export interface AuthoringReferenceSection { id: string; title: string; content: string }
 
+/** Lecture jobs keep core construction/interaction APIs inline; advanced APIs remain verbatim and retrievable. */
+export function compactLectureAuthoringContext(context: { reference: string; sections: AuthoringReferenceSection[] }) {
+  const deferred = new Set([
+    '### Shaded meshes', '### Scene lighting and planar shadows', '### Procedural textures and materials',
+    '### Function and parametric surfaces', '### Basic solids and swept tubes', '### Molecular display beads',
+    '### Curved paths and organic shapes', '### Fixed-topology deformation and scene time',
+    '### Domain helpers and prepared assets', '### Clipping planes and actual cross-sections',
+    '### Silhouette and crease outlines', '### Per-vertex scalar palette colors', '### Configurable label occlusion',
+  ]);
+  const headings = scanReferenceHeadings(context.reference);
+  const sections: AuthoringReferenceSection[] = [];
+  let reference = '', cursor = 0;
+  for (let index = 0; index < headings.length; index++) {
+    const heading = headings[index];
+    if (!deferred.has(heading.heading)) continue;
+    const level = heading.heading.indexOf(' ');
+    const end = headings.slice(index + 1).find(next => next.heading.indexOf(' ') <= level)?.offset ?? context.reference.length;
+    const title = heading.heading.replace(/^#+ /, ''), id = `lecture-api-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const content = context.reference.slice(heading.offset, end);
+    sections.push({ id, title, content });
+    reference += context.reference.slice(cursor, heading.offset)
+      + `${heading.heading}\nRead ${id} with read_animlib_reference BEFORE using this API (${content.length} characters).\n\n`;
+    cursor = end;
+  }
+  reference += context.reference.slice(cursor);
+  const fingerprint = createHash('sha256').update(JSON.stringify(sections)).digest('hex');
+  reference += `\nAdvanced API snapshot SHA-256: ${fingerprint}. Full content remains available through the indexed read_animlib_reference tool; paginate when nextOffset is returned. Do not guess APIs.\n`;
+  return { reference, sections: [...context.sections, ...sections] };
+}
+
 /** Keep the complete API and craft contract in context; retrieve only worked recipes on demand. */
 export function buildAuthoringContext(reference: string): { reference: string; sections: AuthoringReferenceSection[] } {
   // The full builder checks every heading first, so new API content cannot disappear silently.

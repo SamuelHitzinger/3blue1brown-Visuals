@@ -8,6 +8,7 @@ import { parseModelGLB, MODEL_LIMITS } from 'animlib/core';
 import type { ModelAsset } from 'animlib/core';
 import { atomicWrite } from './narration/service.js';
 import type { BundledModelContext } from './bundled-models.js';
+import { isTrustedAppRequest } from './request-origin.js';
 
 export interface ModelProvenance { source?: string; license?: string; attribution?: string; scientific?: BundledModelContext }
 /** Trusted host payload for isolated renderers; no network/filesystem URLs are followed there. */
@@ -111,10 +112,8 @@ export class ModelAssets {
   async handle(request:Request):Promise<Response> {
     const url=new URL(request.url),path=url.pathname;
     if(path==='/api/models' && request.method==='POST') {
-      const origin=request.headers.get('origin');
       // Match the video/narration routes: TLS terminates at the trusted proxy.
-      const publicOrigin=process.env.NARRATION_PUBLIC_ORIGIN??`${request.headers.get('x-forwarded-proto')??url.protocol.slice(0,-1)}://${url.host}`;
-      if(request.headers.get('sec-fetch-site')==='cross-site'||(origin && origin!==publicOrigin))return Response.json({detail:'Cross-origin model uploads are not allowed'},{status:403});
+      if(!isTrustedAppRequest(request))return Response.json({detail:'Cross-origin model uploads are not allowed'},{status:403});
       try {const bytes=await limitedBody(request);return Response.json(await this.publish(bytes),{status:201});}
       catch(error){return Response.json({detail:(error as Error).message},{status:400});}
     }

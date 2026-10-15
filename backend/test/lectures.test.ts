@@ -390,6 +390,61 @@ test('AI section identity and optional concept placement validate against suppli
   expect(() => parseLectureNotes(JSON.stringify({ ...notes, sections: notes.sections.map(s => ({ ...s, id: 'changed' })) }), sources, notes)).toThrow();
 });
 
+test('same-source note refresh marks visuals stale and preserves their playback mode until replacement succeeds', async () => {
+  let kind: 'animation' | 'interactive' = 'animation', fail = false;
+  const s = service(async input => {
+    const notes = makeNotes(input.sources);
+    notes.concepts[0].visualKind = kind;
+    return notes;
+  }, { visualize: async () => {
+    if (fail) throw new Error('Cannot render');
+    return { source: 'old-scene', duration: 12, catalogIds: [] };
+  } });
+  const lecture = await create(s); await append(s, lecture.id);
+  await until(() => get(s, lecture.id), row => row.visualizations[0]?.status === 'ready');
+  kind = 'interactive'; fail = true;
+  await s.handle(api(`/${lecture.id}/synthesize`, 'POST'));
+  const refreshed = await until(() => get(s, lecture.id), row => row.notes?.concepts[0].visualKind === 'interactive');
+  expect(refreshed.visualizations[0].stale).toBe(true);
+  expect(refreshed.visualizations[0].visualKind).toBe('animation');
+  await s.handle(api(`/${lecture.id}/concepts/vector/visualize`, 'POST'));
+  const failed = await until(() => get(s, lecture.id), row => row.visualizations[0]?.status === 'failed');
+  expect(failed.visualizations[0].source).toBe('old-scene');
+  expect(failed.visualizations[0].visualKind).toBe('animation');
+  fail = false;
+  await s.handle(api(`/${lecture.id}/concepts/vector/visualize`, 'POST'));
+  const done = await until(() => get(s, lecture.id), row => row.visualizations[0]?.status === 'ready');
+  expect(done.visualizations[0].visualKind).toBe('interactive');
+  expect(done.visualizations[0].stale).toBe(false);
+});
+
+test('legacy notes refresh from all evidence and global instructions survive restart', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'aha-notes-format-')), file = join(directory, 'lectures.sqlite');
+  const first = new LectureService(file, async input => makeNotes(input.sources)); services.push(first);
+  try {
+    const lecture = await create(first); await append(first, lecture.id);
+    await until(() => get(first, lecture.id), row => row.synthesizedRevision === 1);
+    await first.handle(api('/preferences', 'PATCH', { instructions: 'German, concise.' }));
+    await first.close();
+    const { Database } = await import('bun:sqlite'); const db = new Database(file);
+    const legacy = JSON.parse((db.query('SELECT snapshot FROM lectures WHERE id = ?').get(lecture.id) as { snapshot: string }).snapshot);
+    delete legacy.notesFormatVersion;
+    legacy.notes.questions = [{ text: 'An old paraphrased question', sourceIds: [legacy.sources[0].id] }];
+    db.query('UPDATE lectures SET snapshot = ? WHERE id = ?').run(JSON.stringify(legacy), lecture.id); db.close();
+    let previousRevision: number | undefined, sourceCount = 0, instructions = '';
+    const second = new LectureService(file, async input => {
+      previousRevision = input.previousSourceRevision; sourceCount = input.sources.length; instructions = input.instructions ?? '';
+      return makeNotes(input.sources);
+    }); services.push(second);
+    await append(second, lecture.id, 'A positive scalar preserves direction.', 'next');
+    const done = await until(() => get(second, lecture.id), row => row.synthesizedRevision === 2 && row.status === 'idle');
+    expect(previousRevision).toBe(0); expect(sourceCount).toBe(2);
+    expect(instructions).toBe('German, concise.'); expect(done.notesFormatVersion).toBe(3);
+    expect(done.notes?.questions).toEqual([]);
+    await second.close();
+  } finally { await first.close(); await rm(directory, { recursive: true, force: true }); }
+});
+
 test('ordering and overrides survive restart and legacy records append chronologically', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'aha-notebook-order-'));
   const file = join(directory, 'lectures.sqlite');

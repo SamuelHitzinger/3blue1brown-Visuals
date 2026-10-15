@@ -44,18 +44,19 @@ export default function LectureVisual({ visualization, suspended }: { visualizat
       void controller.setSuspended(suspendedRef.current)
       setPlayback(controller)
       await controller.load([{ id: visualization.id, source: visualization.source }])
+      if (active && visualization.visualKind === 'interactive') await controller.seek(visualization.duration ?? controller.getState().duration)
     }).catch(reason => { if (active) setError(reason instanceof Error ? reason.message : 'This visualization could not load.') })
     return () => { active = false; controller?.dispose(); target?.replaceChildren() }
-  }, [visualization.id, visualization.source, attempt, nearViewport])
+  }, [visualization.id, visualization.source, visualization.visualKind, visualization.duration, attempt, nearViewport])
   useEffect(() => { void playback?.setSuspended(suspended) }, [playback, suspended])
   const failure = error || state.error
   return <div className="lecture-visual" ref={container}>
     <div className="lecture-visual-stage" ref={host}/>{(!nearViewport || suspended) && <div className="lecture-visual-message notebook-visual-idle">{suspended ? 'Visualization paused' : 'Your visual opens as you read'}</div>}
     {failure ? <div className="lecture-visual-message" role="alert"><p>{failure}</p><button className="secondary-button" onClick={() => setAttempt(value => value + 1)}>Reload visualization</button></div> : nearViewport && !suspended && !state.ready && <div className="lecture-visual-message" role="status">Opening your visualization…</div>}
-    <div className="lecture-visual-controls">
+    {visualization.visualKind !== 'interactive' && <div className="lecture-visual-controls">
       <button aria-label={state.ended ? 'Replay visualization' : state.playing ? 'Pause visualization' : 'Play visualization'} disabled={!state.ready || !!failure} onClick={() => { void playback?.toggle() }}>{state.ended ? <RotateCcw size={17}/> : state.playing ? <Pause size={17}/> : <Play size={17}/>}</button>
       <input type="range" aria-label="Visualization progress" min={0} max={state.duration || 1} step={0.1} value={state.time} disabled={!state.ready || !!failure} onChange={event => { void playback?.seek(Number(event.target.value)) }}/>
       <span>{formatTime(state.time)} / {formatTime(state.duration)}</span>
-    </div>
+    </div>}
   </div>
 }

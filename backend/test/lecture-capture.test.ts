@@ -1,5 +1,6 @@
 import { afterEach, expect, test } from 'bun:test';
 import { Database } from 'bun:sqlite';
+import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -41,6 +42,79 @@ async function setup(options: ConstructorParameters<typeof LectureCaptureService
   const status = async () => (await (await capture.handleOwner(ownerRequest(`${route}/${pairing.status.id}`))).json()) as CaptureStatus;
   return { lectures, lecture, capture, route, pairing, secret, token, claim, claimRequest, status };
 }
+
+test('retained photo snippets are cropped, owner-scoped, and removed with the lecture', async () => {
+  const photoSnippet = { crop: { x: 0.25, y: 0.25, width: 0.5, height: 0.5 }, description: 'Experimental trace' };
+  const s = await setup({ extract: async () => ({ text: 'Damping trace', photoSnippet, visualEvidence: 'Horizontal time axis' }) });
+  const photo = new Uint8Array(await createCanvas(800, 600).encode('jpeg'));
+  await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata(), photo)));
+  await until(s.status, value => value.processed === 1);
+  const source = s.lectures.getOwned('user:alice', s.lecture.id)!.sources[0];
+  expect(source.capture?.photoSnippet).toEqual(photoSnippet);
+  expect(source.capture?.visualEvidence).toBe('Horizontal time axis');
+  const path = `/api/lectures/${s.lecture.id}/sources/${source.id}/photo-snippet`;
+  const response = await s.capture.handleOwner(ownerRequest(path));
+  expect(response.status).toBe(200); expect(response.headers.get('content-type')).toBe('image/jpeg');
+  expect(response.headers.get('cache-control')).toContain('no-store');
+  const image = await loadImage(Buffer.from(await response.arrayBuffer()));
+  expect([image.width, image.height]).toEqual([400, 300]);
+  expect((await s.capture.handleOwner(ownerRequest(path, 'GET', 'bob'))).status).toBe(404);
+  const device = ownerRequest(path); device.headers.set('Authorization', `Bearer ${s.token}`);
+  expect((await s.capture.handleOwner(device)).status).toBe(403);
+  expect((await s.capture.handleOwner(ownerRequest(path.replace(source.id, crypto.randomUUID())))).status).toBe(404);
+  await s.lectures.handle(ownerRequest(`/api/lectures/${s.lecture.id}`, 'DELETE'));
+  expect((await s.capture.handleOwner(ownerRequest(path))).status).toBe(404);
+});
+
+test('invalid optional crop retains text and diagram evidence without exposing the full frame', async () => {
+  const s = await setup({ extract: async () => ({ text: 'Readable text', visualEvidence: 'Arrow points right', photoSnippet: { crop: { x: 0, y: 0, width: 1, height: 1 }, description: 'Full frame' } }) });
+  await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()));
+  await until(s.status, value => value.processed === 1);
+  const source = s.lectures.getOwned('user:alice', s.lecture.id)!.sources[0];
+  expect(source.text).toBe('Readable text'); expect(source.capture?.visualEvidence).toBe('Arrow points right');
+  expect(source.capture?.photoSnippet).toBeUndefined();
+  expect((await s.capture.handleOwner(ownerRequest(`/api/lectures/${s.lecture.id}/sources/${source.id}/photo-snippet`))).status).toBe(404);
+});
+
+test('photo details and crop survive a crash before source append without another extraction', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aha-photo-recovery-')); cleanup.push(() => rm(dir, { recursive: true, force: true }));
+  const path = join(dir, 'capture.sqlite'); let calls = 0;
+  const photoSnippet = { crop: { x: 0.2, y: 0.1, width: 0.5, height: 0.5 }, description: 'Measured trace' };
+  const s = await setup({ extract: async () => { calls++; return { text: 'Measured trace', photoSnippet, visualEvidence: 'Horizontal axis' }; } }, path);
+  const append = s.lectures.appendSource.bind(s.lectures);
+  s.lectures.appendSource = () => { throw new Error('Synthetic crash before append'); };
+  const photo = new Uint8Array(await createCanvas(800, 600).encode('jpeg'));
+  const item = await (await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata(), photo)))).json();
+  await until(s.status, value => value.failed === 1); await s.capture.close();
+  const db = new Database(path);
+  try {
+    const row = db.query('SELECT bytes, snippet, extracted_detail, normalized FROM capture_items WHERE id = ?').get(item.id) as any;
+    expect(row.bytes).not.toBeNull(); expect(row.snippet.length).toBeGreaterThan(0);
+    expect(JSON.parse(row.extracted_detail).photoSnippet).toEqual(photoSnippet); expect(row.normalized).toBe('Measured trace');
+    db.query("UPDATE capture_items SET status = 'processing' WHERE id = ?").run(item.id);
+  } finally { db.close(); }
+  s.lectures.appendSource = append;
+  const resumed = new LectureCaptureService(path, s.lectures, { publicOrigin: 'https://phone.example', extract: async () => { calls++; throw new Error('Must reuse normalization'); } });
+  cleanup.push(() => resumed.close());
+  await until(async () => (await (await resumed.handleDevice(deviceRequest('/status', s.token))).json()) as CaptureStatus, value => value.processed === 1);
+  expect(calls).toBe(1);
+  const source = s.lectures.getOwned('user:alice', s.lecture.id)!.sources[0];
+  expect(source.capture?.photoSnippet).toEqual(photoSnippet); expect(source.capture?.visualEvidence).toBe('Horizontal axis');
+  expect((await resumed.handleOwner(ownerRequest(`/api/lectures/${s.lecture.id}/sources/${source.id}/photo-snippet`))).status).toBe(200);
+});
+
+test('legacy capture stores gain optional photo columns without changing existing records', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'aha-photo-migration-')); cleanup.push(() => rm(dir, { recursive: true, force: true }));
+  const path = join(dir, 'capture.sqlite'), db = new Database(path);
+  db.exec(`CREATE TABLE capture_items (id TEXT PRIMARY KEY, pairing TEXT NOT NULL, lecture TEXT NOT NULL, owner TEXT NOT NULL,
+    client_id TEXT NOT NULL, metadata TEXT NOT NULL, fingerprint TEXT NOT NULL, mime TEXT NOT NULL, bytes BLOB,
+    status TEXT NOT NULL, error TEXT, normalized TEXT, UNIQUE(pairing, client_id));`);
+  db.close();
+  const s = await setup({}, path);
+  await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()));
+  await until(s.status, value => value.processed === 1);
+  expect(s.lectures.getOwned('user:alice', s.lecture.id)?.sources[0].text).toBe('A vector has direction.');
+});
 
 test('camera sharing observes new acceptance exactly once, never resurrects a retried upload', async () => {
   const shared: Array<{ id: string; bytes: Uint8Array }> = [];

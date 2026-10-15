@@ -4,6 +4,7 @@ import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { LectureError, LectureService } from './lectures.js';
 import { proxyUser } from './identity.js';
+import { isTrustedAppRequest } from './request-origin.js';
 import type { CaptureMetadata } from '../../shared/lecture-capture.js';
 
 const TTL = 8 * 60 * 60_000, PHOTO_TTL = 15 * 60_000;
@@ -63,8 +64,8 @@ export class LectureLiveBridge {
   handleOwner(request: Request) {
     return this.guard(async () => {
       if (request.headers.has('authorization')) throw new LectureError('Plugin tokens cannot manage connections.', 403);
-      const url = new URL(request.url), origin = request.headers.get('origin');
-      if (request.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== (process.env.NARRATION_PUBLIC_ORIGIN ?? url.origin))) throw new LectureError('Invalid origin.', 403);
+      const url = new URL(request.url);
+      if (!isTrustedAppRequest(request)) throw new LectureError('Invalid origin.', 403);
       const match = /^\/api\/lectures\/([a-f0-9-]{36})\/live-bridge$/.exec(url.pathname);
       if (!match || !uuid.test(match[1])) return json({ detail: 'Not Found' }, 404);
       const user = proxyUser(request), owner = user ? `user:${user.id}` : 'local', lecture = match[1];

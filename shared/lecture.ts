@@ -1,3 +1,9 @@
+/** A tight readable crop, in normalized coordinates of the captured JPEG. */
+export interface LecturePhotoSnippet {
+  crop: { x: number; y: number; width: number; height: number };
+  description: string;
+}
+export interface LecturePhotoReference { sourceId: string; caption: string }
 /** Durable lecture contracts. Future capture adapters normalize their output into sources. */
 export interface LectureSource {
   id: string;
@@ -11,11 +17,27 @@ export interface LectureSource {
     sequence: number;
     capturedAt: string;
     durationMs?: number;
+    photoSnippet?: LecturePhotoSnippet;
+    visualEvidence?: string;
   };
 }
 
 export interface LecturePoint { text: string; sourceIds: string[] }
+export type LectureColor = 'blue' | 'teal' | 'amber' | 'ink';
+/** Deliberately limited drawing vocabulary: no markup, scripts or external resources. */
+export interface LectureDiagram {
+  alt: string;
+  elements: ( { type: 'text'; x: number; y: number; text: string; color?: LectureColor }
+    | { type: 'line'; x1: number; y1: number; x2: number; y2: number; arrow?: boolean; color?: LectureColor }
+    | { type: 'circle'; cx: number; cy: number; r: number; color?: LectureColor }
+    | { type: 'rect'; x: number; y: number; width: number; height: number; color?: LectureColor } )[];
+}
+export interface LectureQuestion extends LecturePoint { diagram?: LectureDiagram }
 export interface LectureConcept {
+  visualKind?: 'static' | 'animation' | 'interactive';
+  diagram?: LectureDiagram;
+  /** Identical terms in notes and drawings carry identical colors. */
+  terms?: { text: string; color: LectureColor }[];
   sectionId?: string;
   id: string;
   title: string;
@@ -28,11 +50,13 @@ export interface LectureNotes {
   /** Concise content-based subtitle, applied only after the lecture is finished. */
   subtitle?: string;
   summary: string;
-  sections: { id: string; title: string; points: LecturePoint[] }[];
+  sections: { id: string; title: string; points: LecturePoint[]; photo?: LecturePhotoReference }[];
   concepts: LectureConcept[];
-  questions: LecturePoint[];
+  questions: LectureQuestion[];
 }
 export interface LectureVisualization {
+  visualKind?: 'animation' | 'interactive';
+  stale?: boolean;
   id: string;
   conceptId: string;
   title: string;
@@ -60,6 +84,9 @@ export interface LectureSession {
   revision: number;
   sourceRevision: number;
   synthesizedRevision: number;
+  /** Explicit refresh re-reads sources, while ordinary capture remains incremental. */
+  notesRefreshRequested?: boolean;
+  notesFormatVersion?: number;
   status: 'idle' | 'queued' | 'processing' | 'failed';
   sources: LectureSource[];
   notes: LectureNotes | null;
@@ -69,6 +96,9 @@ export interface LectureSession {
 }
 export type LectureSummary = Pick<LectureSession, 'schemaVersion' | 'id' | 'title' | 'finishedAt' | 'courseId' | 'position' | 'createdAt' | 'updatedAt' | 'revision' | 'sourceRevision' | 'synthesizedRevision' | 'status'>;
 export interface LectureSynthesisInput {
+  /** Host identifier for timing diagnostics; not injected into the model prompt. */
+  lectureId?: string;
+  instructions?: string;
   title: string;
   sources: LectureSource[];
   previousNotes: LectureNotes | null;

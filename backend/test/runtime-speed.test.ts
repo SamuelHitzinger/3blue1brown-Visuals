@@ -10,6 +10,7 @@ import { agentConfig } from '../src/agents/config.js';
 import { PiAgentRunner } from '../src/agents/runtime.js';
 import type { AgentRunMetrics, AgentTask } from '../src/agents/runtime.js';
 import { createReferenceTools } from '../src/agents/reference-tools.js';
+import { generateLectureNotes } from '../src/agents/lecture.js';
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(path => rm(path, { recursive: true, force: true }))); });
@@ -44,11 +45,35 @@ async function harness(outputs: AssistantMessage[], wait?: (ms: number, signal?:
 }
 const base = { systemPrompt: 'Author a complete scene.', prompt: 'Generate a scene.' };
 
+test('live notes finish with one validated submission without repeating the notebook', async () => {
+  const notes = { summary: '', sections: [{ id: 'vectors', title: 'Vectors', points: [{ text: 'Vector: magnitude + direction', sourceIds: ['s1'] }] }], concepts: [], questions: [] };
+  const { runner, contexts } = await harness([call('submit_output', JSON.stringify(notes))]);
+  expect(await generateLectureNotes(runner, { title: 'Vectors', previousNotes: null, sources: [{ id: 's1', sequence: 1, kind: 'text', text: 'A vector has magnitude and direction.', createdAt: '2026-10-15T08:00:00Z' }] }, new AbortController().signal)).toEqual(notes);
+  expect(contexts).toHaveLength(1);
+});
+
 function sceneCall(name: string, args: Record<string, string | number | string[] | number[]>, id = crypto.randomUUID()) {
   const result = reply('', 'toolUse');
   result.content = [{ type: 'toolCall', id, name, arguments: args }];
   return result;
 }
+
+test('final submission can select an inspected scene without repeating its code; invalid selection stays repairable', async () => {
+  const { runner, contexts } = await harness([
+    sceneCall('inspect_scene', { output: 'complete-scene' }),
+    sceneCall('submit_output', { candidateId: 'missing' }),
+    sceneCall('submit_output', { candidateId: 'candidate-1', output: 'ambiguous' }),
+    sceneCall('submit_output', { candidateId: 'candidate-1' }),
+  ]);
+  let validations = 0;
+  expect(await runner.run({ ...base, outputMode: 'submit-only', validate: async () => { validations++; }, sceneTools: {
+    inspect: async () => inspectionReport,
+  } })).toBe('complete-scene');
+  expect(validations).toBeGreaterThanOrEqual(2);
+  expect(contexts).toHaveLength(4);
+  expect(JSON.stringify(contexts.at(-1))).toContain('Unknown candidateId');
+  expect(JSON.stringify(contexts.at(-1))).toContain('exactly one');
+});
 
 test('bounded recipe tool remains available without web access and reports failed reads for recovery', async () => {
   const { runner, contexts } = await harness([

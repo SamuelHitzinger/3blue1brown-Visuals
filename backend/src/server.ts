@@ -53,7 +53,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     if (path.startsWith('/api/live-bridge/')) return liveBridge ? liveBridge.handlePlugin(request) : Response.json({ detail: 'Lecture bridge is not configured.' }, { status: 503 });
     if (/^\/api\/lectures\/[^/]+\/live-bridge$/.test(path)) return liveBridge ? liveBridge.handleOwner(request) : Response.json({ detail: 'Lecture bridge is not configured.' }, { status: 503 });
     if (path.startsWith('/api/capture/')) return captureService ? captureService.handleDevice(request) : Response.json({detail:'Phone capture is not configured.'},{status:503});
-    if (path === '/api/lecture-capture/config' || /^\/api\/lectures\/[^/]+\/capture-pairings(?:\/|$)/.test(path)) {
+    if (path === '/api/lecture-capture/config' || /^\/api\/lectures\/[^/]+\/capture-pairings(?:\/|$)/.test(path) || /^\/api\/lectures\/[^/]+\/sources\/[^/]+\/photo-snippet$/.test(path)) {
       return captureService ? captureService.handleOwner(request) : Response.json({detail:'Phone capture is not configured.'},{status:503});
     }
     if (path === '/api/visualization-catalog' || path.startsWith('/api/visualization-catalog/')) return catalog(request);

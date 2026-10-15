@@ -2,6 +2,7 @@ import { NarrationError, publicError } from "./errors.js";
 import { buildNarrationPreview, buildSceneAgentInput } from "./handoff.js";
 import { NarrationService } from "./service.js";
 import { SHARED_OWNER } from '../identity.js';
+import { isTrustedAppRequest } from '../request-origin.js';
 
 async function body(request: Request) {
   if (!request.headers.get("content-type")?.startsWith("application/json")) throw new NarrationError("CONTENT_TYPE", "Send application/json.", 415);
@@ -20,11 +21,8 @@ async function body(request: Request) {
 export function narrationRoutes(service = new NarrationService()) {
   return async (request: Request, path: string): Promise<Response> => {
     try {
-      const url = new URL(request.url);
       const owner = SHARED_OWNER;
-      const origin = request.headers.get("origin");
-      const publicOrigin = process.env.NARRATION_PUBLIC_ORIGIN ?? `${request.headers.get('x-forwarded-proto') ?? url.protocol.slice(0, -1)}://${url.host}`;
-      if (request.method === "POST" && (request.headers.get("sec-fetch-site") === "cross-site" || (origin && origin !== publicOrigin))) {
+      if (request.method === "POST" && !isTrustedAppRequest(request)) {
         throw new NarrationError("ORIGIN", "Cross-origin narration requests are not allowed.", 403);
       }
       const match = /^\/api\/narrations(?:\/([a-f0-9]{64})(?:\/(scene-agent|alignment|preview|retry|scenes\/([\w-]+)|audio\/([\w.-]+)))?)?$/.exec(path);

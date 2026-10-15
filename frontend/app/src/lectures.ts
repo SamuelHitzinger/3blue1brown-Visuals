@@ -10,6 +10,8 @@ async function responseJSON<T>(response: Response): Promise<T> {
 const path = (id: string) => `/api/lectures/${encodeURIComponent(id)}`
 const mutate = (url: string, method: string, body?: unknown, key?: string) => fetch(url, { method, headers: { 'Content-Type': 'application/json', ...(key ? { 'Idempotency-Key': key } : {}) }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) }).then(responseJSON<LectureSession>)
 export const listLectures = (signal?: AbortSignal) => fetch('/api/lectures', { signal, cache: 'no-store' }).then(responseJSON<LectureSummary[]>)
+export const getNoteInstructions = (signal?: AbortSignal) => fetch('/api/lectures/preferences', { signal, cache: 'no-store' }).then(responseJSON<{ instructions: string }>)
+export const saveNoteInstructions = (instructions: string) => fetch('/api/lectures/preferences', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ instructions }) }).then(responseJSON<{ instructions: string }>)
 export const reorderLectures = (courseId: string | undefined, lectureIds: string[]): Promise<LectureSummary[]> => fetch('/api/lectures/reorder', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...(courseId === undefined ? {} : { courseId }), lectureIds }) }).then(responseJSON<LectureSummary[]>)
 export const getLecture = (id: string, signal?: AbortSignal) => fetch(path(id), { signal, cache: 'no-store' }).then(responseJSON<LectureSession>)
 /** Idle visible lectures must discover material submitted by a paired phone. */

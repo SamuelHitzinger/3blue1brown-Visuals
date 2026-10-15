@@ -6,6 +6,7 @@ import { ArrowRight, BookOpen, Plus, Search } from './Icons';
 import { moveLecture, orderedLectures } from './notebook-order';
 import { nextLectureTitle } from '../../../shared/lectureTitles';
 import './notes-dashboard.css';
+import NoteInstructions from './NoteInstructions';
 export const INDEPENDENT_COURSE_ID = '__independent__';
 export const lectureDate = (date: string) => new Date(date).toLocaleDateString(undefined, {
   month: 'short',
@@ -224,5 +225,6 @@ export default function LecturesPage({
               }}>Delete</button></div></li>;
         })}</ol> : <div className="learning-empty"><BookOpen size={32} /><h3>{query ? 'No matching lectures' : 'Your notebook is ready.'}</h3><p>{query ? 'Try a different title.' : 'Add your first lecture above. Its notes and material will live here.'}</p></div>}
  </>}
+ <NoteInstructions/>
  </main>;
 }

@@ -12,9 +12,9 @@ and the shared animlib animation engine.
 - **Watch interactive explanations:** generated animations pair with ElevenLabs
   narration and become playable as scenes are ready.
 - **Keep a lesson library:** search, bookmark, replay, and archive saved videos.
-- **Follow a lecture:** append text in a saved session; receive organized notes,
-  source-linked concepts, open questions, and silent interactive explanations.
-  Camera and microphone capture are planned; lecture input currently accepts text.
+- **Follow a lecture:** capture phone photos and audio, or append text; receive
+  compact notebook notes, assigned questions, and silent visual explanations.
+  Visuals follow lecture diagrams; especially useful photo crops can accompany notes.
 - **Reuse visual knowledge:** browse Resources, Techniques, and Foundations in the
   animlib catalog. Generation agents can search and read selected guidance without
   loading the entire catalog into every prompt.
@@ -46,6 +46,15 @@ must pass rendered review. With the simulated video generator, lecture material
 can still be saved, but AI lecture generation is unavailable. See the
 [lecture workspace guide](docs/lecture-workspace.md) and
 [visualization catalog](shared/animlib/catalog/README.md).
+
+**Private website access over Tailscale:** keep the app bound to loopback and
+run `tailscale serve --bg --https=443 http://127.0.0.1:8080` after checking that
+Tailscale HTTPS port 443 is unused. Set `APP_PUBLIC_ORIGIN` in `backend/.env.local`
+to the exact HTTPS URL printed by Tailscale (without a trailing slash), then
+restart the app. Open that URL on devices connected to your tailnet. This grants
+those permitted devices access to the full shared app, including edits; use
+Tailscale access rules to limit who can reach it. The computer and app must remain
+running. The existing capture-only URL on port 8443 remains separate.
 
 **Develop the frontend:** keep the backend running and use a second terminal:
 

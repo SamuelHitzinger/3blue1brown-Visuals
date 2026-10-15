@@ -16,6 +16,7 @@ import { extractUpload, uploadMetadata, uploadType } from './uploads.js'
 import type { Upload } from './uploads.js'
 
 import { SHARED_OWNER } from './identity.js'
+import { isTrustedAppRequest } from './request-origin.js'
 import { logEvent, logStage } from './logging.js'
 import type { ThumbnailArtwork } from '../../shared/video/thumbnail.js'
 export { SHARED_OWNER } from './identity.js'
@@ -401,10 +402,7 @@ export class VideoService {
     const headers = new Headers({ 'Cache-Control': 'no-store' })
     const json = (body: unknown, status = 200) => Response.json(body, { status, headers })
     if (request.method === 'POST' || request.method === 'DELETE') {
-      const origin = request.headers.get('origin')
-      const protocol = request.headers.get('x-forwarded-proto') ?? url.protocol.slice(0, -1)
-      const publicOrigin = process.env.NARRATION_PUBLIC_ORIGIN ?? `${protocol}://${url.host}`
-      if (request.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== publicOrigin)) return json({ detail: 'Invalid origin' }, 403)
+      if (!isTrustedAppRequest(request)) return json({ detail: 'Invalid origin' }, 403)
     }
     if (parts.length === 3) {
       if (request.method === 'GET') return json(this.list())

@@ -1,11 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { LectureSession } from '../../../shared/lecture'
+import type { LectureConcept, LectureSession } from '../../../shared/lecture'
 import { ArrowLeft, BookOpen, Check, RotateCcw } from './Icons'
 import { assignLectureConcepts, lectureNoteText, notebookSectionKey } from './lectureDocument'
 import type { CourseSubject } from './curriculum'
 import type { ReactNode } from 'react'
 import './lecture-notebook.css'
 import LectureVisual from './LectureVisual'
+import LecturePhoto from './LecturePhoto'
+import LectureDiagram, { ConceptText } from './LectureDiagram'
+import NoteInstructions from './NoteInstructions'
 import CapturePairingPanel from './CapturePairingPanel'
 import { finishLecture, hasLectureVisual, mergeLectureSnapshot, patchLecture, synthesizeLecture, visualizeConcept, watchLectureSnapshots } from './lectures'
 
@@ -43,10 +46,6 @@ export default function LecturePage({ id, onBack, suspended, courses = [] }: { i
     catch (reason) { if (mounted.current) setError(reason instanceof Error ? reason.message : 'Something went wrong. Please try again.'); return false }
     finally { busyRef.current = false; if (mounted.current) setBusy('') }
   }
-  const citations = (ids: string[]) => <span className="source-citations">{[...new Set(ids)].map(sourceId => {
-    const source = session?.sources.find(item => item.id === sourceId)
-    return source ? <details className="note-citation" key={sourceId}><summary aria-label={`Read source ${source.sequence}`}>{source.sequence}</summary><div><p>{source.text}</p><small>{new Date(source.createdAt).toLocaleString()}</small></div></details> : null
-  })}</span>
   if (loading) return <main className="learning-page"><div className="learning-empty" role="status">Opening your lecture…</div></main>
   if (!session) return <main className="learning-page"><button className="learning-back" onClick={() => onBack()}><ArrowLeft size={16}/> All lectures</button><div className="learning-empty"><p role="alert">{loadError || 'This lecture is unavailable.'}</p><button className="secondary-button" onClick={() => { setLoading(true); setReload(value => value + 1) }}>Try again</button></div></main>
   const notesPending = session.status === 'queued' || session.status === 'processing'
@@ -61,27 +60,24 @@ export default function LecturePage({ id, onBack, suspended, courses = [] }: { i
     </header>
     {(error || loadError) && <p className="learning-error" role="alert">{error || loadError} {loadError && <button onClick={() => setReload(value => value + 1)}>Reconnect</button>}</p>}
     <CapturePairingPanel key={id} lectureId={id} autoPair={!session.finishedAt}/>
+    <div className={`notebook-layout${session.notes?.questions.length ? ' has-questions' : ''}`}>
     <article className="lecture-main-column notebook-paper">
       <section className="learning-panel lecture-notes-panel" aria-labelledby="generated-notes-heading">
-        <div className="learning-section-heading"><h2 id="generated-notes-heading"><BookOpen size={20}/> Notes</h2>{session.sources.length > 0 && (session.status === 'failed' || (!notesPending && session.synthesizedRevision < session.sourceRevision)) && <button className="learning-text-button" disabled={!!busy} onClick={() => { void act('synthesize', () => synthesizeLecture(id)) }}><RotateCcw size={14}/>{session.status === 'failed' ? 'Retry notes' : 'Update notes'}</button>}</div>
+        <div className="learning-section-heading"><h2 id="generated-notes-heading"><BookOpen size={20}/> Notes</h2>{session.sources.length > 0 && !notesPending && <button className="learning-text-button" disabled={!!busy} onClick={() => { void act('synthesize', () => synthesizeLecture(id)) }}><RotateCcw size={14}/>{session.status === 'failed' ? 'Retry notes' : 'Update notes'}</button>}</div>
         {session.status === 'failed' && <p className="learning-error" role="alert">{session.error || 'Notes could not update. Your recordings are saved.'}</p>}
         {notesPending && <p className="lecture-progress" role="status"><span className="working-dot"/>Updating notes…</p>}
         {session.notes ? <div className="generated-notes">
-          <section className="notebook-section"><EditableNote lectureId={id} noteKey="summary" aiText={session.notes.summary} session={session} busy={!!busy} save={value => act('edit-summary', () => patchLecture(id, { noteEdits: { summary: value } }))}/></section>
+          {(session.notes.summary || session.noteEdits?.summary) && <section className="notebook-section notebook-overview"><EditableNote lectureId={id} noteKey="summary" aiText={session.notes.summary} session={session} busy={!!busy} save={value => act('edit-summary', () => patchLecture(id, { noteEdits: { summary: value } }))}/></section>}
+          {!sections.length && <p className="learning-muted">New concepts will appear here as they are taught.</p>}
           {sections.map(section => <section id={`notebook-${notebookSectionKey(section.id)}`} className="notebook-section" key={section.id}>
             <h3>{section.title}</h3>
-            <EditableNote lectureId={id} noteKey={`section:${section.id}`} aiText={section.points.map(point => point.text).join('\n')} session={session} busy={!!busy} save={value => act('edit-section', () => patchLecture(id, { noteEdits: { [`section:${section.id}`]: value } }))}><ul>{section.points.map((point,index) => <li key={index}>{point.text}{citations(point.sourceIds)}</li>)}</ul></EditableNote>
-            {section.concepts.map(concept => {
-              const visual = [...session.visualizations].reverse().find(item => item.conceptId === concept.id)
-              const pending = visual?.status === 'queued' || visual?.status === 'processing'
-              return <figure className="notebook-figure" key={concept.id}><figcaption><h4>{concept.title}</h4></figcaption><p className="concept-explanation">{concept.explanation}{citations(concept.sourceIds)}</p>{hasLectureVisual(visual) && <LectureVisual key={visual.id} visualization={visual} suspended={suspended}/>}
-                {pending && <p className="lecture-progress" role="status">Updating visual…</p>}
-                {visual?.status === 'failed' && <p className="learning-error" role="alert">{visual.error || 'Visual could not update.'}</p>}
-                {visual && !pending && (visual.status === 'failed' || visual.sourceRevision < session.sourceRevision) && <button className="learning-text-button" disabled={!!busy} onClick={() => { void act('visualize', () => visualizeConcept(id, concept.id)) }}>{visual.status === 'failed' ? 'Retry visual' : 'Update visual from new material'}</button>}
-              </figure>
-            })}
+            <div className={`notebook-section-body${section.concepts.some(concept => concept.visualKind === 'static') ? ' has-sketch' : ''}`}>
+            <EditableNote lectureId={id} noteKey={`section:${section.id}`} aiText={section.points.map(point => point.text).join('\n')} session={session} busy={!!busy} save={value => act('edit-section', () => patchLecture(id, { noteEdits: { [`section:${section.id}`]: value } }))}><ul>{section.points.map((point,index) => <li key={index}><ConceptText text={point.text} terms={section.concepts.flatMap(concept => concept.terms ?? [])}/></li>)}</ul></EditableNote>
+            {section.concepts.some(concept => concept.visualKind === 'static') && <div className="notebook-sketches">{section.concepts.filter(concept => concept.visualKind === 'static').map(concept => <ConceptFigure key={concept.id} concept={concept} session={session} suspended={suspended} busy={!!busy} update={() => { void act('visualize', () => visualizeConcept(id, concept.id)) }}/>)}</div>}
+            </div>
+            {section.photo && <LecturePhoto key={section.photo.sourceId} photo={section.photo} session={session}/>}
+            {section.concepts.filter(concept => concept.visualKind !== 'static').map(concept => <ConceptFigure key={concept.id} concept={concept} session={session} suspended={suspended} busy={!!busy} update={() => { void act('visualize', () => visualizeConcept(id, concept.id)) }}/>) }
           </section>)}
-          {session.notes.questions.length > 0 && <section className="notebook-section"><h3>Questions</h3><ul>{session.notes.questions.map((point,index) => <li key={index}>{point.text}{citations(point.sourceIds)}</li>)}</ul></section>}
         </div> : !notesPending && <div className="learning-empty compact"><p>Scan the QR code and start recording. Notes appear here automatically.</p></div>}
         <details className="personal-notes-panel" open={personalNotes.trim() ? true : undefined}>
           <summary>Your notes{personalDirty.current ? ' · Unsaved changes' : noteSaved ? ' · Saved' : ''}</summary>
@@ -90,7 +86,27 @@ export default function LecturePage({ id, onBack, suspended, courses = [] }: { i
         </details>
       </section>
     </article>
+    {!!session.notes?.questions.length && <aside className="notebook-questions" aria-labelledby="lecture-questions-heading">
+      <h2 id="lecture-questions-heading">Questions</h2><p className="questions-intro">Problems from your lecture</p>
+      <ol>{session.notes.questions.map((question, index) => <li key={index}><p>{question.text}</p>{question.diagram && <LectureDiagram diagram={question.diagram}/>}</li>)}</ol>
+    </aside>}
+    </div>
+    <NoteInstructions/>
   </main>
+}
+
+function ConceptFigure({ concept, session, suspended, busy, update }: { concept: LectureConcept; session: LectureSession; suspended: boolean; busy: boolean; update: () => void }) {
+  const visual = concept.visualKind === 'static' ? undefined : [...session.visualizations].reverse().find(item => item.conceptId === concept.id)
+  const pending = visual?.status === 'queued' || visual?.status === 'processing'
+  return <figure className={`notebook-figure${concept.visualKind === 'static' ? ' notebook-sketch' : ''}`} aria-label={concept.title}>
+    <figcaption><h4>{concept.title}</h4><p className="concept-explanation"><ConceptText text={concept.explanation} terms={concept.terms}/></p></figcaption>
+    {concept.visualKind === 'static' && concept.diagram && <LectureDiagram diagram={concept.diagram}/>}
+    {hasLectureVisual(visual) && <LectureVisual key={visual.id} visualization={visual} suspended={suspended}/>}
+    {pending && <p className="lecture-progress" role="status">Updating visual…</p>}
+    {visual?.status === 'failed' && <p className="learning-error" role="alert">{visual.error || 'Visual could not update.'}</p>}
+    {visual && !pending && (visual.status === 'failed' || visual.stale || visual.sourceRevision < session.sourceRevision) && <button className="learning-text-button" disabled={busy} onClick={update}>{visual.status === 'failed' ? 'Retry visual' : 'Update visual from new material'}</button>}
+    {!visual && concept.visualKind !== 'static' && <button className="learning-text-button" disabled={busy} onClick={update}>Create {concept.visualKind === 'animation' ? 'animation' : 'interactive visual'}</button>}
+  </figure>
 }
 
 function EditableTitle({ title, busy, save }: { title: string; busy: boolean; save: (value: string) => Promise<boolean | undefined> }) {

@@ -1,10 +1,33 @@
 import { expect, test } from 'bun:test';
 import { readFileSync } from 'node:fs';
-import { buildAuthoringReference, buildAuthoringContext, loadAuthoringContext } from '../src/agents/authoring-reference.js';
+import { buildAuthoringReference, buildAuthoringContext, loadAuthoringContext, compactLectureAuthoringContext } from '../src/agents/authoring-reference.js';
 import { createReferenceTools } from '../src/agents/reference-tools.js';
 import { compileSource, evaluateScene } from 'animlib/core';
 
 const reference = readFileSync(new URL('../../shared/animlib/docs/reference.md', import.meta.url), 'utf8').replaceAll('\r\n', '\n');
+
+test('lecture context defers complete advanced API sections while preserving core APIs and every reference', async () => {
+  const full = await loadAuthoringContext();
+  const lean = compactLectureAuthoringContext(full);
+  expect(lean.reference.length).toBeLessThan(full.reference.length - 25000);
+  expect(lean.reference).toContain(between('### Source format', '### Shaded meshes'));
+  expect(lean.reference).toContain(between('### Controls are input values', '### Fixed-topology deformation and scene time'));
+  for (const old of full.sections) expect(lean.sections.find(section => section.id === old.id)).toEqual(old);
+  const moved = lean.sections.filter(section => section.id.startsWith('lecture-api-'));
+  expect(moved.length).toBeGreaterThan(5);
+  for (const section of moved) {
+    expect(full.reference).toContain(section.content);
+    expect(lean.reference).toContain(section.id);
+    expect(lean.reference).not.toContain(section.content);
+    let restored = '';
+    const reader = createReferenceTools(lean.sections);
+    for (let offset: number | undefined = 0; offset !== undefined;) {
+      const page = await reader.read({id:section.id,offset},new AbortController().signal);
+      restored += page.content; offset = page.nextOffset;
+    }
+    expect(restored).toBe(section.content);
+  }
+});
 
 test('compact context moves only complete recipes to an indexed verbatim reference', () => {
   const context = buildAuthoringContext(reference);

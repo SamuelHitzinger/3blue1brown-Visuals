@@ -2,6 +2,7 @@ import { afterEach, expect, test } from 'bun:test';
 import { mkdtemp, mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { createCanvas } from '@napi-rs/canvas';
 import { createHandler } from '../src/server.js';
 import { createCaptureGateway } from '../src/capture-gateway.js';
 import { LectureService } from '../src/lectures.js';
@@ -18,7 +19,7 @@ const desktop = (path: string, method = 'GET', body?: unknown, owner = 'alice') 
 const phone = (path: string, token?: string, method = 'GET', body?: BodyInit) => new Request(`https://phone.example${path}`, {
   method, headers: { Origin: 'https://phone.example', ...(token ? { Authorization: `Bearer ${token}` } : {}) }, ...(body === undefined ? {} : { body }),
 });
-async function fixture() {
+async function fixture(extract: NonNullable<ConstructorParameters<typeof LectureCaptureService>[2]>['extract'] = async () => 'A vector has direction.') {
   const directory = await mkdtemp(join(tmpdir(), 'aha-capture-routing-'));
   cleanup.push(() => rm(directory, { recursive: true, force: true }));
   await mkdir(join(directory, 'assets'));
@@ -33,7 +34,7 @@ async function fixture() {
     sections: [{ id: 'vectors', title: 'Vectors', points: [{ text: 'A vector has direction.', sourceIds: [input.sources[0].id] }] }], concepts: [], questions: [] }));
   cleanup.push(() => lectures.close());
   const captures = new LectureCaptureService(':memory:', lectures, { publicOrigin: 'https://phone.example',
-    extract: async () => 'A vector has direction.' });
+    extract });
   cleanup.push(() => captures.close());
   const app = createHandler(directory, undefined, undefined, undefined, lectures, captures);
   return { app, gateway: createCaptureGateway(app, captures) };
@@ -92,6 +93,27 @@ test('stable recorder installation assets pass through gateway without exposing 
   expect((await gateway(phone('/capture.webmanifest', undefined, 'POST'))).status).toBe(405);
   expect((await gateway(phone('/private.txt'))).status).toBe(404);
   expect((await gateway(phone('/static/private.txt'))).status).toBe(404);
+});
+
+test('app routes cropped images to owner capture service while phone gateway cannot retrieve them', async () => {
+  const { app, gateway } = await fixture(async () => ({ text: 'A vector has direction.', photoSnippet: { crop: { x: 0.1, y: 0.2, width: 0.5, height: 0.5 }, description: 'Annotated trace' } }));
+  const { lecture, token } = await pair(app, gateway);
+  const body = new FormData();
+  body.set('metadata', JSON.stringify({ clientId: 'snippet-route', kind: 'photo', sequence: 1, capturedAt: '2026-10-14T12:00:00.000Z' }));
+  body.set('file', new File([new Uint8Array(await createCanvas(800, 600).encode('jpeg'))], 'photo.jpg', { type: 'image/jpeg' }));
+  expect((await gateway(phone('/api/capture/items', token, 'POST', body))).status).toBe(202);
+  let sourceId: string | undefined;
+  for (let attempt = 0; attempt < 100 && !sourceId; attempt++) {
+    const result = await (await app(desktop(`/api/lectures/${lecture.id}`))).json() as LectureSession;
+    sourceId = result.sources[0]?.id;
+    if (!sourceId) await Bun.sleep(5);
+  }
+  expect(sourceId).toBeDefined();
+  const path = `/api/lectures/${lecture.id}/sources/${sourceId}/photo-snippet`;
+  const response = await app(desktop(path));
+  expect(response.status).toBe(200); expect(response.headers.get('content-type')).toBe('image/jpeg');
+  expect((await app(desktop(path, 'GET', undefined, 'bob'))).status).toBe(404);
+  expect((await gateway(phone(path, token))).status).toBe(404);
 });
 
 test('real gateway blocks desktop APIs even with valid device capability and spoofed identity', async () => {

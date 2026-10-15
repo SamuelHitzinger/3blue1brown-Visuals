@@ -62,7 +62,7 @@ export interface AgentTask {
   validate?: (output: string) => Promise<void>;
   signal?: AbortSignal;
   images?: ImageContent[];
-  logContext?: Pick<LogFields, 'videoId' | 'stage' | 'sceneIndex'>;
+  logContext?: Pick<LogFields, 'videoId' | 'lectureId' | 'stage' | 'sceneIndex'>;
   outputMode?: 'text' | 'validated-reference' | 'submit' | 'submit-only';
   /** Scene-only, nonterminal tools. Sources still pass the authoritative validator. */
   sceneTools?: {
@@ -147,7 +147,8 @@ export class PiAgentRunner implements AgentRunner {
         ? AGENT_COMPLETION_INSTRUCTIONS[mode].replace('Web research tools are available for gathering evidence before submission. ', '')
         : AGENT_COMPLETION_INSTRUCTIONS[mode];
       const completion = protocol + (task.sceneTools && mode === 'validated-reference'
-        ? '\nYou may also select a candidateId returned by inspect_scene or preview_scene; both run the same host validation before inspection. No extra validate_output call is needed for that candidate.' : '');
+        ? '\nYou may also select a candidateId returned by inspect_scene or preview_scene; both run the same host validation before inspection. No extra validate_output call is needed for that candidate.' : '')
+        + (task.sceneTools && isSubmission ? '\nIf inspect_scene or preview_scene already validated your final scene, call submit_output with only its candidateId instead of repeating the code. Otherwise submit the complete output. Both routes receive final host validation.' : '');
       const settingsManager = SettingsManager.inMemory({ compaction: { enabled: false }, retry: { enabled: false, provider: { maxRetries: 0 } } });
       const resourceLoader = new DefaultResourceLoader({ cwd: this.config.agentDir, agentDir: this.config.agentDir, settingsManager,
         additionalExtensionPaths: task.allowWeb === false ? [] : [webAccessExtension],
@@ -187,11 +188,15 @@ export class PiAgentRunner implements AgentRunner {
       });
       const submissionTool = defineTool({ name: 'submit_output', label: 'Submit final output',
         description: 'Submit your complete final output. On successful host validation this ends the task. Use only when satisfied with its correctness and explanatory quality. Call alone, with no other tool calls in the turn. Failed validation returns diagnostics so you can repair and resubmit.',
-        parameters: Type.Object({ output: Type.String({ maxLength: 256000 }) }),
-        async execute(id, { output }) {
+        parameters: Type.Object({ output: Type.Optional(Type.String({ maxLength: 256000 })), ...(task.sceneTools ? { candidateId: Type.Optional(Type.String()) } : {}) }),
+        async execute(id, args) {
           try {
             signal.throwIfAborted();
             if (currentAssistant?.content.filter(block => block.type === 'toolCall').length !== 1) throw new Error('Call submit_output alone to select one unambiguous final output.');
+            const candidateId = 'candidateId' in args ? args.candidateId : undefined;
+            if ((args.output !== undefined) === (candidateId !== undefined)) throw new Error('Provide exactly one of output or candidateId.');
+            const output = candidateId === undefined ? args.output! : candidates.get(String(candidateId));
+            if (output === undefined || (candidateId !== undefined && !task.sceneTools)) throw new Error('Unknown candidateId. Inspect or submit the complete source first.');
             if (!output.trim()) throw new Error('Output must not be empty.');
             await validate(output, 'tool');
             signal.throwIfAborted();

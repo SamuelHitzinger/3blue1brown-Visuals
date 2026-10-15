@@ -4,11 +4,14 @@ import { Database } from 'bun:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { proxyUser } from './identity.js';
+import { isTrustedAppRequest } from './request-origin.js';
 import { AgentError } from './agents/config.js';
 import { parseLectureNotes } from './agents/lecture.js';
+import { logStage } from './logging.js';
 import type { LectureSession, LectureSummary, LectureSource, LectureSynthesizer, LectureVisualGenerator, LectureVisualization, LectureVisualInput } from '../../shared/lecture.js';
 
 const MAX_SOURCE = 40_000, MAX_TOTAL_SOURCE = 250_000, MAX_SOURCES = 1200, MAX_BODY_BYTES = 500_000, MAX_VISUALIZATIONS = 24;
+const NOTES_FORMAT_VERSION = 3;
 const NO_SYNTHESIS = 'Your lecture material is saved. Connect the server AI service, then retry updating the notes.';
 const NO_VISUALIZATION = 'Your notes are saved. Connect the server visualization service, then retry this explanation.';
 type Row = { id: string; owner: string; key: string; input: string; snapshot: string };
@@ -67,6 +70,7 @@ export class LectureService {
       CREATE TABLE IF NOT EXISTS lecture_visual_inputs (id TEXT PRIMARY KEY, lecture TEXT NOT NULL, input TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS lecture_view_links (lecture TEXT PRIMARY KEY, token_hash TEXT NOT NULL, expires_at INTEGER NOT NULL);
       CREATE TABLE IF NOT EXISTS lecture_deleted_courses (owner TEXT NOT NULL, course TEXT NOT NULL, PRIMARY KEY(owner,course));
+      CREATE TABLE IF NOT EXISTS lecture_preferences (owner TEXT PRIMARY KEY, instructions TEXT NOT NULL);
       CREATE INDEX IF NOT EXISTS lectures_owner ON lectures(owner);`);
     this.concurrency = Number.isFinite(options.concurrency) ? Math.max(1, Math.min(4, Math.floor(options.concurrency!))) : 2;
     for (const row of this.rows()) {
@@ -85,6 +89,9 @@ export class LectureService {
     return orderLectureSummaries(sessions);
   }
   private row(id: string): Row | null { return this.db.query('SELECT * FROM lectures WHERE id = ?').get(id) as Row | null; }
+  private instructions(owner: string): string {
+    return (this.db.query('SELECT instructions FROM lecture_preferences WHERE owner = ?').get(owner) as { instructions: string } | null)?.instructions ?? '';
+  }
   private decode(row: Row): LectureSession { return JSON.parse(row.snapshot); }
   private snapshot(id: string): LectureSession | undefined { const row = this.row(id); return row ? this.decode(row) : undefined; }
   /** Host-only access: callers supply the already authenticated storage owner. */
@@ -128,11 +135,12 @@ export class LectureService {
   private enqueueVisual(session: LectureSession, conceptId: string): LectureVisualization {
     const concept = session.notes?.concepts.find(concept => concept.id === conceptId);
     if (!concept) throw new LectureError('This lecture concept is unavailable. Update the notes and try again.', 404);
+    if (concept.visualKind === 'static') throw new LectureError('This concept already has a static diagram.');
     const current = session.visualizations.find(visual => visual.conceptId === conceptId);
     if (!current && session.visualizations.length >= MAX_VISUALIZATIONS) throw new LectureError('This lecture has reached its limit of 24 visual explanations. Start another session for more.', 409);
-    if (current && (current.status === 'queued' || current.status === 'processing' || (current.status === 'ready' && current.sourceRevision === session.synthesizedRevision))) return current;
+    if (current && (current.status === 'queued' || current.status === 'processing' || (current.status === 'ready' && current.sourceRevision === session.synthesizedRevision && !current.stale))) return current;
     // Keep the last working scene and its true revision visible during a refresh or failure.
-    const visual: LectureVisualization = { ...(current?.source ? current : {}), id: current?.id ?? crypto.randomUUID(), conceptId, title: concept.title,
+    const visual: LectureVisualization = { ...(current?.source ? current : (concept.visualKind ? { visualKind: concept.visualKind } : {})), id: current?.id ?? crypto.randomUUID(), conceptId, title: concept.title,
       sourceRevision: current?.source ? current.sourceRevision : session.synthesizedRevision, status: this.options.visualize ? 'queued' : 'failed', catalogIds: current?.source ? current.catalogIds : [...concept.catalogIds],
       ...(!this.options.visualize ? { error: NO_VISUALIZATION } : {}) };
     if (this.options.visualize) delete visual.error;
@@ -167,7 +175,11 @@ export class LectureService {
     work.done = Promise.resolve().then(async () => {
       if (this.stopped || controller.signal.aborted || !this.row(id)) return;
       // A lecture inference has a bounded lifetime independent of the upload connection.
-      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(visualId ? (this.options.visualizationTimeoutMs ?? 6 * 60_000) : (this.options.synthesisTimeoutMs ?? 2 * 60_000))]);
+      const session = this.snapshot(id)!;
+      // Full refreshes re-read the complete lecture and may need validation recovery;
+      // keep the shorter deadline for ordinary incremental capture updates.
+      const fullRefresh = session.notesRefreshRequested || (!!session.notes && session.notesFormatVersion !== NOTES_FORMAT_VERSION);
+      const signal = AbortSignal.any([controller.signal, AbortSignal.timeout(visualId ? (this.options.visualizationTimeoutMs ?? 6 * 60_000) : (this.options.synthesisTimeoutMs ?? (fullRefresh ? 6 : 2) * 60_000))]);
       if (visualId) await this.runVisual(id, visualId, signal); else await this.runNotes(id, signal);
     }).catch(() => {
       // Storage failures must not become unhandled rejections or expose source/provider details.
@@ -183,6 +195,8 @@ export class LectureService {
   }
   private async runNotes(id: string, signal: AbortSignal) {
     const initial = this.snapshot(id)!;
+    const refresh = initial.notesRefreshRequested || (!!initial.notes && initial.notesFormatVersion !== NOTES_FORMAT_VERSION);
+    delete initial.notesRefreshRequested;
     initial.status = 'processing'; delete initial.error; this.save(initial);
     // Bound each incremental update; only mark the batch covered after success.
     let chars = 0, count = 0, revision = initial.synthesizedRevision;
@@ -190,22 +204,28 @@ export class LectureService {
       if (count && (count >= 12 || chars + source.text.length > 24_000)) break;
       chars += source.text.length; count++; revision = source.sequence;
     }
+    if (refresh) revision = initial.sourceRevision;
     const sources = initial.sources.filter(source => source.sequence <= revision);
     try {
       if (!this.synthesize) throw new AgentError('CONFIG', NO_SYNTHESIS);
-      const result = await abortable(this.trackProvider(this.synthesize({ title: initial.title, sources, previousNotes: initial.notes,
-        previousSourceRevision: initial.synthesizedRevision }, signal)), signal);
-      signal.throwIfAborted();
-      const notes = parseLectureNotes(JSON.stringify(result), sources, initial.notes);
+      const notes = await logStage({ lectureId: id, stage: 'lecture-notes', sourceRevision: revision, pendingSources: initial.sourceRevision - initial.synthesizedRevision }, async () => {
+        const result = await abortable(this.trackProvider(this.synthesize!({ lectureId: id, title: initial.title, sources, previousNotes: initial.notes,
+          instructions: this.instructions(this.row(id)!.owner), previousSourceRevision: refresh ? 0 : initial.synthesizedRevision }, signal)), signal);
+        signal.throwIfAborted();
+        return parseLectureNotes(JSON.stringify(result), sources, initial.notes);
+      });
       if (this.stopped) return;
       const current = this.snapshot(id); if (!current) return;
       const previousIds = new Set(initial.notes?.concepts.map(concept => concept.id) ?? []);
-      current.notes = notes; current.synthesizedRevision = revision;
-      current.status = current.sourceRevision > revision ? 'queued' : 'idle'; delete current.error;
+      for (const visual of current.visualizations) {
+        if (JSON.stringify(initial.notes?.concepts.find(concept => concept.id === visual.conceptId)) !== JSON.stringify(notes.concepts.find(concept => concept.id === visual.conceptId))) visual.stale = true;
+      }
+      current.notes = notes; current.synthesizedRevision = revision; current.notesFormatVersion = NOTES_FORMAT_VERSION;
+      current.status = current.sourceRevision > revision || current.notesRefreshRequested ? 'queued' : 'idle'; delete current.error;
       updateFinishedTitle(current);
       // Only one newly discovered concept is automatic. Other concepts remain deliberate requests.
       const firstNew = current.visualizations.length < MAX_VISUALIZATIONS
-        ? notes.concepts.find(concept => !previousIds.has(concept.id) && !current.visualizations.some(visual => visual.conceptId === concept.id)) : undefined;
+        ? notes.concepts.find(concept => concept.visualKind !== 'static' && !previousIds.has(concept.id) && !current.visualizations.some(visual => visual.conceptId === concept.id)) : undefined;
       this.db.transaction(() => { if (firstNew) this.enqueueVisual(current, firstNew.id); this.save(current); })();
     } catch (error) {
       if (this.stopped || !this.row(id)) return;
@@ -231,6 +251,8 @@ export class LectureService {
       const current = this.snapshot(id), target = current?.visualizations.find(item => item.id === visualId);
       if (!current || !target) return;
       target.source = result.source; target.duration = result.duration; target.catalogIds = result.catalogIds;
+      if (job.input.concept.visualKind === 'animation' || job.input.concept.visualKind === 'interactive') target.visualKind = job.input.concept.visualKind; else delete target.visualKind;
+      target.stale = JSON.stringify(current.notes?.concepts.find(concept => concept.id === target.conceptId)) !== JSON.stringify(job.input.concept);
       target.sourceRevision = job.sourceRevision;
       if (result.assets) target.assets = result.assets; else delete target.assets;
       target.status = 'ready'; delete target.error; this.save(current);
@@ -272,11 +294,9 @@ export class LectureService {
       const url = new URL(request.url), user = proxyUser(request), owner = user ? `user:${user.id}` : 'local';
       let path: string; try { path = decodeURIComponent(url.pathname); } catch { throw new LectureError('Invalid URL.'); }
       const match = /^\/api\/lectures(?:\/([a-f0-9-]{36})(?:\/(sources|synthesize|concepts|finish)(?:\/([a-z0-9][a-z0-9_-]{0,79})\/visualize)?)?)?$/.exec(path);
-      if (!['/api/lectures/reorder', '/api/lectures/detach-course'].includes(path) && (!match || (match![2] === 'concepts') !== !!match![3])) return json({ detail: 'Not Found' }, 404);
+      if (!['/api/lectures/preferences', '/api/lectures/reorder', '/api/lectures/detach-course'].includes(path) && (!match || (match![2] === 'concepts') !== !!match![3])) return json({ detail: 'Not Found' }, 404);
       if (!['GET', 'HEAD'].includes(request.method)) {
-        const origin = request.headers.get('origin'), protocol = request.headers.get('x-forwarded-proto') ?? url.protocol.slice(0, -1);
-        const publicOrigin = process.env.NARRATION_PUBLIC_ORIGIN ?? `${protocol}://${url.host}`;
-        if (request.headers.get('sec-fetch-site') === 'cross-site' || (origin && origin !== publicOrigin)) throw new LectureError('Invalid origin.', 403);
+        if (!isTrustedAppRequest(request)) throw new LectureError('Invalid origin.', 403);
       }
       const key = () => field(request.headers.get('Idempotency-Key'), 'an Idempotency-Key', 128);
       const body = async (): Promise<Record<string, unknown>> => {
@@ -297,6 +317,13 @@ export class LectureService {
         if (!value || typeof value !== 'object' || Array.isArray(value)) throw new LectureError('Provide a JSON object.');
         return value as Record<string, unknown>;
       };
+      if (path === '/api/lectures/preferences') {
+        if (request.method === 'GET') return json({ instructions: this.instructions(owner) });
+        if (request.method !== 'PATCH') return method('GET, PATCH');
+        const input = await body(), instructions = field(input.instructions, 'note instructions', 1000, true).trim();
+        this.db.query('INSERT OR REPLACE INTO lecture_preferences VALUES (?, ?)').run(owner, instructions);
+        return json({ instructions });
+      }
       if (path === '/api/lectures/detach-course') {
         if (request.method !== 'POST') return method('POST');
         const input = await body(), courseId = field(input.courseId, 'a course ID', 200);
@@ -403,6 +430,7 @@ export class LectureService {
       } else if (match![2] === 'synthesize') {
         clearTimeout(this.synthesisTimers.get(id)); this.synthesisTimers.delete(id);
         if (!session.sources.length) throw new LectureError('Add lecture text before updating the notes.');
+        if (session.synthesizedRevision === session.sourceRevision) session.notesRefreshRequested = true;
         this.prepareSynthesis(session);
         this.save(session);
       } else this.db.transaction(() => { this.enqueueVisual(session, match![3]); this.save(session); })();

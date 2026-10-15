@@ -56,4 +56,9 @@ export interface CaptureCapabilities {
   publicOrigin?: string;
   detail?: string;
 }
-export type CaptureExtractor = (file: File, metadata: CaptureMetadata, signal: AbortSignal) => Promise<string>;
+export interface CaptureExtraction {
+  text: string;
+  photoSnippet?: import('./lecture').LecturePhotoSnippet;
+  visualEvidence?: string;
+}
+export type CaptureExtractor = (file: File, metadata: CaptureMetadata, signal: AbortSignal) => Promise<string | CaptureExtraction>;

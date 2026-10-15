@@ -29,7 +29,8 @@ const lectureConfig = config && { ...config, model: process.env.LECTURE_MODEL ??
 const lectureRunner = lectureConfig ? new PiAgentRunner(lectureConfig) : undefined;
 const lectures = new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'),
   lectureRunner ? (input, signal) => generateLectureNotes(lectureRunner, input, signal) : undefined,
-  { visualize: config ? createLectureVisualGenerator(new PiAgentRunner(config), config.dataDir, { preview }) : undefined, synthesisDebounceMs: 3_000 });
+  { visualize: config ? createLectureVisualGenerator(new PiAgentRunner({ ...config, thinking: 'medium' }), config.dataDir,
+    { preview, reviewRunner: new PiAgentRunner(config) }) : undefined, synthesisDebounceMs: 3_000 });
 const liveBridge = new LectureLiveBridge(process.env.LIVE_BRIDGE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-live-bridge.sqlite'), lectures);
 const transcription = lectureTranscriptionConfig();
 const captures = new LectureCaptureService(process.env.CAPTURE_DB_PATH ?? join(dirname(process.env.LECTURE_DB_PATH ?? process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lecture-capture.sqlite'), lectures, {
@@ -63,7 +64,8 @@ const server = Bun.serve({
 });
 
 console.log(`Aha! backend listening on ${server.url}`);
-// Forward only this listener through private HTTPS. Never forward the anonymous desktop API.
+// Capture-only links use this restricted listener. Full website sharing requires
+// a separately authorized, access-controlled proxy and explicit APP_PUBLIC_ORIGIN.
 const capturePort = process.env.CAPTURE_PORT === undefined ? undefined : Number(process.env.CAPTURE_PORT);
 if (capturePort !== undefined && (!Number.isInteger(capturePort) || capturePort < 1 || capturePort > 65535)) throw new Error('CAPTURE_PORT must be an integer from 1 to 65535.');
 const captureServer = capturePort === undefined ? undefined : Bun.serve({
