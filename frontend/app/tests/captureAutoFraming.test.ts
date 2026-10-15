@@ -95,6 +95,22 @@ async function inspect(media: CapturedMedia) {
   return { width: image.width, height: image.height, red, blue }
 }
 
+test('stable board with small hand movement adds no repeated hardware zoom waits', async () => {
+  const fixture = cameraFixture({ cameraZoom: true })
+  try {
+    await fixture.engine.start(); await fixture.engine.takePhoto()
+    assert.ok(fixture.zoom > 1)
+    const requests = [...fixture.zoomRequests]
+    for (const shift of [0, 2, -2, 1, 0]) {
+      fixture.move({ x: 160 + shift, y: 150 + shift, width: 320, height: 180 })
+      await fixture.engine.takePhoto()
+      const photo = await inspect(fixture.photos.at(-1)!)
+      assert.ok(photo.red > 50 && photo.blue > 50, 'Movement must not clip edge labels')
+    }
+    assert.deepEqual(fixture.zoomRequests, requests, 'Steady captures must not pay camera settling delay again')
+  } finally { await fixture.close() }
+})
+
 for (const dark of [false, true]) test(`automatically crops ${dark ? 'blackboard' : 'whiteboard/slide'} before notes handoff without camera zoom`, async () => {
   const fixture = cameraFixture({ dark })
   try {
