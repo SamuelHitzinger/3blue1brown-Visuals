@@ -169,7 +169,22 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     if (!scene) return null;
     const { instructions, ...input } = buildSceneAgentInput(pkg, scene.id, previousFrame);
     const planning = scenePlanningContext(story, index, plan);
-    const resolvedCues = resolveSpeechCues(scene, planning.current?.speechCues ?? []);
+    let resolvedCues: ReturnType<typeof resolveSpeechCues>;
+    try {
+      resolvedCues = resolveSpeechCues(scene, planning.current?.speechCues ?? []);
+    } catch (cause) {
+      // Both the approved cues and this narration packet are immutable during
+      // generation; author retries cannot repair an exact-match failure here.
+      const diagnostic = validationMessage(cause);
+      await atomicWrite(join(directory, `scene-${index}.speech-cue-error.json`), JSON.stringify({
+        code: 'RECOVERY_EXHAUSTED', sceneId: scene.id, packageId: pkg.id,
+        scriptHash: pkg.scriptHash, diagnostic,
+      }, null, 2));
+      const failure = new AgentError('RECOVERY_EXHAUSTED',
+        `Speech cue resolution failed for ${scene.id}: ${diagnostic}`, { retryable: false });
+      failure.cause = cause;
+      throw failure;
+    }
     const hostTiming = options.timingMode === 'host' || Object.keys(resolvedCues).length > 0;
     const timingInput = { ...input, resolvedCues };
     const sceneBrief = buildSceneBrief({ lesson: plan, scene: planning.current, context: scene.context,

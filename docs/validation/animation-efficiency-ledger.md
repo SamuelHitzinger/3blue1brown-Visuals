@@ -44,3 +44,4 @@
 - Independent review-gate fix review: ten regression checks passed, including approval reuse after interruption and floating-point endpoint normalization.
 - Pushed resource milestone 49890de and authoring/prompt milestone 2718b71. Next checkpoint contains the reviewed bounded visual gate and experiment harnesses.
 - Completion not established. Model speed, independent rendered quality and holdout evidence remain required.
+- Whole-branch review P1: immutable speech-cue resolution failures now terminate as `RECOVERY_EXHAUSTED`, preserving their cause and scene/package diagnostic artifact. A real-generator/SQLite VideoService regression failed before the fix and now proves no author call, retry wait or restart; 1 test/13 assertions passed. The successful named-cue generator case also passed (1 test/9 assertions). Focused checks only during live timing.

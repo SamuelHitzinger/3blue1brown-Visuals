@@ -3,13 +3,15 @@ import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { compileSource, evaluateScene } from 'animlib/core';
-import { agentConfig } from '../src/agents/config.js';
+import { AgentError, agentConfig } from '../src/agents/config.js';
 import { createPiGenerator as createProductionGenerator } from '../src/agents/generator.js';
 import { reviewGeneratedScene } from '../src/agents/visual-gate.js';
 import { sourceHash } from '../src/agents/visual-edits.js';
 import type { AgentTask } from '../src/agents/runtime.js';
 import type { NarrationService } from '../src/narration/service.js';
 import type { NarrationScenePackage } from '../src/narration/types.js';
+import { alignWords } from '../src/narration/alignment.js';
+import { SHARED_OWNER, VideoService } from '../src/videos.js';
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
@@ -78,6 +80,62 @@ test('planned semantic cues enable scheduling without timestamp arithmetic even 
   const result = await generate(f.request, 0, f.context);
   const compiled = await compileSource(result!.scene.source), expected = await compileSource(literal);
   for (const time of [0, .125, .375, .625, 1, .375]) expect(evaluateScene(compiled, time)).toEqual(evaluateScene(expected, time));
+});
+
+test('an immutable narration cue mismatch terminates durable generation without retry or restart', async () => {
+  const f=await fixture(), measured=structuredClone(packet), spoken='sixty four';
+  const characters=Array.from(spoken), aligned=alignWords({characters,
+    character_start_times_seconds:characters.map((_,i)=>i/10),
+    character_end_times_seconds:characters.map((_,i)=>(i+1)/10)},'beat-1.u1',0);
+  Object.assign(measured.scenes[0].utterances[0],{text:'64.',spokenText:aligned.text,words:aligned.words,sentences:aligned.sentences});
+  const markdown='# Number\n\n## Beat 1\n\nContent needed: Show the number.\n\nNarration: 64.';
+  const lesson={schemaVersion:1,instructionVersion:3,markdown,plan:{audience:'Beginner',prerequisites:[],
+    learningGoal:'Read a number',centralQuestion:'Which number?',keyInsight:'The displayed value is sixty four',
+    runningExample:'64',misconceptions:[],entities:[],scenes:[{id:'beat-1',purpose:'Show the number',whyNow:'Introduce the value',
+      keyPoints:['The value is sixty four'],visualDescription:'Reveal the number at its spoken cue',endsWith:'Number visible',
+      carry:[],cleanup:[],sourceRefs:[],interactions:[],speechCues:[{id:'number',phrase:'64'}]}]}};
+  let authorCalls=0,generationCalls=0,recoveryWaits=0,failure:unknown,videoDirectory='';
+  const narration={...f.narration,async submit(){throw new Error('Committed narration must be reused');},
+    async scenePackage(){return measured;}} as unknown as NarrationService;
+  const generate=createProductionGenerator({async run(){authorCalls++;throw new Error('Author must not run for unresolved speech');}},narration,f.root);
+  const database=join(f.root,'videos.db');
+  const service=new VideoService(database,async(request,index,context)=>{
+    generationCalls++;
+    videoDirectory=join(f.root,context!.videoId);await mkdir(videoDirectory,{recursive:true});
+    await writeFile(join(videoDirectory,'lesson.json'),JSON.stringify(lesson));
+    await writeFile(join(videoDirectory,'narration-id'),measured.id);
+    try{return await generate(request,index,context);}catch(error){failure=error;throw error;}
+  },'pi',undefined,{delay:()=>60_000,wait:async(_ms,signal)=>{
+    recoveryWaits++;
+    // If regression attempts recovery, pause it until cleanup instead of spinning.
+    await new Promise<void>(resolve=>{if(signal?.aborted)resolve();else signal?.addEventListener('abort',()=>resolve(),{once:true});});
+  }});
+  let videoId='';
+  try{
+    const video=service.create(SHARED_OWNER,'cue-mismatch',f.request);videoId=video.id;
+    for(let i=0;i<100;i++){
+      const state=service.get(video.id,SHARED_OWNER)!;
+      if(state.status==='failed'||state.recovery)break;
+      await Bun.sleep(5);
+    }
+    const state=service.get(video.id,SHARED_OWNER)!;
+    expect(state.status).toBe('failed');expect(state.errorCode).toBe('RECOVERY_EXHAUSTED');
+    expect(state.recovery).toBeUndefined();expect(state.scenes).toEqual([]);
+    expect(generationCalls).toBe(1);expect(recoveryWaits).toBe(0);expect(authorCalls).toBe(0);
+    expect(failure).toBeInstanceOf(AgentError);
+    expect(failure).toMatchObject({code:'RECOVERY_EXHAUSTED',diagnostics:{retryable:false},
+      cause:{message:'Speech cue number phrase not found: 64'}});
+    const diagnostics=JSON.parse(await readFile(join(videoDirectory,'scene-0.speech-cue-error.json'),'utf8'));
+    expect(diagnostics).toMatchObject({code:'RECOVERY_EXHAUSTED',sceneId:'beat-1',packageId:measured.id,
+      diagnostic:'Speech cue number phrase not found: 64'});
+    expect(state.error).not.toContain('phrase not found');
+  }finally{await service.close();}
+  const restarted=new VideoService(database,async()=>{generationCalls++;throw new Error('Terminal job restarted');},'pi');
+  try{
+    await Bun.sleep(20);
+    expect(restarted.get(videoId,SHARED_OWNER)?.status).toBe('failed');
+    expect(generationCalls).toBe(1);
+  }finally{await restarted.close();}
 });
 
 for (const outputMode of ['text', 'validated-reference'] as const) {

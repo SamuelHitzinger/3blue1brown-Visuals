@@ -1,6 +1,6 @@
 # Composition and semantic scheduling — Task 1
 
-Date: 2026-10-15. Branch: `codex/animation-authoring-efficiency`, based on inherited checkpoint `6d9798e`. Worker did not commit or change generator/planning/handoff files.
+Date: 2026-10-15. Branch: `codex/animation-authoring-efficiency`, based on inherited checkpoint `6d9798e`. Worker did not commit. Initial implementation left generator/planning/handoff integration to root; the later terminal-recovery correction below explicitly includes generator ownership.
 
 ## Implemented contract
 
@@ -64,3 +64,13 @@ The correction preserves canonical alignment and saved word IDs/times. Cue match
 Three new integration regressions were observed failing before this correction. They call the actual production `alignWords` on text containing an astral character, signs, decimals, digit grouping, percentages, hyphenated/alphanumeric compounds and repeated negative spans. They verify exact measured word IDs/times, rejection of punctuation-flattened partial matches, repeated-phrase occurrence selection, authoritative spoken-text precedence, and valid/invalid source fallbacks.
 
 Fresh verification after the correction: `bun test ./backend/test/speech-cues.test.ts ./backend/test/timing-prelude.test.ts` with local `TEMP`/`TMP` passed **13 tests, 75 assertions**. Only `timing-prelude.ts`, the focused cue test file, and this report changed for the correction; canonical alignment generation remains unchanged.
+
+## Whole-branch review correction: terminal cue resolution
+
+The review found that a correct exact-match rejection could enter unbounded outer recovery: the approved source cue `64` passes planning validation, but measured provider speech `sixty four` cannot resolve that cue. Both cached inputs are immutable during scene generation, so repeating the author cannot repair this mismatch.
+
+The generator now catches only the speech-cue resolver call and throws `AgentError('RECOVERY_EXHAUSTED', ..., {retryable:false})`, preserving the original error as `cause`. It writes `scene-N.speech-cue-error.json` with the scene/package/script identity and exact diagnostic. Unrelated narration, authoring and persistence errors retain their own handling. It never guesses a replacement anchor or edits cached narration.
+
+The new integration regression calls the real generator with a saved approved plan, cached narration built with production `alignWords`, and the durable SQLite-backed `VideoService`. It first failed with the old `generating` recovery state. After the fix it proves one generator invocation, zero author calls or recovery waits, a terminal persisted failure, retained private diagnostics, sanitized public error text, and no restart after reopening the database.
+
+Focused verification with workspace-local `TEMP`/`TMP`: `bun test ./backend/test/scene-timing.test.ts --test-name-pattern 'immutable narration cue mismatch'` passed **1 test, 13 assertions**; the existing `--test-name-pattern 'planned semantic cues'` successful generation case passed **1 test, 9 assertions**. No broad suite or benchmark was run during the active live timing window.
