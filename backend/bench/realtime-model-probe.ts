@@ -16,7 +16,7 @@ import type { ProbeCase } from './realtime-probe/prompts.js';
 
 const hash = (text: string | Uint8Array) => createHash('sha256').update(text).digest('hex');
 const save = (path: string, value: unknown) => writeFile(path, JSON.stringify(value, null, 2), { flag: 'wx' });
-const help = 'Use list OR run --case=cube|curve|diagram|external --format=native-js|ops --action=create|edit --model=ID --thinking=off|minimal|low|medium|high|xhigh|max --service-tier=priority|default --out=NEW_DIRECTORY [--timeout-ms=90000] [--max-tokens=2048] [--prompt-file=PATH] [--image=PNG_OR_JPEG]. External requires prompt-file. Run makes one real model request; list uses local catalog/auth metadata only.';
+const help = 'Use list OR run --case=cube|curve|diagram|external --format=native-js|ops --action=create|edit --model=ID --thinking=off|minimal|low|medium|high|xhigh|max --service-tier=priority|default --out=NEW_DIRECTORY [--timeout-ms=90000] [--max-tokens=2048] [--prompt-file=PATH] [--system-file=PATH] [--image=PNG_OR_JPEG]. External requires prompt-file. System override is external-only; format then selects text metrics, not a grammar guarantee. Run makes one real model request; list uses local catalog/auth metadata only.';
 function argumentsFor(args: string[]) {
   const values: Record<string, string> = {};
   const allowed = new Set(['case','format','action','model','thinking','service-tier','out','timeout-ms','max-tokens','prompt-file','system-file','image']);
@@ -82,7 +82,7 @@ export async function main(args = process.argv.slice(2)) {
   ].map(async ([name, path]) => [name, hash(await readFile(fileURLToPath(path), 'utf8'))])));
   await mkdir(dirname(directory), { recursive: true });
   try { await mkdir(directory); } catch { throw new AgentError('CONFIG', 'Output directory must be new; retained runs cannot be overwritten.'); }
-  const identity = { schemaVersion: 1, evidenceKind: 'model-stream-only', case: which, format, action,
+  const identity = { schemaVersion: 1, evidenceKind: 'model-stream-only', case: which, format, action, systemPromptOverridden: !!flags['system-file'],
     model: config.model, provider: config.provider, authMode: config.authMode, thinkingRequested: config.thinking,
     serviceTierRequested: flags['service-tier'], timeoutMs, maxTokensRequested: maxTokens, maxRetries: 0, transportRequested: 'sse',
     promptSha256: hash(JSON.stringify(prompts)), promptBytes: Buffer.byteLength(prompts.systemPrompt + prompts.prompt), sourceHashes, image: imageMetadata,
@@ -149,7 +149,7 @@ export async function main(args = process.argv.slice(2)) {
     priorityConfirmed: actualTier === 'priority' || actualTier === 'fast', reasoningEffortSent: payloadReasoning, maxTokensSent,
     completeResponseWithin5s: state.completeOutputMs !== null && state.completeOutputMs <= 5000,
     completeResponseWithin10s: state.completeOutputMs !== null && state.completeOutputMs <= 10000,
-    stopReason: final?.stopReason ?? null, tokens: final?.usage ? {
+    stopReason: final?.stopReason ?? null, tokens: final?.usage && (outcome === 'complete' || final.usage.totalTokens > 0) ? {
       input: final.usage.input, output: final.usage.output, reasoning: final.usage.reasoning ?? null,
       cacheRead: final.usage.cacheRead, cacheWrite: final.usage.cacheWrite, total: final.usage.totalTokens,
     } : null, sourceSha256: hash(text), sourceBytes: Buffer.byteLength(text), failure };

@@ -39,6 +39,7 @@ compilation, resource preparation and first renderer submission:
 | Create rotating cube and label | 2.72 s | Submitted; visible cube confirmed |
 | Move cube and change fill | 1.76 s | Submitted; retained rotation |
 | Add procedural sine wave and marker | — | Failed: unquoted YELLOW identifier; previous world retained |
+| Create cube plus procedural wave after clarifying color-string syntax | 3.95 s | Submitted; cube, wave and marker visible |
 
 These are **render-submission timestamps**, not hardware presentation timestamps.
 They exclude lecture capture/transcription and do not establish scientific
@@ -52,6 +53,13 @@ The renderer now typesets them through its existing TeX script layout. Original
 failed evidence remains intact; rerenders use new directories. An apparent blank
 operation-render preview was investigated: its final PNG and native-JS final
 PNG are byte-identical. It was not a lowering mismatch.
+
+A fresh critic inspected the local mechanics candidate without model or latency
+information and rated it **4/10, revise**. It reproduced the equal-reaction
+conclusion without explaining symmetry or moments; missing hidden-member cues
+made the support plane ambiguous, and labels collided with geometry. There was
+no matched baseline animation in this review, so it establishes no parity claim.
+The source frame was uploaded only after the user's explicit OpenAI approval.
 
 Ignored local evidence lives under `data/realtime-workshop/`. Exact prompts,
 source hashes, response events, failure outcomes, source media hashes and new

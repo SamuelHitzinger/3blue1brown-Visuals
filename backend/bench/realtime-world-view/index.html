@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Continuous animation workshop</title>
+<style>body{margin:0;background:#10121a;color:#eef0f7;font:16px system-ui}main{max-width:1280px;margin:auto;padding:20px}h1{font-size:24px;margin:0 0 8px}p{color:#adb5c9}canvas{width:100%;aspect-ratio:16/9;background:#080b14;border-radius:8px}form{display:flex;gap:8px;margin:14px 0}input{flex:1;min-width:100px}input,button,select{font:inherit;padding:10px;border:1px solid #44506a;border-radius:6px;background:#1c2332;color:inherit}button{cursor:pointer;background:#215d71}button:disabled{opacity:.5}pre{white-space:pre-wrap;color:#b9c8dc;font-size:13px}#status{min-height:24px}</style>
+<main><h1>Continuous animation workshop</h1><p>New instructions change one persistent world. Prototype: response timing and continuity only; visual quality still needs review.</p>
+<canvas width="1280" height="720" aria-label="Persistent animation world"></canvas>
+<form><select aria-label="Instruction type"><option value="add">Add geometry</option><option value="edit">Edit existing</option></select><input aria-label="Animation instruction" value="Create a blue cube at [-2,0,0], rotating steadily for 60 seconds. Add a small label Rotation above it."><button disabled>Run instruction</button></form>
+<div id="status" role="status">Preparing renderer…</div><pre id="report"></pre></main><script type="module" src="/main.ts"></script></html>

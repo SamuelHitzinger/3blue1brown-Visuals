@@ -41,7 +41,7 @@ Files: `backend/bench/realtime-model-probe.ts`,
 - [x] Add model-only CLI with explicit model/reasoning/tier and immutable results.
 - [x] Test fragmented text, terminal failures and retained evidence.
 - [x] Run initial actual provider calls; inspect sent and returned settings.
-- [ ] Complete matched native/operation create/edit matrix and real-image probe.
+- [x] Complete matched native/operation create/edit matrix and real-image probe.
 
 ## Task 2: Native runtime measurement
 
@@ -57,9 +57,9 @@ Files: `backend/bench/realtime-runtime-probe.ts`,
 Files: `backend/bench/realtime-probe/lower.ts`, `lower.test.ts`, plus a dedicated
 probe-output verifier. Interface: `lowerOperations(text, previousFrame?) -> source`.
 
-- [ ] Test incomplete batches, unknown operations, duplicate/missing IDs and unsafe keys.
-- [ ] Lower only complete bounded transactions into native sandboxed code.
-- [ ] Compile actual native/operation outputs; check command obligations separately.
+- [x] Test incomplete batches, unknown operations, duplicate/missing IDs and unsafe keys.
+- [x] Lower only complete bounded transactions into native sandboxed code.
+- [x] Compile actual native/operation outputs; check command obligations separately.
 - [ ] Render motion proof and request fresh blinded critical review.
 
 ## Task 4: Persistent-world runtime
@@ -68,9 +68,9 @@ Choose exact API after tasks 1–3. Required contract: revisioned atomic apply,
 current-playhead sampling, uninterrupted unaffected motion, stale cancellation,
 rollback and resource retention. Tests must cover each review-focus item above.
 
-- [ ] Write failing continuity and concurrent-update tests before implementation.
+- [x] Write failing continuity and concurrent-update tests before implementation.
 - [ ] Implement generic structural edits and procedural geometry support.
-- [ ] Connect streamed updates to one persistent browser renderer.
+- [x] Connect completed model updates to one persistent browser renderer (incremental stream commits remain open).
 - [ ] Measure complete usable output, not only compilation or first pixels.
 
 ## Task 5: Real-media and broader evaluation
