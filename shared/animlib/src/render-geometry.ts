@@ -23,7 +23,22 @@ import { applyLabelOcclusion, type LabelAnchor } from './label-occlusion.js';
 import { resolveAssetGeometry } from './asset-geometry.js';
 import type { AssetGeometryResolver } from './asset-types.js';
 
-export function textTex(text:string):string {return String.raw`\text{`+text.replace(/[\\{}$&#%_^~]/g,c=>({'\\':String.raw`\backslash `,'{':String.raw`\{`,'}':String.raw`\}`,'$':String.raw`\$`,'&':String.raw`\&`,'#':String.raw`\#`,'%':String.raw`\%`,'_':String.raw`\_`,'^':String.raw`\textasciicircum `,'~':String.raw`\textasciitilde `}[c]!))+'}';}
+function literalTextTex(text:string):string {return String.raw`\text{`+text.replace(/[\\{}$&#%_^~]/g,c=>({'\\':String.raw`\backslash `,'{':String.raw`\{`,'}':String.raw`\}`,'$':String.raw`\$`,'&':String.raw`\&`,'#':String.raw`\#`,'%':String.raw`\%`,'_':String.raw`\_`,'^':String.raw`\textasciicircum `,'~':String.raw`\textasciitilde `}[c]!))+'}';}
+/** Unicode scripts need TeX layout: the bundled font has baseline digits, not
+ * standalone superscript/subscript glyphs. Keep literal text escaping intact. */
+export function textTex(text:string):string {
+  const superscripts='⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿⁱ',subscripts='₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎',baseline='0123456789+-=()ni';
+  let result='',cursor=0;
+  for(const match of text.matchAll(/[⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾ⁿⁱ]+|[₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎]+/g)) {
+    if(match.index>cursor||!result)result+=literalTextTex(text.slice(cursor,match.index));
+    const raised=superscripts.includes(match[0][0]),alphabet=raised?superscripts:subscripts;
+    const digits=Array.from(match[0],character=>baseline[alphabet.indexOf(character)]).join('');
+    result+=`${raised?'^':'_'}{${literalTextTex(digits)}}`;
+    cursor=match.index+match[0].length;
+  }
+  if(cursor<text.length||!result)result+=literalTextTex(text.slice(cursor));
+  return result;
+}
 function contains(contour:Vec3[],point:Vec3):boolean {
   let inside=false;
   for(let i=0,j=contour.length-1;i<contour.length;j=i++) {
