@@ -2,6 +2,8 @@ import { Color } from 'animlib/core';
 import type { VideoRequest } from '../../../shared/video/contract.js';
 import { parseStoryline } from '../narration/markdown.js';
 import type { Storyline } from '../narration/types.js';
+import { validateSpeechCuePhrases } from './timing-prelude.js';
+import type { SpeechCue } from './timing-prelude.js';
 
 export interface PlannedEntity { id: string; meaning: string; color: string }
 export interface PlannedInteraction {
@@ -15,6 +17,8 @@ export interface ScenePlan {
   interactions: PlannedInteraction[];
   /** Optional for saved plans created before explicit view planning. */
   view?: { mode: '2d' | '3d'; rationale: string };
+  /** Named phrases are resolved against measured narration by the host. */
+  speechCues?: SpeechCue[];
 }
 export interface LessonPlan {
   audience: string; prerequisites: string[]; learningGoal: string; centralQuestion: string;
@@ -43,6 +47,7 @@ export const PLANNING_CONTRACT = `Return one JSON object, without code fences, c
       "keyPoints": ["ideas made visible, in order"],
       "visualDescription": "the ordered visual construction, what changes or stays constant, speech cues, and evidence supporting the inference; avoid exact layout or API calls",
       "view": {"mode": "2d", "rationale": "why this representation makes the relationship clear"},
+      "speechCues": [{"id": "show-result", "phrase": "exact short phrase copied from this scene's spoken script"}],
       "endsWith": "a clean end picture that prepares the next scene",
       "carry": ["entity IDs to keep into the next scene"],
       "cleanup": ["entity IDs that should no longer be visible at the end"],
@@ -52,6 +57,7 @@ export const PLANNING_CONTRACT = `Return one JSON object, without code fences, c
   }
 }
 For molecular scenes, visualDescription must name the representation and source identity, explain what observation it enables, and preserve the correspondence/context when changing detail. Use existing fields, not a new schema; do not require molecular detail choices for other topics.
+For important visual operations, name speechCues with stable IDs and exact phrases from the spoken script. Mention these IDs in visualDescription to associate the operation with its speech. The host resolves measured times after synthesis; never invent timestamps. Use a 1-based occurrence only when a phrase repeats, and an optional exact utteranceId to restrict it. Prefer unique phrases and a few meaningful operation anchors over a cue for every word. Empty speechCues is valid when no specific operation needs an anchor. Leave enough narration or explicit pause time for the promised operation and inspection hold.
 Plan and write the script together in this one response. The host performs a separate editorial review before speech synthesis.
 For interactive requests, prefer direct manipulation: let viewers grab and move objects or handles to explore the actual model. Interaction types are drag, custom, slider, toggle, and select. For drag/custom, id names the target element or group; drives describes the gesture, constraints, and dependent geometry/readouts. Custom behaviors require an implementation registered by the host; do not invent unavailable behavior names. Use sliders only when direct manipulation cannot express the quantity clearly or the user explicitly requests one. There is no pedagogical interaction-count quota. Explicitly requested interactions must appear in the relevant scenes' interactions arrays; scenes without useful interaction may use []. The scene author must implement these requirements and may add useful interactions without a planning round trip. A complete narrated default does not make requested interactions optional. In interactive lessons, every 3D model view must allow viewer rotation unless a compelling scene-specific reason makes it misleading or prevents the required task. Explain any exception in visualDescription; convenience, narration, and default framing are not reasons to disable rotation. Orbit is independent of the interactions list.
 Each plan scene must match a parsed Markdown beat ID exactly and in the same order: ## Beat 1 produces beat-1; ## Ponder 2 produces ponder-2. Every beat needs speech and a Content needed description consistent with its plan. Respect requested scene count and duration; no fixed 4-8 scene quota.
@@ -138,8 +144,19 @@ export function parsePlannedLesson(output: string, request: VideoRequest, option
     else if ((!view || options.legacy) && /^\s*2D\s*\(because\b/i.test(description)) view = { mode: '2d', rationale: description };
     const keyPoints = strings(s.keyPoints, `${sceneId}.keyPoints`);
     if (!keyPoints.length) throw new Error(`${sceneId} needs at least one keyPoint.`);
+    const speechCues = s.speechCues === undefined ? undefined : list(s.speechCues, `${sceneId}.speechCues`, 32).map((value, j): SpeechCue => {
+      const cue = object(value, `${sceneId}.speechCues[${j}]`);
+      const occurrence = cue.occurrence;
+      if (occurrence !== undefined && (typeof occurrence !== 'number' || !Number.isSafeInteger(occurrence) || occurrence < 1)) {
+        throw new Error(`${sceneId} speech cue occurrence must be a positive integer.`);
+      }
+      return { id: id(cue.id, 'speechCue.id'), phrase: text(cue.phrase, 'speechCue.phrase'),
+        ...(occurrence !== undefined ? { occurrence } : {}),
+        ...(cue.utteranceId !== undefined ? { utteranceId: text(cue.utteranceId, 'speechCue.utteranceId') } : {}) };
+    });
+    if (speechCues) validateSpeechCuePhrases(story.beats[i].blocks.flatMap(block => block.kind === 'speech' ? [{ id: block.id, text: block.text }] : []), speechCues);
     return { id: sceneId, purpose: text(s.purpose, `${sceneId}.purpose`), whyNow: text(s.whyNow, `${sceneId}.whyNow`), keyPoints,
-      visualDescription: text(s.visualDescription, `${sceneId}.visualDescription`), endsWith: text(s.endsWith, `${sceneId}.endsWith`), carry, cleanup, sourceRefs, interactions, ...(view ? { view } : {}) };
+      visualDescription: text(s.visualDescription, `${sceneId}.visualDescription`), endsWith: text(s.endsWith, `${sceneId}.endsWith`), carry, cleanup, sourceRefs, interactions, ...(view ? { view } : {}), ...(speechCues ? { speechCues } : {}) };
   });
   if (scenes.length !== story.beats.length) throw new Error('Every script beat needs exactly one scene plan.');
   const plan: LessonPlan = { audience: text(p.audience, 'plan.audience'), prerequisites: strings(p.prerequisites, 'plan.prerequisites'),

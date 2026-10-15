@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 1,
+  "scope": "Deterministic synthetic timing and VM/state equivalence; no claim of visual quality, speech alignment accuracy or model generation speed.",
+  "runtime": "v26.3.0",
+  "fixtureTiming": {
+    "durationSec": 10,
+    "utterances": [
+      {
+        "id": "beat-1.u1",
+        "role": "narration",
+        "text": "Show the starting arrangement",
+        "startSec": 1,
+        "endSec": 2,
+        "words": [
+          {
+            "id": "beat-1.u1.w1",
+            "text": "Show",
+            "startSec": 1,
+            "endSec": 1.25
+          },
+          {
+            "id": "beat-1.u1.w2",
+            "text": "the",
+            "startSec": 1.25,
+            "endSec": 1.5
+          },
+          {
+            "id": "beat-1.u1.w3",
+            "text": "starting",
+            "startSec": 1.5,
+            "endSec": 1.75
+          },
+          {
+            "id": "beat-1.u1.w4",
+            "text": "arrangement",
+            "startSec": 1.75,
+            "endSec": 2
+          }
+        ]
+      },
+      {
+        "id": "beat-1.u2",
+        "role": "narration",
+        "text": "Move the selected element",
+        "startSec": 3,
+        "endSec": 4,
+        "words": [
+          {
+            "id": "beat-1.u2.w1",
+            "text": "Move",
+            "startSec": 3,
+            "endSec": 3.25
+          },
+          {
+            "id": "beat-1.u2.w2",
+            "text": "the",
+            "startSec": 3.25,
+            "endSec": 3.5
+          },
+          {
+            "id": "beat-1.u2.w3",
+            "text": "selected",
+            "startSec": 3.5,
+            "endSec": 3.75
+          },
+          {
+            "id": "beat-1.u2.w4",
+            "text": "element",
+            "startSec": 3.75,
+            "endSec": 4
+          }
+        ]
+      },
+      {
+        "id": "beat-1.u3",
+        "role": "narration",
+        "text": "Mark the changed relationship",
+        "startSec": 5,
+        "endSec": 6,
+        "words": [
+          {
+            "id": "beat-1.u3.w1",
+            "text": "Mark",
+            "startSec": 5,
+            "endSec": 5.25
+          },
+          {
+            "id": "beat-1.u3.w2",
+            "text": "the",
+            "startSec": 5.25,
+            "endSec": 5.5
+          },
+          {
+            "id": "beat-1.u3.w3",
+            "text": "changed",
+            "startSec": 5.5,
+            "endSec": 5.75
+          },
+          {
+            "id": "beat-1.u3.w4",
+            "text": "relationship",
+            "startSec": 5.75,
+            "endSec": 6
+          }
+        ]
+      },
+      {
+        "id": "beat-1.u4",
+        "role": "narration",
+        "text": "Hold the visible conclusion",
+        "startSec": 7,
+        "endSec": 8,
+        "words": [
+          {
+            "id": "beat-1.u4.w1",
+            "text": "Hold",
+            "startSec": 7,
+            "endSec": 7.25
+          },
+          {
+            "id": "beat-1.u4.w2",
+            "text": "the",
+            "startSec": 7.25,
+            "endSec": 7.5
+          },
+          {
+            "id": "beat-1.u4.w3",
+            "text": "visible",
+            "startSec": 7.5,
+            "endSec": 7.75
+          },
+          {
+            "id": "beat-1.u4.w4",
+            "text": "conclusion",
+            "startSec": 7.75,
+            "endSec": 8
+          }
+        ]
+      }
+    ],
+    "pauses": []
+  },
+  "results": [
+    {
+      "id": "binary-search",
+      "baseline": "export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{\nconst range=s.rectangle('binary-search-comparison/range',{\"width\":5,\"height\":1,\"fill\":\"none\",\"stroke\":\"BLUE\"});\nconst probe=s.circle('binary-search-comparison/probe',{\"radius\":0.2,\"position\":[-2,0],\"fill\":\"YELLOW\"});\nconst label=s.text('binary-search-comparison/label',{\"text\":\"Choose the middle\",\"position\":[0,1],\"fontSize\":0.3});\nconst group=s.group('binary-search-comparison',[range,probe,label]);\nlet cursor=0;const play=(start,end,actions)=>{s.wait(start-cursor);s.play(actions,{duration:end-start});cursor=end;};\nplay(__narration.start('beat-1.u1.w1'),__narration.end('beat-1.u1.w4'),group.fadeIn());\nplay(__narration.start('beat-1.u2.w1'),__narration.end('beat-1.u2.w4'),probe.moveTo([0,0]));\nplay(__narration.start('beat-1.u3.w1'),__narration.end('beat-1.u3.w4'),range.scaleTo(.5));\nplay(__narration.start('beat-1.u4.w1'),__narration.end('beat-1.u4.w4'),label.fadeOut());\ns.wait(__narration.durationSec-cursor);\ns.keep(group);\n});",
+      "candidate": "export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{\nconst parts=s.compose('binary-search-comparison',{range:{kind:'rectangle',props:{\"width\":5,\"height\":1,\"fill\":\"none\",\"stroke\":\"BLUE\"}},probe:{kind:'circle',props:{\"radius\":0.2,\"position\":[-2,0],\"fill\":\"YELLOW\"}},label:{kind:'text',props:{\"text\":\"Choose the middle\",\"position\":[0,1],\"fontSize\":0.3}}});\nconst range=parts.get('range');const probe=parts.get('probe');const label=parts.get('label');const group=parts.group;\ns.schedule(__narration,[{id:'setup',cue:'setup',actions:group.fadeIn()},{id:'move',cue:'move',actions:probe.moveTo([0,0])},{id:'relationship',cue:'relationship',actions:range.scaleTo(.5)},{id:'conclusion',cue:'conclusion',actions:label.fadeOut()}]);\ns.keep(group);\n});",
+      "baselineSha256": "9a36dff85fc7e64746e69303a08376ba5153fb680a5687b6b7668bacbf6e3e54",
+      "candidateSha256": "4f4932064cef69ea3fcb4d0bfe8b453d8d5605381b5f7f013506ac279201e80c",
+      "sourceBytes": {
+        "baseline": 1021,
+        "candidate": 770
+      },
+      "unavoidableGeometryBytes": 160,
+      "compositionBytes": {
+        "baseline": 400,
+        "candidate": 418
+      },
+      "timingBytes": {
+        "baseline": 518,
+        "candidate": 249
+      },
+      "timingArithmeticExpressions": {
+        "baseline": 3,
+        "candidate": 0
+      },
+      "compositionAndTimingBoilerplateBytes": {
+        "baseline": 693,
+        "candidate": 442
+      },
+      "boilerplateReduction": 0.3621933621933622,
+      "compileMs": {
+        "baseline": {
+          "p50": 13.17429999999996,
+          "p95": 14.024699999999996,
+          "samples": [
+            13.873899999999992,
+            14.024699999999996,
+            13.127399999999994,
+            13.17429999999996,
+            12.507000000000005,
+            12.931600000000003,
+            12.677500000000009,
+            13.188699999999983
+          ]
+        },
+        "candidate": {
+          "p50": 13.323800000000006,
+          "p95": 13.59190000000001,
+          "samples": [
+            13.40549999999999,
+            13.493499999999983,
+            12.888499999999993,
+            13.323800000000006,
+            12.63130000000001,
+            13.59190000000001,
+            12.516200000000026,
+            12.4144
+          ]
+        }
+      },
+      "equivalent": true,
+      "sampledTimes": [
+        0,
+        0.5,
+        1,
+        1.5,
+        2,
+        2.5,
+        3,
+        3.5,
+        4,
+        4.5,
+        5,
+        5.5,
+        6,
+        6.5,
+        7,
+        7.5,
+        8,
+        9,
+        10,
+        5.5,
+        0
+      ],
+      "tracks": 4,
+      "durationSec": 10
+    },
+    {
+      "id": "derivative",
+      "baseline": "export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{\nconst range=s.path('derivative-local-change/range',{\"points\":[[-2,2],[-1,0.5],[0,0],[1,0.5],[2,2]],\"stroke\":\"BLUE\",\"fill\":\"none\"});\nconst probe=s.circle('derivative-local-change/probe',{\"radius\":0.15,\"position\":[0,0],\"fill\":\"YELLOW\"});\nconst label=s.text('derivative-local-change/label',{\"text\":\"Local change\",\"position\":[0,2.8],\"fontSize\":0.3});\nconst group=s.group('derivative-local-change',[range,probe,label]);\nlet cursor=0;const play=(start,end,actions)=>{s.wait(start-cursor);s.play(actions,{duration:end-start});cursor=end;};\nplay(__narration.start('beat-1.u1.w1'),__narration.end('beat-1.u1.w4'),group.fadeIn());\nplay(__narration.start('beat-1.u2.w1'),__narration.end('beat-1.u2.w4'),probe.moveTo([1,.5]));\nplay(__narration.start('beat-1.u3.w1'),__narration.end('beat-1.u3.w4'),range.animate({stroke:Color.TEAL}));\nplay(__narration.start('beat-1.u4.w1'),__narration.end('beat-1.u4.w4'),label.fadeOut());\ns.wait(__narration.durationSec-cursor);\ns.keep(group);\n});",
+      "candidate": "export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{\nconst parts=s.compose('derivative-local-change',{range:{kind:'path',props:{\"points\":[[-2,2],[-1,0.5],[0,0],[1,0.5],[2,2]],\"stroke\":\"BLUE\",\"fill\":\"none\"}},probe:{kind:'circle',props:{\"radius\":0.15,\"position\":[0,0],\"fill\":\"YELLOW\"}},label:{kind:'text',props:{\"text\":\"Local change\",\"position\":[0,2.8],\"fontSize\":0.3}}});\nconst range=parts.get('range');const probe=parts.get('probe');const label=parts.get('label');const group=parts.group;\ns.schedule(__narration,[{id:'setup',cue:'setup',actions:group.fadeIn()},{id:'move',cue:'move',actions:probe.moveTo([1,.5])},{id:'relationship',cue:'relationship',actions:range.animate({stroke:Color.TEAL})},{id:'conclusion',cue:'conclusion',actions:label.fadeOut()}]);\ns.keep(group);\n});",
+      "baselineSha256": "e87755589f81e17b54c9a47471368ebaae0f27590acf9559f2208c6cff410374",
+      "candidateSha256": "f5cbf69c0e63b1f8a211447bab9f03df227b4962a8269ed1a40246bcd8f564a6",
+      "sourceBytes": {
+        "baseline": 1053,
+        "candidate": 805
+      },
+      "unavoidableGeometryBytes": 183,
+      "compositionBytes": {
+        "baseline": 414,
+        "candidate": 435
+      },
+      "timingBytes": {
+        "baseline": 536,
+        "candidate": 267
+      },
+      "timingArithmeticExpressions": {
+        "baseline": 3,
+        "candidate": 0
+      },
+      "compositionAndTimingBoilerplateBytes": {
+        "baseline": 684,
+        "candidate": 436
+      },
+      "boilerplateReduction": 0.36257309941520466,
+      "compileMs": {
+        "baseline": {
+          "p50": 13.184399999999982,
+          "p95": 14.441100000000006,
+          "samples": [
+            12.966800000000035,
+            13.184399999999982,
+            13.031399999999962,
+            12.986999999999966,
+            12.575500000000034,
+            13.2654,
+            13.26559999999995,
+            14.441100000000006
+          ]
+        },
+        "candidate": {
+          "p50": 13.117599999999982,
+          "p95": 15.692000000000007,
+          "samples": [
+            13.117599999999982,
+            12.746299999999962,
+            12.6284,
+            12.611099999999965,
+            13.630400000000009,
+            12.948600000000056,
+            13.452999999999975,
+            15.692000000000007
+          ]
+        }
+      },
+      "equivalent": true,
+      "sampledTimes": [
+        0,
+        0.5,
+        1,
+        1.5,
+        2,
+        2.5,
+        3,
+        3.5,
+        4,
+        4.5,
+        5,
+        5.5,
+        6,
+        6.5,
+        7,
+        7.5,
+        8,
+        9,
+        10,
+        5.5,
+        0
+      ],
+      "tracks": 4,
+      "durationSec": 10
+    },
+    {
+      "id": "molecular-transport",
+      "baseline": "export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{\nconst range=s.rectangle('molecular-channel-transport/range',{\"width\":0.4,\"height\":3,\"fill\":\"TEAL\"});\nconst probe=s.circle('molecular-channel-transport/probe',{\"radius\":0.25,\"position\":[-2,0],\"fill\":\"YELLOW\"});\nconst label=s.text('molecular-channel-transport/label',{\"text\":\"Transport through the channel\",\"position\":[0,2],\"fontSize\":0.3});\nconst group=s.group('molecular-channel-transport',[range,probe,label]);\nlet cursor=0;const play=(start,end,actions)=>{s.wait(start-cursor);s.play(actions,{duration:end-start});cursor=end;};\nplay(__narration.start('beat-1.u1.w1'),__narration.end('beat-1.u1.w4'),group.fadeIn());\nplay(__narration.start('beat-1.u2.w1'),__narration.end('beat-1.u2.w4'),probe.moveTo([0,0]));\nplay(__narration.start('beat-1.u3.w1'),__narration.end('beat-1.u3.w4'),probe.moveTo([2,0]));\nplay(__narration.start('beat-1.u4.w1'),__narration.end('beat-1.u4.w4'),label.fadeOut());\ns.wait(__narration.durationSec-cursor);\ns.keep(group);\n});",
+      "candidate": "export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{\nconst parts=s.compose('molecular-channel-transport',{range:{kind:'rectangle',props:{\"width\":0.4,\"height\":3,\"fill\":\"TEAL\"}},probe:{kind:'circle',props:{\"radius\":0.25,\"position\":[-2,0],\"fill\":\"YELLOW\"}},label:{kind:'text',props:{\"text\":\"Transport through the channel\",\"position\":[0,2],\"fontSize\":0.3}}});\nconst range=parts.get('range');const probe=parts.get('probe');const label=parts.get('label');const group=parts.group;\ns.schedule(__narration,[{id:'setup',cue:'setup',actions:group.fadeIn()},{id:'move',cue:'move',actions:probe.moveTo([0,0])},{id:'relationship',cue:'relationship',actions:probe.moveTo([2,0])},{id:'conclusion',cue:'conclusion',actions:label.fadeOut()}]);\ns.keep(group);\n});",
+      "baselineSha256": "e765ebd3d8478c78c4f9c6fd7c1c515af8c06be5c4de96f1241f0914a2218cd3",
+      "candidateSha256": "7f7db206d1bebfc55470048f56865437c10517ffb88a489190df5f240c5360a3",
+      "sourceBytes": {
+        "baseline": 1034,
+        "candidate": 774
+      },
+      "unavoidableGeometryBytes": 159,
+      "compositionBytes": {
+        "baseline": 411,
+        "candidate": 420
+      },
+      "timingBytes": {
+        "baseline": 520,
+        "candidate": 251
+      },
+      "timingArithmeticExpressions": {
+        "baseline": 3,
+        "candidate": 0
+      },
+      "compositionAndTimingBoilerplateBytes": {
+        "baseline": 705,
+        "candidate": 445
+      },
+      "boilerplateReduction": 0.36879432624113473,
+      "compileMs": {
+        "baseline": {
+          "p50": 13.146200000000022,
+          "p95": 17.749900000000025,
+          "samples": [
+            17.749900000000025,
+            13.146200000000022,
+            12.430799999999977,
+            12.506500000000074,
+            12.47810000000004,
+            13.159500000000094,
+            14.886000000000081,
+            12.814799999999991
+          ]
+        },
+        "candidate": {
+          "p50": 12.879799999999932,
+          "p95": 13.100099999999998,
+          "samples": [
+            12.586199999999963,
+            12.936700000000087,
+            13.100099999999998,
+            12.861100000000079,
+            12.879799999999932,
+            13.059200000000033,
+            12.8596,
+            12.688800000000015
+          ]
+        }
+      },
+      "equivalent": true,
+      "sampledTimes": [
+        0,
+        0.5,
+        1,
+        1.5,
+        2,
+        2.5,
+        3,
+        3.5,
+        4,
+        4.5,
+        5,
+        5.5,
+        6,
+        6.5,
+        7,
+        7.5,
+        8,
+        9,
+        10,
+        5.5,
+        0
+      ],
+      "tracks": 4,
+      "durationSec": 10
+    }
+  ],
+  "allEquivalent": true,
+  "meetsBoilerplateTarget": true
+}

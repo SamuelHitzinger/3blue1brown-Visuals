@@ -453,6 +453,58 @@ from zero to one at its scheduled cursor. Other animation starting values come
 from the object's evaluated state at the start of the interval. Scene-builder
 calls never draw intermediate frames.
 
+For narration-aligned scenes, `s.schedule(packet, operations)` inserts those
+waits and durations for you. The host's read-only `__narration` packet has a
+`durationSec` and `words`, `utterances`, `pauses`, and named `cues` maps, each
+containing exact local `startSec`/`endSec` values. Named cues come from approved
+spoken phrases resolved by the host; unknown or ambiguous phrases fail instead
+of selecting a similar word. Existing `__narration.start(wordId)` and
+`__narration.end(wordId)` accessors remain available.
+
+```js
+const shape = s.compose('moving-point', {
+  dot: {kind:'circle', props:{radius:.2, fill:Color.BLUE}},
+  label: (s, id) => s.text(id, {text:'Position', position:[0,.5]}),
+});
+s.schedule(__narration, [
+  {id:'show', cue:'show-point', reveal:[shape.group]},
+  {id:'move', cue:'move-point', actions:shape.get('dot').moveTo([2,0])},
+  {id:'answer', at:{utterance:'beat-1.u3'}, duration:.4,
+    notBefore:{utterance:'beat-1.u3'}, reveal:[answer]},
+]);
+s.keep(shape.group);
+```
+
+Each composition part has a local name; its real ID is `prefix/name`. The
+returned ordinary `group` has ID `prefix`, and `get(name)` returns the ordinary
+part handle or throws. Descriptor kinds are `circle`, `sphere`, `rectangle`,
+`path`, `line`, `arrow`, `text`, `latex`, and `mesh`. A custom constructor
+`(s, scopedId) => handle` can use any existing builder, including models and
+domain helpers. It must return a newly created, unparented handle from the same
+scene/view with the exact supplied ID. Any extra child IDs are the constructor's
+responsibility. Groups, attachment, removal, animation, and handoff retain their
+usual ownership rules. Composition does not infer layout or change geometry.
+
+The concise `cue:'name'` operation uses the complete measured cue span. For
+other timing, supply `at:{cue|word|utterance|pause:'id', edge:'start'|'end'}`;
+the default edge is `start`. Supply either `through` with another anchor, or
+`duration`. Omitting both creates an instantaneous operation. Do not combine
+the full-span `cue` shorthand with `at`, `through`, or `duration`.
+`actions` accepts one action or an array; `reveal` accepts handles and adds
+their fade-in actions. All actions in an operation share its interval and
+optional `ease`. Use `notBefore` to guard an answer with its reveal utterance
+or named answer cue. The scheduler rejects changes inside explicit pauses,
+backwards/overlapping windows, invalid IDs, and operations past the measured
+end. It does not shorten motion, move cues, or change narration to make a
+schedule fit. All windows are checked before adding timeline tracks.
+
+Keep operations in chronological order and combine simultaneous changes in one
+operation. Direct `s.play`/`s.wait` calls before a schedule remain valid if they
+finish before its first anchor. The scheduler finishes with a hold to
+`durationSec`, so only untimed work such as `s.keep` belongs after it. It returns
+frozen `{id,startSec,endSec}` windows for local inspection. Empty schedules hold
+to the measured end. No host timing data is needed for ordinary custom scenes.
+
 ### Elements and coordinates
 
 Basic creation methods are `circle`, `sphere`, `rectangle`, `line`, `arrow`,

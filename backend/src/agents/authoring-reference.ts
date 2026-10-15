@@ -140,6 +140,27 @@ export function compactLectureAuthoringContext(context: { reference: string; sec
     '### Domain helpers and prepared assets', '### Clipping planes and actual cross-sections',
     '### Silhouette and crease outlines', '### Per-vertex scalar palette colors', '### Configurable label occlusion',
   ]);
+  return deferAuthoringSections(context, deferred, 'lecture-api');
+}
+
+/** Explicit planar plans can retrieve spatial detail on demand. Unknown/spatial
+ * requirements retain the full contract; selection never removes tool access.
+ */
+export function selectSceneAuthoringContext(
+  context: { reference: string; sections: AuthoringReferenceSection[] },
+  view?: { mode: '2d' | '3d'; rationale: string },
+) {
+  if (view?.mode !== '2d') return context;
+  return deferAuthoringSections(context, new Set([
+    '### Shaded meshes', '### Scene lighting and planar shadows', '### Procedural textures and materials',
+    '### Function and parametric surfaces', '### Basic solids and swept tubes', '### Molecular display beads',
+    '### Clipping planes and actual cross-sections', '### Silhouette and crease outlines',
+    '### Per-vertex scalar palette colors', '### Configurable label occlusion',
+    '### Round lines and arrows in 3D', '### Geometry and camera transitions',
+  ]), 'scene-api');
+}
+
+function deferAuthoringSections(context: { reference: string; sections: AuthoringReferenceSection[] }, deferred: Set<string>, prefix: string) {
   const headings = scanReferenceHeadings(context.reference);
   const sections: AuthoringReferenceSection[] = [];
   let reference = '', cursor = 0;
@@ -148,7 +169,7 @@ export function compactLectureAuthoringContext(context: { reference: string; sec
     if (!deferred.has(heading.heading)) continue;
     const level = heading.heading.indexOf(' ');
     const end = headings.slice(index + 1).find(next => next.heading.indexOf(' ') <= level)?.offset ?? context.reference.length;
-    const title = heading.heading.replace(/^#+ /, ''), id = `lecture-api-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
+    const title = heading.heading.replace(/^#+ /, ''), id = `${prefix}-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     const content = context.reference.slice(heading.offset, end);
     sections.push({ id, title, content });
     reference += context.reference.slice(cursor, heading.offset)

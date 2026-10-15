@@ -13,7 +13,7 @@ import { buildSceneAgentInput, validateSceneAgainstNarration } from "../narratio
 import { atomicWrite } from "../narration/service.js";
 import type { NarrationService } from "../narration/service.js";
 import { AgentError } from "./config.js";
-import { attachTimingPrelude, TIMING_PRELUDE_INSTRUCTIONS } from "./timing-prelude.js";
+import { attachTimingPrelude, resolveSpeechCues, TIMING_PRELUDE_INSTRUCTIONS } from "./timing-prelude.js";
 import type { AgentRunner, AgentTask } from "./runtime.js";
 import { parsePlannedLesson, scenePlanningContext, validateStory } from './planning.js';
 import { authorReviewedLesson } from './editorial.js';
@@ -21,7 +21,9 @@ import type { LessonPlan } from './planning.js';
 import { validateSceneQuality } from './scene-quality.js';
 import { validateScenePlan, validateViewingMode } from './scene-plan.js';
 import { instructionSnapshot, loadPrompt } from './prompts.js';
-import { loadAuthoringContext } from './authoring-reference.js';
+import { loadAuthoringContext, selectSceneAuthoringContext } from './authoring-reference.js';
+import { buildSceneBrief } from './scene-brief.js';
+import { createVisualizationResolver } from '../visualization-resolver.js';
 import { createReferenceTools } from './reference-tools.js';
 import { catalogTools, CATALOG_GUIDANCE } from './catalog.js';
 import { validationMessage } from './runtime.js';
@@ -167,11 +169,16 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     if (!scene) return null;
     const { instructions, ...input } = buildSceneAgentInput(pkg, scene.id, previousFrame);
     const planning = scenePlanningContext(story, index, plan);
+    const resolvedCues = resolveSpeechCues(scene, planning.current?.speechCues ?? []);
+    const hostTiming = options.timingMode === 'host' || Object.keys(resolvedCues).length > 0;
+    const timingInput = { ...input, resolvedCues };
+    const sceneBrief = buildSceneBrief({ lesson: plan, scene: planning.current, context: scene.context,
+      durationSec: scene.durationSec, cues: resolvedCues });
     // Preserve explicit visual preferences even when a saved plan omitted them.
-    const packet = { ...input, planning, videoMode: request.videoMode ?? 'classic', legacyPlan, instructionVersion,
+    const packet = { ...input, planning, sceneBrief, videoMode: request.videoMode ?? 'classic', legacyPlan, instructionVersion,
       request: { title: request.title, topic: request.topic, videoMode: request.videoMode ?? 'classic' } };
-    const assemble = (output: string) => options.timingMode === 'host'
-      ? attachTimingPrelude(sceneSource(output), input) : sceneSource(output);
+    const assemble = (output: string) => hostTiming
+      ? attachTimingPrelude(sceneSource(output), timingInput) : sceneSource(output);
     const diagnostics: string[] = [];
     // Scoped to this immutable narration/previous-frame context; failures are never cached.
     const verifiedSources = new Map<string, { candidate: SceneCandidate; finalFrame: Frame }>();
@@ -209,9 +216,9 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       context.onProgress?.({ stage: 'scene', ...progress });
       const modelCatalog=await bundledModelCatalog();
       const sceneInput=()=>({...packet,modelAssets:modelMetadata(),modelAssetContext:modelAssetContext(),modelCatalog});
-      const scenePrompt=()=>`Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify(sceneInput())}`;
+      const scenePrompt=()=>`Generate this scene using the authoritative narration packet and lesson plan. sceneBrief is the shared acceptance brief for authoring and review; its named speechCues are already resolved. Preserve the complete explanatory operation and custom geometry.${hostTiming ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify(sceneInput())}`;
       const [authoring, craft] = await Promise.all([
-        loadAuthoringContext(),
+        loadAuthoringContext().then(context => selectSceneAuthoringContext(context, planning.current?.view)),
         loadPrompt('scene-craft'),
       ]);
       const reviewDirectory = join(directory, 'scene-inspection', `${index}-${crypto.randomUUID()}`);
@@ -245,12 +252,14 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
           return frames;
         }) satisfies NonNullable<AgentTask['sceneTools']>['preview'] } : {}),
       };
+      const referenceTools = createReferenceTools(authoring.sections);
       const task = {
         catalogTools,
-        referenceTools: createReferenceTools(authoring.sections),
+        referenceTools,
+        resourceTools: createVisualizationResolver({ publishModel, referenceTools, signal }),
         publishModel,
         outputMode: options.outputMode ?? 'text',
-        systemPrompt: `Use publish_model when imported or custom mesh assets help the explanation. Existing model assets are listed in the input. Geometry/image bytes belong in assets, never scene code.\n${instructions.replace("Return animlib SceneSource { id, source }.", "Return only JavaScript with one default-exported scene, without a JSON wrapper.")}\nFor video delivery, end your timeline at exactly durationSec using a final s.wait() as needed. Validate your complete output using inspect_scene or validate_output before finishing. The host output/timing contract and viewing-mode policy take priority over illustrative API examples; implement the approved plan within those constraints.
+        systemPrompt: `Resolve relevant catalog resources with resolve_visualization_resource to obtain ready packages, preparation requirements and exact limitations. Use publish_model for additional imported or custom mesh assets. Existing model assets are listed in the input. Geometry/image bytes belong in assets, never scene code.\n${instructions.replace("Return animlib SceneSource { id, source }.", "Return only JavaScript with one default-exported scene, without a JSON wrapper.")}\nFor video delivery, end your timeline at exactly durationSec. Prefer s.schedule with named cues when host timing is available; it owns waits and final padding. Use s.compose for repeated named constructions while retaining custom constructors for novel geometry. Validate your complete output using inspect_scene or validate_output before finishing. The host output/timing contract and viewing-mode policy take priority over illustrative API examples; implement the approved plan within those constraints.
 Before final submission, call inspect_scene on your complete candidate. Reuse the returned candidateId for later tool calls; send source again only when revising it. Inspect relevant reveal/settled timestamps and specific object bounds as needed. Reports are advisory: distinguish intentional entrances, exits and overlaps from defects. Four inspections are available.
 ${options.preview ? 'Then call preview_scene to see up to six actual rendered frames. Choose important reveals, settled layouts and at least one transition midpoint using local narration times. Two preview batches are available: review once, repair concrete defects if needed, and use the second to verify. Optional focusObjectId crops one object. Avoid cosmetic iteration. If rendering is unavailable, use analytical feedback and finish; never claim you saw unavailable frames.' : 'Visual preview is unavailable for this run; use analytical feedback.'}
 Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned interactions during repairs. Inspection and preview never submit the scene.\n\n${CATALOG_GUIDANCE}\n\n${craft}\n\n${authoring.reference}`,

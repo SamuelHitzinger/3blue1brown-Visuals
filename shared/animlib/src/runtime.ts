@@ -1,3 +1,4 @@
+import { createAuthoringBuilders } from './authoring.js';
 import { createSampledState } from './diagrams/sampled-state.js';
 import { createScientificStateBuilders } from './scientific-state.js';
 import { createNucleicBuilders } from './nucleic-structures.js';
@@ -17,10 +18,10 @@ import { createCollectionBuilders } from './diagrams/collections.js';
 import { createCompactQueueBuilders } from './diagrams/compact-queue.js';
 
 type MeshBuilders = ReturnType<typeof createSurfaceBuilders> & ReturnType<typeof createSolidBuilders> & ReturnType<typeof createMoleculeBuilders>;
-type DomainFactories = {createScientificStateBuilders: typeof createScientificStateBuilders; createCompactQueueBuilders: typeof createCompactQueueBuilders; createNucleicTranslationBuilders: typeof createNucleicTranslationBuilders; createNucleicTranscriptionCycleBuilders: typeof createNucleicTranscriptionCycleBuilders; createNucleicProcessingBuilders: typeof createNucleicProcessingBuilders; createPeptideBuilders: typeof createPeptideBuilders; createSampledState: typeof createSampledState; createAssetBuilders: typeof createAssetBuilders; createCoordinateBuilders: typeof createCoordinateBuilders; createGraphAlgorithms: typeof createGraphAlgorithms; createGraphBuilders: typeof createGraphBuilders; createCollectionBuilders: typeof createCollectionBuilders; createMolecularBackboneBuilders: typeof createMolecularBackboneBuilders; createNucleicBuilders: typeof createNucleicBuilders};
+type DomainFactories = {createAuthoringBuilders: typeof createAuthoringBuilders; createScientificStateBuilders: typeof createScientificStateBuilders; createCompactQueueBuilders: typeof createCompactQueueBuilders; createNucleicTranslationBuilders: typeof createNucleicTranslationBuilders; createNucleicTranscriptionCycleBuilders: typeof createNucleicTranscriptionCycleBuilders; createNucleicProcessingBuilders: typeof createNucleicProcessingBuilders; createPeptideBuilders: typeof createPeptideBuilders; createSampledState: typeof createSampledState; createAssetBuilders: typeof createAssetBuilders; createCoordinateBuilders: typeof createCoordinateBuilders; createGraphAlgorithms: typeof createGraphAlgorithms; createGraphBuilders: typeof createGraphBuilders; createCollectionBuilders: typeof createCollectionBuilders; createMolecularBackboneBuilders: typeof createMolecularBackboneBuilders; createNucleicBuilders: typeof createNucleicBuilders};
 
 /** Self-contained on purpose: the function is installed inside QuickJS, never eval'd by the host. */
-export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders: MeshBuilders = {...createSurfaceBuilders(), ...createSolidBuilders(), ...createMoleculeBuilders()}, domainFactories: DomainFactories = {createScientificStateBuilders, createCompactQueueBuilders, createNucleicTranslationBuilders, createNucleicTranscriptionCycleBuilders, createNucleicProcessingBuilders, createPeptideBuilders, createSampledState, createAssetBuilders, createCoordinateBuilders, createGraphAlgorithms, createGraphBuilders, createCollectionBuilders, createMolecularBackboneBuilders, createNucleicBuilders}): CompiledScene {
+export function buildScene(options: SceneOptions, builder: (context: SceneContext) => void, input: CompileInput = {}, installReactive?: (update: (values: Record<string, ControlValue>, changed: string[], time?: number) => ReactiveUpdate[]) => void, meshBuilders: MeshBuilders = {...createSurfaceBuilders(), ...createSolidBuilders(), ...createMoleculeBuilders()}, domainFactories: DomainFactories = {createAuthoringBuilders, createScientificStateBuilders, createCompactQueueBuilders, createNucleicTranslationBuilders, createNucleicTranscriptionCycleBuilders, createNucleicProcessingBuilders, createPeptideBuilders, createSampledState, createAssetBuilders, createCoordinateBuilders, createGraphAlgorithms, createGraphBuilders, createCollectionBuilders, createMolecularBackboneBuilders, createNucleicBuilders}): CompiledScene {
   const algorithms = domainFactories.createGraphAlgorithms();
   const molecular = domainFactories.createMolecularBackboneBuilders(meshBuilders);
   const nucleic = domainFactories.createNucleicBuilders(molecular);
@@ -370,6 +371,8 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     sampledState: options => domainFactories.createSampledState(options),
     plane: (id,options) => domainFactories.createCoordinateBuilders(context).plane(id,options),
     graph: (id,data,options) => domainFactories.createGraphBuilders(context,algorithms).graph(id,data,options),
+    compose: (id,parts) => domainFactories.createAuthoringBuilders(context, () => cursor).compose(id,parts),
+    schedule: (narration,operations) => domainFactories.createAuthoringBuilders(context, () => cursor).schedule(narration,operations),
     collection: (id,items,options) => domainFactories.createCollectionBuilders(context).collection(id,items,options),
     compactQueue: (id,items,options) => domainFactories.createCompactQueueBuilders(context).compactQueue(id,items,options),
     dijkstra: (data,source) => algorithms.dijkstra(data,source),

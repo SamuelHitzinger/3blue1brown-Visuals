@@ -28,6 +28,26 @@ test('planning validates source names and ordered scene identity before acceptin
   expect(() => parsePlannedLesson(JSON.stringify(noSpeech), request)).toThrow();
 });
 
+test('planning retains named speech cues and rejects bad or ambiguous phrases before speech', () => {
+  const planned = lesson();
+  planned.plan.scenes[0].speechCues = [{ id: 'count', phrase: 'Two dots' }];
+  expect(parsePlannedLesson(JSON.stringify(planned), request)).toEqual(planned);
+  for (const speechCues of [
+    [{ id: 'missing', phrase: 'Three dots' }],
+    [{ id: 'count', phrase: 'Two dots', occurrence: 0 }],
+    [{ id: 'count', phrase: 'Two dots', occurrence: 1.5 }],
+    [{ id: 'count', phrase: 'Two dots' }, { id: 'count', phrase: 'dots' }],
+    [{ id: 'count', phrase: 'Two dots', utteranceId: 'absent' }],
+  ]) {
+    const invalid = lesson(); Object.assign(invalid.plan.scenes[0], { speechCues });
+    expect(() => parsePlannedLesson(JSON.stringify(invalid), request)).toThrow();
+  }
+  planned.markdown = planned.markdown.replace('Narration: Two dots.', 'Narration: Two dots. Two dots.');
+  expect(() => parsePlannedLesson(JSON.stringify(planned), request)).toThrow();
+  planned.plan.scenes[0].speechCues![0].occurrence = 2;
+  expect(parsePlannedLesson(JSON.stringify(planned), request)).toEqual(planned);
+});
+
 test('planning rejects contradictory ownership and unsupported palette/control declarations', () => {
   const overlap = lesson(); overlap.plan.scenes[0].cleanup.push('dot');
   expect(() => parsePlannedLesson(JSON.stringify(overlap), request)).toThrow('disjoint');

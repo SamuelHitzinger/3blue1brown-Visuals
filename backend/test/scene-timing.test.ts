@@ -19,8 +19,9 @@ const packet: NarrationScenePackage = {
     audio: { id: 'saved-audio.beat-1', url: '/unused.wav', sha256: 'fixed', sampleCount: 24000 },
     utterances: [{ id: 'beat-1.u1', role: 'narration', text: 'One dot.', spokenText: 'One dot.',
       source: { start: 0, end: 8, line: 7 }, startSec: 0, endSec: 1,
-      words: [{ id: 'beat-1.u1.w1', utteranceId: 'beat-1.u1', text: 'One', startSec: 0.125, endSec: 0.625, characterRange: [0, 3] }],
-      sentences: [{ id: 'beat-1.u1.s1', wordIds: ['beat-1.u1.w1'], text: 'One dot.', startSec: 0, endSec: 1 }],
+      words: [{ id: 'beat-1.u1.w1', utteranceId: 'beat-1.u1', text: 'One', startSec: 0.125, endSec: 0.625, characterRange: [0, 3] },
+        { id: 'beat-1.u1.w2', utteranceId: 'beat-1.u1', text: 'dot', startSec: 0.7, endSec: 0.95, characterRange: [4, 7] }],
+      sentences: [{ id: 'beat-1.u1.s1', wordIds: ['beat-1.u1.w1', 'beat-1.u1.w2'], text: 'One dot.', startSec: 0, endSec: 1 }],
     }], pauses: [] }],
 };
 const raw = `export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{
@@ -47,6 +48,36 @@ test('timing mode defaults to inline and rejects unsupported values', () => {
   expect(agentConfig({}).sceneTimingMode).toBe('inline');
   expect(agentConfig({ AGENT_SCENE_TIMING_MODE: 'host' }).sceneTimingMode).toBe('host');
   for (const value of ['', 'HOST', 'automatic']) expect(() => agentConfig({ AGENT_SCENE_TIMING_MODE: value })).toThrow('AGENT_SCENE_TIMING_MODE');
+});
+
+test('planned semantic cues enable scheduling without timestamp arithmetic even in inline mode', async () => {
+  const f = await fixture();
+  const markdown = await readFile(join(f.directory, 'script.md'), 'utf8');
+  await writeFile(join(f.directory, 'lesson.json'), JSON.stringify({ schemaVersion: 1, instructionVersion: 3, markdown,
+    plan: { audience: 'Beginner', prerequisites: [], learningGoal: 'Follow one object', centralQuestion: 'Where does it move?',
+      keyInsight: 'Object identity survives motion', runningExample: 'One dot', misconceptions: [],
+      entities: [{ id: 'dot', meaning: 'The same dot', color: 'BLUE' }],
+      scenes: [{ id: 'beat-1', purpose: 'Move one dot', whyNow: 'Establish identity', keyPoints: ['Same dot moves'],
+        visualDescription: 'Move dot across cue one', endsWith: 'Dot on right', carry: [], cleanup: [], sourceRefs: [], interactions: [],
+        view: { mode: '2d', rationale: 'Motion in a plane' }, speechCues: [{ id: 'one', phrase: 'One' }] }] } }));
+  const scheduled = `export default scene({audio:__narration.audioAssetId,end:__narration.endMode},s=>{
+    const dot=s.circle('dot');
+    s.schedule(__narration,[{id:'move',at:{cue:'one'},through:{cue:'one',edge:'end'},actions:dot.moveTo([1,0])}]);
+  });`;
+  const generate = createPiGenerator({ async run(task) {
+    const data = JSON.parse(task.prompt.slice(task.prompt.indexOf('{"timingBasis"')));
+    expect(data.sceneBrief.speechCues.one.wordIds).toEqual(['beat-1.u1.w1']);
+    expect(task.resourceTools).toBeDefined();
+    expect(task.systemPrompt).toContain('scene-api-shaded-meshes');
+    await task.validate!(scheduled);
+    return scheduled;
+  } }, f.narration, f.root, { timingMode: 'inline', visualGate: async options => {
+    expect(options.task.prompt).toContain('"speechCues":{"one"');
+    await options.validate(options.source); return options.source;
+  } });
+  const result = await generate(f.request, 0, f.context);
+  const compiled = await compileSource(result!.scene.source), expected = await compileSource(literal);
+  for (const time of [0, .125, .375, .625, 1, .375]) expect(evaluateScene(compiled, time)).toEqual(evaluateScene(expected, time));
 });
 
 for (const outputMode of ['text', 'validated-reference'] as const) {

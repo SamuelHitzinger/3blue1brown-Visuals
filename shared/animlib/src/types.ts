@@ -1,3 +1,5 @@
+import type { AuthoringBuilders } from './authoring-types.js';
+export type * from './authoring-types.js';
 import type { SampledState, SampledStateOptions } from './diagrams/sampled-state-types.js';
 import type { ScientificStateBuilders } from './scientific-state-types.js';
 export type * from './scientific-state-types.js';
@@ -485,7 +487,7 @@ export interface ElementHandle {
   countTo(values: Record<string, number>): AnimationAction;
 }
 
-export interface SceneContext extends ScientificStateBuilders {
+export interface SceneContext extends ScientificStateBuilders, AuthoringBuilders {
   modelInfo(asset: string): ModelAssetDescriptor;
   image(id: string, props: ImageProps): ElementHandle;
   circle(id: string, props?: ElementProps): ElementHandle;
