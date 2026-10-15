@@ -1,5 +1,7 @@
-import { afterEach, expect, test } from 'bun:test';
+import { afterEach, expect, spyOn, test } from 'bun:test';
 import { LiveWorld } from './world.js';
+import { SourceCompiler } from '../../../shared/animlib/src/compiler-client.js';
+import type { AssetRegistry } from '../../../shared/animlib/src/asset-types.js';
 import type { Frame } from '../../../shared/animlib/src/types.js';
 
 // Exercise real QuickJS through SourceCompiler's supported headless mode.
@@ -18,6 +20,98 @@ const deform=`export default scene({mode:'3d',end:'hold',orbit:false},s=>{
 });`;
 const dot=(id:string)=>`export default scene({end:'hold'},s=>{s.circle('${id}',{radius:.3});s.wait(60);});`;
 function deferred(){let resolve!:()=>void;const promise=new Promise<void>(r=>{resolve=r;});return {promise,resolve};}
+
+test('preaborted external transactions publish nothing and do not invoke the guard',async()=>{
+  const world=new LiveWorld({clock:()=>0});worlds.push(world);
+  await world.addProgram({id:'cube',source:cube,baseRevision:0},0);
+  const controller=new AbortController();controller.abort(new Error('evidence corrected'));
+  let calls=0;const options={signal:controller.signal,beforeCommit:()=>{calls++;}};
+  await expect(world.addProgram({id:'new',source:dot('new'),baseRevision:1},2,options)).rejects.toThrow('evidence corrected');
+  await expect(world.apply({baseRevision:1,changes:[{id:'cube',props:{fill:'RED'}}]},2,options)).rejects.toThrow('evidence corrected');
+  expect(calls).toBe(0);expect(world.revision).toBe(1);expect(world.summary().reservedIdCount).toBe(1);
+  expect(element(await world.sample(3),'cube').rotation[1]).toBe(3);
+});
+
+test('external correction during preparation releases candidate assets and IDs while old motion continues',async()=>{
+  let leases=0,block=true;const entered=deferred(),gate=deferred(),controller=new AbortController();
+  let preparedSignal:AbortSignal|undefined;
+  const descriptor={id:'image',kind:'image' as const,hash:'a'.repeat(64),width:1,height:1};
+  const assets:AssetRegistry={catalog:[descriptor],stats:()=>({decodedBytes:4,pinnedBytes:leases*4,leases,models:1}),acquire:()=>{
+    leases++;return {resolve:()=>{throw new Error('No mesh');},resolveImage:()=>({...descriptor,copyPixels:()=>new Uint8Array([0,0,0,255])}),dispose:()=>{leases--;}};
+  }};
+  const world=new LiveWorld({clock:()=>0,assets,prepare:async(scene,_assets,signal)=>{
+    if(block&&[...scene.initial,...scene.lifecycle.flatMap(event=>event.elements??[])].some(e=>e.id==='picture')){preparedSignal=signal;entered.resolve();await gate.promise;}
+  }});worlds.push(world);
+  await world.addProgram({id:'cube',source:cube,baseRevision:0},0);
+  const request={id:'picture',source:`export default scene({},s=>{s.image('picture',{asset:'image'});s.wait(60)});`,baseRevision:1};
+  const pending=world.addProgram(request,2,{signal:controller.signal});const rejected=pending.catch(error=>error);
+  await entered.promise;expect(leases).toBe(1);controller.abort(new Error('evidence corrected'));
+  expect(await rejected).toMatchObject({message:'evidence corrected'});expect(preparedSignal?.aborted).toBe(true);
+  expect(leases).toBe(0);expect(world.summary().pendingPrograms).toBe(0);expect(world.summary().reservedIdCount).toBe(1);
+  expect(world.revision).toBe(1);expect(element(await world.sample(4),'cube').rotation[1]).toBe(4);
+  block=false;gate.resolve();await world.addProgram(request,4);expect(leases).toBe(1);expect(world.revision).toBe(2);
+});
+
+test('external abort during compilation disposes only the candidate compiler',async()=>{
+  const world=new LiveWorld({clock:()=>0});worlds.push(world);await world.addProgram({id:'cube',source:cube,baseRevision:0},0);
+  const original=SourceCompiler.prototype.compile,entered=deferred(),gate=deferred(),controller=new AbortController();
+  let candidate:SourceCompiler|undefined;
+  const spy=spyOn(SourceCompiler.prototype,'compile').mockImplementation(async function(this:SourceCompiler,...args:Parameters<typeof original>){
+    candidate=this;entered.resolve();await gate.promise;return original.apply(this,args);
+  });
+  try{
+    const pending=world.addProgram({id:'new',source:dot('new'),baseRevision:1},1,{signal:controller.signal});const rejected=pending.catch(error=>error);
+    await entered.promise;controller.abort(new Error('compile cancelled'));
+    expect(await rejected).toMatchObject({message:'compile cancelled'});
+    await expect(original.call(candidate!,dot('check'))).rejects.toThrow('disposed');
+    expect(world.revision).toBe(1);expect(world.summary().pendingPrograms).toBe(0);
+    expect(element(await world.sample(3),'cube').rotation[1]).toBe(3);
+  }finally{gate.resolve();spy.mockRestore();}
+});
+
+test('publication guards may cancel add or apply synchronously without partial publication',async()=>{
+  for(const kind of ['add','apply']){
+    let now=0;const world=new LiveWorld({clock:()=>now});worlds.push(world);await world.addProgram({id:'cube',source:cube,baseRevision:0},0);
+    now=5;const controller=new AbortController();let calls=0;
+    const options={signal:controller.signal,beforeCommit:()=>{calls++;expect(now).toBe(5);controller.abort(new Error('expired at publication'));}};
+    const pending=kind==='add'?world.addProgram({id:'new',source:dot('new'),baseRevision:1},1,options)
+      :world.apply({baseRevision:1,changes:[{id:'cube',props:{fill:'RED'}}]},1,options);
+    await expect(pending).rejects.toThrow('expired at publication');expect(calls).toBe(1);expect(world.revision).toBe(1);
+    const current=element(await world.sample(6),'cube');expect(current.rotation[1]).toBe(6);expect(current.fill).toBe('BLUE');
+    expect(world.summary().entityIds).toEqual(['cube']);
+  }
+});
+
+test('guards reject asynchronous returns and recheck revision after trusted synchronous host code',async()=>{
+  for(const kind of ['add','apply'])for(const guard of ['thenable','stale']){
+    const world=new LiveWorld({clock:()=>0});worlds.push(world);await world.addProgram({id:'cube',source:cube,baseRevision:0},0);
+    const options={beforeCommit:()=>{
+      if(guard==='thenable')return Promise.resolve();
+      // Simulate host reentrancy changing the revision inside the publication guard.
+      (world as unknown as {version:number}).version++;
+    }};
+    const pending=kind==='add'?world.addProgram({id:'new',source:dot('new'),baseRevision:1},1,options)
+      :world.apply({baseRevision:1,changes:[{id:'cube',props:{fill:'RED'}}]},1,options);
+    await expect(pending).rejects.toThrow(guard==='thenable'?/synchronous/i:/stale/i);
+    expect(world.revision).toBe(guard==='thenable'?1:2);expect(world.summary().reservedIdCount).toBe(1);
+    const current=element(await world.sample(3),'cube');expect(current.fill).toBe('BLUE');expect(current.rotation[1]).toBe(3);
+  }
+});
+
+test('cancelling apply during asynchronous sampling preserves the live compiler and motion',async()=>{
+  const world=new LiveWorld({clock:()=>0});worlds.push(world);await world.addProgram({id:'cube',source:cube,baseRevision:0},0);
+  const original=SourceCompiler.prototype.update,entered=deferred(),gate=deferred(),finished=deferred(),controller=new AbortController();
+  const spy=spyOn(SourceCompiler.prototype,'update').mockImplementation(async function(this:SourceCompiler,...args:Parameters<typeof original>){
+    entered.resolve();await gate.promise;try{return await original.apply(this,args);}finally{finished.resolve();}
+  });
+  try{
+    const pending=world.apply({baseRevision:1,changes:[{id:'cube',props:{fill:'RED'}}]},2,{signal:controller.signal});const rejected=pending.catch(error=>error);
+    await entered.promise;controller.abort(new Error('sample cancelled'));
+    expect(await rejected).toMatchObject({message:'sample cancelled'});expect(world.revision).toBe(1);
+    gate.resolve();await finished.promise;spy.mockRestore();
+    const current=element(await world.sample(4),'cube');expect(current.rotation[1]).toBe(4);expect(current.fill).toBe('BLUE');
+  }finally{gate.resolve();spy.mockRestore();}
+});
 
 test('retains sandbox rotation/deformation while adding a new program and does not restart old time',async()=>{
   let now=0;const world=new LiveWorld({clock:()=>now});worlds.push(world);

@@ -11,6 +11,8 @@ import { applyBindings } from '../../../shared/animlib/src/bindings.js';
 import { applyReactiveProperties, mergeReactiveUpdates, validateReactiveProperties } from '../../../shared/animlib/src/reactive.js';
 import { SceneAssets } from '../../../shared/animlib/src/scene-assets.js';
 import { paletteResolver } from '../../../shared/animlib/src/palette.js';
+import { validateModelMetadata } from '../../../shared/animlib/src/model-metadata.js';
+import type { ModelMetadata } from '../../../shared/animlib/src/model-types.js';
 import type { AssetRegistry } from '../../../shared/animlib/src/asset-types.js';
 import type { CameraState, ColorPalette, ColorValue, CompiledScene, ElementState, Frame, ReactiveProperties } from '../../../shared/animlib/src/types.js';
 
@@ -19,6 +21,8 @@ export interface WorldOptions {
   clock?: () => number;
   palette?: ColorPalette;
   assets?: AssetRegistry;
+  /** Immutable host inventory only. GLB bytes remain in the renderer's ModelStore. */
+  models?: Record<string,ModelMetadata>;
   maxPrograms?: number;
   /** Lifetime ID budget, including tombstones: removed IDs are not reused. */
   maxObjects?: number;
@@ -33,6 +37,12 @@ export interface WorldPatch {
   remove?: string[];
 }
 export interface WorldCommit { revision: number; committedAt: number; originSampledAt?: number }
+/** Trusted host controls, deliberately separate from serializable scene requests. */
+export interface WorldTransactionOptions {
+  signal?: AbortSignal;
+  /** Synchronous evidence/deadline check immediately before publication. */
+  beforeCommit?: () => void;
+}
 type Property = keyof ReactiveProperties;
 type Override = { from: unknown; to: unknown; start: number; duration: number };
 type Program = { id: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean };
@@ -70,13 +80,24 @@ function interpolate(a:unknown,b:unknown,t:number):unknown {
   if(typeof a==='number'&&typeof b==='number')return a+(b-a)*t;
   return (a as unknown[]).map((value,index)=>interpolate(value,(b as unknown[])[index],t));
 }
-function aborted(signal:AbortSignal,work:Promise<void>):Promise<void>{
+function aborted<T>(signal:AbortSignal|undefined,work:Promise<T>):Promise<T>{
+  if(!signal)return work;
   return new Promise((resolve,reject)=>{
-    const stop=()=>reject(signal.reason??new Error('Candidate aborted'));
+    const cleanup=()=>signal.removeEventListener('abort',stop);
+    const stop=()=>{cleanup();reject(signal.reason??new Error('Transaction aborted'));};
     if(signal.aborted){work.catch(()=>{});stop();return;}
     signal.addEventListener('abort',stop,{once:true});
-    work.then(resolve,reject).finally(()=>signal.removeEventListener('abort',stop));
+    work.then(value=>{cleanup();resolve(value);},error=>{cleanup();reject(error);});
   });
+}
+function beforeCommit(options:WorldTransactionOptions):void{
+  options.signal?.throwIfAborted();
+  const result:unknown=options.beforeCommit?.();
+  if(result!==null&&(typeof result==='object'||typeof result==='function')&&typeof (result as {then?:unknown}).then==='function'){
+    // An accidentally async hook may already have rejected; observe it, never await it.
+    void Promise.resolve(result).catch(()=>{});
+    throw new Error('beforeCommit must be synchronous');
+  }
 }
 
 export class LiveWorld {
@@ -91,6 +112,7 @@ export class LiveWorld {
   private options:WorldOptions;
   private clock:()=>number;
   private palette:ColorPalette;
+  private models:Record<string,ModelMetadata>;
   private maxPrograms:number;
   private maxObjects:number;
   private maxPending:number;
@@ -102,6 +124,9 @@ export class LiveWorld {
   constructor(options:WorldOptions={}) {
     this.options=options;this.clock=options.clock??(()=>performance.now()/1000);
     this.palette=paletteResolver(options.palette).palette;
+    json(options.models??{});this.models=structuredClone(options.models??{});
+    check(Object.keys(this.models).length<=64,'World model inventory limit exceeded');
+    for(const [key,metadata] of Object.entries(this.models)){check(key.length>0&&key.length<=256,'Invalid model inventory ID');validateModelMetadata(metadata);}
     this.maxPrograms=options.maxPrograms??32;this.maxObjects=options.maxObjects??2000;this.maxPending=options.maxPendingPrograms??2;
     for(const value of [this.maxPrograms,this.maxObjects,this.maxPending])check(Number.isInteger(value)&&value>0&&value<=20_000,'Invalid world limit');
     this.assetGeometry=new SceneAssets(options.assets);
@@ -134,7 +159,8 @@ export class LiveWorld {
     return ids;
   }
 
-  async addProgram(request:ProgramRequest,nowSeconds:number):Promise<WorldCommit>{
+  async addProgram(request:ProgramRequest,nowSeconds:number,options:WorldTransactionOptions={}):Promise<WorldCommit>{
+    options={signal:options.signal,beforeCommit:options.beforeCommit};options.signal?.throwIfAborted();
     this.alive();json(request);this.fresh(request.baseRevision);time(nowSeconds);id(request.id);
     check(typeof request.source==='string'&&request.source.length>0&&new TextEncoder().encode(request.source).length<=limits.sourceBytes,'Source size limit exceeded');
     check(this.programs.size<this.maxPrograms&&this.pending.size<this.maxPending,'World program/pending limit exceeded');
@@ -142,21 +168,27 @@ export class LiveWorld {
     // Copy before awaiting: callers cannot change the submitted transaction.
     const input=structuredClone(request);
     const candidate:Candidate={id:input.id,compiler:new SourceCompiler(),controller:new AbortController()};
+    const cancel=()=>candidate.controller.abort(options.signal?.reason);
+    options.signal?.addEventListener('abort',cancel,{once:true});
     this.pending.add(candidate);let published=false;
     try{
       // No previous frame: the sandbox cannot acquire or mutate existing IDs.
-      const scene=candidate.scene=await candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog});
+      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models:this.models}));
       this.fresh(input.baseRevision);candidate.controller.signal.throwIfAborted();this.inspect(scene);
       this.assetGeometry.prepare(scene);
       if(this.options.prepare)await aborted(candidate.controller.signal,this.options.prepare(scene,this.assetGeometry,candidate.controller.signal));
       this.fresh(input.baseRevision);candidate.controller.signal.throwIfAborted();
       check(this.programs.size<this.maxPrograms,'World program limit exceeded');const ids=this.inspect(scene);
+      beforeCommit(options);
       const committedAt=this.now(nowSeconds);
       const program:Program={id:input.id,compiler:candidate.compiler,scene,ids,epoch:committedAt,readers:0,retired:false};
+      // No awaits or host hooks between these final checks and publication.
+      candidate.controller.signal.throwIfAborted();this.fresh(input.baseRevision);
       this.programs.set(input.id,program);for(const key of ids){this.reserved.add(key);this.owners.set(key,program);}
       if(!this.cameraInitialized){this.camera=structuredClone(scene.camera);this.renderOptions=structuredClone({...scene.options,orbit:false});this.cameraInitialized=true;}
       published=true;this.version++;this.cancelOthers(candidate);return {revision:this.version,committedAt};
     }finally{
+      options.signal?.removeEventListener('abort',cancel);
       this.pending.delete(candidate);if(!published)candidate.compiler.dispose();
       this.assetGeometry.retain(this.scenes());
     }
@@ -202,14 +234,16 @@ export class LiveWorld {
     throw new Error('World changed repeatedly during sampling; retry the next frame');
   }
 
-  async apply(request:WorldPatch,nowSeconds:number):Promise<WorldCommit>{
+  async apply(request:WorldPatch,nowSeconds:number,options:WorldTransactionOptions={}):Promise<WorldCommit>{
+    options={signal:options.signal,beforeCommit:options.beforeCommit};options.signal?.throwIfAborted();
     this.alive();json(request);this.fresh(request.baseRevision);time(nowSeconds);
     check(JSON.stringify(request).length<=limits.patchBytes,'Patch size limit exceeded');
     check(Array.isArray(request.changes)&&request.changes.length<=limits.changes,'Patch change limit exceeded');
     check(request.remove===undefined||Array.isArray(request.remove)&&request.remove.length<=limits.changes,'Removal limit exceeded');
     check(request.changes.length+(request.remove?.length??0)>0,'Empty patch');
     const input=structuredClone(request),originSampledAt=this.now(nowSeconds);
-    const sampled=await this.capture(originSampledAt);this.fresh(input.baseRevision);
+    // Cancellation abandons this sample; it must not dispose shared live compilers.
+    const sampled=await aborted(options.signal,this.capture(originSampledAt));this.fresh(input.baseRevision);options.signal?.throwIfAborted();
     let committedAt=this.now(originSampledAt);
     // Re-evaluate native timeline tracks at actual commit. Time callbacks were
     // sampled at originSampledAt; animated edits to their properties are rejected.
@@ -245,6 +279,7 @@ export class LiveWorld {
       for(const child of definition?.geometry.children??[])removeTree(child);
     };
     for(const key of input.remove??[]){id(key);removeTree(key);}
+    beforeCommit(options);
     const publicationTime=this.now(committedAt);
     if(publicationTime!==committedAt){
       const latest=new Map(this.compose(sampled,publicationTime).elements.map(element=>[element.id,element]));
@@ -260,6 +295,7 @@ export class LiveWorld {
       committedAt=publicationTime;
     }
     // No awaits after validation: publication is one host-JS transaction.
+    options.signal?.throwIfAborted();this.fresh(input.baseRevision);
     this.overrides=nextOverrides;this.removed=nextRemoved;this.version++;this.cancelOthers();
     for(const [key,program] of this.programs)if([...program.ids].every(entity=>this.removed.has(entity))){
       this.programs.delete(key);for(const entity of program.ids)this.owners.delete(entity);this.retire(program);
