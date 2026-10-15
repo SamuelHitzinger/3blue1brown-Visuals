@@ -16,6 +16,7 @@ import type { PreviewFrame } from './scene-preview.js';
 import type { CatalogTools } from './catalog.js';
 import type { ReferenceTools } from './reference-tools.js';
 import type {VisualizationResourceTools} from '../visualization-resolver.js';
+import { applyVisualEdits, sourceHash } from './visual-edits.js';
 
 const webAccessExtension = fileURLToPath(import.meta.resolve('pi-web-access/dist/index.js'));
 
@@ -155,7 +156,8 @@ export class PiAgentRunner implements AgentRunner {
         : AGENT_COMPLETION_INSTRUCTIONS[mode];
       const completion = protocol + (task.structuredOutput ? '\nFor submit_output, put the complete JSON object directly in output. Do not encode it as a JSON string.' : '') + (task.sceneTools && mode === 'validated-reference'
         ? '\nYou may also select a candidateId returned by inspect_scene or preview_scene; both run the same host validation before inspection. No extra validate_output call is needed for that candidate.' : '')
-        + (task.sceneTools && isSubmission ? '\nIf inspect_scene or preview_scene already validated your final scene, call submit_output with only its candidateId instead of repeating the code. Otherwise submit the complete output. Both routes receive final host validation.' : '');
+        + (task.sceneTools && isSubmission ? '\nIf inspect_scene or preview_scene already validated your final scene, call submit_output with only its candidateId instead of repeating the code. Otherwise submit the complete output. Both routes receive final host validation.' : '')
+        + (task.sceneTools ? '\nFor reported layout fixes to a validated candidate, prefer inspect_scene with its candidateId and exact edits [{before,after}] instead of repeating the source. Use complete output for larger changes or sources that failed validation.' : '');
       const settingsManager = SettingsManager.inMemory({ compaction: { enabled: false }, retry: { enabled: false, provider: { maxRetries: 0 } } });
       const resourceLoader = new DefaultResourceLoader({ cwd: this.config.agentDir, agentDir: this.config.agentDir, settingsManager,
         additionalExtensionPaths: task.allowWeb === false ? [] : [webAccessExtension],
@@ -291,6 +293,7 @@ export class PiAgentRunner implements AgentRunner {
           }
           if (!output?.trim()) throw new Error('Output must not be empty.');
           await validate(output, 'tool');
+          signal.throwIfAborted();
           return { output, candidateId: remember(output) };
         };
         const selector = {
@@ -298,8 +301,10 @@ export class PiAgentRunner implements AgentRunner {
           output: Type.Optional(Type.String({ maxLength: 256000 })),
         };
         customTools.push(defineTool({ name: 'inspect_scene', label: 'Inspect scene layout',
-          description: 'Inspect a complete scene before final submission. Pass output once or reuse a candidateId. Returns sampled advisory text collisions, framing, small-text warnings, and optional object bounds at 960×540. At most four inspections per run, including retries; does not finish the task.',
+          description: 'Inspect a scene before final submission. Pass complete output once or reuse candidateId. For reported layout fixes, prefer candidateId plus 1–80 exact edits [{before,after}]; each before must match once in that original candidate, edits cannot overlap, and changed text is limited to 25%. Edits require candidateId and cannot accompany output. A validated edit returns a new candidateId; failures preserve the original. Use complete output for larger changes or invalid sources. Returns sampled advisory text collisions, framing, small-text warnings, and optional object bounds at 960×540. At most four inspections per run, including retries; does not finish the task.',
           parameters: Type.Object({ ...selector,
+            edits: Type.Optional(Type.Array(Type.Object({ before: Type.String({ minLength: 1, maxLength: 16000 }),
+              after: Type.String({ maxLength: 16000 }) }, { additionalProperties: false }), { minItems: 1, maxItems: 80 })),
             times: Type.Optional(Type.Array(Type.Number({ minimum: 0 }), { minItems: 1, maxItems: 24 })),
             objectIds: Type.Optional(Type.Array(Type.String({ maxLength: 256 }), { maxItems: 20 })),
             includeAnimating: Type.Optional(Type.Boolean()),
@@ -307,7 +312,14 @@ export class PiAgentRunner implements AgentRunner {
           async execute(_id, args) {
             try {
               if (sceneBudget.inspections++ >= 4) throw new Error('Scene inspection budget exhausted (four calls). Finish using the available feedback.');
-              const candidate = await select(args);
+              let candidate;
+              if (args.edits !== undefined) {
+                if (args.candidateId === undefined || args.output !== undefined) throw new Error('Exact edits require candidateId and forbid output.');
+                const base = await select({ candidateId: args.candidateId });
+                const output = applyVisualEdits(JSON.stringify({ sourceSha256: sourceHash(base.output),
+                  edits: args.edits.map(({ before, after }) => ({ finding: 0, before, after })) }), base.output, 1);
+                candidate = await select({ output });
+              } else candidate = await select(args);
               const report = await task.sceneTools!.inspect(candidate.output, args, signal);
               return { content: [{ type: 'text', text: JSON.stringify({ candidateId: candidate.candidateId, ...report }) }], details: {} };
             } catch (error) { return { content: [{ type: 'text', text: validationMessage(error) }], details: {}, isError: true }; }

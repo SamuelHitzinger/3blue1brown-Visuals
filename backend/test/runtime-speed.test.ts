@@ -13,6 +13,7 @@ import { createReferenceTools } from '../src/agents/reference-tools.js';
 import { generateLectureNotes } from '../src/agents/lecture.js';
 import {createVisualizationResolver} from '../src/visualization-resolver.js';
 import {catalogTools} from '../src/agents/catalog.js';
+import { compileSource } from 'animlib/core';
 
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(path => rm(path, { recursive: true, force: true }))); });
@@ -95,7 +96,7 @@ test('live notes finish with one validated submission without repeating the note
   expect(contexts).toHaveLength(1);
 });
 
-function sceneCall(name: string, args: Record<string, string | number | string[] | number[]>, id = crypto.randomUUID()) {
+function sceneCall(name: string, args: JsonObject, id = crypto.randomUUID()) {
   const result = reply('', 'toolUse');
   result.content = [{ type: 'toolCall', id, name, arguments: args }];
   return result;
@@ -145,6 +146,130 @@ test('catalog search forwards discipline and readiness filters', async () => {
 });
 const inspectionReport = { viewport: { width: 960, height: 540 }, times: [1], warnings: [], bounds: [], truncated: false, note: 'sampled' };
 const previewImage = { type: 'image' as const, mimeType: 'image/png', data: 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGOQi7rzHwAEQgJUZSSrPwAAAABJRU5ErkJggg==' };
+const editableScene = `export default scene({},s=>{s.text('label',{text:'Readable title',position:[5,0]});s.circle('dot',{position:[-1,0],radius:.4});s.wait(4);});`;
+const layoutEdits = [{ before: '[5,0]', after: '[0,0]' }];
+const editedScene = editableScene.replace('[5,0]', '[0,0]');
+
+test.each(['validated-reference', 'submit-only'] as const)('inspect exact edits validate a new immutable candidate for %s completion', async outputMode => {
+  const { runner, contexts } = await harness([
+    sceneCall('inspect_scene', { output: editableScene }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', edits: layoutEdits, times: [1] }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1' }),
+    outputMode === 'submit-only' ? sceneCall('submit_output', { candidateId: 'candidate-2' }) : reply('{"candidateId":"candidate-2"}'),
+    outputMode === 'submit-only' ? sceneCall('submit_output', { candidateId: 'candidate-1' }) : reply('{"candidateId":"candidate-1"}'),
+  ]);
+  const checked: string[] = [], inspected: string[] = [];
+  expect(await runner.run({ ...base, allowWeb: false, outputMode,
+    validate: async source => { checked.push(source); await compileSource(source); },
+    sceneTools: { async inspect(source) { inspected.push(source); return inspectionReport; } },
+  })).toBe(editedScene);
+  expect(checked.slice(0, 2)).toEqual([editableScene, editedScene]);
+  expect(checked.at(-1)).toBe(editedScene);
+  expect(inspected).toEqual([editableScene, editedScene, editableScene]);
+  expect(JSON.stringify(contexts[2])).toContain('candidate-2');
+  expect(JSON.stringify(contexts[0])).toContain('edits');
+});
+
+test.each([
+  ['no match', [{ before: 'absent', after: 'fixed' }], 'exactly once'],
+  ['duplicate match', [{ before: 'position', after: 'position2' }], 'exactly once'],
+  ['overlap', [{ before: 'position:[5,0]', after: 'position:[1,0]' }, { before: '[5,0]', after: '[0,0]' }], 'overlap'],
+  ['excessive change', [{ before: 'Readable title', after: 'a'.repeat(100) }], '25%'],
+] as const)('inspect exact edits reject %s without mutating or allocating a candidate', async (_name, edits, diagnostic) => {
+  const { runner, contexts } = await harness([
+    call('validate_output', editableScene),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', edits: [...edits] }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-2' }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1' }),
+    reply('{"candidateId":"candidate-1"}'),
+  ]);
+  const checked: string[] = [], inspected: string[] = [];
+  expect(await runner.run({ ...base, allowWeb: false, outputMode: 'validated-reference',
+    validate: async source => { checked.push(source); await compileSource(source); },
+    sceneTools: { async inspect(source) { inspected.push(source); return inspectionReport; } },
+  })).toBe(editableScene);
+  expect(inspected).toEqual([editableScene]);
+  expect(checked).toEqual([editableScene, editableScene]);
+  expect(JSON.stringify(contexts.at(-1))).toContain(diagnostic);
+  expect(JSON.stringify(contexts.at(-1))).toContain('Unknown candidateId');
+});
+
+test('inspect exact edits validate before assigning an ID and allow a later valid patch from the same base', async () => {
+  const { runner, contexts } = await harness([
+    call('validate_output', editableScene),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', edits: [{ before: '[5,0]', after: '[' }] }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-2' }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', edits: layoutEdits }),
+    reply('{"candidateId":"candidate-2"}'),
+    reply('{"candidateId":"candidate-1"}'),
+  ]);
+  const checked: string[] = [], inspected: string[] = [];
+  expect(await runner.run({ ...base, allowWeb: false, outputMode: 'validated-reference',
+    validate: async source => { checked.push(source); await compileSource(source); },
+    sceneTools: { async inspect(source) { inspected.push(source); return inspectionReport; } },
+  })).toBe(editedScene);
+  expect(checked).toEqual([editableScene, editableScene.replace('[5,0]', '['), editedScene, editedScene]);
+  expect(inspected).toEqual([editedScene]);
+  expect(JSON.stringify(contexts[3])).toContain('Unknown candidateId');
+});
+
+test('inspect exact edits require a candidate, reject full output, and share the four-call budget', async () => {
+  const { runner, contexts } = await harness([
+    call('validate_output', editableScene),
+    sceneCall('inspect_scene', { edits: layoutEdits }),
+    sceneCall('inspect_scene', { output: editableScene, edits: layoutEdits }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', output: editableScene, edits: layoutEdits }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', edits: layoutEdits }),
+    sceneCall('inspect_scene', { candidateId: 'candidate-2', edits: [{ before: '[0,0]', after: '[2,0]' }] }),
+    reply('{"candidateId":"candidate-2"}'),
+    reply('{"candidateId":"candidate-1"}'),
+  ]);
+  const inspected: string[] = [];
+  expect(await runner.run({ ...base, allowWeb: false, outputMode: 'validated-reference',
+    validate: async source => { await compileSource(source); },
+    sceneTools: { async inspect(source) { inspected.push(source); return inspectionReport; } },
+  })).toBe(editedScene);
+  expect(inspected).toEqual([editedScene]);
+  expect(JSON.stringify(contexts.at(-1))).toContain('inspection budget exhausted');
+  expect(JSON.stringify(contexts[4])).toContain('edits require candidateId');
+});
+
+test.each([
+  ['empty list', []], ['too many edits', Array.from({ length: 81 }, () => layoutEdits[0])],
+  ['oversized before', [{ before: 'x'.repeat(16001), after: 'x' }]],
+  ['oversized after', [{ before: '[5,0]', after: 'x'.repeat(16001) }]],
+] as const)('inspect exact edits schema rejects %s before inspection', async (_name, edits) => {
+  const { runner, contexts } = await harness([
+    call('validate_output', editableScene),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', edits: [...edits] }),
+    reply('{"candidateId":"candidate-1"}'),
+  ]);
+  let inspected = 0;
+  expect(await runner.run({ ...base, allowWeb: false, outputMode: 'validated-reference', validate: async () => {},
+    sceneTools: { async inspect() { inspected++; return inspectionReport; } },
+  })).toBe(editableScene);
+  expect(inspected).toBe(0);
+  expect(contexts.at(-1)!.messages.filter(message => message.role === 'toolResult')
+    .find(message => message.toolName === 'inspect_scene')?.isError).toBe(true);
+});
+
+test('inspect exact edits keep the reconstructed source size bound and preserve the full-source route', async () => {
+  const largeSource = editableScene + '/*' + 'x'.repeat(255990 - editableScene.length - 4) + '*/';
+  const { runner, contexts } = await harness([
+    call('validate_output', largeSource),
+    sceneCall('inspect_scene', { candidateId: 'candidate-1', edits: [{ before: 'Readable title', after: 'a'.repeat(100) }] }),
+    sceneCall('inspect_scene', { output: editedScene }),
+    reply('{"candidateId":"candidate-2"}'),
+  ]);
+  const checked: string[] = [], inspected: string[] = [];
+  expect(await runner.run({ ...base, allowWeb: false, outputMode: 'validated-reference',
+    validate: async source => { checked.push(source); await compileSource(source); },
+    sceneTools: { async inspect(source) { inspected.push(source); return inspectionReport; } },
+  })).toBe(editedScene);
+  expect(checked).toEqual([largeSource, editedScene, editedScene]);
+  expect(inspected).toEqual([editedScene]);
+  expect(JSON.stringify(contexts.at(-1))).toContain('source size limit');
+});
 
 test('scene tools return candidate references, diagnostics and actual image content without submitting', async () => {
   const { runner, contexts } = await harness([
