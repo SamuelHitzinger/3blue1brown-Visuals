@@ -219,6 +219,119 @@
           "shared/animlib/dist/runtime.js": "2cec70e013b69da2f36933e13febaf5ae5ee033e5b66f1c3d5252e52e317a84b"
         }
       }
+    },
+    {
+      "topic": "rna",
+      "matchingInputs": true,
+      "baseline": {
+        "status": "complete",
+        "revision": "6d9798e7082e4453d9285a6971f4251798adcfa3",
+        "elapsedMs": 409062.593,
+        "modelTasks": 8,
+        "providerCalls": 18,
+        "outputTokens": 14502,
+        "reasoningTokens": 4225,
+        "uncachedInputTokens": 423820,
+        "cacheReadTokens": 510080,
+        "invalidSubmissions": 1,
+        "authorPromptBytes": [
+          172107,
+          192505
+        ],
+        "firstReviewApprovals": 0,
+        "approvedScenes": 2,
+        "scenes": [
+          {
+            "id": "beat-1",
+            "sourceSha256": "a11adc142daa672acafcbf025e81478e0a39245c9f6519482701eedd1119cfd8",
+            "approvedAttempt": 1,
+            "savedBytes": 8696,
+            "authoredBytes": 6269,
+            "usesSchedule": false,
+            "usesCompose": false
+          },
+          {
+            "id": "beat-2",
+            "sourceSha256": "6beefddfb7855ba6081f6b5c9989e386ea2d02bae16a564c2ff67bb02b13e852",
+            "approvedAttempt": 1,
+            "savedBytes": 8026,
+            "authoredBytes": 5640,
+            "usesSchedule": false,
+            "usesCompose": false
+          }
+        ]
+      },
+      "candidate": {
+        "status": "complete",
+        "revision": "ec2d8d93199f4efe8b686e0ce56f4648f6e7f747",
+        "elapsedMs": 325809.0129,
+        "modelTasks": 6,
+        "providerCalls": 14,
+        "outputTokens": 11114,
+        "reasoningTokens": 5946,
+        "uncachedInputTokens": 327890,
+        "cacheReadTokens": 321920,
+        "invalidSubmissions": 0,
+        "authorPromptBytes": [
+          145121,
+          173408
+        ],
+        "firstReviewApprovals": 1,
+        "approvedScenes": 2,
+        "scenes": [
+          {
+            "id": "beat-1",
+            "sourceSha256": "522cfaf10ff420e6fb21b6645c3b610a8f0412713d6dab6a6ae2f3dc4cb91820",
+            "approvedAttempt": 1,
+            "savedBytes": 10796,
+            "authoredBytes": 6088,
+            "usesSchedule": true,
+            "usesCompose": true
+          },
+          {
+            "id": "beat-2",
+            "sourceSha256": "179da1861191bb372b029865b13857dcee7ff6d13abb41d89ed4202812855786",
+            "approvedAttempt": 0,
+            "savedBytes": 10835,
+            "authoredBytes": 6223,
+            "usesSchedule": true,
+            "usesCompose": true
+          }
+        ]
+      },
+      "reduction": {
+        "wallTime": 0.20352283861848997,
+        "outputTokens": 0.2336229485588195,
+        "authoredBytes": -0.03375598287009818
+      },
+      "sourceHashes": {
+        "baseline": {
+          "backend/src/agents/generator.ts": "95ae9526b6f683b8808d82ebeffc9abc43d1e9507e4903bcf950c702a27e5c5f",
+          "backend/src/agents/runtime.ts": "9af925b67f4994322837fe8843ee6dc84c1078c7b7253c526e2321d529cff9ce",
+          "backend/src/agents/visual-gate.ts": "66735506eca8d9355b1d214ee29078428ec7cf5d9dce916104f3042528efba9a",
+          "backend/src/agents/timing-prelude.ts": "9b0a6d5d1349d608c1f84d17984bf9bccc206599a2b9bf26426ca6cefa5d9144",
+          "backend/src/agents/authoring-reference.ts": "54a7101dabb2e16e494be9f21b9be0d93bfcd2e4ea853af1b307a662fa08f7ed",
+          "backend/prompts/scene-craft.md": "a9079e2e513f7b87cf32d2a960b0370f05adae4467327645141c330ffa215d44",
+          "backend/prompts/scene-verify.md": "323b418f67ea8b5a4f7efb1b014a0566eff7bb6956b1858d46dd07cd0c423264",
+          "shared/animlib/docs/reference.md": "427118a1c0539036d7ed30a25ae301c729fb3be2928659317f512bc52ca9a406",
+          "shared/animlib/dist/core.js": "b3cea713e34c48f2063c1ec6b9a9ce03597169bb1d0499831044ead4a310f456",
+          "shared/animlib/dist/compiler.js": "f4a4615d277f5c66c093a35313cd450d415419c479261178f1dd49bdf7a0d453",
+          "shared/animlib/dist/runtime.js": "0e158118982eee476a325b019d895f884cff5f95297885c7c7a09246da2adb4d"
+        },
+        "candidate": {
+          "backend/src/agents/generator.ts": "63125676fde9fdf6f62bbb919a9bc0dc0bd229ad1ddc5badf90dead139228127",
+          "backend/src/agents/runtime.ts": "3432b231d1ab05210d73eaa1c23b9921d8ad8ad1ea2d54a650abdf28b9552a17",
+          "backend/src/agents/visual-gate.ts": "92a22c9dd411c1c0935be3762ef7bda37b4b89d425447a0db33f57fa9562d04b",
+          "backend/src/agents/timing-prelude.ts": "91c247ff0a0049d3b90b910442e44de23a97d773461e07d83d68dbdbb4acca58",
+          "backend/src/agents/authoring-reference.ts": "8cb357e0474f821b1d4aa82ceaed0379f80985f32068e60b90b7f45d56fd7178",
+          "backend/prompts/scene-craft.md": "a9079e2e513f7b87cf32d2a960b0370f05adae4467327645141c330ffa215d44",
+          "backend/prompts/scene-verify.md": "bfce84a14c97edce4552c9950d8886f63a89f28d9ef8a445e353dea8f5d221e5",
+          "shared/animlib/docs/reference.md": "82fffbd9c238468c8fa4b1ac08ab0578305771c5ed6df62f24566354b9c83788",
+          "shared/animlib/dist/core.js": "b3cea713e34c48f2063c1ec6b9a9ce03597169bb1d0499831044ead4a310f456",
+          "shared/animlib/dist/compiler.js": "d20c66d3ced7ab85ffd40399455eb6edd8e7cb9aa7a00ca349a6bcda408e8d66",
+          "shared/animlib/dist/runtime.js": "6b9a474e8dc7d02ba9f7eaefe828141d9d3e378ffd05932cd6fb3214032ada3a"
+        }
+      }
     }
   ],
   "limitation": "One pair per domain is exploratory, with model/provider variance and shared prompt-cache effects. Source bytes exclude the host prelude. Approval is a pipeline outcome, not independent visual-quality proof. Failures are retained, never converted into speedups."
