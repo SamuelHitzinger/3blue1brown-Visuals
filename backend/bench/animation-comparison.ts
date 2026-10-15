@@ -3,7 +3,7 @@ import { resolve, join } from 'node:path';
 import type { AgentRunMetrics } from '../src/agents/runtime.js';
 
 interface Run {
-  variant: string; topic: string; status: string; revision: string; elapsedMs: number;
+  variant: string; topic: string; trial: string; status: string; revision: string; elapsedMs: number;
   model: string; thinking: string; fixtureHash: string; packageHash: string; planSha256: string;
   audioHashes: Record<string, string>; error?: unknown; sourceHashes: Record<string, string>;
   metrics: { stage: string; promptBytes: number; metrics?: AgentRunMetrics }[];
@@ -35,14 +35,16 @@ function summary(run: Run) {
 }
 
 /** Preserve failures and compare only runs whose semantic input and model settings match. */
-export async function compareAnimationGenerations(trial: string, topics = ['binary', 'derivative', 'rna']) {
-  if (!/^[a-z0-9-]+$/.test(trial) || topics.some(topic => !['binary', 'derivative', 'rna'].includes(topic))) throw new Error('Invalid benchmark trial/topic.');
-  const root = resolve(import.meta.dir, '../../data/animation-efficiency/live', trial);
+export async function compareAnimationGenerations(trial: string, topics = ['binary', 'derivative', 'rna'], baselineTrial = trial) {
+  if (![trial, baselineTrial].every(value => /^[a-z0-9-]+$/.test(value)) || topics.some(topic => !['binary', 'derivative', 'rna'].includes(topic))) throw new Error('Invalid benchmark trial/topic.');
+  const root = resolve(import.meta.dir, '../../data/animation-efficiency/live');
   const pairs = [];
   for (const topic of topics) {
-    const read = async (variant: string): Promise<Run> => JSON.parse(await readFile(join(root, topic, variant, 'result.json'), 'utf8'));
+    const read = async (variant: string): Promise<Run> => JSON.parse(await readFile(join(root, variant === 'baseline' ? baselineTrial : trial, topic, variant, 'result.json'), 'utf8'));
     const [baseline, candidate] = await Promise.all([read('baseline'), read('candidate')]);
     if (baseline.variant !== 'baseline' || candidate.variant !== 'candidate' || baseline.topic !== topic || candidate.topic !== topic) throw new Error(`Mislabeled runs: ${topic}`);
+    if (baseline.trial !== baselineTrial || candidate.trial !== trial) throw new Error(`Mislabeled trial: ${topic}`);
+    if (![baseline.status, candidate.status].every(status => status === 'complete' || status === 'failed')) throw new Error(`Run is not finished: ${topic}`);
     for (const key of ['model', 'thinking', 'fixtureHash', 'packageHash', 'planSha256'] as const) {
       if (baseline[key] !== candidate[key]) throw new Error(`Unmatched ${key}: ${topic}`);
     }
@@ -58,15 +60,16 @@ export async function compareAnimationGenerations(trial: string, topics = ['bina
       sourceHashes: { baseline: baseline.sourceHashes, candidate: candidate.sourceHashes },
     });
   }
-  return { evidenceKind: 'matched-production-generations', trial, pairs,
+  return { evidenceKind: 'matched-production-generations', trial, baselineTrial, pairs,
     limitation: 'One pair per domain is exploratory, with model/provider variance and shared prompt-cache effects. Source bytes exclude the host prelude. Approval is a pipeline outcome, not independent visual-quality proof. Failures are retained, never converted into speedups.' };
 }
 
 if (import.meta.main) {
-  const report = await compareAnimationGenerations(process.argv[2], process.argv[3]?.split(','));
+  const report = await compareAnimationGenerations(process.argv[2], process.argv[3]?.split(','), process.argv[4]);
   const directory = resolve(import.meta.dir, '../../docs/validation/animation-authoring-benchmark');
   await mkdir(directory, { recursive: true });
-  await writeFile(join(directory, `live-${report.trial}.json`), JSON.stringify(report, null, 2));
+  const name = report.baselineTrial === report.trial ? report.trial : `${report.trial}-vs-${report.baselineTrial}`;
+  await writeFile(join(directory, `live-${name}.json`), JSON.stringify(report, null, 2));
   console.log(JSON.stringify(report.pairs.map(({ topic, baseline, candidate, reduction }) => ({ topic,
     status: [baseline.status, candidate.status], seconds: [baseline.elapsedMs / 1000, candidate.elapsedMs / 1000],
     outputTokens: [baseline.outputTokens, candidate.outputTokens], reduction })), null, 2));

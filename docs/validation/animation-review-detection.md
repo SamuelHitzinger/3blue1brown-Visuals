@@ -1,6 +1,17 @@
 # Blinded visual reviewer detection experiment
 
-Status: implementation and pure checks only. No native rendering or model calls have been run by this worker. Freeze the manifest after the pending production sampler changes and before the first experiment call; retain failures and disagreements.
+Status: trial1 completed; root agent inspected saved native frames and raw findings. This is agent inspection, not human adjudication; raw `confirmedSeedDetections` fields remain null. Eight independent calls completed without retries. Frozen manifest SHA-256: `85586900d53f32af79cea9b787b9b163aa2d456ad940b66abc3275836619361f`. Total rendering and model time: 44.5 seconds.
+
+| Pair | Inherited evidence | Current evidence | Pixel adjudication |
+| --- | --- | --- | --- |
+| Visibility, clean | Approved | Approved | Both labeled disks remain visible |
+| Visibility, defective | Approved | Rejected at 6.25 and 6.29 seconds | Current native frames show B and its label absent in both aspect ratios; inherited samples skip the excursion |
+| Count, clean | Approved | Approved | Two disks and Total = 2 |
+| Count, defective | Rejected | Rejected | Both findings correctly identify Total = 3 with only two disks |
+
+Thus the seeded disappearance was detected only with current evidence; both strategies detected the persistent count mismatch. No clean control was rejected. Inherited visibility-clean and visibility-defect contact sheets are byte-identical (960x720 first sheet SHA-256 `ec42030fa9f8fe1e9b2a594f587347744ffde5174a07c3587f9f8e59f659fe73`), explaining that evidence-consistent approval. This small, deliberately targeted experiment is not an estimate of general reviewer accuracy.
+
+Committed raw result: `animation-authoring-benchmark/review-detection-trial1.json`; frozen manifest: `animation-authoring-benchmark/review-detection-trial1-manifest.json`. Native frames, model inputs and raw answers remain under `data/animation-efficiency/review-detection/trial1/cell-*`. Raw decisions are preserved unchanged; this paragraph records subsequent adjudication.
 
 `backend/bench/review-detection.ts` separates real visual judgment from the scripted gate and sampling benchmark. It uses the production native renderer and `PiAgentRunner`. The experiment has two predeclared matched pairs and eight independent conversations:
 

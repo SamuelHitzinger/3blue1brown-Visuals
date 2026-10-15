@@ -1,0 +1,562 @@
+{
+  "benchmark": "review-detection",
+  "version": 1,
+  "frozenAt": "2026-10-15T21:39:16.282Z",
+  "baselineRevision": "6d9798e",
+  "settings": {
+    "provider": "openai-codex",
+    "model": "gpt-6-astra",
+    "thinking": "high",
+    "authMode": "subscription",
+    "outputMode": "text",
+    "allowWeb": false,
+    "timeoutMs": 180000,
+    "modelConversationsPerCell": 1,
+    "providerRetry": "disabled-by-benchmark-wait-hook",
+    "protocolRetry": "none"
+  },
+  "sourceHashes": {
+    "backend/bench/review-detection.ts": "40be96b50111c1a3c30bac77ce2520d1debaef52e106aa1386a9c625cb316a28",
+    "backend/src/agents/runtime.ts": "0a16a3c39764f387776c6ebe5ebc69171d18c6e488ae97d484b1b3ed133dbf7a",
+    "backend/src/agents/config.ts": "30f5a123efb5282adba30b13c6b6fae1d91b4aef0340f44a822fa02ba8028120",
+    "backend/src/agents/frame-renderer.ts": "f2759eb0c826a1118773a98e0cc959b6df01c49b9d29cb32f24e86c1dc2db0cb",
+    "backend/src/agents/visual-evidence.ts": "1d97b1336284e01d5020be94c98842bd6e516658e55c3bc4d0dfb95017f0beca",
+    "backend/src/agents/visual-edits.ts": "e088fa03abe22c3a4dd02058f1185ab715b1b96af4d1bd84505139f9313799d2",
+    "shared/animlib/tools/render-frames.mjs": "8aa96c16e8f4db63878913e8b2312a41c542bd54592614983da95ae8fabf1139",
+    "shared/animlib/dist/core.js": "b3cea713e34c48f2063c1ec6b9a9ce03597169bb1d0499831044ead4a310f456",
+    "shared/animlib/dist/compiler.js": "d20c66d3ced7ab85ffd40399455eb6edd8e7cb9aa7a00ca349a6bcda408e8d66",
+    "shared/animlib/dist/renderer.js": "816a98ff624e3459c380ba8fea0e1a9c1b6a193181ade22d465167b4bf591fde"
+  },
+  "systemPrompt": "Assess only the supplied visual intent and rendered images. Check every supplied image for demonstrated violations of that intent. Contact-sheet cells are complete viewports, ordered left-to-right then top-to-bottom; their timestamps are listed. Native images, when present, show one full-resolution viewport. Do not infer that an unsampled interval was inspected. Missing intervals alone are not defects. Do not demand extra decoration, animation, or style changes. No source, narration, external evidence, or tools are available.\nReturn exactly one JSON object with approved and findings. Approve if and only if no substantive defect is demonstrated by supplied images. Each finding must give its supplied frame timestamp (or null if unknown), identifiable objectIds from the intent, concrete problem, and smallest correction. Format: {\"approved\":true,\"findings\":[]} or {\"approved\":false,\"findings\":[{\"timeSec\":1.5,\"objectIds\":[\"disk-b\"],\"problem\":\"Observed violation\",\"fix\":\"Correction\"}]}. No markdown or extra keys.",
+  "systemPromptSha256": "d8817b25e682ae4bf2a5536a821f5faf271008f1f70246a284cce03c82cc0c8d",
+  "fixtures": [
+    {
+      "id": "visibility-clean",
+      "pair": "visibility",
+      "condition": "clean",
+      "source": "export default scene({},s=>{\n  s.text('heading',{text:'Two separate objects',position:[0,2],fontSize:.5});\n  s.circle('disk-a',{position:[-2,0],radius:.65,fill:'BLUE'});\n  s.text('label-a',{text:'A',position:[-2,0],fontSize:.5,fill:'WHITE'});\n  const b=s.circle('disk-b',{position:[2,0],radius:.65,fill:'YELLOW'});\n  const label=s.text('label-b',{text:'B',position:[2,0],fontSize:.5,fill:'BLACK'});\n  s.wait(6.23);s.play([b.moveTo([3,0]),label.moveTo([3,0])],{duration:.04,ease:'linear'});\n  s.play([b.moveTo([2,0]),label.moveTo([2,0])],{duration:.04,ease:'linear'});s.wait(53.69);\n});",
+      "sourceSha256": "24312764c00f44eb7c840cc184db84ea85c65cdb2e99585f9f9618493a7aa23a",
+      "intent": "Show exactly two labeled disks throughout: blue A (disk-a, label-a) and yellow B (disk-b, label-b). Both disks and their labels must remain fully visible and clearly separated in each viewport. Small motion is allowed; neither disk may leave the viewport or cover the other. The heading is heading.",
+      "truth": {
+        "defective": false,
+        "seedObjectIds": [
+          "disk-b",
+          "label-b"
+        ],
+        "seedDescription": "B and its label leave the viewport during the brief excursion.",
+        "seedInterval": [
+          6.23,
+          6.31
+        ],
+        "adjudication": "A rejection alone does not establish seed detection. Inspect findings, timestamp, and corresponding saved native frame; retain unrelated findings as possible false positives."
+      },
+      "duration": 60,
+      "baselineTimes": [
+        0,
+        0.5,
+        6.3100000000000005,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        60
+      ],
+      "candidatePlan": {
+        "coverage": "partial",
+        "samples": [
+          {
+            "time": 0,
+            "reasons": [
+              "opening",
+              "lifecycle-add"
+            ]
+          },
+          {
+            "time": 0.5,
+            "reasons": [
+              "visible-opening"
+            ]
+          },
+          {
+            "time": 6.25,
+            "reasons": [
+              "operation-interior"
+            ]
+          },
+          {
+            "time": 6.29,
+            "reasons": [
+              "operation-interior"
+            ]
+          },
+          {
+            "time": 15,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 20,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 25,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 33.155,
+            "reasons": [
+              "hold"
+            ]
+          },
+          {
+            "time": 40,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 45,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 50,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 60,
+            "reasons": [
+              "end-state"
+            ]
+          }
+        ],
+        "nativeTimes": [
+          6.25,
+          60
+        ],
+        "omittedOperationInteriors": 0,
+        "omittedCueBoundaries": 0,
+        "uncoveredDefectTimes": [],
+        "normalizedDefectTimes": []
+      }
+    },
+    {
+      "id": "visibility-defect",
+      "pair": "visibility",
+      "condition": "defect",
+      "source": "export default scene({},s=>{\n  s.text('heading',{text:'Two separate objects',position:[0,2],fontSize:.5});\n  s.circle('disk-a',{position:[-2,0],radius:.65,fill:'BLUE'});\n  s.text('label-a',{text:'A',position:[-2,0],fontSize:.5,fill:'WHITE'});\n  const b=s.circle('disk-b',{position:[2,0],radius:.65,fill:'YELLOW'});\n  const label=s.text('label-b',{text:'B',position:[2,0],fontSize:.5,fill:'BLACK'});\n  s.wait(6.23);s.play([b.moveTo([20,0]),label.moveTo([20,0])],{duration:.04,ease:'linear'});\n  s.play([b.moveTo([2,0]),label.moveTo([2,0])],{duration:.04,ease:'linear'});s.wait(53.69);\n});",
+      "sourceSha256": "e224b8e89365dafb510cedd34ddaa34be6e91b646a108a4b59c2c18f173a8d50",
+      "intent": "Show exactly two labeled disks throughout: blue A (disk-a, label-a) and yellow B (disk-b, label-b). Both disks and their labels must remain fully visible and clearly separated in each viewport. Small motion is allowed; neither disk may leave the viewport or cover the other. The heading is heading.",
+      "truth": {
+        "defective": true,
+        "seedObjectIds": [
+          "disk-b",
+          "label-b"
+        ],
+        "seedDescription": "B and its label leave the viewport during the brief excursion.",
+        "seedInterval": [
+          6.23,
+          6.31
+        ],
+        "adjudication": "A rejection alone does not establish seed detection. Inspect findings, timestamp, and corresponding saved native frame; retain unrelated findings as possible false positives."
+      },
+      "duration": 60,
+      "baselineTimes": [
+        0,
+        0.5,
+        6.3100000000000005,
+        15,
+        20,
+        25,
+        30,
+        35,
+        40,
+        45,
+        50,
+        60
+      ],
+      "candidatePlan": {
+        "coverage": "partial",
+        "samples": [
+          {
+            "time": 0,
+            "reasons": [
+              "opening",
+              "lifecycle-add"
+            ]
+          },
+          {
+            "time": 0.5,
+            "reasons": [
+              "visible-opening"
+            ]
+          },
+          {
+            "time": 6.25,
+            "reasons": [
+              "operation-interior"
+            ]
+          },
+          {
+            "time": 6.29,
+            "reasons": [
+              "operation-interior"
+            ]
+          },
+          {
+            "time": 15,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 20,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 25,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 33.155,
+            "reasons": [
+              "hold"
+            ]
+          },
+          {
+            "time": 40,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 45,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 50,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 60,
+            "reasons": [
+              "end-state"
+            ]
+          }
+        ],
+        "nativeTimes": [
+          6.25,
+          60
+        ],
+        "omittedOperationInteriors": 0,
+        "omittedCueBoundaries": 0,
+        "uncoveredDefectTimes": [],
+        "normalizedDefectTimes": []
+      }
+    },
+    {
+      "id": "count-clean",
+      "pair": "count",
+      "condition": "clean",
+      "source": "export default scene({},s=>{\n  s.text('count',{text:'Total = 2',position:[0,2],fontSize:.55});\n  s.circle('disk-a',{position:[-2,0],radius:.65,fill:'BLUE'});\n  s.text('label-a',{text:'A',position:[-2,0],fontSize:.5,fill:'WHITE'});\n  s.circle('disk-b',{position:[2,0],radius:.65,fill:'YELLOW'});\n  s.text('label-b',{text:'B',position:[2,0],fontSize:.5,fill:'BLACK'});s.wait(12);\n});",
+      "sourceSha256": "648acb53ee196237bdc16369d483509929c26b111caff6750913713f29c5670e",
+      "intent": "Show two labeled disks: blue A (disk-a, label-a) and yellow B (disk-b, label-b). Both disks and their labels must remain fully visible and separated. The displayed Total (objectId count) must equal the number of visible disks in every frame.",
+      "truth": {
+        "defective": false,
+        "seedObjectIds": [
+          "count"
+        ],
+        "seedDescription": "Displayed Total is 3 although exactly two disks are visible.",
+        "seedInterval": [
+          0,
+          12
+        ],
+        "adjudication": "A rejection alone does not establish seed detection. Inspect findings, timestamp, and corresponding saved native frame; retain unrelated findings as possible false positives."
+      },
+      "duration": 12,
+      "baselineTimes": [
+        0,
+        0.5,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12
+      ],
+      "candidatePlan": {
+        "coverage": "partial",
+        "samples": [
+          {
+            "time": 0,
+            "reasons": [
+              "opening",
+              "lifecycle-add"
+            ]
+          },
+          {
+            "time": 0.5,
+            "reasons": [
+              "visible-opening"
+            ]
+          },
+          {
+            "time": 2,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 3,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 4,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 5,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 6,
+            "reasons": [
+              "hold",
+              "coverage"
+            ]
+          },
+          {
+            "time": 7,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 8,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 9,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 10,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 12,
+            "reasons": [
+              "end-state"
+            ]
+          }
+        ],
+        "nativeTimes": [
+          12
+        ],
+        "omittedOperationInteriors": 0,
+        "omittedCueBoundaries": 0,
+        "uncoveredDefectTimes": [],
+        "normalizedDefectTimes": []
+      }
+    },
+    {
+      "id": "count-defect",
+      "pair": "count",
+      "condition": "defect",
+      "source": "export default scene({},s=>{\n  s.text('count',{text:'Total = 3',position:[0,2],fontSize:.55});\n  s.circle('disk-a',{position:[-2,0],radius:.65,fill:'BLUE'});\n  s.text('label-a',{text:'A',position:[-2,0],fontSize:.5,fill:'WHITE'});\n  s.circle('disk-b',{position:[2,0],radius:.65,fill:'YELLOW'});\n  s.text('label-b',{text:'B',position:[2,0],fontSize:.5,fill:'BLACK'});s.wait(12);\n});",
+      "sourceSha256": "e0b2efa710108bd0d7bda787789c5042f274773934f38fa2cb31f7027c69d158",
+      "intent": "Show two labeled disks: blue A (disk-a, label-a) and yellow B (disk-b, label-b). Both disks and their labels must remain fully visible and separated. The displayed Total (objectId count) must equal the number of visible disks in every frame.",
+      "truth": {
+        "defective": true,
+        "seedObjectIds": [
+          "count"
+        ],
+        "seedDescription": "Displayed Total is 3 although exactly two disks are visible.",
+        "seedInterval": [
+          0,
+          12
+        ],
+        "adjudication": "A rejection alone does not establish seed detection. Inspect findings, timestamp, and corresponding saved native frame; retain unrelated findings as possible false positives."
+      },
+      "duration": 12,
+      "baselineTimes": [
+        0,
+        0.5,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        12
+      ],
+      "candidatePlan": {
+        "coverage": "partial",
+        "samples": [
+          {
+            "time": 0,
+            "reasons": [
+              "opening",
+              "lifecycle-add"
+            ]
+          },
+          {
+            "time": 0.5,
+            "reasons": [
+              "visible-opening"
+            ]
+          },
+          {
+            "time": 2,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 3,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 4,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 5,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 6,
+            "reasons": [
+              "hold",
+              "coverage"
+            ]
+          },
+          {
+            "time": 7,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 8,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 9,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 10,
+            "reasons": [
+              "coverage"
+            ]
+          },
+          {
+            "time": 12,
+            "reasons": [
+              "end-state"
+            ]
+          }
+        ],
+        "nativeTimes": [
+          12
+        ],
+        "omittedOperationInteriors": 0,
+        "omittedCueBoundaries": 0,
+        "uncoveredDefectTimes": [],
+        "normalizedDefectTimes": []
+      }
+    }
+  ],
+  "order": [
+    {
+      "fixtureId": "visibility-clean",
+      "arm": "baseline"
+    },
+    {
+      "fixtureId": "visibility-defect",
+      "arm": "candidate"
+    },
+    {
+      "fixtureId": "visibility-clean",
+      "arm": "candidate"
+    },
+    {
+      "fixtureId": "visibility-defect",
+      "arm": "baseline"
+    },
+    {
+      "fixtureId": "count-defect",
+      "arm": "baseline"
+    },
+    {
+      "fixtureId": "count-clean",
+      "arm": "candidate"
+    },
+    {
+      "fixtureId": "count-defect",
+      "arm": "candidate"
+    },
+    {
+      "fixtureId": "count-clean",
+      "arm": "baseline"
+    }
+  ],
+  "design": "Two predeclared clean/defect pairs, two evidence arms, eight independent blinded conversations. Same renderer, intent, reviewer prompt, model, and configuration. Evidence arm jointly changes timestamps and inclusion of selected native frames.",
+  "limitations": [
+    "One response per cell; this is a smoke experiment, not a general detection rate estimate.",
+    "The visibility interval deliberately tests known sampling weakness; count tests an obvious persistent error. Neither represents scientific scene difficulty.",
+    "Baseline and candidate may legitimately disagree when one arm never shows the defect. Approval certifies supplied evidence only.",
+    "Rejection rate is not seed detection. Human adjudication of raw findings and pixels is required.",
+    "No continuous-motion, interaction, acoustic sync, or full production prompting claim."
+  ]
+}

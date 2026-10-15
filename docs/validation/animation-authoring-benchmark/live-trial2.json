@@ -1,6 +1,7 @@
 {
   "evidenceKind": "matched-production-generations",
   "trial": "trial2",
+  "baselineTrial": "trial2",
   "pairs": [
     {
       "topic": "binary",
@@ -93,6 +94,119 @@
         },
         "candidate": {
           "backend/src/agents/generator.ts": "aee3c803aa87d73caa60ccd0d315439a870a4897f95673f5b1547412db024c52",
+          "backend/src/agents/runtime.ts": "0a16a3c39764f387776c6ebe5ebc69171d18c6e488ae97d484b1b3ed133dbf7a",
+          "backend/src/agents/visual-gate.ts": "92a22c9dd411c1c0935be3762ef7bda37b4b89d425447a0db33f57fa9562d04b",
+          "backend/src/agents/timing-prelude.ts": "8e198f3cd564dadc3cd97098d9a548141c370b097f29886456e5c479acc68707",
+          "backend/src/agents/authoring-reference.ts": "8cb357e0474f821b1d4aa82ceaed0379f80985f32068e60b90b7f45d56fd7178",
+          "backend/prompts/scene-craft.md": "a9079e2e513f7b87cf32d2a960b0370f05adae4467327645141c330ffa215d44",
+          "backend/prompts/scene-verify.md": "bfce84a14c97edce4552c9950d8886f63a89f28d9ef8a445e353dea8f5d221e5",
+          "shared/animlib/docs/reference.md": "10a162d07caaffc582f987c1dff720b78e89ed76c7eb1451f235d0c2509fb791",
+          "shared/animlib/dist/core.js": "b3cea713e34c48f2063c1ec6b9a9ce03597169bb1d0499831044ead4a310f456",
+          "shared/animlib/dist/compiler.js": "d20c66d3ced7ab85ffd40399455eb6edd8e7cb9aa7a00ca349a6bcda408e8d66",
+          "shared/animlib/dist/runtime.js": "2cec70e013b69da2f36933e13febaf5ae5ee033e5b66f1c3d5252e52e317a84b"
+        }
+      }
+    },
+    {
+      "topic": "derivative",
+      "matchingInputs": true,
+      "baseline": {
+        "status": "complete",
+        "revision": "6d9798e7082e4453d9285a6971f4251798adcfa3",
+        "elapsedMs": 276413.5806,
+        "modelTasks": 4,
+        "providerCalls": 11,
+        "outputTokens": 9962,
+        "reasoningTokens": 2905,
+        "uncachedInputTokens": 212096,
+        "cacheReadTokens": 317696,
+        "invalidSubmissions": 1,
+        "authorPromptBytes": [
+          171840,
+          179329
+        ],
+        "firstReviewApprovals": 2,
+        "approvedScenes": 2,
+        "scenes": [
+          {
+            "id": "beat-1",
+            "sourceSha256": "53103d0ca3b2420137dabfc9191ad8b05e374a8eab97c8d33aeb1bff71e6fad3",
+            "approvedAttempt": 0,
+            "savedBytes": 6207,
+            "authoredBytes": 3856,
+            "usesSchedule": false,
+            "usesCompose": false
+          },
+          {
+            "id": "beat-2",
+            "sourceSha256": "c813b154a8111b2df10382e57c953b2892a3d3e1181e8419ab44f0f39d6ef402",
+            "approvedAttempt": 0,
+            "savedBytes": 7357,
+            "authoredBytes": 4823,
+            "usesSchedule": false,
+            "usesCompose": false
+          }
+        ]
+      },
+      "candidate": {
+        "status": "complete",
+        "revision": "df24fdaa2c72488ba4b9ce1c71ad3ccc499cd3c4",
+        "elapsedMs": 597646.1786,
+        "modelTasks": 6,
+        "providerCalls": 20,
+        "outputTokens": 21430,
+        "reasoningTokens": 8490,
+        "uncachedInputTokens": 308390,
+        "cacheReadTokens": 576128,
+        "invalidSubmissions": 2,
+        "authorPromptBytes": [
+          143025,
+          154893
+        ],
+        "firstReviewApprovals": 1,
+        "approvedScenes": 2,
+        "scenes": [
+          {
+            "id": "beat-1",
+            "sourceSha256": "acd06893b702ef437f7a21e8df2aaef22f26dc38c59b83fd2a5fcec644798977",
+            "approvedAttempt": 0,
+            "savedBytes": 8980,
+            "authoredBytes": 4413,
+            "usesSchedule": true,
+            "usesCompose": true
+          },
+          {
+            "id": "beat-2",
+            "sourceSha256": "caa9c4f2e391180485353dc06fbc5b3074effe03915cbd8f520581ce9817a0ec",
+            "approvedAttempt": 1,
+            "savedBytes": 11712,
+            "authoredBytes": 6888,
+            "usesSchedule": false,
+            "usesCompose": true
+          }
+        ]
+      },
+      "reduction": {
+        "wallTime": -1.162144773432308,
+        "outputTokens": -1.1511744629592453,
+        "authoredBytes": -0.3021085378499828
+      },
+      "sourceHashes": {
+        "baseline": {
+          "backend/src/agents/generator.ts": "95ae9526b6f683b8808d82ebeffc9abc43d1e9507e4903bcf950c702a27e5c5f",
+          "backend/src/agents/runtime.ts": "9af925b67f4994322837fe8843ee6dc84c1078c7b7253c526e2321d529cff9ce",
+          "backend/src/agents/visual-gate.ts": "66735506eca8d9355b1d214ee29078428ec7cf5d9dce916104f3042528efba9a",
+          "backend/src/agents/timing-prelude.ts": "9b0a6d5d1349d608c1f84d17984bf9bccc206599a2b9bf26426ca6cefa5d9144",
+          "backend/src/agents/authoring-reference.ts": "54a7101dabb2e16e494be9f21b9be0d93bfcd2e4ea853af1b307a662fa08f7ed",
+          "backend/prompts/scene-craft.md": "a9079e2e513f7b87cf32d2a960b0370f05adae4467327645141c330ffa215d44",
+          "backend/prompts/scene-verify.md": "323b418f67ea8b5a4f7efb1b014a0566eff7bb6956b1858d46dd07cd0c423264",
+          "shared/animlib/docs/reference.md": "427118a1c0539036d7ed30a25ae301c729fb3be2928659317f512bc52ca9a406",
+          "shared/animlib/dist/core.js": "b3cea713e34c48f2063c1ec6b9a9ce03597169bb1d0499831044ead4a310f456",
+          "shared/animlib/dist/compiler.js": "f4a4615d277f5c66c093a35313cd450d415419c479261178f1dd49bdf7a0d453",
+          "shared/animlib/dist/runtime.js": "0e158118982eee476a325b019d895f884cff5f95297885c7c7a09246da2adb4d"
+        },
+        "candidate": {
+          "backend/src/agents/generator.ts": "63125676fde9fdf6f62bbb919a9bc0dc0bd229ad1ddc5badf90dead139228127",
           "backend/src/agents/runtime.ts": "0a16a3c39764f387776c6ebe5ebc69171d18c6e488ae97d484b1b3ed133dbf7a",
           "backend/src/agents/visual-gate.ts": "92a22c9dd411c1c0935be3762ef7bda37b4b89d425447a0db33f57fa9562d04b",
           "backend/src/agents/timing-prelude.ts": "8e198f3cd564dadc3cd97098d9a548141c370b097f29886456e5c479acc68707",

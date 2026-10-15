@@ -1,0 +1,379 @@
+{
+  "benchmark": "review-detection",
+  "manifestSha256": "85586900d53f32af79cea9b787b9b163aa2d456ad940b66abc3275836619361f",
+  "startedAt": "2026-10-15T21:39:24.983Z",
+  "status": "complete",
+  "cells": [
+    {
+      "fixtureId": "visibility-clean",
+      "arm": "baseline",
+      "status": "complete",
+      "renderMs": 1827.5799,
+      "inputSha256": "da8adf64aff72fd83479354ecb99fd1fae5f3e638f64a5c3c8ff534428bbb279",
+      "metrics": {
+        "elapsedMs": 2671.9452,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 2484.2442,
+            "providerMs": 2482.6083000000003,
+            "stopReason": "stop",
+            "inputTokens": 8058,
+            "outputTokens": 13,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 31,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "514320ab6b5f9f4f53c047a698a2dcf4f1ca43a201833f8eb5d9bd7630cb4899",
+      "review": {
+        "approved": true,
+        "findings": []
+      },
+      "rejected": false,
+      "expectedDefect": false,
+      "findingTimesInSeedInterval": [],
+      "elapsedMs": 4513.7597
+    },
+    {
+      "fixtureId": "visibility-defect",
+      "arm": "candidate",
+      "status": "complete",
+      "renderMs": 1737.6486000000004,
+      "inputSha256": "c911221ffefae3e9fbf2ececd1b28393ca6aed06497073e7aa741f60607e67aa",
+      "metrics": {
+        "elapsedMs": 4520.915800000001,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 4199.092700000001,
+            "providerMs": 4198.720399999999,
+            "stopReason": "stop",
+            "inputTokens": 12029,
+            "outputTokens": 120,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 453,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "4faeb796b3af4bbe6b2a902b738e5cd272c7f45b2432600fb04ab0d651538abd",
+      "review": {
+        "approved": false,
+        "findings": [
+          {
+            "timeSec": 6.25,
+            "objectIds": [
+              "disk-b",
+              "label-b"
+            ],
+            "problem": "Yellow disk B and its label are absent in both viewport sizes; only A is visible.",
+            "fix": "Keep disk B and its label fully visible, separated from A."
+          },
+          {
+            "timeSec": 6.29,
+            "objectIds": [
+              "disk-b",
+              "label-b"
+            ],
+            "problem": "Yellow disk B and its label are absent in both viewport sizes; only A is visible.",
+            "fix": "Keep disk B and its label fully visible, separated from A."
+          }
+        ]
+      },
+      "rejected": true,
+      "expectedDefect": true,
+      "findingTimesInSeedInterval": [
+        6.25,
+        6.29
+      ],
+      "elapsedMs": 6272.9525
+    },
+    {
+      "fixtureId": "visibility-clean",
+      "arm": "candidate",
+      "status": "complete",
+      "renderMs": 1722.4336999999996,
+      "inputSha256": "fa780d10eabb6d45b3702c46e2a47631c43196f7f3003392d3cf1bcc2af24df7",
+      "metrics": {
+        "elapsedMs": 2664.284099999999,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 2324.5864,
+            "providerMs": 2324.1967000000004,
+            "stopReason": "stop",
+            "inputTokens": 12029,
+            "outputTokens": 13,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 31,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "514320ab6b5f9f4f53c047a698a2dcf4f1ca43a201833f8eb5d9bd7630cb4899",
+      "review": {
+        "approved": true,
+        "findings": []
+      },
+      "rejected": false,
+      "expectedDefect": false,
+      "findingTimesInSeedInterval": [],
+      "elapsedMs": 4400.7757
+    },
+    {
+      "fixtureId": "visibility-defect",
+      "arm": "baseline",
+      "status": "complete",
+      "renderMs": 1714.1041999999998,
+      "inputSha256": "da8adf64aff72fd83479354ecb99fd1fae5f3e638f64a5c3c8ff534428bbb279",
+      "metrics": {
+        "elapsedMs": 2509.4102999999996,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 2322.463599999999,
+            "providerMs": 2322.1684999999998,
+            "stopReason": "stop",
+            "inputTokens": 8058,
+            "outputTokens": 13,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 31,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "514320ab6b5f9f4f53c047a698a2dcf4f1ca43a201833f8eb5d9bd7630cb4899",
+      "review": {
+        "approved": true,
+        "findings": []
+      },
+      "rejected": false,
+      "expectedDefect": true,
+      "findingTimesInSeedInterval": [],
+      "elapsedMs": 4238.581
+    },
+    {
+      "fixtureId": "count-defect",
+      "arm": "baseline",
+      "status": "complete",
+      "renderMs": 1767.1531000000032,
+      "inputSha256": "2c62adc1a7139f7d1292577bd5610eb190bee370b058dabf993d479f69babafe",
+      "metrics": {
+        "elapsedMs": 5997.351699999999,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 5821.345099999999,
+            "providerMs": 5821.111000000001,
+            "stopReason": "stop",
+            "inputTokens": 8036,
+            "outputTokens": 152,
+            "reasoningTokens": 85,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 271,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "64a2223185fc87363ed55e3726b3c1ddc71e0909ec7f8ab5dc38a688bf96b059",
+      "review": {
+        "approved": false,
+        "findings": [
+          {
+            "timeSec": 0,
+            "objectIds": [
+              "count"
+            ],
+            "problem": "Total displays 3 although only two disks are visible. This mismatch appears in every supplied frame across both viewport sizes.",
+            "fix": "Change the displayed Total to 2 in all supplied frames."
+          }
+        ]
+      },
+      "rejected": true,
+      "expectedDefect": true,
+      "findingTimesInSeedInterval": [
+        0
+      ],
+      "elapsedMs": 7778.407700000003
+    },
+    {
+      "fixtureId": "count-clean",
+      "arm": "candidate",
+      "status": "complete",
+      "renderMs": 1722.831000000002,
+      "inputSha256": "d2400ac5a5a750bbd8ccce8bba805b4265676251bf080d561f11780ddd38ae62",
+      "metrics": {
+        "elapsedMs": 2769.620500000001,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 2518.3163000000022,
+            "providerMs": 2518.0017000000007,
+            "stopReason": "stop",
+            "inputTokens": 10020,
+            "outputTokens": 13,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 31,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "514320ab6b5f9f4f53c047a698a2dcf4f1ca43a201833f8eb5d9bd7630cb4899",
+      "review": {
+        "approved": true,
+        "findings": []
+      },
+      "rejected": false,
+      "expectedDefect": false,
+      "findingTimesInSeedInterval": [],
+      "elapsedMs": 4503.6874000000025
+    },
+    {
+      "fixtureId": "count-defect",
+      "arm": "candidate",
+      "status": "complete",
+      "renderMs": 1762.5705000000016,
+      "inputSha256": "fe5700db6d0e2784911190700d332ca8761f0fc11942b4f6ea4df9bdff76c66a",
+      "metrics": {
+        "elapsedMs": 6992.003700000001,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 6737.706400000003,
+            "providerMs": 6737.366700000006,
+            "stopReason": "stop",
+            "inputTokens": 10020,
+            "outputTokens": 170,
+            "reasoningTokens": 65,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 307,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "71cca5e184e3fb13635d54b0aa3c383236ea0209f397577dbf4c50a5cd4eb6d5",
+      "review": {
+        "approved": false,
+        "findings": [
+          {
+            "timeSec": 0,
+            "objectIds": [
+              "count"
+            ],
+            "problem": "Total displays 3 despite only two visible disks. This occurs in both viewport sizes at all supplied timestamps: 0, 0.5, 2, 3, 4, 5, 6, 7, 8, 9, 10, and 12 seconds.",
+            "fix": "Change the displayed Total to 2 in all affected frames."
+          }
+        ]
+      },
+      "rejected": true,
+      "expectedDefect": true,
+      "findingTimesInSeedInterval": [
+        0
+      ],
+      "elapsedMs": 8765.545899999997
+    },
+    {
+      "fixtureId": "count-clean",
+      "arm": "baseline",
+      "status": "complete",
+      "renderMs": 1713.6722000000009,
+      "inputSha256": "fbfc6ed54216f1774a594ac2e18cbc30d98b43f6abdc35d99276dcd67b497048",
+      "metrics": {
+        "elapsedMs": 2291.521099999998,
+        "providerCalls": 1,
+        "turns": [
+          {
+            "index": 1,
+            "elapsedMs": 2101.8009999999995,
+            "providerMs": 2101.5656000000017,
+            "stopReason": "stop",
+            "inputTokens": 8036,
+            "outputTokens": 13,
+            "reasoningTokens": 0,
+            "cacheReadTokens": 0,
+            "cacheWriteTokens": 0,
+            "textChars": 31,
+            "toolArgumentChars": 0
+          }
+        ],
+        "validations": []
+      },
+      "outputSha256": "514320ab6b5f9f4f53c047a698a2dcf4f1ca43a201833f8eb5d9bd7630cb4899",
+      "review": {
+        "approved": true,
+        "findings": []
+      },
+      "rejected": false,
+      "expectedDefect": false,
+      "findingTimesInSeedInterval": [],
+      "elapsedMs": 4016.9983999999968
+    }
+  ],
+  "finishedAt": "2026-10-15T21:40:09.482Z",
+  "elapsedMs": 44499.6744,
+  "summary": {
+    "byArm": [
+      {
+        "arm": "baseline",
+        "complete": 4,
+        "total": 4,
+        "rejectedCleanControls": 0,
+        "rejectedSeededScenes": 1,
+        "confirmedSeedDetections": null,
+        "interpretation": "Counts are raw model decisions, not adjudicated detection or false-positive rates. Inspect every finding and relevant native frame; no reruns were performed."
+      },
+      {
+        "arm": "candidate",
+        "complete": 4,
+        "total": 4,
+        "rejectedCleanControls": 0,
+        "rejectedSeededScenes": 2,
+        "confirmedSeedDetections": null,
+        "interpretation": "Counts are raw model decisions, not adjudicated detection or false-positive rates. Inspect every finding and relevant native frame; no reruns were performed."
+      }
+    ],
+    "disagreements": [
+      {
+        "fixtureId": "visibility-defect",
+        "baselineRejected": false,
+        "candidateRejected": true,
+        "interpretation": "Different evidence can justify different decisions. Inspect the raw findings and available frames before scoring."
+      }
+    ]
+  },
+  "limitations": [
+    "One response per cell; this is a smoke experiment, not a general detection rate estimate.",
+    "The visibility interval deliberately tests known sampling weakness; count tests an obvious persistent error. Neither represents scientific scene difficulty.",
+    "Baseline and candidate may legitimately disagree when one arm never shows the defect. Approval certifies supplied evidence only.",
+    "Rejection rate is not seed detection. Human adjudication of raw findings and pixels is required.",
+    "No continuous-motion, interaction, acoustic sync, or full production prompting claim."
+  ]
+}
