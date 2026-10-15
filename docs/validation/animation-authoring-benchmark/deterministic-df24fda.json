@@ -1,0 +1,175 @@
+{
+  "schemaVersion": 1,
+  "evidenceKind": "deterministic-host-gates",
+  "revision": "df24fdaa2c72488ba4b9ce1c71ad3ccc499cd3c4",
+  "completedAt": "2026-10-15T21:22:41.357Z",
+  "elapsedMs": 5087.3223,
+  "nativeRendered": true,
+  "gates": {
+    "authoring": true,
+    "resources": true,
+    "evidence": true,
+    "reviewBudget": true,
+    "prompts": true
+  },
+  "passed": true,
+  "summary": {
+    "authoring": [
+      {
+        "id": "binary-search",
+        "boilerplateReduction": 0.3621933621933622,
+        "sourceBytes": {
+          "baseline": 1021,
+          "candidate": 770
+        },
+        "equivalent": true
+      },
+      {
+        "id": "derivative",
+        "boilerplateReduction": 0.36257309941520466,
+        "sourceBytes": {
+          "baseline": 1053,
+          "candidate": 805
+        },
+        "equivalent": true
+      },
+      {
+        "id": "molecular-transport",
+        "boilerplateReduction": 0.36879432624113473,
+        "sourceBytes": {
+          "baseline": 1034,
+          "candidate": 774
+        },
+        "equivalent": true
+      }
+    ],
+    "retrieval": {
+      "top1": 9,
+      "top3": 10,
+      "supported": 10,
+      "falselyCompatible": 0
+    },
+    "preparation": {
+      "fixture": "1crn-beads",
+      "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+      "bytes": 228476,
+      "producerCounts": [
+        1,
+        1,
+        1,
+        1,
+        1
+      ],
+      "concurrentCold": {
+        "samples": 5,
+        "p50Ms": 13.9449,
+        "p95Ms": 96.1694
+      },
+      "memory": {
+        "samples": 50,
+        "p50Ms": 0.0363,
+        "p95Ms": 0.0549
+      },
+      "freshInstanceDisk": {
+        "samples": 5,
+        "p50Ms": 2.0104,
+        "p95Ms": 4.0152
+      },
+      "freshProcess": {
+        "preparationMs": 72.5901,
+        "conversions": 0,
+        "sha256": "cb6fb2a3879d3e9b82549c270ec866b1241e7f30f62e1b1b4ea45a7c3aad0529",
+        "bytes": 228476,
+        "processWallMs": 238.2561
+      },
+      "sameJobPublications": 1,
+      "newJobPublications": 1,
+      "modelPacketBytes": 14016
+    },
+    "prompts": [
+      {
+        "mode": "2d",
+        "fullBytes": 133815,
+        "selectedBytes": 98050,
+        "reduction": 0.26727197997234986,
+        "deferredSectionsRestored": 12,
+        "snapshotSha256": "65aa9c700a256d24b426a4cc0728256360b2e747ec27a16726b48c8a45bec7b4"
+      },
+      {
+        "mode": "3d",
+        "fullBytes": 133815,
+        "selectedBytes": 133815,
+        "reduction": 0,
+        "deferredSectionsRestored": 0,
+        "snapshotSha256": "d8bb121493274948b45fd680ed53be13f8297ad1ae7a526a9c3da6ff399a769b"
+      },
+      {
+        "mode": "unknown",
+        "fullBytes": 133815,
+        "selectedBytes": 133815,
+        "reduction": 0,
+        "deferredSectionsRestored": 0,
+        "snapshotSha256": "d8bb121493274948b45fd680ed53be13f8297ad1ae7a526a9c3da6ff399a769b"
+      }
+    ],
+    "review": {
+      "sampling": [
+        {
+          "id": "brief-overlap",
+          "baselineInterior": false,
+          "candidateInterior": true,
+          "samples": 12
+        },
+        {
+          "id": "fifth-camera",
+          "baselineInterior": false,
+          "candidateInterior": true,
+          "samples": 12
+        }
+      ],
+      "gateCases": [
+        {
+          "name": "clean",
+          "status": "approved",
+          "reviews": 1,
+          "repairs": 0,
+          "renders": 1,
+          "images": 4,
+          "nativeImages": 2,
+          "approvedSourceSha256": "870edc733283999878b4d561a39cfb3db4ef7494acfcbd44ca3492126fe0bb80"
+        },
+        {
+          "name": "one-repair",
+          "status": "approved",
+          "reviews": 2,
+          "repairs": 1,
+          "renders": 2,
+          "images": 10,
+          "nativeImages": 6,
+          "approvedSourceSha256": "916dc314cb45883e6389aed442de716d565245fb18d0c4c6a6e486a541f7bf93"
+        },
+        {
+          "name": "rejected",
+          "status": "rejected",
+          "error": "RECOVERY_EXHAUSTED",
+          "reviews": 2,
+          "repairs": 1,
+          "renders": 2,
+          "images": 10,
+          "nativeImages": 6
+        },
+        {
+          "name": "malformed-protocol",
+          "status": "rejected",
+          "error": "RECOVERY_EXHAUSTED",
+          "reviews": 2,
+          "repairs": 0,
+          "renders": 1,
+          "images": 8,
+          "nativeImages": 4
+        }
+      ]
+    }
+  },
+  "limitation": "These gates do not establish generation speed, acoustic alignment, real-model defect detection or visual quality. Run matched live generations and inspect native renders separately."
+}
