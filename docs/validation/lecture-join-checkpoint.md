@@ -115,6 +115,10 @@ molecular topology and retained changes. Easy graphs cannot compensate for a
 failed molecule or surface. The current eight-case breadth screen does not prove
 controlled detail-only scaling or generalization.
 
+The subsequent [committed-context checkpoint](committed-context-checkpoint.md)
+adds bounded exact operation history and local verification. Its effect on model
+decisions remains untested; it does not change this run's failed quality verdict.
+
 ## Verification and reproduction
 
 The following focused run passed **57 tests / 428 assertions**. Targeted strict

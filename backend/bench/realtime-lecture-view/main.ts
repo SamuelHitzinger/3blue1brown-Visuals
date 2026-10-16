@@ -1,6 +1,7 @@
 import { LiveWorld, type WorldPatch } from '../realtime-world/world.js';
 import { MediaReplay, type AsrInput, type EvidencePacket, type LocalAsrTrial } from '../realtime-media/replay.js';
 import type { SourceClock } from '../realtime-media/events.js';
+import { CommittedContextJournal } from '../realtime-media/committed-context.js';
 import { CanvasRenderer } from '../../../shared/animlib/src/renderer.js';
 import type { Frame } from '../../../shared/animlib/src/types.js';
 
@@ -28,6 +29,8 @@ let clock: Clock | undefined, run: Run | undefined, runSequence = 0, starting = 
 let renderer: CanvasRenderer, renderError: Error | undefined, renderWait: RenderWait | undefined;
 let lastFrame: Frame | undefined, lastFrameRevision = -1, lastFrameStamp: Stamp | undefined;
 let disposed = false;
+// A new source run can continue the same world, so committed history outlives Run.
+const committedContext = new CommittedContextJournal();
 const message = (error: unknown) => error instanceof Error ? error.message : String(error);
 function note(text: string) {
   const item = document.createElement('li'); item.textContent = text.slice(0, 1200); history.prepend(item);
@@ -144,12 +147,17 @@ async function animate() {
   } catch (error) { renderWait?.reject(new Error(message(error))); status.textContent = `Render failed: ${message(error)}`; }
   requestAnimationFrame(animate);
 }
-function conciseWorld() {
-  return { summary: world.summary(), sampledRevision: lastFrameRevision, sampledAt: lastFrameStamp,
+function conciseWorld(requestOverheadBytes: number) {
+  const description = { summary: world.summary(), sampledRevision: lastFrameRevision, sampledAt: lastFrameStamp,
     elements: lastFrameRevision === world.revision ? lastFrame?.elements.slice(0, 256).map(element => ({
       id: element.id, kind: element.geometry.kind, position: element.position, rotation: element.rotation,
       scale: element.scale, opacity: element.opacity, fill: element.fill,
     })) : [], elementsTruncated: (lastFrame?.elements.length ?? 0) > 256 };
+  // Keep exact operations whole. An omitted source is unknown, never an empty scene.
+  const serialized = JSON.stringify(description), field = ',"committedOperations":';
+  const remaining = 60_000 - serialized.length - field.length;
+  const remainingBytes = 120_000 - requestOverheadBytes - new TextEncoder().encode(serialized + field).length;
+  return { ...description, committedOperations: committedContext.snapshot(remaining, remainingBytes) };
 }
 async function generate(current: Run, packet: EvidencePacket, signal: AbortSignal) {
   const attempt: Attempt = { packet, controller: new AbortController(), terminal: false, corrected: false,
@@ -165,13 +173,18 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
   let committedAt: Stamp | undefined;
   try {
     guard(current, attempt);
+    const request = { runId: current.id, planId: packet.planId, baseRevision: packet.baseWorldRevision,
+      evidence: packet.changes.map(({ id, version }) => ({ id, version })), context: packet.context.map(({ id, version }) => ({ id, version })),
+      world: null as unknown, deadlineServerMs: attempt.deadline };
+    // Replace the four ASCII bytes of null with the complete bounded world object.
+    request.world = conciseWorld(new TextEncoder().encode(JSON.stringify(request)).length - 4);
+    if (new TextEncoder().encode(JSON.stringify(request)).length > 120_000) throw new Error('World request exceeds UTF-8 byte budget');
+    guard(current, attempt);
     const requested = stamp();
     receipt(current, packet.planId, { type: 'generation-requested', ...requested, deadlineServerMs: attempt.deadline, baseRevision: packet.baseWorldRevision,
       evidence: packet.changes.map(({ id, version }) => ({ id, version })), context: packet.context.map(({ id, version }) => ({ id, version })) });
     status.textContent = 'Generating from available lecture evidence… existing world remains visible.';
-    const result = await post('/generate', { runId: current.id, planId: packet.planId, baseRevision: packet.baseWorldRevision,
-      evidence: packet.changes.map(({ id, version }) => ({ id, version })), context: packet.context.map(({ id, version }) => ({ id, version })),
-      world: conciseWorld(), deadlineServerMs: attempt.deadline }, attempt.controller.signal);
+    const result = await post('/generate', request, attempt.controller.signal);
     guard(current, attempt);
     const submission = result.submission as Submission | null;
     receipt(current, packet.planId, { type: 'generation-received', ...stamp(), requestId: result.requestId, action: submission?.action ?? null });
@@ -187,6 +200,12 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
         ? await world.apply({ changes: submission.changes, remove: submission.remove, baseRevision: packet.baseWorldRevision }, upperNow() / 1000, options)
         : (() => { throw new Error('Unknown submission action'); })();
     attempt.committedRevision = commit.revision; committedAt = stamp();
+    committedContext.record({ revision: commit.revision, runId: current.id, planId: packet.planId,
+      committedAtMs: commit.committedAt * 1000,
+      evidence: { changes: packet.changes.map(({ id, version }) => ({ id, version })), context: packet.context.map(({ id, version }) => ({ id, version })) },
+      operation: submission.action === 'add'
+        ? { action: 'add', programId: `run-${current.sequence}-${packet.planId}`, source: submission.source }
+        : { action: 'edit', patch: { changes: submission.changes, remove: submission.remove, baseRevision: packet.baseWorldRevision } } });
     receipt(current, packet.planId, { type: 'world-committed', ...committedAt, worldCommittedAtMs: commit.committedAt * 1000, worldRevision: commit.revision });
     guard(current, attempt);
     if (renderError) throw renderError;
@@ -198,6 +217,7 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
     const outcome = current.replay!.commit(packet.planId, { status: 'render-submitted', atMs: submitted.serverUpperMs,
       committedAtMs: commit.committedAt * 1000, baseWorldRevision: packet.baseWorldRevision, worldRevision: commit.revision, currentWorldRevision: world.revision });
     attempt.terminal = true;
+    committedContext.markRendered(commit.revision);
     receipt(current, packet.planId, { type: 'render-submitted', ...submitted, committedBrowserAtMs: committedAt.browserAtMs, outcome });
     drain(current);
     note(`${packet.planId}: revision ${commit.revision} submitted to renderer (${submission.action}); pixels and correctness unverified.`);

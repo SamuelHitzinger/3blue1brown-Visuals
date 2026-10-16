@@ -1,0 +1,48 @@
+{
+  "kind": "offline-journal-context-audit",
+  "sourceRun": "d9d30bcb-a22a-4faf-9724-bd7a49ef563e",
+  "networkRequests": 0,
+  "actualPacket": {
+    "oldWorldCharacters": 1113,
+    "newWorldCharacters": 2239,
+    "exactSourcePreserved": true,
+    "semanticCompletion": "unknown"
+  },
+  "syntheticSerializationStress": {
+    "records": 64,
+    "payloadCharactersPerRecord": 3037,
+    "outputBudgetCharacters": 56000,
+    "outputBudgetUtf8Bytes": 100000,
+    "outputCharacters": 52827,
+    "retained": 16,
+    "omitted": 48,
+    "iterations": 20,
+    "medianMs": 0.7110000000000003,
+    "maxMs": 2.6077999999999992,
+    "costsMs": [
+      2.6077999999999992,
+      1.066799999999997,
+      0.5693999999999981,
+      1.1975000000000016,
+      0.8123000000000005,
+      1.0131000000000014,
+      0.41389999999999816,
+      0.6097000000000001,
+      0.3857999999999997,
+      0.3382000000000005,
+      0.9082000000000008,
+      0.3451000000000022,
+      1.3225999999999978,
+      0.34969999999999857,
+      0.915300000000002,
+      0.3506,
+      0.9606999999999992,
+      0.46899999999999764,
+      0.33119999999999905,
+      0.8680999999999983
+    ]
+  },
+  "sourceSha256": "3998c96f211770e117cc45908426549aeee3f5e6a407887394b58f4043173df4",
+  "journalSha256": "cbcc623e8dfb6eeca948eb0e88a0fe118d238b88e0828a126dce0a47b881cfff",
+  "limitation": "Offline restored historical record and synthetic serialization load. No model calls, quality evidence, live latency or percentile reliability claim."
+}
