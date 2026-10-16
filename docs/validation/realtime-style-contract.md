@@ -41,6 +41,19 @@ conditions, unexplained algebra, and decorative slide framing. Synthetic visual
 windows do not establish speech synchronization. Compare unchanged rendered
 sources, including intermediate motion, before claiming quality preservation.
 
+## Controlled detail feasibility proof
+
+Reuse the saved full-caffeine and moving-saddle baseline constructions. For each
+pair, change only atom tessellation or surface grid resolution; retain all atoms,
+bonds, traces, labels, camera, motion and the final reading hold. These offline
+derivatives test detail sensitivity and benchmark feasibility, not model speed.
+The saddle's moving slice must follow the analytic equation at intermediate
+times; measure its distance from the discretized mesh separately. The molecular
+reveal and rigid rotation must preserve topology and source coordinates. Lower
+detail is not automatically an acceptable optimized output. Review depth,
+occlusion, attached notation and retained identity independently of numerical
+geometry checks.
+
 ## Direct source authoring experiment
 
 The same approved reference and rejection patterns apply across public physics

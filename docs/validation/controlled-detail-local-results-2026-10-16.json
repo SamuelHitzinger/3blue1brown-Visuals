@@ -1,0 +1,199 @@
+{
+  "kind": "retrospective-controlled-detail-local-proof",
+  "networkRequests": 0,
+  "source": "data/realtime-workshop/controlled-detail-local-01",
+  "rows": [
+    {
+      "id": "surface-detailed",
+      "originalSourceSha256": "92806d3575a48ee6704ea5a6965a5979d80b6dc091e96261f945e360472ed3a6",
+      "declaredChange": {
+        "before": "xSegments:40,ySegments:40",
+        "after": "xSegments:10,ySegments:10"
+      },
+      "dataSha256": null,
+      "sampleTimes": [
+        0,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6,
+        3.8,
+        4,
+        4.2,
+        4.4,
+        4.6,
+        4.8,
+        5,
+        5.2,
+        5.4,
+        5.6,
+        5.8,
+        6,
+        6.2,
+        6.4,
+        6.6,
+        6.8,
+        7,
+        7.2,
+        7.4,
+        7.6,
+        7.8,
+        8
+      ],
+      "variants": {
+        "low": {
+          "sourceSha256": "25be1a4bb782a2dfbfcc510762de6862d2838af9155059ca9972499d51309efa",
+          "geometry": {
+            "targetMeshes": 1,
+            "vertices": 121,
+            "triangles": 200,
+            "entities": 15
+          }
+        },
+        "high": {
+          "sourceSha256": "92806d3575a48ee6704ea5a6965a5979d80b6dc091e96261f945e360472ed3a6",
+          "geometry": {
+            "targetMeshes": 1,
+            "vertices": 1681,
+            "triangles": 3200,
+            "entities": 15
+          }
+        }
+      },
+      "nonDetailStateExactlyPreserved": true,
+      "maxAnalyticTraceError": 0,
+      "maxSampledVerticalMeshTraceGap": {
+        "low": 0.012000000000000122,
+        "high": 0.0008000000000001339
+      }
+    },
+    {
+      "id": "caffeine-full",
+      "originalSourceSha256": "faf91194dd50490bfe03be932b8a8aecf92d317134e0c2cbb5a71b9b05f7712e",
+      "declaredChange": {
+        "before": "radius:a.element===\"H\"?.095:.19,detail:2",
+        "after": "radius:a.element===\"H\"?.095:.19,detail:0"
+      },
+      "dataSha256": "c9258f019dcaad8754b4f171dd379f6b78e33bd27b8aa90b949378cd7079dce1",
+      "sampleTimes": [
+        0,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6,
+        3.8,
+        4,
+        4.2,
+        4.4,
+        4.6,
+        4.8,
+        5,
+        5.2,
+        5.4,
+        5.6,
+        5.8,
+        6,
+        6.2,
+        6.4,
+        6.6,
+        6.8,
+        7,
+        7.2,
+        7.4,
+        7.6,
+        7.8,
+        8
+      ],
+      "variants": {
+        "low": {
+          "sourceSha256": "45b373659ad3e5b9b75b89ea094ed30d084e8db7a18cb30c0323fb18be334d48",
+          "geometry": {
+            "targetMeshes": 24,
+            "vertices": 144,
+            "triangles": 192,
+            "entities": 94,
+            "bondStrokes": 29
+          }
+        },
+        "high": {
+          "sourceSha256": "4e575ab1eec4c21f6594fad16f39d602473343e9d56ac1eacd4eb0f3f5829802",
+          "geometry": {
+            "targetMeshes": 24,
+            "vertices": 1584,
+            "triangles": 3072,
+            "entities": 94,
+            "bondStrokes": 29
+          }
+        }
+      },
+      "nonDetailStateExactlyPreserved": true
+    }
+  ],
+  "movies": [
+    {
+      "id": "surface-detailed",
+      "relativePath": "surface-detailed/detail-side-by-side.mp4",
+      "sha256": "9376f9138bc1ff47a69e9778cc81ea57272eb621810e02cb151b7655f7dc7b45",
+      "width": 2560,
+      "height": 720,
+      "fps": 24,
+      "frames": 192,
+      "duration": 8,
+      "audio": false
+    },
+    {
+      "id": "caffeine-full",
+      "relativePath": "caffeine-full/detail-side-by-side-v2.mp4",
+      "sha256": "bb8b2c696d8a70e2f036ce8bf65c5202c9ad9671206885f3546704e8312eb247",
+      "width": 2560,
+      "height": 720,
+      "fps": 24,
+      "frames": 192,
+      "duration": 8,
+      "audio": false
+    }
+  ],
+  "mediaVerification": "Both decoded independently with ffmpeg exit0;192frames,8seconds,24fps,2560x720,H264/yuv420p,noaudio.",
+  "blindReview": {
+    "reviewer": "/root/detail_blind_review",
+    "modality": "three-times sheets and four individual PNGs plus three reference PNGs; no playback",
+    "mapping": {
+      "surfaceA": "high",
+      "surfaceB": "low",
+      "moleculeA": "low",
+      "moleculeB": "high"
+    },
+    "readability": "revise",
+    "referenceStyle": "revise",
+    "fullMotion": "unverified"
+  },
+  "limitation": "Offline deterministic derivatives of existing model baselines. No new authoring, live latency, speech alignment or quality approval. Detail levels are distinct requirements, not baseline/optimized arms."
+}

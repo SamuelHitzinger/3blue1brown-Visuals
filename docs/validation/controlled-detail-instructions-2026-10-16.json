@@ -1,0 +1,77 @@
+{
+  "kind": "controlled-detail-instruction-fixtures",
+  "createdAt": "2026-10-16T01:32:00.220Z",
+  "generationStatus": "not-run",
+  "networkRequests": 0,
+  "cases": [
+    {
+      "id": "line-sampling-low",
+      "pair": "line-sampling",
+      "detailLevel": "low",
+      "promptSha256": "4195a2c2c8989df693f2eefe1869382facff0f910c6c7649281acd542a431077",
+      "invariantSha256": "8b2a0c6adf87802a8afb0ff102afdceef395a415a4197f0a2357f7d81b189604",
+      "expectedGeometry": {
+        "curveSamples": 17
+      },
+      "maxCurveInterpolationError": 0.015625
+    },
+    {
+      "id": "line-sampling-high",
+      "pair": "line-sampling",
+      "detailLevel": "high",
+      "promptSha256": "1c0355aa8c0b963e7ae87771f7a9a63c38b26383876bf64f40b6f1246d63c058",
+      "invariantSha256": "8b2a0c6adf87802a8afb0ff102afdceef395a415a4197f0a2357f7d81b189604",
+      "expectedGeometry": {
+        "curveSamples": 129
+      },
+      "maxCurveInterpolationError": 0.000244140625
+    },
+    {
+      "id": "saddle-mesh-low",
+      "pair": "saddle-mesh",
+      "detailLevel": "low",
+      "promptSha256": "8415fa9ae82fa0c7ae86069dd89c740de9bf96dc96dd27dd852bb2a7bdd3f155",
+      "invariantSha256": "0b0686cb2fe1b98c5ba369d1d662239c811e6759528cfbf892b9704c93e89f5f",
+      "expectedGeometry": {
+        "surfaceSegmentsPerAxis": 10
+      }
+    },
+    {
+      "id": "saddle-mesh-high",
+      "pair": "saddle-mesh",
+      "detailLevel": "high",
+      "promptSha256": "9c1837dc9cf13b3cfb9147be25723ba14043f28bb93ed04ca63ac716963df1a2",
+      "invariantSha256": "0b0686cb2fe1b98c5ba369d1d662239c811e6759528cfbf892b9704c93e89f5f",
+      "expectedGeometry": {
+        "surfaceSegmentsPerAxis": 40
+      }
+    },
+    {
+      "id": "caffeine-spheres-low",
+      "pair": "caffeine-spheres",
+      "detailLevel": "low",
+      "promptSha256": "0988a2f000f4d0406f6912aa2756b18ea626b43a06fb9012683b09a20921fae3",
+      "invariantSha256": "c3ecd12d84c2bde5d1ae15b9b86e51c43fa48c0f9d4acd959fd037a64d04eb04",
+      "expectedGeometry": {
+        "sphereDetail": 0,
+        "atoms": 24,
+        "bonds": 25,
+        "bondStrokes": 29
+      }
+    },
+    {
+      "id": "caffeine-spheres-high",
+      "pair": "caffeine-spheres",
+      "detailLevel": "high",
+      "promptSha256": "232c23f5bee9ab41ff00d94def6522bce4e2c83a954b22de1f9ca1ca1a00b5c6",
+      "invariantSha256": "c3ecd12d84c2bde5d1ae15b9b86e51c43fa48c0f9d4acd959fd037a64d04eb04",
+      "expectedGeometry": {
+        "sphereDetail": 2,
+        "atoms": 24,
+        "bonds": 25,
+        "bondStrokes": 29
+      }
+    }
+  ],
+  "limitation": "Six prepared instruction fixtures. Each detail level still requires baseline and candidate authoring arms and full quality/latency evaluation; preparation is not model evidence."
+}
