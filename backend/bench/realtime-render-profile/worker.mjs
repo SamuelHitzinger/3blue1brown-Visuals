@@ -24,7 +24,8 @@ try{
   const cold=await measure(()=>createSceneProgram(input.source,compileInput));program=cold.value;result.coldCompileMs=cold.ms;
   const warm=[];for(let i=0;i<3;i++){const t=await measure(()=>createSceneProgram(input.source,compileInput));warm.push(t.ms);t.value.dispose();}result.warmCompile=stats(warm);
   const scene=program.scene;result.compiledBytes=Buffer.byteLength(JSON.stringify(scene));result.modelPrepareMs=(await measure(()=>models.prepare([scene]))).ms;
-  const sample=(time)=>{let current=scene;if(scene.reactiveBindings?.some(b=>b.time)){const updates=program.update({},[],time);current={...scene,reactiveBindings:mergeReactiveUpdates(scene,updates,[],time),reactiveTime:time};}return evaluateScene(current,time);};
+  const values=Object.fromEntries(scene.controls.map(control=>[control.id,control.value]));
+  const sample=(time)=>{let current=scene;if(scene.reactiveBindings?.some(b=>b.time)){const updates=program.update(values,[],time);current={...scene,reactiveBindings:mergeReactiveUpdates(scene,updates,[],time),reactiveTime:time};}return evaluateScene(current,time);};
   Object.assign(globalThis,globals);globalThis.ResizeObserver=class {observe(){}disconnect(){}};globalThis.devicePixelRatio=1;
   const gpu=create([]),adapterRun=await measure(()=>gpu.requestAdapter());if(!adapterRun.value)throw Error('No native WebGPU adapter');
   result.adapterMs=adapterRun.ms;const deviceRun=await measure(()=>adapterRun.value.requestDevice());device=deviceRun.value;result.deviceMs=deviceRun.ms;
@@ -57,7 +58,7 @@ try{
     try{const encoder=device.createCommandEncoder();encoder.copyTextureToBuffer({texture},{buffer,bytesPerRow,rowsPerImage:height},[width,height]);device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);const pixels=Buffer.from(buffer.getMappedRange()).subarray(0,bytesPerRow*height);const digest=hash(pixels);buffer.unmap();return digest;}finally{buffer.destroy();}}
   for(let i=0;i<input.samples+3;i++){
     const time=i/60;let t=performance.now();const frame=sample(time);const sampleMs=performance.now()-t;
-    reset();t=performance.now();renderer.render(frame,scene.options);const renderMs=performance.now()-t;const calls={...counters};
+    reset();t=performance.now();if(!renderer.render(frame,scene.options))throw Error('Native renderer did not submit frame');const renderMs=performance.now()-t;const calls={...counters};
     t=performance.now();await device.queue.onSubmittedWorkDone();const fenceMs=performance.now()-t;
     if(errors.length)throw Error(errors.join('; '));
     if(i===0){const readback=await measure(readPixels);result.firstFrame={sampleMs,renderMs,fenceMs,readbackMs:readback.ms,...calls};pixelHashes.push({time,sha256:readback.value});}
@@ -76,7 +77,7 @@ try{
   }
   result.geometryCPU=stats(geometryTimes);result.compositionCPU=stats(compositionTimes);result.geometryCounts=geometryCounts;result.geometrySha256=geometryHash.digest('hex');
   if(input.profile){profiler=new Session();profiler.connect();const post=promisify(profiler.post.bind(profiler));await post('Profiler.enable');await post('Profiler.start');
-    for(let i=0;i<input.samples*3;i++){renderer.render(sample(i/60),scene.options);await device.queue.onSubmittedWorkDone();}
+    for(let i=0;i<input.samples*3;i++){if(!renderer.render(sample(i/60),scene.options))throw Error('Native renderer did not submit frame');await device.queue.onSubmittedWorkDone();}
     const {profile}=await post('Profiler.stop');await writeFile(input.profile,JSON.stringify(profile),{flag:'wx'});result.cpuProfile=input.profile;
   }
   result.status='complete';
