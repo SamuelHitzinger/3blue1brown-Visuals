@@ -1,0 +1,425 @@
+{
+  "schemaVersion": 1,
+  "scope": "Single-attempt faster-configuration screen using corrected direct-native API instructions. Not a matched same-time model comparison; no live timing or quality claim.",
+  "limitation": "One request per case. Model-only latency; no real-time ingestion, browser-presentation, reliability or quality acceptance. Initial out-of-range host sampling retained, actual-duration rendering never repairs source.",
+  "rows": [
+    {
+      "id": "line-basic",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 3336.499,
+      "acceptedToolCallMs": 3324.5881999999997,
+      "tokens": {
+        "input": 1496,
+        "output": 579,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 2075
+      },
+      "sourceSha256": "71aee6e8f325eb971a5f996df441be8c78f736968d403dff6aa6fef32d58e962",
+      "sourceBytes": 1480,
+      "compiledSourceSha256": "71aee6e8f325eb971a5f996df441be8c78f736968d403dff6aa6fef32d58e962",
+      "dataSha256": null,
+      "compileMs": 38.829199999999986,
+      "duration": 8,
+      "requestedDuration": 8,
+      "exactEightSeconds": true,
+      "renderStatus": "rendered",
+      "initialRenderError": null,
+      "durationSamplingCorrection": null,
+      "sampledGeometry": [
+        {
+          "time": 0,
+          "elements": 10,
+          "meshTriangles": 0
+        },
+        {
+          "time": 1,
+          "elements": 10,
+          "meshTriangles": 0
+        },
+        {
+          "time": 3,
+          "elements": 10,
+          "meshTriangles": 0
+        },
+        {
+          "time": 5,
+          "elements": 10,
+          "meshTriangles": 0
+        },
+        {
+          "time": 6,
+          "elements": 10,
+          "meshTriangles": 0
+        },
+        {
+          "time": 8,
+          "elements": 10,
+          "meshTriangles": 0
+        }
+      ]
+    },
+    {
+      "id": "line-detailed",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 10526.6526,
+      "acceptedToolCallMs": 10345.0354,
+      "tokens": {
+        "input": 1519,
+        "output": 1503,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 3022
+      },
+      "sourceSha256": "17ee792dae126b6d112a03b8bc0989ce288f5865287ac39a57cb33d085176d0f",
+      "sourceBytes": 3619,
+      "compiledSourceSha256": "17ee792dae126b6d112a03b8bc0989ce288f5865287ac39a57cb33d085176d0f",
+      "dataSha256": null,
+      "compileMs": 17.816800000000057,
+      "duration": 6,
+      "requestedDuration": 8,
+      "exactEightSeconds": false,
+      "renderStatus": "rendered",
+      "initialRenderError": "The scene renderer is temporarily unavailable.",
+      "durationSamplingCorrection": "Initial host sampling requested 8s outside actual duration. Exact source unchanged; duration requirement still failed.",
+      "sampledGeometry": [
+        {
+          "time": 0,
+          "elements": 21,
+          "meshTriangles": 0
+        },
+        {
+          "time": 1,
+          "elements": 21,
+          "meshTriangles": 0
+        },
+        {
+          "time": 3,
+          "elements": 31,
+          "meshTriangles": 0
+        },
+        {
+          "time": 5,
+          "elements": 31,
+          "meshTriangles": 0
+        },
+        {
+          "time": 6,
+          "elements": 31,
+          "meshTriangles": 0
+        },
+        {
+          "time": 8,
+          "elements": 31,
+          "meshTriangles": 0
+        }
+      ]
+    },
+    {
+      "id": "surface-basic",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 5941.4967,
+      "acceptedToolCallMs": 5930.3578,
+      "tokens": {
+        "input": 1530,
+        "output": 823,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 2353
+      },
+      "sourceSha256": "9c6001d248d4a12689f6233ce5e7f853d829f5aa0b0a65300963a04143b1f523",
+      "sourceBytes": 1859,
+      "compiledSourceSha256": "9c6001d248d4a12689f6233ce5e7f853d829f5aa0b0a65300963a04143b1f523",
+      "dataSha256": null,
+      "compileMs": 16.26369999999997,
+      "duration": 6,
+      "requestedDuration": 8,
+      "exactEightSeconds": false,
+      "renderStatus": "rendered",
+      "initialRenderError": "The scene renderer is temporarily unavailable.",
+      "durationSamplingCorrection": "Initial host sampling requested 8s outside actual duration. Exact source unchanged; duration requirement still failed.",
+      "sampledGeometry": [
+        {
+          "time": 0,
+          "elements": 11,
+          "meshTriangles": 200
+        },
+        {
+          "time": 1,
+          "elements": 11,
+          "meshTriangles": 200
+        },
+        {
+          "time": 3,
+          "elements": 11,
+          "meshTriangles": 200
+        },
+        {
+          "time": 5,
+          "elements": 11,
+          "meshTriangles": 200
+        },
+        {
+          "time": 6,
+          "elements": 11,
+          "meshTriangles": 200
+        },
+        {
+          "time": 8,
+          "elements": 11,
+          "meshTriangles": 200
+        }
+      ]
+    },
+    {
+      "id": "surface-detailed",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 7953.6059000000005,
+      "acceptedToolCallMs": 7945.2636,
+      "tokens": {
+        "input": 1559,
+        "output": 1177,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 2736
+      },
+      "sourceSha256": "d0eb8afa2319716a108cb4f870ef3a50ce8889fa1e4986c022679b2e68d2568c",
+      "sourceBytes": 2914,
+      "compiledSourceSha256": "d0eb8afa2319716a108cb4f870ef3a50ce8889fa1e4986c022679b2e68d2568c",
+      "dataSha256": null,
+      "compileMs": null,
+      "duration": null,
+      "requestedDuration": 8,
+      "exactEightSeconds": false,
+      "renderStatus": "failed",
+      "initialRenderError": "Reactive mesh updates must preserve vertex count and topology",
+      "durationSamplingCorrection": null,
+      "sampledGeometry": null
+    },
+    {
+      "id": "probability-curves",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 7733.8699,
+      "acceptedToolCallMs": 7726.9809000000005,
+      "tokens": {
+        "input": 1563,
+        "output": 1376,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 2939
+      },
+      "sourceSha256": "38a5268b2669da517dc3b04a47d7d38dcf63d5d5fd18c020f40b3a90a98a2075",
+      "sourceBytes": 3402,
+      "compiledSourceSha256": "38a5268b2669da517dc3b04a47d7d38dcf63d5d5fd18c020f40b3a90a98a2075",
+      "dataSha256": null,
+      "compileMs": 25.259399999999914,
+      "duration": 6.05,
+      "requestedDuration": 8,
+      "exactEightSeconds": false,
+      "renderStatus": "rendered",
+      "initialRenderError": "The scene renderer is temporarily unavailable.",
+      "durationSamplingCorrection": "Initial host sampling requested 8s outside actual duration. Exact source unchanged; duration requirement still failed.",
+      "sampledGeometry": [
+        {
+          "time": 0,
+          "elements": 36,
+          "meshTriangles": 0
+        },
+        {
+          "time": 1,
+          "elements": 36,
+          "meshTriangles": 0
+        },
+        {
+          "time": 3,
+          "elements": 36,
+          "meshTriangles": 0
+        },
+        {
+          "time": 5,
+          "elements": 37,
+          "meshTriangles": 0
+        },
+        {
+          "time": 6,
+          "elements": 37,
+          "meshTriangles": 0
+        },
+        {
+          "time": 8,
+          "elements": 37,
+          "meshTriangles": 0
+        }
+      ]
+    },
+    {
+      "id": "wave-superposition",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 8491.0149,
+      "acceptedToolCallMs": 8461.417099999999,
+      "tokens": {
+        "input": 1536,
+        "output": 1393,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 2929
+      },
+      "sourceSha256": "7811f1c4dd1681eb8ab0f46fc00ee344a7b41370fd6dc458f4558505424a217d",
+      "sourceBytes": 3765,
+      "compiledSourceSha256": "7811f1c4dd1681eb8ab0f46fc00ee344a7b41370fd6dc458f4558505424a217d",
+      "dataSha256": null,
+      "compileMs": 25.541999999999916,
+      "duration": 8,
+      "requestedDuration": 8,
+      "exactEightSeconds": true,
+      "renderStatus": "rendered",
+      "initialRenderError": null,
+      "durationSamplingCorrection": null,
+      "sampledGeometry": [
+        {
+          "time": 0,
+          "elements": 26,
+          "meshTriangles": 0
+        },
+        {
+          "time": 1,
+          "elements": 26,
+          "meshTriangles": 0
+        },
+        {
+          "time": 3,
+          "elements": 27,
+          "meshTriangles": 0
+        },
+        {
+          "time": 5,
+          "elements": 27,
+          "meshTriangles": 0
+        },
+        {
+          "time": 6,
+          "elements": 30,
+          "meshTriangles": 0
+        },
+        {
+          "time": 8,
+          "elements": 30,
+          "meshTriangles": 0
+        }
+      ]
+    },
+    {
+      "id": "caffeine-heavy",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 6518.154,
+      "acceptedToolCallMs": 6470.9175000000005,
+      "tokens": {
+        "input": 2175,
+        "output": 1113,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 3288
+      },
+      "sourceSha256": "0242e9567b3d1d9ffdc0d519ffe45023d5bb68de541b7866053d3e3693ae89ea",
+      "sourceBytes": 2764,
+      "compiledSourceSha256": "055d8efb149bc219677de260cf35cb4b903bdfaaaf0e6759bcbebe71c4995df6",
+      "dataSha256": "c9258f019dcaad8754b4f171dd379f6b78e33bd27b8aa90b949378cd7079dce1",
+      "compileMs": null,
+      "duration": null,
+      "requestedDuration": 8,
+      "exactEightSeconds": false,
+      "renderStatus": "failed",
+      "initialRenderError": "cannot read property 'Symbol.iterator' of undefined",
+      "durationSamplingCorrection": null,
+      "sampledGeometry": null
+    },
+    {
+      "id": "caffeine-full",
+      "model": "gpt-6-luna",
+      "thinking": "off",
+      "requestedTier": "priority",
+      "actualTier": "default",
+      "providerTerminalMs": 7645.8215,
+      "acceptedToolCallMs": 7613.7425,
+      "tokens": {
+        "input": 2217,
+        "output": 1007,
+        "reasoning": 0,
+        "cacheRead": 0,
+        "cacheWrite": 0,
+        "total": 3224
+      },
+      "sourceSha256": "d3c2c8e0a9dc91feec8f44e7556ff74271ec6bb83e5a7efbf0156337a68a5016",
+      "sourceBytes": 2878,
+      "compiledSourceSha256": "ac46a9deb3906b539f1d5506e6fd6b6482e0ca220671e289806fe46894f8d25b",
+      "dataSha256": "c9258f019dcaad8754b4f171dd379f6b78e33bd27b8aa90b949378cd7079dce1",
+      "compileMs": 61.47540000000026,
+      "duration": 6,
+      "requestedDuration": 8,
+      "exactEightSeconds": false,
+      "renderStatus": "rendered",
+      "initialRenderError": "The scene renderer is temporarily unavailable.",
+      "durationSamplingCorrection": "Initial host sampling requested 8s outside actual duration. Exact source unchanged; duration requirement still failed.",
+      "sampledGeometry": [
+        {
+          "time": 0,
+          "elements": 81,
+          "meshTriangles": 3072
+        },
+        {
+          "time": 1,
+          "elements": 81,
+          "meshTriangles": 3072
+        },
+        {
+          "time": 3,
+          "elements": 81,
+          "meshTriangles": 3072
+        },
+        {
+          "time": 5,
+          "elements": 81,
+          "meshTriangles": 3072
+        },
+        {
+          "time": 6,
+          "elements": 81,
+          "meshTriangles": 3072
+        },
+        {
+          "time": 8,
+          "elements": 81,
+          "meshTriangles": 3072
+        }
+      ]
+    }
+  ]
+}
