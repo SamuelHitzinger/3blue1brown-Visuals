@@ -107,7 +107,7 @@ Reuse existing semantic objects and labels instead of adding duplicate labels at
  try{
  if(imagePath)await writeFile(imagePath,frame!.bytes,{flag:'wx'});
  signal.throwIfAborted();
- const result=await runProbe(['run','--kind=world','--case=external','--model=gpt-6-luna','--thinking=off','--service-tier=priority',...(imagePath?[`--image=${imagePath}`]:[]),
+ const result=await runProbe(['run','--kind=world','--case=external',`--model=${process.env.LECTURE_ANIMATION_MODEL??'gpt-6-luna'}`,`--thinking=${process.env.LECTURE_ANIMATION_THINKING??'off'}`,'--service-tier=priority',...(imagePath?[`--image=${imagePath}`]:[]),
   `--timeout-ms=${remaining}`,'--max-tokens=4096',`--prompt-file=${join(folder,'prompt.json')}`,`--system-file=${join(folder,'system.txt')}`,`--out=${join(folder,'provider')}`],
   {signal,speechAnchors:true,retainedParameters:true,progressiveWorld:true});
  check(result.report.status==='complete'&&result.submission,'Animation generation did not complete.',502);return result.submission;

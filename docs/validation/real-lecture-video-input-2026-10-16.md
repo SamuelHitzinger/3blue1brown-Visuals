@@ -12,6 +12,8 @@ The user approved the audio and frame/transcript destinations, then explicitly r
 - Animation requests include the newest already-arrived photo even when queued speech is older. The speech cursor still advances through its original ordered batches. Frame and speech capture times remain distinct; no measured speech anchor is fabricated.
 - Benchmark direct-frame mode records a receipt rather than running a caption model first. Original pixels go to the animation author. Normal capture extraction remains unchanged outside this explicit benchmark mode.
 - Prompt specifies independent visual evidence, dark-canvas contrast, one readable primary construction, and reuse of existing object identities. Existing source can support edit mechanics but is not evidence of lecture facts.
+- Reconstructing source diagrams is explicitly permitted. The author may isolate nodes, reveal forces, introduce illustrative axes, resolve supported components, or rotate supported spatial geometry to explain it. Explanatory motion must not assert unobserved physical motion. Live labels target 0.6–0.7 world units; a 0.3-em letter was only about 8 pixels tall at the tested view size.
+- Optional server-only `LECTURE_ANIMATION_MODEL` and `LECTURE_ANIMATION_THINKING` settings allow controlled model comparisons. Defaults remain `gpt-6-luna` and `off`; priority service is requested, not guaranteed.
 - Watch view separates transcript, frame receipts, and model decisions. It removes only normalized exact multiword overlap between adjacent overlapping audio windows. ASR revisions and ambiguous single-word repetition remain; original evidence is untouched.
 - Native literal text now renders precomposed/decomposed German umlauts. This is not general Unicode coverage; `ß` remains unsupported.
 
@@ -22,6 +24,8 @@ The user approved the audio and frame/transcript destinations, then explicitly r
 | `real-lecture-live-01` | Initial photo/text integration lost useful visual detail; mostly deferred, then unsupported umlaut rendering failed. |
 | `real-lecture-live-02` | Actual sampled JPEGs produced truss diagrams. One initial request timed out; manual retry was used. Small crowded labels and lagging frame selection failed visual review. |
 | `real-lecture-live-03` | Latest-frame context worked, but generated BLACK geometry was invisible on dark canvas. Two updates followed by repeated deferrals and a provider failure. Preserved without hand-editing generated outputs. |
+| `real-lecture-live-04` | Contrast and text size improved, but the author copied two overlapping constructions and produced a static initial scene. Following request timed out; one manual retry also timed out. Label overlap and explanatory animation remain failed acceptance checks. |
+| `real-lecture-live-05` | Same corrected prompt with `gpt-6.1-sol`, low reasoning, priority requested. Initial request hit the ten-second deadline; no scene was published. Provider receipt did not confirm priority service. |
 
 All directories are beneath `data/realtime-workshop/`; each contains `events.jsonl`, provider receipts, and screenshots. Inputs are in `real-lecture-audio-01/manifest-video.json`. Frames were extracted at exact excerpt times 0, 5, …, 55 seconds, using explicit input seeks. Failed trials are evidence, not successful quality results.
 
@@ -33,3 +37,5 @@ All directories are beneath `data/realtime-workshop/`; each contains `events.jso
 - Main-app production build passes, including rebuilt native text renderer.
 
 The ten-second end-to-end target, general visual quality, and faithful updates across subjects are not established by these trials. A model response, renderer submission, and physical screen presentation are distinct events. Browser telemetry measures the next frame opportunity, not physical pixel presentation.
+
+The existing native overlap diagnostics can reject candidate text collisions before publication, but they are not wired into this live path. Candidate-only checking would miss collisions with retained programs; automatic repair would also need bounded feedback plumbing. Prompt changes alone did not solve overlapping diagrams. No layout guarantee or automatic repair is claimed.
