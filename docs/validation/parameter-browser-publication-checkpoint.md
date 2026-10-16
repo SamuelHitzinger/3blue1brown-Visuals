@@ -120,4 +120,5 @@ and molecule screenshots, finding no new issue or obvious viewport-edge clipping
 Remaining acceptance includes real model/ASR runs, the broader subject/detail
 matrix and unseen holdouts, continuous/blinded visual review, and full measured
 source-to-visible latency. Scripted browser success does not discharge those gates.
-Provider upload approval and the separate GitHub destination approval remain pending.
+Provider upload and GitHub destination approvals were subsequently granted; the
+forty-request model trial is recorded in `parameter-trial-live-checkpoint.md`.
