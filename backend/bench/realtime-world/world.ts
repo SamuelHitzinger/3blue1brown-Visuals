@@ -45,7 +45,8 @@ export interface WorldTransactionOptions {
 }
 type Property = keyof ReactiveProperties;
 type Override = { from: unknown; to: unknown; start: number; duration: number };
-type Program = { id: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean };
+type Program = { id: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean;
+  terminalScene?: Promise<CompiledScene> };
 type Candidate = { id: string; compiler: SourceCompiler; controller: AbortController; scene?: CompiledScene };
 type Sample = { program: Program; scene: CompiledScene };
 const geometryKeys = new Set(['radius','vertices','normals','material','texture','scalarColors','points']);
@@ -140,7 +141,7 @@ export class LiveWorld {
   private now(lowerBound:number){time(lowerBound);const value=this.clock();time(value);return Math.max(value,lowerBound);}
   private scenes(){return [...this.programs.values()].map(program=>program.scene).concat([...this.pending].flatMap(candidate=>candidate.scene?[candidate.scene]:[]));}
   private cancelOthers(except?:Candidate){for(const candidate of this.pending)if(candidate!==except)candidate.controller.abort(new Error('Stale world revision'));}
-  private cleanup(program:Program){if(program.retired&&program.readers===0)program.compiler.dispose();}
+  private cleanup(program:Program){if(program.retired&&program.readers===0){delete program.terminalScene;program.compiler.dispose();}}
   private retire(program:Program){program.retired=true;this.cleanup(program);}
 
   private inspect(scene:CompiledScene):Set<string>{
@@ -200,8 +201,17 @@ export class LiveWorld {
     try{
       const local=Math.max(0,Math.min(program.scene.duration,nowSeconds-program.epoch));
       if(!program.scene.reactiveBindings?.some(binding=>binding.time))return {program,scene:program.scene};
-      const updates=await program.compiler.update(program.scene,{},[],{},local);
-      return {program,scene:{...program.scene,reactiveBindings:mergeReactiveUpdates(program.scene,updates,[],local),reactiveTime:local}};
+      const sample=async():Promise<CompiledScene>=>{
+        const updates=await program.compiler.update(program.scene,{},[],{},local);
+        return {...program.scene,reactiveBindings:mergeReactiveUpdates(program.scene,updates,[],local),reactiveTime:local};
+      };
+      if(local!==program.scene.duration)return {program,scene:await sample()};
+      // Pure callbacks receive identical inputs forever after the authored end.
+      // Keep the original scene as compiler/asset identity; never cache composed
+      // frames, which must still reflect host edits, removals and bindings.
+      const terminal=program.terminalScene??=sample();
+      try{return {program,scene:await terminal};}
+      catch(error){if(program.terminalScene===terminal)delete program.terminalScene;throw error;}
     }finally{program.readers--;this.cleanup(program);}
   }
   private async capture(nowSeconds:number):Promise<Sample[]>{

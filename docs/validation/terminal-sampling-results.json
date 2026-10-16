@@ -1,0 +1,905 @@
+{
+  "evidenceRoot": "data/realtime-workshop/terminal-sampling-01",
+  "status": "complete",
+  "providerRequests": 0,
+  "baseline": {
+    "ref": "295f14f2c1224961a79e6c659fee12b2d5e79525",
+    "path": "backend/bench/realtime-world/world.ts",
+    "originalSha256": "1b5acadd0d63c46c7eb898e14efd5acf09ed8cad708da30807e7bc067edd0909",
+    "relocatedSha256": "4dacda4f280430f97d77d5e816d8f94a25c9b763015b43284bf93a5a1421fe09",
+    "change": "Only ../../../shared/ import paths become ../shared/ from .tmp"
+  },
+  "provenance": {
+    "backend/bench/realtime-world/world.ts": "0e1f6d84efc2ef118693161d369ae66ce488a0ce2cd3cf8184c91427fc7a54cc",
+    "shared/animlib/src/compiler-client.ts": "0438aacfdd2d569a36ed0fc9fe1dddf0d4502716d62c1fc232df89690070b24c",
+    "shared/animlib/src/compiler.ts": "96fbcca74ea1599868d379fe3f909af56b5a15c9b9a14cbec5cdeb74e50532c5",
+    "shared/animlib/src/runtime.ts": "8f64884c30350eb7db8ec06cfd7663267b7d7256e5e2dcc186f00702417d2549",
+    "shared/animlib/src/timeline.ts": "4942935932ffd84b5503033c1b0141819feb7cb5187f9d7f864b30e859044ddb"
+  },
+  "scope": "Headless Bun LiveWorld.sample only. Sample timers include delegating callback instrumentation, exclude hash/equality checks, compile/add, model preparation and all GPU work.",
+  "callbackMeaning": "Completed ReactiveUpdate records count successful registered runtime binding callback invocations; nested per-vertex deformation functions and construction callbacks are not counted.",
+  "cases": [
+    {
+      "id": "graph",
+      "exactFramePairs": 76,
+      "allSentinelChecksPass": true,
+      "held": {
+        "baseline": {
+          "samples": 60,
+          "medianMs": 0.08884999999999366,
+          "minMs": 0.07779999999999632,
+          "maxMs": 0.29710000000000036,
+          "meanMs": 0.10048999999999969,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        },
+        "candidate": {
+          "samples": 60,
+          "medianMs": 0.0875999999999948,
+          "minMs": 0.07650000000001,
+          "maxMs": 0.150100000000009,
+          "meanMs": 0.09183833333333287,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        }
+      },
+      "active": {
+        "baseline": {
+          "samples": 12,
+          "medianMs": 0.12905000000000655,
+          "minMs": 0.11429999999998586,
+          "maxMs": 0.9431000000000154,
+          "meanMs": 0.19711666666666616,
+          "dispatches": 12,
+          "registeredCallbackExecutions": 12,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 12
+        },
+        "candidate": {
+          "samples": 12,
+          "medianMs": 0.12919999999999732,
+          "minMs": 0.11160000000000991,
+          "maxMs": 0.4807999999999879,
+          "meanMs": 0.16046666666666454,
+          "dispatches": 12,
+          "registeredCallbackExecutions": 12,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 12
+        }
+      },
+      "firstTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 0.12309999999999377,
+          "minMs": 0.12309999999999377,
+          "maxMs": 0.12309999999999377,
+          "meanMs": 0.12309999999999377,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.12270000000000891,
+          "minMs": 0.12270000000000891,
+          "maxMs": 0.12270000000000891,
+          "meanMs": 0.12270000000000891,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "returnTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 0.077699999999993,
+          "minMs": 0.077699999999993,
+          "maxMs": 0.077699999999993,
+          "meanMs": 0.077699999999993,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.08299999999999841,
+          "minMs": 0.08299999999999841,
+          "maxMs": 0.08299999999999841,
+          "meanMs": 0.08299999999999841,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "hostOverride": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 0.15399999999999636,
+          "minMs": 0.15399999999999636,
+          "maxMs": 0.15399999999999636,
+          "meanMs": 0.15399999999999636,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.12809999999998922,
+          "minMs": 0.12809999999998922,
+          "maxMs": 0.12809999999998922,
+          "meanMs": 0.12809999999998922,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      }
+    },
+    {
+      "id": "surface",
+      "exactFramePairs": 76,
+      "allSentinelChecksPass": true,
+      "held": {
+        "baseline": {
+          "samples": 60,
+          "medianMs": 1.3632499999999936,
+          "minMs": 1.2450000000000045,
+          "maxMs": 1.7425000000000068,
+          "meanMs": 1.374981666666659,
+          "dispatches": 120,
+          "registeredCallbackExecutions": 360,
+          "heldCallbacks": 300,
+          "sentinelCallbacks": 60
+        },
+        "candidate": {
+          "samples": 60,
+          "medianMs": 1.0157000000000096,
+          "minMs": 0.9048999999999978,
+          "maxMs": 1.3414000000000215,
+          "meanMs": 1.0248549999999985,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        }
+      },
+      "active": {
+        "baseline": {
+          "samples": 12,
+          "medianMs": 1.3684499999999957,
+          "minMs": 1.3018999999999892,
+          "maxMs": 1.617999999999995,
+          "meanMs": 1.3890083333333223,
+          "dispatches": 24,
+          "registeredCallbackExecutions": 72,
+          "heldCallbacks": 60,
+          "sentinelCallbacks": 12
+        },
+        "candidate": {
+          "samples": 12,
+          "medianMs": 1.3982500000000186,
+          "minMs": 1.3289000000000328,
+          "maxMs": 1.4963999999999942,
+          "meanMs": 1.4061583333333374,
+          "dispatches": 24,
+          "registeredCallbackExecutions": 72,
+          "heldCallbacks": 60,
+          "sentinelCallbacks": 12
+        }
+      },
+      "firstTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 1.3894999999999982,
+          "minMs": 1.3894999999999982,
+          "maxMs": 1.3894999999999982,
+          "meanMs": 1.3894999999999982,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 6,
+          "heldCallbacks": 5,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 1.3401000000000067,
+          "minMs": 1.3401000000000067,
+          "maxMs": 1.3401000000000067,
+          "meanMs": 1.3401000000000067,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 6,
+          "heldCallbacks": 5,
+          "sentinelCallbacks": 1
+        }
+      },
+      "returnTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 1.2404999999999973,
+          "minMs": 1.2404999999999973,
+          "maxMs": 1.2404999999999973,
+          "meanMs": 1.2404999999999973,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 6,
+          "heldCallbacks": 5,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.9173999999999296,
+          "minMs": 0.9173999999999296,
+          "maxMs": 0.9173999999999296,
+          "meanMs": 0.9173999999999296,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "hostOverride": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 1.2554999999999836,
+          "minMs": 1.2554999999999836,
+          "maxMs": 1.2554999999999836,
+          "meanMs": 1.2554999999999836,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 6,
+          "heldCallbacks": 5,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.9276000000000977,
+          "minMs": 0.9276000000000977,
+          "maxMs": 0.9276000000000977,
+          "meanMs": 0.9276000000000977,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      }
+    },
+    {
+      "id": "full-molecule",
+      "exactFramePairs": 76,
+      "allSentinelChecksPass": true,
+      "held": {
+        "baseline": {
+          "samples": 60,
+          "medianMs": 1.3513000000000943,
+          "minMs": 1.3031999999998334,
+          "maxMs": 1.796699999999987,
+          "meanMs": 1.3703866666666633,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        },
+        "candidate": {
+          "samples": 60,
+          "medianMs": 1.347500000000025,
+          "minMs": 1.3019999999999072,
+          "maxMs": 3.9408999999999423,
+          "meanMs": 1.4422433333333173,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        }
+      },
+      "active": {
+        "baseline": {
+          "samples": 12,
+          "medianMs": 1.3698499999999854,
+          "minMs": 1.3389000000000806,
+          "maxMs": 1.518199999999979,
+          "meanMs": 1.3950249999999944,
+          "dispatches": 12,
+          "registeredCallbackExecutions": 12,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 12
+        },
+        "candidate": {
+          "samples": 12,
+          "medianMs": 1.3940000000000055,
+          "minMs": 1.3424999999999727,
+          "maxMs": 1.5535999999999603,
+          "meanMs": 1.4213166666666837,
+          "dispatches": 12,
+          "registeredCallbackExecutions": 12,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 12
+        }
+      },
+      "firstTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 1.350999999999999,
+          "minMs": 1.350999999999999,
+          "maxMs": 1.350999999999999,
+          "meanMs": 1.350999999999999,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 1.379699999999957,
+          "minMs": 1.379699999999957,
+          "maxMs": 1.379699999999957,
+          "meanMs": 1.379699999999957,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "returnTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 1.4040999999999713,
+          "minMs": 1.4040999999999713,
+          "maxMs": 1.4040999999999713,
+          "meanMs": 1.4040999999999713,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 1.3240000000000691,
+          "minMs": 1.3240000000000691,
+          "maxMs": 1.3240000000000691,
+          "meanMs": 1.3240000000000691,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "hostOverride": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 1.3111999999998716,
+          "minMs": 1.3111999999998716,
+          "maxMs": 1.3111999999998716,
+          "meanMs": 1.3111999999998716,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 1.3054000000001906,
+          "minMs": 1.3054000000001906,
+          "maxMs": 1.3054000000001906,
+          "meanMs": 1.3054000000001906,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      }
+    },
+    {
+      "id": "large-glb",
+      "exactFramePairs": 76,
+      "allSentinelChecksPass": true,
+      "held": {
+        "baseline": {
+          "samples": 60,
+          "medianMs": 0.16440000000000055,
+          "minMs": 0.1511000000000422,
+          "maxMs": 1.7101999999999862,
+          "meanMs": 0.21480999999998857,
+          "dispatches": 120,
+          "registeredCallbackExecutions": 120,
+          "heldCallbacks": 60,
+          "sentinelCallbacks": 60
+        },
+        "candidate": {
+          "samples": 60,
+          "medianMs": 0.13934999999992215,
+          "minMs": 0.1274999999998272,
+          "maxMs": 0.2800999999999476,
+          "meanMs": 0.14754333333332473,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        }
+      },
+      "active": {
+        "baseline": {
+          "samples": 12,
+          "medianMs": 0.19295000000010987,
+          "minMs": 0.1774000000000342,
+          "maxMs": 0.2780999999999949,
+          "meanMs": 0.2037500000000326,
+          "dispatches": 24,
+          "registeredCallbackExecutions": 24,
+          "heldCallbacks": 12,
+          "sentinelCallbacks": 12
+        },
+        "candidate": {
+          "samples": 12,
+          "medianMs": 0.19029999999997926,
+          "minMs": 0.1756000000000313,
+          "maxMs": 0.24490000000014334,
+          "meanMs": 0.19670833333335244,
+          "dispatches": 24,
+          "registeredCallbackExecutions": 24,
+          "heldCallbacks": 12,
+          "sentinelCallbacks": 12
+        }
+      },
+      "firstTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 0.19590000000016516,
+          "minMs": 0.19590000000016516,
+          "maxMs": 0.19590000000016516,
+          "meanMs": 0.19590000000016516,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.20450000000005275,
+          "minMs": 0.20450000000005275,
+          "maxMs": 0.20450000000005275,
+          "meanMs": 0.20450000000005275,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        }
+      },
+      "returnTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 0.1614999999999327,
+          "minMs": 0.1614999999999327,
+          "maxMs": 0.1614999999999327,
+          "meanMs": 0.1614999999999327,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.14079999999989923,
+          "minMs": 0.14079999999989923,
+          "maxMs": 0.14079999999989923,
+          "meanMs": 0.14079999999989923,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "hostOverride": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 0.17470000000002983,
+          "minMs": 0.17470000000002983,
+          "maxMs": 0.17470000000002983,
+          "meanMs": 0.17470000000002983,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 0.13409999999998945,
+          "minMs": 0.13409999999998945,
+          "maxMs": 0.13409999999998945,
+          "meanMs": 0.13409999999998945,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "model": {
+        "modelReads": 1,
+        "resolvedModelTriangles": 90004,
+        "sha256Verified": true
+      }
+    },
+    {
+      "id": "synthetic-surfaces-1",
+      "exactFramePairs": 76,
+      "allSentinelChecksPass": true,
+      "held": {
+        "baseline": {
+          "samples": 60,
+          "medianMs": 7.7500499999999874,
+          "minMs": 7.635300000000143,
+          "maxMs": 9.23980000000006,
+          "meanMs": 7.803214999999978,
+          "dispatches": 120,
+          "registeredCallbackExecutions": 120,
+          "heldCallbacks": 60,
+          "sentinelCallbacks": 60
+        },
+        "candidate": {
+          "samples": 60,
+          "medianMs": 1.066150000000107,
+          "minMs": 1.035200000000259,
+          "maxMs": 1.222099999999955,
+          "meanMs": 1.0818233333333487,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        }
+      },
+      "active": {
+        "baseline": {
+          "samples": 12,
+          "medianMs": 7.705299999999966,
+          "minMs": 7.643100000000004,
+          "maxMs": 7.84680000000003,
+          "meanMs": 7.713941666666623,
+          "dispatches": 24,
+          "registeredCallbackExecutions": 24,
+          "heldCallbacks": 12,
+          "sentinelCallbacks": 12
+        },
+        "candidate": {
+          "samples": 12,
+          "medianMs": 7.765199999999936,
+          "minMs": 7.642100000000028,
+          "maxMs": 7.8922000000000025,
+          "meanMs": 7.759366666666665,
+          "dispatches": 24,
+          "registeredCallbackExecutions": 24,
+          "heldCallbacks": 12,
+          "sentinelCallbacks": 12
+        }
+      },
+      "firstTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 7.735699999999952,
+          "minMs": 7.735699999999952,
+          "maxMs": 7.735699999999952,
+          "meanMs": 7.735699999999952,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 7.641499999999951,
+          "minMs": 7.641499999999951,
+          "maxMs": 7.641499999999951,
+          "meanMs": 7.641499999999951,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        }
+      },
+      "returnTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 7.642899999999827,
+          "minMs": 7.642899999999827,
+          "maxMs": 7.642899999999827,
+          "meanMs": 7.642899999999827,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 1.0619999999998981,
+          "minMs": 1.0619999999998981,
+          "maxMs": 1.0619999999998981,
+          "meanMs": 1.0619999999998981,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "hostOverride": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 7.695900000000165,
+          "minMs": 7.695900000000165,
+          "maxMs": 7.695900000000165,
+          "meanMs": 7.695900000000165,
+          "dispatches": 2,
+          "registeredCallbackExecutions": 2,
+          "heldCallbacks": 1,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 1.077600000000075,
+          "minMs": 1.077600000000075,
+          "maxMs": 1.077600000000075,
+          "meanMs": 1.077600000000075,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      }
+    },
+    {
+      "id": "synthetic-surfaces-4",
+      "exactFramePairs": 76,
+      "allSentinelChecksPass": true,
+      "held": {
+        "baseline": {
+          "samples": 60,
+          "medianMs": 31.273299999999836,
+          "minMs": 30.699999999999818,
+          "maxMs": 32.273299999999836,
+          "meanMs": 31.31619333333339,
+          "dispatches": 300,
+          "registeredCallbackExecutions": 300,
+          "heldCallbacks": 240,
+          "sentinelCallbacks": 60
+        },
+        "candidate": {
+          "samples": 60,
+          "medianMs": 4.225400000000263,
+          "minMs": 4.082400000000234,
+          "maxMs": 7.907600000000457,
+          "meanMs": 4.4161149999999605,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        }
+      },
+      "active": {
+        "baseline": {
+          "samples": 12,
+          "medianMs": 31.136600000000044,
+          "minMs": 30.62149999999974,
+          "maxMs": 32.18690000000015,
+          "meanMs": 31.16188333333332,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 48,
+          "sentinelCallbacks": 12
+        },
+        "candidate": {
+          "samples": 12,
+          "medianMs": 30.93209999999999,
+          "minMs": 30.58979999999974,
+          "maxMs": 33.8424,
+          "meanMs": 31.277991666666633,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 48,
+          "sentinelCallbacks": 12
+        }
+      },
+      "firstTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 31.22460000000001,
+          "minMs": 31.22460000000001,
+          "maxMs": 31.22460000000001,
+          "meanMs": 31.22460000000001,
+          "dispatches": 5,
+          "registeredCallbackExecutions": 5,
+          "heldCallbacks": 4,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 31.583700000000135,
+          "minMs": 31.583700000000135,
+          "maxMs": 31.583700000000135,
+          "meanMs": 31.583700000000135,
+          "dispatches": 5,
+          "registeredCallbackExecutions": 5,
+          "heldCallbacks": 4,
+          "sentinelCallbacks": 1
+        }
+      },
+      "returnTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 31.472100000000864,
+          "minMs": 31.472100000000864,
+          "maxMs": 31.472100000000864,
+          "meanMs": 31.472100000000864,
+          "dispatches": 5,
+          "registeredCallbackExecutions": 5,
+          "heldCallbacks": 4,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 4.164600000000064,
+          "minMs": 4.164600000000064,
+          "maxMs": 4.164600000000064,
+          "meanMs": 4.164600000000064,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "hostOverride": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 31.033399999999347,
+          "minMs": 31.033399999999347,
+          "maxMs": 31.033399999999347,
+          "meanMs": 31.033399999999347,
+          "dispatches": 5,
+          "registeredCallbackExecutions": 5,
+          "heldCallbacks": 4,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 4.1085000000002765,
+          "minMs": 4.1085000000002765,
+          "maxMs": 4.1085000000002765,
+          "meanMs": 4.1085000000002765,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      }
+    },
+    {
+      "id": "synthetic-surfaces-16",
+      "exactFramePairs": 76,
+      "allSentinelChecksPass": true,
+      "held": {
+        "baseline": {
+          "samples": 60,
+          "medianMs": 124.32299999999941,
+          "minMs": 123.18870000000061,
+          "maxMs": 139.09499999999753,
+          "meanMs": 125.0592249999997,
+          "dispatches": 1020,
+          "registeredCallbackExecutions": 1020,
+          "heldCallbacks": 960,
+          "sentinelCallbacks": 60
+        },
+        "candidate": {
+          "samples": 60,
+          "medianMs": 16.40060000000085,
+          "minMs": 16.151200000000244,
+          "maxMs": 18.0020999999997,
+          "meanMs": 16.51364000000003,
+          "dispatches": 60,
+          "registeredCallbackExecutions": 60,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 60
+        }
+      },
+      "active": {
+        "baseline": {
+          "samples": 12,
+          "medianMs": 124.3755000000001,
+          "minMs": 123.83849999999984,
+          "maxMs": 129.12690000000111,
+          "meanMs": 125.03603333333338,
+          "dispatches": 204,
+          "registeredCallbackExecutions": 204,
+          "heldCallbacks": 192,
+          "sentinelCallbacks": 12
+        },
+        "candidate": {
+          "samples": 12,
+          "medianMs": 124.50795000000107,
+          "minMs": 124.02849999999853,
+          "maxMs": 129.45689999999922,
+          "meanMs": 125.28988333333307,
+          "dispatches": 204,
+          "registeredCallbackExecutions": 204,
+          "heldCallbacks": 192,
+          "sentinelCallbacks": 12
+        }
+      },
+      "firstTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 127.29190000000017,
+          "minMs": 127.29190000000017,
+          "maxMs": 127.29190000000017,
+          "meanMs": 127.29190000000017,
+          "dispatches": 17,
+          "registeredCallbackExecutions": 17,
+          "heldCallbacks": 16,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 125.97600000000057,
+          "minMs": 125.97600000000057,
+          "maxMs": 125.97600000000057,
+          "meanMs": 125.97600000000057,
+          "dispatches": 17,
+          "registeredCallbackExecutions": 17,
+          "heldCallbacks": 16,
+          "sentinelCallbacks": 1
+        }
+      },
+      "returnTerminal": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 124.44659999999931,
+          "minMs": 124.44659999999931,
+          "maxMs": 124.44659999999931,
+          "meanMs": 124.44659999999931,
+          "dispatches": 17,
+          "registeredCallbackExecutions": 17,
+          "heldCallbacks": 16,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 16.461699999999837,
+          "minMs": 16.461699999999837,
+          "maxMs": 16.461699999999837,
+          "meanMs": 16.461699999999837,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      },
+      "hostOverride": {
+        "baseline": {
+          "samples": 1,
+          "medianMs": 126.30270000000019,
+          "minMs": 126.30270000000019,
+          "maxMs": 126.30270000000019,
+          "meanMs": 126.30270000000019,
+          "dispatches": 17,
+          "registeredCallbackExecutions": 17,
+          "heldCallbacks": 16,
+          "sentinelCallbacks": 1
+        },
+        "candidate": {
+          "samples": 1,
+          "medianMs": 18.763700000003155,
+          "minMs": 18.763700000003155,
+          "maxMs": 18.763700000003155,
+          "meanMs": 18.763700000003155,
+          "dispatches": 1,
+          "registeredCallbackExecutions": 1,
+          "heldCallbacks": 0,
+          "sentinelCallbacks": 1
+        }
+      }
+    }
+  ],
+  "exactFramePairs": 532,
+  "limitation": "Headless fixed fixtures, one local run, no GPU, live latency or visual review claim. Graph and molecule are callback-free negative controls."
+}

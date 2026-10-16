@@ -30,8 +30,16 @@ Raw prompts/outputs and provider metrics are retained under ignored
 `data/realtime-workshop/live-requests/`. Browser outcomes, including failures,
 are retained under `data/realtime-workshop/browser/`.
 
-The core prototype rejects unsupported controls, attachments, camera animation
+The core prototype rejects unsupported controls, cross-program attachments, camera animation
 and interpolated edits to properties already owned by time callbacks. It has
 bounded program/object counts and no history replay. See `LiveWorld.summary()`
 for current limits. These restrictions are experiments, not narrowed product
 acceptance criteria.
+
+Finished time-bound programs retain one terminal callback snapshot. Concurrent
+requests share that computation; failed computations can retry. Earlier samples
+still evaluate callbacks normally. This relies on animlib's existing pure-callback
+contract; callbacks that mutate closure state or consume random values are not
+supported. The cache does not freeze host edits, internal attachments/connectors,
+timeline evaluation or rendering. Compiler and asset ownership remain attached to
+the original scene until its program is removed or the world is disposed.
