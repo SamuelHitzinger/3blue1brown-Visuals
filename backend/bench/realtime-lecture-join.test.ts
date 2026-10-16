@@ -1,11 +1,17 @@
 import {expect,test} from 'bun:test';
 import {EventEmitter} from 'node:events';
-import {selectEvidence,generationDeadline,openEventStream,endEventStreams,watchDisconnect,cancelGeneration,type JoinedEvidence} from './realtime-lecture-join.js';
+import {selectEvidence,generationDeadline,openEventStream,endEventStreams,watchDisconnect,cancelGeneration,requireAssetInventory,type JoinedEvidence} from './realtime-lecture-join.js';
 
 const speech:JoinedEvidence={id:'chunk-0000',version:1,kind:'transcript',sourceId:'lecture',sourceStartMs:0,sourceEndMs:4000,
   sourceReadyAtMs:5000,availableAtMs:5300,text:'uncertain speech',trialRef:'local:trial'};
 const frame:JoinedEvidence={id:'frame-1',version:1,kind:'frame',sourceId:'lecture',sourceStartMs:8000,sourceEndMs:8000,
   sourceReadyAtMs:9000,availableAtMs:9010,frameRef:'local:frame'};
+
+test('stale or missing browser asset inventory cannot start or generate against a different host snapshot',()=>{
+ const current='a'.repeat(64);
+ expect(()=>requireAssetInventory(current,current)).not.toThrow();
+ for(const value of [undefined,null,'b'.repeat(64),{},''])expect(()=>requireAssetInventory(value,current)).toThrow('inventory');
+});
 
 test('only released exact evidence versions can enter a model request',()=>{
   const ledger=new Map([[speech.id,speech],[frame.id,frame]]);

@@ -1,0 +1,90 @@
+{
+  "date": "2026-10-16",
+  "kind": "local-http-asset-world-integration",
+  "inventoryId": "971c9b19431ac7b9d2cbc66cdb5ec1b3628f4caa4be0fd2cb6400191ac56cbe0",
+  "assetId": "model-b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+  "sha256": "b395b900e5008e039b988a865814311a9d55cc5ff1bf0675b01621265236e450",
+  "parts": 12,
+  "triangles": 90004,
+  "hostIndexAndSessionBuildMs": 165.5711,
+  "lookupMs": 0.5414000000000101,
+  "candidateBytes": 6701,
+  "worldAddMs": 104.50510000000003,
+  "includedLocalHttpReadMs": 2.824200000000019,
+  "patchMs": 0.8721999999999639,
+  "readsAfterSecondInstance": 1,
+  "frames": 3,
+  "unknownAssetStatus": 400,
+  "staleStartStatus": 400,
+  "providerRequests": 0,
+  "limitation": "Handwritten local integration proof with simulated world clock. World-add includes model loading; separate native rendering follows. No lecture interpretation, model selection, live deadline or quality parity claim.",
+  "verification": {
+    "tests": 30,
+    "assertions": 171,
+    "failures": 0,
+    "targetedStrictTypeScript": "pass",
+    "review": "No remaining actionable integration findings; visual quality not reviewed"
+  },
+  "artifacts": [
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/probe.ts",
+      "bytes": 5060,
+      "sha256": "055247a4082a409f907bb9a5f097917b6efcd8e83ef88ef31e21c16d082670a2"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/render-world-frames.mjs",
+      "bytes": 6660,
+      "sha256": "1e05aeae3b920ae770ae2172f1b9b42f7400d10189532c713ac7c3b67625f5e0"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/render-input.json",
+      "bytes": 5106367,
+      "sha256": "33acd4d89fe379efa8cfd80782ace3b4b00d203d2c57bbc1694c7dd0d3fde2d8"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native-input.json",
+      "bytes": 5106496,
+      "sha256": "25ddf080072ee8a8f7bb7645bf0373489aacc32251a437d2c532bfe460b04d5e"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native/frames.json",
+      "bytes": 1810,
+      "sha256": "811818b28f613f3b0c3e3c2b00be6558c038e4bc46dff92be7af1c7e6a881d9c"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/browser-ready.png",
+      "bytes": 17537,
+      "sha256": "433e03a9a23cf1615df863255c7d8c613a70c0fed6597455029f23a685810963"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native/1280x720-0.png",
+      "bytes": 193014,
+      "sha256": "d3c2b98a3e6982530df6cd8a22c8f7d840587af8a2729d9ca4d1f0900d54d584"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native/1280x720-1.png",
+      "bytes": 194413,
+      "sha256": "5132b28c927607135240058154d6eeea55725e5d43ad22d32c30cc429c0377c3"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native/1280x720-2.png",
+      "bytes": 196270,
+      "sha256": "0a6781562dedd9218b01afe7bb5074675b9668cdddb8c7d30722e2c0296764a5"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native/960x720-0.png",
+      "bytes": 188623,
+      "sha256": "f7ce3a804ddae4974eb2657fab4a5bc8a6f6df47b210073608fdc41d151df0ec"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native/960x720-1.png",
+      "bytes": 189567,
+      "sha256": "46816324d1da4b2dfad155587a1c593d85fe1e2fd2a54f42e0af7426c4ed1498"
+    },
+    {
+      "path": "data/realtime-workshop/lecture-assets-local-04/native/960x720-2.png",
+      "bytes": 191254,
+      "sha256": "4b3827a76406a24e23ccfc11922848e0d8d88f4bfd09b55ab01640f52895704c"
+    }
+  ]
+}

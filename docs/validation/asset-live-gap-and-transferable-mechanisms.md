@@ -7,6 +7,10 @@ arbitrary scientifically correct lecture-to-animation output within ten seconds.
 
 ## Concrete integration gap
 
+Historical audit below describes the pre-integration state. The subsequent
+[static asset checkpoint](lecture-static-assets-checkpoint.md) closes the bounded
+startup-inventory wiring gap and records actual local rendering evidence.
+
 The local index already provides bounded search, stable IDs, provenance, native
 registries and static published GLB payloads. However, the joined lecture prompt
 explicitly forbids external assets, exposes only `submit_world`, and supplies no

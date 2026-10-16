@@ -1,4 +1,7 @@
-import { LiveWorld, type WorldPatch } from '../realtime-world/world.js';
+import { type WorldPatch } from '../realtime-world/world.js';
+import { createAssetBackedWorld } from '../realtime-media/asset-world.js';
+import { ModelStore } from '../../../shared/animlib/src/model-store.js';
+import type { ModelAsset } from '../../../shared/animlib/src/model-types.js';
 import { MediaReplay, type AsrInput, type EvidencePacket, type LocalAsrTrial } from '../realtime-media/replay.js';
 import type { SourceClock } from '../realtime-media/events.js';
 import { CommittedContextJournal } from '../realtime-media/committed-context.js';
@@ -42,11 +45,27 @@ function stamp(): Stamp {
   return { browserAtMs, serverLowerMs: browserAtMs + clock.offsetLowerMs, serverUpperMs: browserAtMs + clock.offsetUpperMs };
 }
 const upperNow = () => stamp().serverUpperMs;
+async function loadModelInventory():Promise<{inventoryId:string;assets:Record<string,ModelAsset>}> {
+  status.textContent = 'Loading indexed model inventory…';
+  try {
+    const response = await fetch('/lecture-assets', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
+    const value = await response.json();
+    if (!response.ok || !/^[a-f0-9]{64}$/.test(value.inventoryId) || !value.assets || typeof value.assets !== 'object'
+      || Array.isArray(value.assets) || Object.keys(value.assets).length > 4) throw new Error('Invalid indexed model inventory');
+    for (const [id,asset] of Object.entries(value.assets) as [string,ModelAsset][]) {
+      if (asset.kind !== 'model' || asset.url !== `/lecture-assets/file?assetId=${encodeURIComponent(id)}`
+        || !/^[a-f0-9]{64}$/.test(asset.sha256 ?? '')) throw new Error('Invalid indexed model route or hash');
+    }
+    return value;
+  } catch (error) { status.textContent = `Asset initialization failed: ${message(error)}`; throw error; }
+}
+const modelInventory = await loadModelInventory();
+const models = new ModelStore(modelInventory.assets);
 // The world and the scheduler always use the same conservative mapped clock.
-const world = new LiveWorld({ clock: () => upperNow() / 1000, prepare: async (scene, assets, signal) => {
+const world = createAssetBackedWorld(models, { clock: () => upperNow() / 1000, prepare: async (scene, assets, signal) => {
   signal.throwIfAborted(); await renderer.prepare([scene], assets); signal.throwIfAborted();
 } });
-renderer = new CanvasRenderer(canvas, undefined, world.assetGeometry);
+renderer = new CanvasRenderer(canvas, undefined, world.assetGeometry, models);
 renderer.onError = error => { renderError = error; renderWait?.reject(error); status.textContent = `Renderer error: ${error.message}`; };
 renderer.onRecovered = () => { renderError = undefined; };
 
@@ -173,7 +192,7 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
   let committedAt: Stamp | undefined;
   try {
     guard(current, attempt);
-    const request = { runId: current.id, planId: packet.planId, baseRevision: packet.baseWorldRevision,
+    const request = { runId: current.id, planId: packet.planId, baseRevision: packet.baseWorldRevision, inventoryId: modelInventory.inventoryId,
       evidence: packet.changes.map(({ id, version }) => ({ id, version })), context: packet.context.map(({ id, version }) => ({ id, version })),
       world: null as unknown, deadlineServerMs: attempt.deadline };
     // Replace the four ASCII bytes of null with the complete bounded world object.
@@ -304,13 +323,13 @@ async function start() {
   starting = true; startButton.disabled = true; status.textContent = 'Starting lecture source…';
   try {
     if (!clock) await measureClock();
-    const result = await post('/start', {}, AbortSignal.timeout(15000));
+    const result = await post('/start', { inventoryId: modelInventory.inventoryId }, AbortSignal.timeout(15000));
     if (typeof result.runId !== 'string' || !result.runId) throw new Error('Missing run ID');
     const current: Run = { id: result.runId, sequence: ++runSequence, stopped: false, clocks: {}, seen: new Map() }; run = current;
     const source = current.source = new EventSource(`/events?runId=${encodeURIComponent(current.id)}`);
     source.onmessage = event => { try { ingest(current, JSON.parse(event.data)); } catch (error) { note(`Evidence stream failed: ${message(error)}`); void stop(); } };
     source.onerror = () => { if (!current.stopped) { note('Evidence stream disconnected; stopping this run.'); void stop(); } };
-    receipt(current, null, { type: 'client-started', ...stamp(), worldRevision: world.revision });
+    receipt(current, null, { type: 'client-started', ...stamp(), worldRevision: world.revision, inventoryId: modelInventory.inventoryId });
     note(`Run ${current.id} started at world revision ${world.revision}.`);
     stopButton.disabled = false; status.textContent = 'Listening for lecture evidence…';
   } catch (error) { status.textContent = `Start failed: ${message(error)}`; note(status.textContent); }
@@ -333,9 +352,9 @@ document.addEventListener('visibilitychange', () => {
   const current = run;
   if (document.hidden && current?.active) { terminal(current, current.active, 'page-hidden'); cancelServer(current, current.active); note('Active attempt retired because the page became hidden.'); }
 });
-window.addEventListener('pagehide', () => { void stop(); disposed = true; clearInterval(poller); world.dispose(); renderer.dispose(); });
+window.addEventListener('pagehide', () => { void stop(); disposed = true; clearInterval(poller); world.dispose(); renderer.dispose(); models.dispose(); });
 const poller = setInterval(poll, 50);
 try {
-  await renderer.prepare([]); status.textContent = `Ready · ${renderer.backend}. Start to receive lecture evidence.`; startButton.disabled = false;
+  await renderer.prepare([]); status.textContent = `Ready · ${renderer.backend} · ${Object.keys(modelInventory.assets).length} indexed static models. Start to receive lecture evidence.`; startButton.disabled = false;
   requestAnimationFrame(animate);
 } catch (error) { status.textContent = `Renderer initialization failed: ${message(error)}`; note(status.textContent); }
