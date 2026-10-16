@@ -1,7 +1,8 @@
 /** Experimental persistent world. No production player or scene protocol changes.
  * New sandbox programs own new IDs. Host property overrides layer over freshly
  * sampled old programs, retaining their untouched tracks and time callbacks.
- * There is deliberately no replay history, controls, input behavior, camera
+ * Reactive sliders are host-controlled numeric parameters, without control UI.
+ * There is deliberately no replay history, input behavior, camera
  * authoring, cross-program attachment, or live rebase of a callback-owned tween.
  */
 import { SourceCompiler } from '../../../shared/animlib/src/compiler-client.js';
@@ -31,6 +32,7 @@ export interface WorldOptions {
   prepare?: (scene: CompiledScene, assets: SceneAssets, signal: AbortSignal) => Promise<void>;
 }
 export interface ProgramRequest { id: string; source: string; baseRevision: number }
+export interface WorldParameterPatch { baseRevision: number; programId: string; values: Record<string,number> }
 export interface WorldPatch {
   baseRevision: number;
   changes: { id: string; props: ReactiveProperties; duration?: number }[];
@@ -52,12 +54,13 @@ export interface WorldModelRegistration {
 }
 type Property = keyof ReactiveProperties;
 type Override = { from: unknown; to: unknown; start: number; duration: number };
+type ParameterState = { values: Record<string,number>; snapshot: CompiledScene; terminalScene?: Promise<CompiledScene> };
 type Program = { id: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean;
-  terminalScene?: Promise<CompiledScene> };
+  state: ParameterState; parameterPending?: boolean };
 type Candidate = { id: string; compiler: SourceCompiler; controller: AbortController; scene?: CompiledScene };
 type Sample = { program: Program; scene: CompiledScene };
 const geometryKeys = new Set(['radius','vertices','normals','material','texture','scalarColors','points']);
-export const WORLD_LIMITS = Object.freeze({ sourceBytes: 128_000, patchBytes: 1_000_000, changes: 256, vertices: 100_000 });
+export const WORLD_LIMITS = Object.freeze({ sourceBytes: 128_000, patchBytes: 1_000_000, changes: 256, vertices: 100_000, parameterChanges: 32, parameterEvaluations: 2 });
 const limits = WORLD_LIMITS;
 function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 function id(value: unknown): asserts value is string { check(typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$/.test(value),'Invalid stable ID'); }
@@ -109,6 +112,10 @@ function beforeCommit(options:WorldTransactionOptions):void{
     throw new Error('beforeCommit must be synchronous');
   }
 }
+function ownedProperties(properties:ReactiveProperties):string[]{
+  const keys=Object.keys(properties);
+  return keys.includes('vertices')&&!keys.includes('normals')?[...keys,'normals']:keys;
+}
 
 export class LiveWorld {
   private version=0;
@@ -116,6 +123,7 @@ export class LiveWorld {
   private stopped=false;
   private programs=new Map<string,Program>();
   private pending=new Set<Candidate>();
+  private pendingParameters=0;
   private owners=new Map<string,Program>();
   private reserved=new Set<string>();
   private removed=new Set<string>();
@@ -151,7 +159,7 @@ export class LiveWorld {
   private now(lowerBound:number){time(lowerBound);const value=this.clock();time(value);return Math.max(value,lowerBound);}
   private scenes(){return [...this.programs.values()].map(program=>program.scene).concat([...this.pending].flatMap(candidate=>candidate.scene?[candidate.scene]:[]));}
   private cancelOthers(except?:Candidate){for(const candidate of this.pending)if(candidate!==except)candidate.controller.abort(new Error('Stale world revision'));}
-  private cleanup(program:Program){if(program.retired&&program.readers===0){delete program.terminalScene;program.compiler.dispose();}}
+  private cleanup(program:Program){if(program.retired&&program.readers===0){delete program.state.terminalScene;program.compiler.dispose();}}
   private retire(program:Program){program.retired=true;this.cleanup(program);}
 
   stageModelRegistration(additions:Record<string,ModelMetadata>):WorldModelRegistration{
@@ -175,7 +183,12 @@ export class LiveWorld {
 
   private inspect(scene:CompiledScene):Set<string>{
     validateCompiledScene(scene,this.options.assets?.catalog);
-    check(scene.controls.length===0,'Controls are not implemented by the experimental world');
+    for(const control of scene.controls){
+      id(control.id);check(!['__proto__','prototype','constructor'].includes(control.id),'Unsafe parameter ID');
+      check(control.kind==='slider'&&control.reactive===true,'Only reactive slider controls are supported as world parameters');
+      check(typeof control.min==='number'&&Number.isFinite(control.min)&&typeof control.max==='number'&&Number.isFinite(control.max)&&control.min<=control.max,'Invalid parameter bounds');
+      check(scene.reactiveBindings?.some(binding=>binding.controls.includes(control.id)),`Unused parameter: ${control.id}`);
+    }
     check(!scene.options.audio,'Audio is not implemented by the experimental world');
     check(!scene.views?.length&&!scene.tracks.some(track=>track.action.type==='camera'),'Program camera/view authoring is not implemented');
     check(!scene.behaviors?.length,'Behaviors are not implemented');
@@ -212,7 +225,8 @@ export class LiveWorld {
       check(this.programs.size<this.maxPrograms,'World program limit exceeded');const ids=this.inspect(scene);
       beforeCommit(options);
       const committedAt=this.now(nowSeconds);
-      const program:Program={id:input.id,compiler:candidate.compiler,scene,ids,epoch:committedAt,readers:0,retired:false};
+      const program:Program={id:input.id,compiler:candidate.compiler,scene,ids,epoch:committedAt,readers:0,retired:false,
+        state:{values:Object.fromEntries(scene.controls.map(control=>[control.id,control.value as number])),snapshot:scene}};
       // No awaits or host hooks between these final checks and publication.
       candidate.controller.signal.throwIfAborted();this.fresh(input.baseRevision);
       this.programs.set(input.id,program);for(const key of ids){this.reserved.add(key);this.owners.set(key,program);}
@@ -228,19 +242,21 @@ export class LiveWorld {
   private async sampleProgram(program:Program,nowSeconds:number):Promise<Sample>{
     program.readers++;
     try{
-      const local=Math.max(0,Math.min(program.scene.duration,nowSeconds-program.epoch));
-      if(!program.scene.reactiveBindings?.some(binding=>binding.time))return {program,scene:program.scene};
+      // Capture one committed state before awaiting. Old results/cache completions
+      // can never merge with a newer parameter snapshot.
+      const state=program.state,local=Math.max(0,Math.min(program.scene.duration,nowSeconds-program.epoch));
+      if(!state.snapshot.reactiveBindings?.some(binding=>binding.time))return {program,scene:state.snapshot};
       const sample=async():Promise<CompiledScene>=>{
-        const updates=await program.compiler.update(program.scene,{},[],{},local);
-        return {...program.scene,reactiveBindings:mergeReactiveUpdates(program.scene,updates,[],local),reactiveTime:local};
+        const updates=await program.compiler.update(program.scene,state.values,[],{},local);
+        return {...state.snapshot,reactiveBindings:mergeReactiveUpdates(state.snapshot,updates,[],local),reactiveTime:local};
       };
       if(local!==program.scene.duration)return {program,scene:await sample()};
       // Pure callbacks receive identical inputs forever after the authored end.
       // Keep the original scene as compiler/asset identity; never cache composed
       // frames, which must still reflect host edits, removals and bindings.
-      const terminal=program.terminalScene??=sample();
+      const terminal=state.terminalScene??=sample();
       try{return {program,scene:await terminal};}
-      catch(error){if(program.terminalScene===terminal)delete program.terminalScene;throw error;}
+      catch(error){if(state.terminalScene===terminal)delete state.terminalScene;throw error;}
     }finally{program.readers--;this.cleanup(program);}
   }
   private async capture(nowSeconds:number):Promise<Sample[]>{
@@ -274,6 +290,63 @@ export class LiveWorld {
     throw new Error('World changed repeatedly during sampling; retry the next frame');
   }
 
+  /** Atomic publication of host values and geometry. Native callbacks must be pure
+   * functions of inputs/immutable captures: their retained closure mutations are
+   * not rollbackable, including after cancellation or rejected callback output. */
+  async setParameters(request:WorldParameterPatch,nowSeconds:number,options:WorldTransactionOptions={}):Promise<WorldCommit>{
+    options={signal:options.signal,beforeCommit:options.beforeCommit};options.signal?.throwIfAborted();
+    this.alive();json(request);this.fresh(request.baseRevision);time(nowSeconds);id(request.programId);
+    check(request.values&&typeof request.values==='object'&&!Array.isArray(request.values),'Invalid parameter values');
+    check(JSON.stringify(request).length<=limits.patchBytes,'Parameter patch size limit exceeded');
+    const input=structuredClone(request),program=this.programs.get(input.programId);
+    check(program&&!program.retired,'Unknown parameter program');
+    const state=program.state,nextValues={...state.values},keys=Object.keys(input.values),changed:string[]=[];
+    check(keys.length>0&&keys.length<=limits.parameterChanges,'Parameter change limit exceeded');
+    for(const key of keys){
+      const control=program.scene.controls.find(control=>control.id===key),value=input.values[key];
+      check(control&&control.kind==='slider'&&control.reactive===true,'Unknown numeric parameter');
+      check(typeof value==='number'&&Number.isFinite(value)&&value>=control.min!&&value<=control.max!,`Parameter out of range: ${key}`);
+      const dependents=program.scene.reactiveBindings?.filter(binding=>binding.controls.includes(key))??[];
+      check(dependents.length>0,`Unused parameter: ${key}`);
+      check(dependents.every(binding=>!this.removed.has(binding.target)),'Parameter target was removed');
+      if(value!==state.values[key]){nextValues[key]=value;changed.push(key);}
+    }
+    const assertCurrent=()=>{
+      options.signal?.throwIfAborted();this.fresh(input.baseRevision);
+      check(this.programs.get(input.programId)===program&&!program.retired&&program.state===state,'Stale parameter program');
+    };
+    if(!changed.length){
+      beforeCommit(options);const committedAt=this.now(nowSeconds);assertCurrent();
+      return {revision:this.version,committedAt};
+    }
+    check(!program.parameterPending,'Parameter evaluation already pending for this program');
+    check(this.pendingParameters<limits.parameterEvaluations,'World pending parameter evaluation limit exceeded');
+    const originSampledAt=this.now(nowSeconds),local=Math.max(0,Math.min(program.scene.duration,originSampledAt-program.epoch));
+    assertCurrent();program.parameterPending=true;this.pendingParameters++;program.readers++;
+    const evaluate=async()=>{
+      try{
+        // Full values and current local time preserve mixed parameter/time bindings.
+        const updates=await program.compiler.update(program.scene,nextValues,changed,{},local);
+        // Validated reactive fields cannot change asset/model/image references or
+        // topology; material/texture are inline numeric/procedural data only.
+        // Existing leases and renderer initialization remain sufficient, as for
+        // time samples. Resource-bearing reactive fields would need preparation.
+        return {...state.snapshot,controls:state.snapshot.controls.map(control=>({...control,value:nextValues[control.id]})),
+          reactiveBindings:mergeReactiveUpdates(state.snapshot,updates,changed,local),
+          ...(state.snapshot.reactiveBindings?.some(binding=>binding.time)?{reactiveTime:local}:{})};
+      }finally{
+        // The cancellation wrapper may have returned already; do not release the
+        // shared compiler or admission slot until its actual evaluation settles.
+        program.parameterPending=false;this.pendingParameters--;program.readers--;this.cleanup(program);
+      }
+    };
+    const snapshot=await aborted(options.signal,evaluate());assertCurrent();
+    beforeCommit(options);const committedAt=this.now(originSampledAt);assertCurrent();
+    // No awaits or hooks between final checks and this single state publication.
+    program.state={values:nextValues,snapshot};this.version++;this.cancelOthers();
+    return {revision:this.version,committedAt,originSampledAt};
+  }
+
   async apply(request:WorldPatch,nowSeconds:number,options:WorldTransactionOptions={}):Promise<WorldCommit>{
     options={signal:options.signal,beforeCommit:options.beforeCommit};options.signal?.throwIfAborted();
     this.alive();json(request);this.fresh(request.baseRevision);time(nowSeconds);
@@ -301,6 +374,8 @@ export class LiveWorld {
       const overrides=new Map(nextOverrides.get(change.id));
       for(const [rawKey,value] of Object.entries(change.props)){
         const key=rawKey as Property,from=readProperty(element,key);
+        check(!owner.scene.reactiveBindings?.some(binding=>binding.target===change.id&&binding.controls.length>0&&ownedProperties(binding.properties).includes(key)),
+          `Cannot override parameter-owned property: ${key}`);
         if(duration>0){
           check(!owner.scene.reactiveBindings?.some(binding=>binding.target===change.id&&binding.time&&Object.hasOwn(binding.properties,key)),
             'Animating a time-bound property requires a live rebase policy');
@@ -344,9 +419,11 @@ export class LiveWorld {
   }
 
   summary(){return {revision:this.version,disposed:this.stopped,pendingPrograms:this.pending.size,
-    programs:[...this.programs.values()].map(program=>({id:program.id,epoch:program.epoch,duration:program.scene.duration,ids:[...program.ids].filter(key=>!this.removed.has(key))})),
+    programs:[...this.programs.values()].map(program=>({id:program.id,epoch:program.epoch,duration:program.scene.duration,ids:[...program.ids].filter(key=>!this.removed.has(key)),
+      parameters:program.scene.controls.map(control=>({id:control.id,label:control.label,default:control.default as number,value:program.state.values[control.id],min:control.min!,max:control.max!,step:control.step,
+        dependents:(program.scene.reactiveBindings??[]).filter(binding=>binding.controls.includes(control.id)).map(binding=>({target:binding.target,properties:ownedProperties(binding.properties)}))}))})),
     entityIds:[...this.owners.keys()].filter(key=>!this.removed.has(key)),reservedIdCount:this.reserved.size,
-    limitations:['No controls, behavior/input, cross-program attachments, audio, or per-program views/camera animation','First committed program chooses world camera; later program camera defaults are ignored',
+    limitations:['Reactive sliders are host parameters only; no control UI, behavior/input, cross-program attachments, audio, or per-program views/camera animation','First committed program chooses world camera; later program camera defaults are ignored',
       'Time callbacks stop at the authored program duration','Animated edits to time-callback-owned properties require a separate rebase policy','No history replay before committed mutations']};}
   dispose(){if(this.stopped)return;this.stopped=true;for(const candidate of this.pending){candidate.controller.abort(new Error('World disposed'));candidate.compiler.dispose();}
     for(const program of this.programs.values())this.retire(program);this.programs.clear();this.owners.clear();this.overrides.clear();this.assetGeometry.dispose();}

@@ -63,6 +63,18 @@ test('anchor finalization cannot publish after persistence exhausts the narrowed
  expect(receipts[0].operationDeadline).toBe(12000);
 });
 
+test('parameter operations resolve measured speech and keep the original phrase deadline',async()=>{
+ const trial={windowStartSec:0,windowEndSec:4,sourceWindowStartSec:0,sourceWindowEndSec:4,availableAfterSourceSec:4,inferenceMs:200,text:'double slope',
+  segments:[{text:'double slope',words:[{word:'double',startSec:0,endSec:.5,sourceStartSec:0,sourceEndSec:.5,probability:.9},
+   {word:'slope',startSec:.5,endSec:1,sourceStartSec:.5,sourceEndSec:1,probability:.9}]}]};
+ const item=joinedSpeechEvidence({id:'speech',version:1,sourceId:'lecture',trial,trialRef:'trial',clock:{monotonicStartMs:1000},sourceReadyAtMs:5000,availableAtMs:5300});
+ const result=await finalizeSpeechAnchor({submission:{action:'parameters',source:'',changes:[],remove:[],parameterProgramId:'p',parameterValues:[{id:'slope',value:2}],
+   speechAnchor:{evidenceId:'speech',version:1,phrase:'double slope',occurrence:null,utteranceId:null}},
+  changes:[{id:'speech',version:1}],context:[],ledger:new Map([['speech',item]]),deadline:15000,now:()=>6000,
+  signal:new AbortController().signal,persist:async()=>{}});
+ expect(result.operationDeadline).toBe(12000);expect(result.resolvedSpeechAnchor).not.toBeNull();
+});
+
 class Response extends EventEmitter {
   destroyed=false;writableEnded=false;headers:string[]=[];chunks:string[]=[];
   setHeader(name:string,_value:string){this.headers.push(name);return this;}

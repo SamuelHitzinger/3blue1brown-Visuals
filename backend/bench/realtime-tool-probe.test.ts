@@ -401,3 +401,91 @@ test('library external signal does not replace the request timeout', async () =>
   expect(result.report.status).toBe('failed');
   expect(result.submission).toBeNull();
 });
+
+const parametersWorld={action:'parameters',reason:'',source:'',changes:[],remove:[],parameterProgramId:'surface-program',
+  parameterValues:[{id:'amplitude',value:-0.5},{id:'phase',value:0}]};
+const emptyParameters={parameterProgramId:'',parameterValues:[]};
+
+test('retained parameters are opt-in and preserve the legacy schema and operations',()=>{
+  const legacy=submissionTool('world').parameters as any, enabled=submissionTool('world','require',false,true);
+  expect(legacy.properties.action.enum).toEqual(['add','edit','defer']);
+  expect(legacy.properties.parameterValues).toBeUndefined();
+  expect((enabled.parameters as any).properties.action.enum).toEqual(['add','edit','defer','parameters']);
+  const tools=convertResponsesTools([enabled],{supportsStrictMode:true});
+  expect(preparePayload({tools,tool_choice:'required',service_tier:'priority'},'world','require','priority',false,true).payload.parallel_tool_calls).toBe(false);
+  expect(()=>preparePayload({tools,tool_choice:'required',service_tier:'priority'},'world','require','priority')).toThrow();
+  expect(()=>validateSubmission('world',parametersWorld)).toThrow();
+  for(const wire of [addWorld,editWorld,deferWorld]){
+    expect(()=>validateSubmission('world',wire,false,true)).toThrow();
+    const expected=validateSubmission('world',wire);
+    expect(validateSubmission('world',{...wire,...emptyParameters},false,true)).toEqual({...expected,...emptyParameters});
+    expect(()=>validateSubmission('world',{...wire,...emptyParameters,parameterProgramId:'program'},false,true)).toThrow();
+    expect(()=>validateSubmission('world',{...wire,...emptyParameters,parameterValues:[{id:'x',value:1}]},false,true)).toThrow();
+  }
+  for(const kind of ['scene','brief'] as const){
+    expect(()=>submissionTool(kind,'require',false,true)).toThrow();
+    expect(()=>validateSubmission(kind,{},false,true)).toThrow();
+  }
+});
+
+test('parameter branch accepts one bounded plain numeric batch and rejects mixed or unsafe input',()=>{
+  const {reason,...expected}=parametersWorld;
+  expect(validateSubmission('world',parametersWorld,false,true)).toEqual(expected);
+  expect(validateSubmission('world',{...parametersWorld,speechAnchor},true,true)).toEqual({...expected,speechAnchor});
+  expect(validateSubmission('world',{...parametersWorld,parameterValues:Array.from({length:32},(_,i)=>({id:`p${i}`,value:i}))},false,true)).toMatchObject({action:'parameters'});
+  for(const patch of [
+    {parameterProgramId:''},{parameterProgramId:'bad id'},{parameterProgramId:'x'.repeat(129)},
+    {parameterValues:[]},{parameterValues:Array.from({length:33},(_,i)=>({id:`p${i}`,value:i}))},
+    {parameterValues:[{id:'x',value:1},{id:'x',value:2}]},{parameterValues:[{id:'bad id',value:1}]},
+    {parameterValues:[{id:'',value:1}]},{parameterValues:[{id:'x',value:'1'}]},
+    ...[NaN,Infinity,-Infinity].map(value=>({parameterValues:[{id:'x',value}]})),
+    {parameterValues:[{id:'x',value:1,extra:true}]},{parameterValues:Array(1)},
+    {source:worldSource},{reason:'change it'},{changes:editWorld.changes},{remove:['old']},
+    {parameterValues:[Object.assign(Object.create({inherited:true}),{id:'x',value:1})]},
+  ])expect(()=>validateSubmission('world',{...parametersWorld,...patch},false,true)).toThrow();
+  let reads=0;
+  const accessor={id:'x',get value(){reads++;return 1;}};
+  expect(()=>validateSubmission('world',{...parametersWorld,parameterValues:[accessor]},false,true)).toThrow();
+  expect(reads).toBe(0);
+});
+
+test('parameter receipt requires exact completed and terminal values',()=>{
+  const wire={...call,name:'submit_world',arguments:parametersWorld};
+  expect(acceptSubmission('world',[wire],[wire],true,false,true)).toMatchObject({action:'parameters',parameterValues:parametersWorld.parameterValues});
+  expect(()=>acceptSubmission('world',[wire],[{...wire,arguments:{...parametersWorld,parameterValues:[{id:'amplitude',value:0.5}]}}],true,false,true)).toThrow();
+  expect(()=>acceptSubmission('world',[wire],[wire],false,false,true)).toThrow();
+});
+
+test('runProbe carries parameter opt-in through strict adapter, observation, acceptance and immutable evidence',async()=>{
+  const {directory,args}=await requestArgs('world'),system=join(directory,'..','system.txt');
+  await writeFile(system,'Use host-exposed numeric parameters.');
+  const wire={...call,name:'submit_world',arguments:{...parametersWorld,speechAnchor}},message=terminalFor(wire);
+  const result=await probe.runProbe([...args,`--system-file=${system}`],{retainedParameters:true,speechAnchors:true,
+    createRuntime:runtimeFor(async function*(options){
+      const tools=convertResponsesTools([submissionTool('world','require',true,true)],{supportsStrictMode:true});
+      await options.onPayload!({tools,tool_choice:'required',service_tier:'priority'},{} as Parameters<NonNullable<StreamOptions['onPayload']>>[1]);
+      yield {type:'toolcall_end',contentIndex:0,toolCall:wire,partial:message};
+      yield {type:'done',reason:'toolUse',message};
+    })});
+  expect(result.report.status).toBe('complete');
+  expect(result.report.validToolCallCompleteMs).toBeNumber();
+  expect(result.report.worldOperation).toBe('parameters');
+  expect(result.report.retainedParameters).toBe(true);
+  expect(result.submission).toMatchObject({action:'parameters',parameterProgramId:'surface-program',parameterValues:parametersWorld.parameterValues,speechAnchor});
+  expect(Object.isFrozen((result.submission as any).parameterValues[0])).toBe(true);
+  expect(JSON.parse(await readFile(join(directory,'world.json'),'utf8'))).toEqual(result.submission);
+  expect(JSON.parse(await readFile(join(directory,'started.json'),'utf8')).retainedParameters).toBe(true);
+  expect(JSON.parse(await readFile(join(directory,'prompt.json'),'utf8')).systemPrompt).toContain('parameterProgramId');
+});
+
+test('runProbe rejects invalid parameter options before opening a runtime',async()=>{
+  let opened=false;
+  const createRuntime=(async()=>{opened=true;throw new Error('Must not dispatch');}) as typeof createModelRuntime;
+  for(const kind of ['scene','brief'] as const){
+    const {args}=await requestArgs(kind);
+    await expect(probe.runProbe(args,{retainedParameters:true,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
+  }
+  const {args}=await requestArgs('world');
+  await expect(probe.runProbe(args,{retainedParameters:'yes' as unknown as boolean,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
+  expect(opened).toBe(false);
+});

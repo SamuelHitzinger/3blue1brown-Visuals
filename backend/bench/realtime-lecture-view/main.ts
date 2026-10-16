@@ -1,17 +1,18 @@
-import { type WorldPatch } from '../realtime-world/world.js';
+import {commitLectureSubmission,type LectureSubmission} from '../realtime-media/world-submission.js';
 import { createAssetBackedWorld,registerAssetBackedModels } from '../realtime-media/asset-world.js';
 import {validateLectureModelInventory,reconcileLectureModelInventory,type LectureModelInventory} from '../realtime-media/inventory-sync.js';
 import { ModelStore } from '../../../shared/animlib/src/model-store.js';
 import { MediaReplay, type AsrInput, type EvidencePacket, type LocalAsrTrial } from '../realtime-media/replay.js';
 import type { SourceClock } from '../realtime-media/events.js';
 import { CommittedContextJournal } from '../realtime-media/committed-context.js';
+import {buildWorldContext} from '../realtime-media/world-context.js';
 import { measureSpeechRender,type ResolvedOperationSpeechAnchor } from '../realtime-media/speech-anchor.js';
 import { CanvasRenderer } from '../../../shared/animlib/src/renderer.js';
 import type { Frame } from '../../../shared/animlib/src/types.js';
 
 type Clock = { clockDomain: string; serverTimeMs: number; browserBeforeMs: number; browserAfterMs: number; offsetLowerMs: number; offsetUpperMs: number };
 type Stamp = { browserAtMs: number; serverLowerMs: number; serverUpperMs: number };
-type Submission = { action: 'add'; source: string } | { action: 'edit'; changes: WorldPatch['changes']; remove: string[] } | { action: 'defer'; reason: string };
+type Submission = LectureSubmission;
 type Seen = { id: string; version: number; availableAtMs: number; stable: boolean; pending: boolean };
 type Attempt = { packet: EvidencePacket; controller: AbortController; deadline: number; terminal: boolean; corrected: boolean; committedRevision?: number; cancelPromise?: Promise<boolean> };
 type Run = { id: string; sequence: number; stopped: boolean; source?: EventSource; replay?: MediaReplay; clocks: Record<string, SourceClock>; seen: Map<string, Seen>; active?: Attempt };
@@ -163,16 +164,8 @@ async function animate() {
   requestAnimationFrame(animate);
 }
 function conciseWorld(requestOverheadBytes: number) {
-  const description = { summary: world.summary(), sampledRevision: lastFrameRevision, sampledAt: lastFrameStamp,
-    elements: lastFrameRevision === world.revision ? lastFrame?.elements.slice(0, 256).map(element => ({
-      id: element.id, kind: element.geometry.kind, position: element.position, rotation: element.rotation,
-      scale: element.scale, opacity: element.opacity, fill: element.fill,
-    })) : [], elementsTruncated: (lastFrame?.elements.length ?? 0) > 256 };
-  // Keep exact operations whole. An omitted source is unknown, never an empty scene.
-  const serialized = JSON.stringify(description), field = ',"committedOperations":';
-  const remaining = 60_000 - serialized.length - field.length;
-  const remainingBytes = 120_000 - requestOverheadBytes - new TextEncoder().encode(serialized + field).length;
-  return { ...description, committedOperations: committedContext.snapshot(remaining, remainingBytes) };
+  return buildWorldContext({summary:world.summary(),sampledRevision:lastFrameRevision,sampledAt:lastFrameStamp,
+    frame:lastFrame,requestOverheadBytes,journal:committedContext});
 }
 async function generate(current: Run, packet: EvidencePacket, signal: AbortSignal) {
   const attempt: Attempt = { packet, controller: new AbortController(), terminal: false, corrected: false,
@@ -221,18 +214,18 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
       note(`${packet.planId}: deferred — ${submission.reason}`); status.textContent = 'Deferred: more evidence is needed.'; return;
     }
     const options = { signal: attempt.controller.signal, beforeCommit: () => guard(current, attempt) };
-    const commit = submission.action === 'add'
-      ? await world.addProgram({ id: `run-${current.sequence}-${packet.planId}`, source: submission.source, baseRevision: packet.baseWorldRevision }, upperNow() / 1000, options)
-      : submission.action === 'edit'
-        ? await world.apply({ changes: submission.changes, remove: submission.remove, baseRevision: packet.baseWorldRevision }, upperNow() / 1000, options)
-        : (() => { throw new Error('Unknown submission action'); })();
+    const {commit,operation,changed}=await commitLectureSubmission(world,submission,packet.baseWorldRevision,
+      `run-${current.sequence}-${packet.planId}`,upperNow()/1000,options);
+    if(!changed){
+      terminal(current,attempt,'unchanged parameters: no visual change committed');
+      note(`${packet.planId}: unchanged parameters; no new revision or coverage credit.`);
+      status.textContent='No parameter change committed. Listening for more evidence.';return;
+    }
     attempt.committedRevision = commit.revision; committedAt = stamp();
     committedContext.record({ revision: commit.revision, runId: current.id, planId: packet.planId,
       committedAtMs: commit.committedAt * 1000,
       evidence: { changes: packet.changes.map(({ id, version }) => ({ id, version })), context: packet.context.map(({ id, version }) => ({ id, version })) },
-      operation: submission.action === 'add'
-        ? { action: 'add', programId: `run-${current.sequence}-${packet.planId}`, source: submission.source }
-        : { action: 'edit', patch: { changes: submission.changes, remove: submission.remove, baseRevision: packet.baseWorldRevision } } });
+      operation });
     receipt(current, packet.planId, { type: 'world-committed', ...committedAt, worldCommittedAtMs: commit.committedAt * 1000, worldRevision: commit.revision });
     guard(current, attempt);
     if (renderError) throw renderError;

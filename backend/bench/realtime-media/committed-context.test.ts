@@ -6,6 +6,18 @@ const add=(revision=1,source='export default scene({},s=>{s.wait(8)});'):Committ
   evidence:{changes:[{id:'chunk-0',version:1}],context:[]},operation:{action:'add',programId:`program-${revision}`,source},
 });
 
+test('retained parameter commits keep exact bounded detached history',()=>{
+  const journal=new CommittedContextJournal();journal.record(add());
+  const patch={baseRevision:1,programId:'program-1',values:{slope:2}};
+  journal.record({...add(2),operation:{action:'parameters',patch}});
+  patch.values.slope=99;
+  expect(journal.snapshot(10000).records[1].operation).toEqual({action:'parameters',patch:{baseRevision:1,programId:'program-1',values:{slope:2}}});
+  for(const values of [{}, {slope:Infinity}, Object.fromEntries(Array.from({length:33},(_,i)=>[`p${i}`,1]))]){
+    expect(()=>journal.record({...add(3),operation:{action:'parameters',patch:{baseRevision:2,programId:'program-1',values}}})).toThrow();
+  }
+  expect(journal.snapshot(10000).latestRevision).toBe(2);
+});
+
 test('committed source and patch remain exact detached records; rendering is separate',()=>{
   const journal=new CommittedContextJournal(),first=add();journal.record(first);
   first.evidence.changes[0].id='mutated';

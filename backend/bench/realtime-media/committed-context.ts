@@ -1,10 +1,10 @@
-import type {WorldPatch} from '../realtime-world/world.js';
+import type {WorldPatch,WorldParameterPatch} from '../realtime-world/world.js';
 
 export interface OperationEvidenceRef {id:string;version:number}
 export interface CommittedOperationInput {
   revision:number;runId:string;planId:string;committedAtMs:number;
   evidence:{changes:OperationEvidenceRef[];context:OperationEvidenceRef[]};
-  operation:{action:'add';programId:string;source:string}|{action:'edit';patch:WorldPatch};
+  operation:{action:'add';programId:string;source:string}|{action:'edit';patch:WorldPatch}|{action:'parameters';patch:WorldParameterPatch};
 }
 export interface CommittedOperationRecord extends CommittedOperationInput {
   semanticCompletion:'unknown';renderingStatus:'not-observed'|'render-submitted';
@@ -42,8 +42,17 @@ function validate(input:CommittedOperationInput):void {
   const operation=input.operation;
   check(operation&&typeof operation==='object','Missing committed operation');
   if(operation.action==='add')check(identifier(operation.programId)&&typeof operation.source==='string'&&operation.source.length>0,'Invalid committed addition');
+  else if(operation.action==='parameters'){
+    const patch=operation.patch;
+    check(patch&&patch.baseRevision===input.revision-1&&identifier(patch.programId),'Invalid committed parameter patch');
+    check(patch.values&&typeof patch.values==='object'&&!Array.isArray(patch.values),'Invalid committed parameter values');
+    const entries=Object.entries(patch.values);
+    check(entries.length>0&&entries.length<=32,'Invalid committed parameter count');
+    for(const [key,value] of entries)check(/^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$/.test(key)&&!['constructor','prototype','__proto__'].includes(key)
+      &&typeof value==='number'&&Number.isFinite(value),'Invalid committed parameter value');
+  }
   else {
-    check(operation.action==='edit','Only committed add/edit operations can be recorded');
+    check(operation.action==='edit','Only committed add/edit/parameters operations can be recorded');
     const patch=operation.patch;
     check(patch&&patch.baseRevision===input.revision-1&&Array.isArray(patch.changes)
       &&(patch.remove===undefined||Array.isArray(patch.remove))&&patch.changes.length+(patch.remove?.length??0)>0,'Invalid committed patch');
