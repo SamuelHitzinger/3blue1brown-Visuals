@@ -51,12 +51,12 @@ export function buildWorldContext(input:WorldContextInput){
   const parameterCount=infos.reduce((n,{program})=>n+program.parameters.length,0);
   const description={
     summary:{revision:input.summary.revision,disposed:input.summary.disposed,pendingPrograms:input.summary.pendingPrograms,
-      programs:[] as ContextProgram[],entityIds:[] as string[],reservedIdCount:input.summary.reservedIdCount,limitations:[] as string[]},
+      programs:[] as ContextProgram[],entityIds:[] as string[],motions:[] as Summary['motions'],reservedIdCount:input.summary.reservedIdCount,limitations:[] as string[]},
     sampledRevision:input.sampledRevision,sampledAt:null as unknown,frameCurrent:input.sampledRevision===input.summary.revision&&input.frame!==undefined,
     // Reserve the longer JSON boolean (false) until final completeness is known.
     elements:[] as ContextElement[],elementsTruncated:false,
     unusableParameterCount:infos.reduce((n,info)=>n+info.usable.filter(usable=>!usable).length,0),
-    omissions:{programs:infos.length,parameters:parameterCount,
+    omissions:{programs:infos.length,parameters:parameterCount,motions:input.summary.motions?.length??0,
       dependencies:infos.reduce((n,{program})=>n+program.parameters.reduce((count,parameter)=>count+parameter.dependents.length,0),0),
       programEntityIds:infos.reduce((n,{program})=>n+program.ids.length,0),entityIds:input.summary.entityIds.length,
       elements:input.frame?.elements.length??0,labels:parameterCount,limitations:input.summary.limitations.length,sampledAt:input.sampledAt!=null},
@@ -69,6 +69,11 @@ export function buildWorldContext(input:WorldContextInput){
   };
   check(fits(),'World context budget cannot fit omission metadata');
   const attempt=(add:()=>void,undo:()=>void)=>{add();if(fits())return true;undo();return false;};
+
+  for(const motion of (input.summary.motions??[]).slice(0,256)){
+    if(!attempt(()=>{description.summary.motions.push(structuredClone(motion));description.omissions.motions--;},
+      ()=>{description.summary.motions.pop();description.omissions.motions++;}))break;
+  }
 
   // Program identities precede parameter descriptors; round-robin parameters
   // preserve breadth across programs when the complete inventory cannot fit.

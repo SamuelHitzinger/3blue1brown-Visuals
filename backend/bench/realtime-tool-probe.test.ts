@@ -523,3 +523,96 @@ test('exact system prompt requires a provided system file and boolean opt-in bef
   await expect(probe.runProbe(args,{exactSystemPrompt:'yes' as unknown as boolean,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
   expect(opened).toBe(false);
 });
+
+const emptyProgressive={motionChanges:[],replacementProgramId:''};
+const motionWorld={action:'motion',reason:'',source:'',changes:[],remove:[],motionChanges:[{id:'cube',velocity:[2,0,0]}],replacementProgramId:''};
+const replaceWorld={action:'replace',reason:'',source:worldSource,changes:[],remove:[],motionChanges:[],replacementProgramId:'cube-program'};
+
+test('progressive protocol is opt-in and strict conversion preserves required branch fields',()=>{
+  const legacy=submissionTool('world','require',false,true).parameters as any;
+  expect(legacy.properties.action.enum).toEqual(['add','edit','defer','parameters']);
+  expect(legacy.properties.motionChanges).toBeUndefined();
+  const tool=submissionTool('world','require',true,true,true),schema=tool.parameters as any;
+  expect(schema.properties.action.enum).toEqual(['add','edit','defer','parameters','motion','replace']);
+  expect(schema.required).toContain('motionChanges');expect(schema.required).toContain('replacementProgramId');
+  expect(schema.properties.motionChanges.maxItems).toBe(32);
+  const tools=convertResponsesTools([tool],{supportsStrictMode:true});
+  expect(preparePayload({tools,tool_choice:'required',service_tier:'priority'},'world','require','priority',true,true,true).payload.parallel_tool_calls).toBe(false);
+  expect(()=>preparePayload({tools,tool_choice:'required',service_tier:'priority'},'world','require','priority',true,true)).toThrow();
+  for(const wire of [motionWorld,replaceWorld])expect(()=>validateSubmission('world',wire)).toThrow();
+  for(const wire of [addWorld,editWorld,deferWorld,parametersWorld]){
+    const retained=wire.action==='parameters';
+    expect(validateSubmission('world',{...wire,...emptyProgressive},false,retained,true)).toEqual({...validateSubmission('world',wire,false,retained),...emptyProgressive});
+    expect(()=>validateSubmission('world',wire,false,retained,true)).toThrow();
+    expect(()=>validateSubmission('world',{...wire,...emptyProgressive,motionChanges:motionWorld.motionChanges},false,retained,true)).toThrow();
+    expect(()=>validateSubmission('world',{...wire,...emptyProgressive,replacementProgramId:'program'},false,retained,true)).toThrow();
+  }
+  for(const kind of ['scene','brief'] as const){
+    expect(()=>submissionTool(kind,'require',false,false,true)).toThrow();
+    expect(()=>validateSubmission(kind,{},false,false,true)).toThrow();
+  }
+});
+
+test('progressive motion and replacement reject mixed branches and invalid identities or vectors',()=>{
+  for(const wire of [motionWorld,replaceWorld]){
+    const {reason,...expected}=wire;
+    expect(validateSubmission('world',wire,false,false,true)).toEqual(expected);
+    expect<unknown>(validateSubmission('world',{...wire,...emptyParameters,speechAnchor},true,true,true)).toEqual({...expected,...emptyParameters,speechAnchor});
+    for(const patch of [{reason:'why'},{changes:editWorld.changes},{remove:['cube']},{extra:true}])
+      expect(()=>validateSubmission('world',{...wire,...patch},false,false,true)).toThrow();
+    expect(()=>validateSubmission('world',{...wire,...emptyParameters,parameterProgramId:'x'},false,true,true)).toThrow();
+    expect(()=>validateSubmission('world',{...wire,...emptyParameters,parameterValues:[{id:'x',value:1}]},false,true,true)).toThrow();
+  }
+  expect(validateSubmission('world',{...motionWorld,motionChanges:[{id:'cube',velocity:[0,0,0]}]},false,false,true)).toMatchObject({action:'motion'});
+  expect(validateSubmission('world',{...motionWorld,motionChanges:Array.from({length:32},(_,i)=>({id:`cube${i}`,velocity:[-1e6,0,1e6]}))},false,false,true)).toMatchObject({action:'motion'});
+  for(const patch of [{source:worldSource},{replacementProgramId:'program'},{motionChanges:[]},{motionChanges:null},
+    {motionChanges:Array.from({length:33},(_,i)=>({id:`cube${i}`,velocity:[0,0,0]}))},
+    {motionChanges:[...motionWorld.motionChanges,...motionWorld.motionChanges]},
+    ...['','bad id','x'.repeat(129)].map(id=>({motionChanges:[{id,velocity:[0,0,0]}]})),
+    ...[[0,0],[0,0,0,0],[NaN,0,0],[Infinity,0,0],[1000001,0,0],['2',0,0],Array(3),null].map(velocity=>({motionChanges:[{id:'cube',velocity}]})),
+    {motionChanges:[{id:'cube',velocity:[0,0,0],extra:true}]}, {motionChanges:Array(1)}])
+    expect(()=>validateSubmission('world',{...motionWorld,...patch},false,false,true)).toThrow();
+  for(const patch of [{source:''},{source:' '},{replacementProgramId:''},{replacementProgramId:'bad id'},
+    {replacementProgramId:'x'.repeat(129)},{motionChanges:motionWorld.motionChanges}])
+    expect(()=>validateSubmission('world',{...replaceWorld,...patch},false,false,true)).toThrow();
+});
+
+test('progressive receipt and observation require exact completed terminal agreement',()=>{
+  for(const args of [motionWorld,replaceWorld]){
+    const wire={...call,name:'submit_world',arguments:args},trace=submissionTrace();
+    observeSubmission(trace,'world',{type:'toolcall_end',contentIndex:0,toolCall:wire,partial:terminalFor(wire)},20,false,false,true);
+    expect(trace.validToolCallCompleteMs).toBe(20);
+    expect(acceptSubmission('world',trace.completed,[wire],true,false,false,true)).toMatchObject({action:args.action});
+    expect(()=>acceptSubmission('world',[wire],[wire],false,false,false,true)).toThrow();
+    expect(()=>acceptSubmission('world',[wire],[{...wire,arguments:{...args,replacementProgramId:'different'}}],true,false,false,true)).toThrow();
+  }
+});
+
+test('runProbe carries progressive opt-in through prompts adapter receipt and saved evidence',async()=>{
+  for(const exactSystemPrompt of [false,true]){
+    const {directory,args}=await requestArgs('world'),system=join(directory,'..','system.txt'),frozen='Progressive test.';
+    await writeFile(system,frozen);
+    const wire={...call,name:'submit_world',arguments:{...motionWorld,...emptyParameters,speechAnchor}},message=terminalFor(wire);
+    const result=await probe.runProbe([...args,`--system-file=${system}`],{progressiveWorld:true,retainedParameters:true,speechAnchors:true,exactSystemPrompt,
+      createRuntime:runtimeFor(async function*(options){
+        const tools=convertResponsesTools([submissionTool('world','require',true,true,true)],{supportsStrictMode:true});
+        await options.onPayload!({tools,tool_choice:'required',service_tier:'priority'},{} as Parameters<NonNullable<StreamOptions['onPayload']>>[1]);
+        yield {type:'toolcall_end',contentIndex:0,toolCall:wire,partial:message};yield {type:'done',reason:'toolUse',message};
+      })});
+    expect(result.report.status).toBe('complete');expect(result.report.progressiveWorld).toBe(true);
+    expect(result.report.worldOperation).toBe('motion');expect(result.report.validToolCallCompleteMs).toBeNumber();
+    expect(result.submission).toMatchObject({action:'motion',motionChanges:motionWorld.motionChanges});
+    expect(Object.isFrozen((result.submission as any).motionChanges[0].velocity)).toBe(true);
+    expect(JSON.parse(await readFile(join(directory,'world.json'),'utf8'))).toEqual(result.submission);
+    const prompt=JSON.parse(await readFile(join(directory,'prompt.json'),'utf8')).systemPrompt;
+    if(exactSystemPrompt)expect(prompt).toBe(frozen);else expect(prompt).toContain('replacementProgramId');
+  }
+});
+
+test('runProbe rejects invalid progressive options before runtime',async()=>{
+  let opened=false;const createRuntime=(async()=>{opened=true;throw Error('Must not dispatch');}) as typeof createModelRuntime;
+  for(const kind of ['scene','brief'] as const){const {args}=await requestArgs(kind);await expect(probe.runProbe(args,{progressiveWorld:true,createRuntime})).rejects.toMatchObject({code:'CONFIG'});}
+  const {args}=await requestArgs('world');
+  await expect(probe.runProbe(args,{progressiveWorld:'yes' as unknown as boolean,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
+  expect(opened).toBe(false);
+});

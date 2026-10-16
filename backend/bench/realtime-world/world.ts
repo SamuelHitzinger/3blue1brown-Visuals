@@ -33,6 +33,7 @@ export interface WorldOptions {
 }
 export interface ProgramRequest { id: string; source: string; baseRevision: number }
 export interface WorldParameterPatch { baseRevision: number; programId: string; values: Record<string,number> }
+export interface WorldMotionPatch { baseRevision: number; changes: { id: string; velocity: [number,number,number] }[] }
 export interface WorldPatch {
   baseRevision: number;
   changes: { id: string; props: ReactiveProperties; duration?: number }[];
@@ -54,8 +55,9 @@ export interface WorldModelRegistration {
 }
 type Property = keyof ReactiveProperties;
 type Override = { from: unknown; to: unknown; start: number; duration: number };
+type Motion = { origin: [number,number,number]; velocity: [number,number,number]; start: number };
 type ParameterState = { values: Record<string,number>; snapshot: CompiledScene; terminalScene?: Promise<CompiledScene> };
-type Program = { id: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean;
+type Program = { id: string; source: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean;
   state: ParameterState; parameterPending?: boolean };
 type Candidate = { id: string; compiler: SourceCompiler; controller: AbortController; scene?: CompiledScene };
 type Sample = { program: Program; scene: CompiledScene };
@@ -128,6 +130,7 @@ export class LiveWorld {
   private reserved=new Set<string>();
   private removed=new Set<string>();
   private overrides=new Map<string,Map<Property,Override>>();
+  private motions=new Map<string,Motion>();
   private options:WorldOptions;
   private clock:()=>number;
   private palette:ColorPalette;
@@ -181,7 +184,7 @@ export class LiveWorld {
     }};
   }
 
-  private inspect(scene:CompiledScene):Set<string>{
+  private inspect(scene:CompiledScene,replacing?:Program):Set<string>{
     validateCompiledScene(scene,this.options.assets?.catalog);
     for(const control of scene.controls){
       id(control.id);check(!['__proto__','prototype','constructor'].includes(control.id),'Unsafe parameter ID');
@@ -198,8 +201,8 @@ export class LiveWorld {
     const ids=new Set<string>();let vertices=0;
     for(const element of all){id(element.id);ids.add(element.id);vertices+=(element.geometry.vertices?.length??0)+(element.geometry.points?.length??0);}
     check(ids.size>0,'Program must create geometry');check(vertices<=limits.vertices,'Program geometry limit exceeded');
-    check(this.reserved.size+ids.size<=this.maxObjects,'World object limit exceeded');
-    for(const key of ids)check(!this.reserved.has(key),`Duplicate or previously owned entity ID: ${key}`);
+    check(this.reserved.size+[...ids].filter(key=>!this.reserved.has(key)).length<=this.maxObjects,'World object limit exceeded');
+    for(const key of ids)check(!this.reserved.has(key)||Boolean(replacing&&this.owners.get(key)===replacing&&!this.removed.has(key)),`Duplicate or previously owned entity ID: ${key}`);
     return ids;
   }
 
@@ -225,7 +228,7 @@ export class LiveWorld {
       check(this.programs.size<this.maxPrograms,'World program limit exceeded');const ids=this.inspect(scene);
       beforeCommit(options);
       const committedAt=this.now(nowSeconds);
-      const program:Program={id:input.id,compiler:candidate.compiler,scene,ids,epoch:committedAt,readers:0,retired:false,
+      const program:Program={id:input.id,source:input.source,compiler:candidate.compiler,scene,ids,epoch:committedAt,readers:0,retired:false,
         state:{values:Object.fromEntries(scene.controls.map(control=>[control.id,control.value as number])),snapshot:scene}};
       // No awaits or host hooks between these final checks and publication.
       candidate.controller.signal.throwIfAborted();this.fresh(input.baseRevision);
@@ -273,6 +276,8 @@ export class LiveWorld {
         properties[key]=key==='fill'&&progress>0&&progress<1?paletteResolver(this.palette).interpolate(override.from as ColorValue,override.to as ColorValue,progress):interpolate(override.from,override.to,progress);
       }
       if(Object.keys(properties).length)applyReactiveProperties(element,properties as ReactiveProperties);
+      const motion=this.motions.get(element.id);
+      if(motion)element.position=motion.origin.map((value,index)=>value+motion.velocity[index]*Math.max(0,nowSeconds-motion.start)) as [number,number,number];
     }
     // Resolve against the final host-adjusted pose. Starting unbound also lets
     // connectors recover from a formerly collapsed pose; missing sources retain
@@ -288,6 +293,113 @@ export class LiveWorld {
       catch(error){this.alive();if(revision===this.version)throw error;}
     }
     throw new Error('World changed repeatedly during sampling; retry the next frame');
+  }
+
+  private assertHostProperty(scene:CompiledScene,target:string,key:Property):void{
+    for(const binding of scene.bindings??[])if(binding.target===target){
+      check(key!==(binding.type==='attach'?'position':'points'),`Cannot override binding-owned property: ${key}`);
+    }
+    check(!scene.reactiveBindings?.some(binding=>binding.target===target&&ownedProperties(binding.properties).includes(key)),
+      `Cannot override reactive-owned property: ${key}; replace the program to change ownership`);
+  }
+
+  /** Constant local-coordinate velocity begins at actual publication pose. Native
+   * position tracks yield to this host channel; reactive/binding owners do not. */
+  async setMotion(request:WorldMotionPatch,nowSeconds:number,options:WorldTransactionOptions={}):Promise<WorldCommit>{
+    options={signal:options.signal,beforeCommit:options.beforeCommit};options.signal?.throwIfAborted();
+    this.alive();json(request);this.fresh(request.baseRevision);time(nowSeconds);
+    check(JSON.stringify(request).length<=limits.patchBytes,'Motion patch size limit exceeded');
+    check(Array.isArray(request.changes)&&request.changes.length>0&&request.changes.length<=limits.changes,'Motion change limit exceeded');
+    const input=structuredClone(request),seen=new Set<string>();
+    for(const change of input.changes){
+      id(change.id);check(!seen.has(change.id),'Duplicate changed ID');seen.add(change.id);
+      check(Array.isArray(change.velocity)&&change.velocity.length===3&&change.velocity.every(v=>typeof v==='number'&&Number.isFinite(v)),'Invalid velocity');
+      const owner=this.owners.get(change.id);check(owner&&!this.removed.has(change.id),'Unknown motion target ID');
+      this.assertHostProperty(owner.scene,change.id,'position');
+    }
+    const originSampledAt=this.now(nowSeconds),sampled=await aborted(options.signal,this.capture(originSampledAt));
+    options.signal?.throwIfAborted();this.fresh(input.baseRevision);
+    beforeCommit(options);const committedAt=this.now(originSampledAt);
+    options.signal?.throwIfAborted();this.fresh(input.baseRevision);
+    const byId=new Map(this.compose(sampled,committedAt).elements.map(element=>[element.id,element]));
+    const next=new Map(this.motions),overrides=new Map(this.overrides);let changed=false;
+    for(const change of input.changes){
+      const element=byId.get(change.id);check(element,'Unknown or invisible motion target ID');
+      const prior=next.get(change.id);
+      if(prior&&prior.velocity.every((v,i)=>v===change.velocity[i]))continue;
+      next.set(change.id,{origin:[...element.position],velocity:[...change.velocity],start:committedAt});changed=true;
+      const properties=new Map(overrides.get(change.id));properties.delete('position');
+      if(properties.size)overrides.set(change.id,properties);else overrides.delete(change.id);
+    }
+    if(changed){this.motions=next;this.overrides=overrides;this.version++;this.cancelOthers();}
+    return {revision:this.version,committedAt,originSampledAt};
+  }
+
+  /** Compile/preflight an isolated replacement, then swap ownership atomically.
+   * Same-ID current controls retain values. Removed controls disappear; new
+   * controls use authored defaults. Retained host channels must remain valid. */
+  async replaceProgram(request:ProgramRequest,nowSeconds:number,options:WorldTransactionOptions={}):Promise<WorldCommit>{
+    options={signal:options.signal,beforeCommit:options.beforeCommit};options.signal?.throwIfAborted();
+    this.alive();json(request);this.fresh(request.baseRevision);time(nowSeconds);id(request.id);
+    check(typeof request.source==='string'&&request.source.length>0&&new TextEncoder().encode(request.source).length<=limits.sourceBytes,'Source size limit exceeded');
+    const input=structuredClone(request),previous=this.programs.get(input.id);
+    check(previous&&!previous.retired,'Unknown replacement program');
+    check(this.pending.size<this.maxPending,'World pending program limit exceeded');
+    check(![...this.pending].some(candidate=>candidate.id===input.id),'Duplicate pending program ID');
+    const candidate:Candidate={id:input.id,compiler:new SourceCompiler(),controller:new AbortController()};
+    const cancel=()=>candidate.controller.abort(options.signal?.reason);
+    options.signal?.addEventListener('abort',cancel,{once:true});this.pending.add(candidate);let published=false;
+    const assertCurrent=()=>{candidate.controller.signal.throwIfAborted();this.fresh(input.baseRevision);check(this.programs.get(input.id)===previous&&!previous.retired,'Stale replacement program');};
+    try{
+      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models:this.models}));
+      assertCurrent();const ids=this.inspect(scene,previous),values=Object.fromEntries(scene.controls.map(control=>[control.id,control.value as number]));
+      const common=scene.controls.filter(control=>Object.hasOwn(previous.state.values,control.id));
+      for(const control of common){
+        const value=previous.state.values[control.id];check(value>=control.min!&&value<=control.max!,`Retained parameter out of range: ${control.id}`);values[control.id]=value;
+      }
+      this.assetGeometry.prepare(scene);
+      if(this.options.prepare)await aborted(candidate.controller.signal,this.options.prepare(scene,this.assetGeometry,candidate.controller.signal));
+      assertCurrent();beforeCommit(options);assertCurrent();
+      // Preparation may be slow. Preflight callbacks at the retained epoch only
+      // after resources are ready, including programs with no shared controls.
+      // This records a sampled-time preflight, not a proof about future callback
+      // values. A second guard checks evidence again after asynchronous sampling.
+      const originSampledAt=this.now(nowSeconds);
+      let snapshot=scene;
+      if(common.length||scene.reactiveBindings?.some(binding=>binding.time)){
+        const local=Math.max(0,Math.min(scene.duration,originSampledAt-previous.epoch)),changed=common.map(control=>control.id);
+        const updates=await aborted(candidate.controller.signal,candidate.compiler.update(scene,values,changed,{},local));assertCurrent();
+        snapshot={...scene,controls:scene.controls.map(control=>({...control,value:values[control.id]})),reactiveBindings:mergeReactiveUpdates(scene,updates,changed,local),
+          ...(scene.reactiveBindings?.some(binding=>binding.time)?{reactiveTime:local}:{})};
+      }
+      assertCurrent();this.inspect(scene,previous);beforeCommit(options);
+      const committedAt=this.now(nowSeconds);assertCurrent();
+      const frame=evaluateScene(snapshot,Math.max(0,committedAt-previous.epoch),{bindings:false}),byId=new Map(frame.elements.map(element=>[element.id,element]));
+      for(const key of ids){
+        if(!previous.ids.has(key))continue;
+        const properties=this.overrides.get(key),motion=this.motions.get(key);
+        if(!properties?.size&&!motion)continue;
+        const element=byId.get(key);check(element,'Retained host target is invisible in replacement');
+        for(const [property,override] of properties??[]){
+          check(!geometryKeys.has(property)||!scene.tracks.some(track=>track.action.type==='morph'&&track.action.ids.includes(key)),
+            `Retained host geometry conflicts with replacement morph: ${property}`);
+          for(const owned of ownedProperties({[property]:override.to}))this.assertHostProperty(scene,key,owned as Property);
+          validateReactiveProperties({[property]:override.to},element,scene);
+          if(override.duration>0&&property!=='fill')check(numericShape(readProperty(element,property),override.to),'Retained host target shape changed');
+        }
+        if(motion)this.assertHostProperty(scene,key,'position');
+      }
+      const program:Program={id:input.id,source:input.source,compiler:candidate.compiler,scene,ids,epoch:previous.epoch,readers:0,retired:false,state:{values,snapshot}};
+      // Validation above is synchronous. No await or host hook until publication.
+      this.programs.set(input.id,program);
+      for(const key of previous.ids)if(!ids.has(key)){this.removed.add(key);this.owners.delete(key);this.overrides.delete(key);this.motions.delete(key);}
+      for(const key of ids){this.reserved.add(key);this.owners.set(key,program);}
+      published=true;this.version++;this.cancelOthers(candidate);this.retire(previous);
+      return {revision:this.version,committedAt,originSampledAt};
+    }finally{
+      options.signal?.removeEventListener('abort',cancel);this.pending.delete(candidate);
+      if(!published)candidate.compiler.dispose();this.assetGeometry.retain(this.scenes());
+    }
   }
 
   /** Atomic publication of host values and geometry. Native callbacks must be pure
@@ -411,14 +523,20 @@ export class LiveWorld {
     }
     // No awaits after validation: publication is one host-JS transaction.
     options.signal?.throwIfAborted();this.fresh(input.baseRevision);
-    this.overrides=nextOverrides;this.removed=nextRemoved;this.version++;this.cancelOthers();
+    this.overrides=nextOverrides;this.removed=nextRemoved;
+    for(const change of input.changes)if(Object.hasOwn(change.props,'position'))this.motions.delete(change.id);
+    for(const key of nextRemoved)this.motions.delete(key);
+    this.version++;this.cancelOthers();
     for(const [key,program] of this.programs)if([...program.ids].every(entity=>this.removed.has(entity))){
       this.programs.delete(key);for(const entity of program.ids)this.owners.delete(entity);this.retire(program);
     }
     this.assetGeometry.retain(this.scenes());return {revision:this.version,committedAt,originSampledAt};
   }
 
+  /** Caller receives immutable source text; source is deliberately absent from compact summaries. */
+  programSource(programId:string):string|undefined{this.alive();return this.programs.get(programId)?.source;}
   summary(){return {revision:this.version,disposed:this.stopped,pendingPrograms:this.pending.size,
+    motions:[...this.motions].map(([id,motion])=>({id,...structuredClone(motion)})),
     programs:[...this.programs.values()].map(program=>({id:program.id,epoch:program.epoch,duration:program.scene.duration,ids:[...program.ids].filter(key=>!this.removed.has(key)),
       parameters:program.scene.controls.map(control=>({id:control.id,label:control.label,default:control.default as number,value:program.state.values[control.id],min:control.min!,max:control.max!,step:control.step,
         dependents:(program.scene.reactiveBindings??[]).filter(binding=>binding.controls.includes(control.id)).map(binding=>({target:binding.target,properties:ownedProperties(binding.properties)}))}))})),
@@ -426,5 +544,5 @@ export class LiveWorld {
     limitations:['Reactive sliders are host parameters only; no control UI, behavior/input, cross-program attachments, audio, or per-program views/camera animation','First committed program chooses world camera; later program camera defaults are ignored',
       'Time callbacks stop at the authored program duration','Animated edits to time-callback-owned properties require a separate rebase policy','No history replay before committed mutations']};}
   dispose(){if(this.stopped)return;this.stopped=true;for(const candidate of this.pending){candidate.controller.abort(new Error('World disposed'));candidate.compiler.dispose();}
-    for(const program of this.programs.values())this.retire(program);this.programs.clear();this.owners.clear();this.overrides.clear();this.assetGeometry.dispose();}
+    for(const program of this.programs.values())this.retire(program);this.programs.clear();this.owners.clear();this.overrides.clear();this.motions.clear();this.assetGeometry.dispose();}
 }

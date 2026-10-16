@@ -1,10 +1,10 @@
-import type {WorldPatch,WorldParameterPatch} from '../realtime-world/world.js';
+import type {WorldPatch,WorldParameterPatch,WorldMotionPatch} from '../realtime-world/world.js';
 
 export interface OperationEvidenceRef {id:string;version:number}
 export interface CommittedOperationInput {
   revision:number;runId:string;planId:string;committedAtMs:number;
   evidence:{changes:OperationEvidenceRef[];context:OperationEvidenceRef[]};
-  operation:{action:'add';programId:string;source:string}|{action:'edit';patch:WorldPatch}|{action:'parameters';patch:WorldParameterPatch};
+  operation:{action:'add'|'replace';programId:string;source:string}|{action:'edit';patch:WorldPatch}|{action:'parameters';patch:WorldParameterPatch}|{action:'motion';patch:WorldMotionPatch};
 }
 export interface CommittedOperationRecord extends CommittedOperationInput {
   semanticCompletion:'unknown';renderingStatus:'not-observed'|'render-submitted';
@@ -41,7 +41,17 @@ function validate(input:CommittedOperationInput):void {
   }
   const operation=input.operation;
   check(operation&&typeof operation==='object','Missing committed operation');
-  if(operation.action==='add')check(identifier(operation.programId)&&typeof operation.source==='string'&&operation.source.length>0,'Invalid committed addition');
+  if(operation.action==='add'||operation.action==='replace')check(identifier(operation.programId)&&typeof operation.source==='string'&&operation.source.length>0,'Invalid committed source');
+  else if(operation.action==='motion'){
+    const patch=operation.patch;
+    check(patch&&patch.baseRevision===input.revision-1&&Array.isArray(patch.changes)&&patch.changes.length>0&&patch.changes.length<=32,'Invalid committed motion patch');
+    const ids=new Set<string>();
+    for(const change of patch.changes){
+      check(change&&identifier(change.id)&&!ids.has(change.id)&&Array.isArray(change.velocity)&&change.velocity.length===3
+        &&change.velocity.every(value=>typeof value==='number'&&Number.isFinite(value)&&Math.abs(value)<=1e6),'Invalid committed motion');
+      ids.add(change.id);
+    }
+  }
   else if(operation.action==='parameters'){
     const patch=operation.patch;
     check(patch&&patch.baseRevision===input.revision-1&&identifier(patch.programId),'Invalid committed parameter patch');
@@ -52,7 +62,7 @@ function validate(input:CommittedOperationInput):void {
       &&typeof value==='number'&&Number.isFinite(value),'Invalid committed parameter value');
   }
   else {
-    check(operation.action==='edit','Only committed add/edit/parameters operations can be recorded');
+    check(operation.action==='edit','Unknown committed operation');
     const patch=operation.patch;
     check(patch&&patch.baseRevision===input.revision-1&&Array.isArray(patch.changes)
       &&(patch.remove===undefined||Array.isArray(patch.remove))&&patch.changes.length+(patch.remove?.length??0)>0,'Invalid committed patch');

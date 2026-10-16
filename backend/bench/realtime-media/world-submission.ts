@@ -1,15 +1,26 @@
-import type {LiveWorld,WorldPatch,WorldTransactionOptions} from '../realtime-world/world.js';
+import type {LiveWorld,WorldPatch,WorldMotionPatch,WorldTransactionOptions} from '../realtime-world/world.js';
 import type {CommittedOperationInput} from './committed-context.js';
 
 export type LectureSubmission = {action:'add';source:string}
   | {action:'edit';changes:WorldPatch['changes'];remove:string[]}
   | {action:'parameters';parameterProgramId:string;parameterValues:{id:string;value:number}[]}
+  | {action:'motion';motionChanges:WorldMotionPatch['changes']}
+  | {action:'replace';replacementProgramId:string;source:string}
   | {action:'defer';reason:string};
 
 /** Dispatch only accepted tool submissions. World remains the transaction boundary. */
 export async function commitLectureSubmission(world:LiveWorld,submission:Exclude<LectureSubmission,{action:'defer'}>,
   baseRevision:number,programId:string,nowSeconds:number,options:WorldTransactionOptions={}){
   let operation:CommittedOperationInput['operation'];
+  if(submission.action==='motion'){
+    const patch={baseRevision,changes:submission.motionChanges};
+    const commit=await world.setMotion(patch,nowSeconds,options);
+    return {commit,operation:{action:'motion' as const,patch},changed:commit.revision!==baseRevision};
+  }
+  if(submission.action==='replace'){
+    const commit=await world.replaceProgram({id:submission.replacementProgramId,source:submission.source,baseRevision},nowSeconds,options);
+    return {commit,operation:{action:'replace' as const,programId:submission.replacementProgramId,source:submission.source},changed:commit.revision!==baseRevision};
+  }
   if(submission.action==='add'){
     operation={action:'add',programId,source:submission.source};
     const commit=await world.addProgram({id:programId,source:submission.source,baseRevision},nowSeconds,options);

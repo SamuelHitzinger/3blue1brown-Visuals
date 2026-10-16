@@ -22,10 +22,15 @@ type WorldChange = { id: string; props: Pick<WorldPatch['changes'][number]['prop
 /** Normalized native properties: required wire nulls are omitted here, never interpreted as values. */
 export interface SpeechAnchor { evidenceId:string;version:number;phrase:string;occurrence:number|null;utteranceId:string|null }
 export interface WorldParameterValue { id:string;value:number }
-export type WorldSubmission = (({ action: 'add'; source: string; changes: []; remove: [] }
+export interface WorldMotionChange { id:string;velocity:[number,number,number] }
+type EmptyParameters={parameterProgramId?:'';parameterValues?:[]};
+type EmptyProgressive={motionChanges?:[];replacementProgramId?:''};
+export type WorldSubmission = ((({ action: 'add'; source: string; changes: []; remove: [] }
   | { action: 'edit'; source: ''; changes: WorldChange[]; remove: string[] }
-  | { action: 'defer'; reason: string; source: ''; changes: []; remove: [] }) & {parameterProgramId?:'';parameterValues?:[]}
-  | {action:'parameters';source:'';changes:[];remove:[];parameterProgramId:string;parameterValues:WorldParameterValue[]}) & {speechAnchor?:SpeechAnchor|null};
+  | { action: 'defer'; reason: string; source: ''; changes: []; remove: [] }) & EmptyParameters
+  | {action:'parameters';source:'';changes:[];remove:[];parameterProgramId:string;parameterValues:WorldParameterValue[]}) & EmptyProgressive
+  | ({action:'motion';source:'';changes:[];remove:[];motionChanges:WorldMotionChange[];replacementProgramId:''}
+  | {action:'replace';source:string;changes:[];remove:[];motionChanges:[];replacementProgramId:string}) & EmptyParameters) & {speechAnchor?:SpeechAnchor|null};
 type Submission = SceneSubmission | BriefSubmission | WorldSubmission;
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const save = (path: string, value: unknown) => writeFile(path, JSON.stringify(value, null, 2), { flag: 'wx' });
@@ -34,18 +39,23 @@ const help = 'run --kind=scene|brief|world --model=ID --thinking=off|minimal|low
 
 const evidenceIdPattern='^[A-Za-z0-9][A-Za-z0-9_.:/-]{0,191}$';
 const parameterContract=' With retained parameters enabled, parameters is a separate branch: set parameterProgramId to one supplied program ID and parameterValues to 1–32 unique {id,value} entries using only host-exposed numeric parameter IDs and bounds. This applies immediately and atomically; source/reason must be empty and changes/remove empty. For add/edit/defer, parameterProgramId must be empty and parameterValues empty. Never infer control IDs or change source, native properties, and parameters in one operation.';
-function worldSchema(speechAnchors=false,retainedParameters=false) {
+const progressiveContract=' With progressive world enabled, create known objects immediately without inventing unknown properties. All branches require motionChanges and replacementProgramId. For add/edit/defer/parameters keep motionChanges empty and replacementProgramId empty. motion sets 1–32 unique existing IDs with velocity [x,y,z] in local coordinates per host second, starting from each current pose at actual commit; zero velocity stops motion. Its source/reason, changes/remove, replacementProgramId and parameter fields must be empty. replace supplies complete native source and exact existing replacementProgramId, preserving that program ID, original epoch and unrelated world; reason, changes/remove, motionChanges and parameter fields must be empty. Use replacement when new geometry or behavior cannot fit existing controls. Speech-grounded motion/replace use the same supplied speech-anchor contract when enabled. Never combine branches.';
+function worldSchema(speechAnchors=false,retainedParameters=false,progressiveWorld=false) {
   const id = Type.String({ pattern: '^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$' });
   // Pi rejects structured anyOf unions; nullable type arrays preserve its strict subset.
   const vector = Type.Unsafe({ type: ['array','null'], items: {type:'number',minimum:-1e6,maximum:1e6}, minItems:3, maxItems:3 });
   const scalar = (max: number) => Type.Unsafe({ type:['number','null'], minimum:0, maximum:max });
   return Type.Object({
-    action: Type.String({enum:['add','edit','defer',...(retainedParameters?['parameters']:[])]}), reason: Type.String({maxLength:512}), source: Type.String({maxLength:WORLD_LIMITS.sourceBytes}),
+    action: Type.String({enum:['add','edit','defer',...(retainedParameters?['parameters']:[]),...(progressiveWorld?['motion','replace']:[])]}), reason: Type.String({maxLength:512}), source: Type.String({maxLength:WORLD_LIMITS.sourceBytes}),
     changes: Type.Array(Type.Object({ id, props: Type.Object({
       position:vector, rotation:vector, scale:scalar(1e6), opacity:scalar(1),
       fill:Type.Unsafe({type:['string','null'],enum:[...Object.values(Color),null]}),
     },{additionalProperties:false}), duration:Type.Number({minimum:0,maximum:60}) },{additionalProperties:false}),{maxItems:WORLD_LIMITS.changes}),
     remove:Type.Array(id,{maxItems:WORLD_LIMITS.changes}),
+    ...(progressiveWorld?{
+      motionChanges:Type.Array(Type.Object({id,velocity:Type.Array(Type.Number({minimum:-1e6,maximum:1e6}),{minItems:3,maxItems:3})},{additionalProperties:false}),{maxItems:32}),
+      replacementProgramId:Type.String({pattern:'^(?:[A-Za-z0-9][A-Za-z0-9_./-]{0,127})?$'}),
+    }:{}),
     ...(retainedParameters?{
       parameterProgramId:Type.String({pattern:'^(?:[A-Za-z0-9][A-Za-z0-9_./-]{0,127})?$'}),
       parameterValues:Type.Array(Type.Object({id,value:Type.Number()},{additionalProperties:false}),{maxItems:32}),
@@ -59,17 +69,18 @@ function worldSchema(speechAnchors=false,retainedParameters=false) {
   },{additionalProperties:false});
 }
 
-export function submissionTool(kind: Kind, strict: Strict = 'require', speechAnchors=false,retainedParameters=false): Tool {
+export function submissionTool(kind: Kind, strict: Strict = 'require', speechAnchors=false,retainedParameters=false,progressiveWorld=false): Tool {
   if(speechAnchors&&kind!=='world')throw new Error('Speech anchors require world submissions');
   if(retainedParameters&&kind!=='world')throw new Error('Retained parameters require world submissions');
+  if(progressiveWorld&&kind!=='world')throw new Error('Progressive operations require world submissions');
   return {
     name: nameFor(kind),
     description: kind === 'scene' ? 'Submit the complete native scene source exactly once.' : kind === 'world'
-      ? 'Submit exactly one branch: add native source with empty changes/remove, edit native properties with empty source, or defer with a specific evidence-grounded reason when evidence is insufficient. Defer requires empty source/changes/remove; add/edit require empty reason. Null properties mean unchanged. Never combine branches.'+(retainedParameters?parameterContract:'')+(speechAnchors?' speechAnchor must name an exact supplied evidence version and spoken phrase; host resolves measured times. For frame-only operations and deferrals, set all five speechAnchor fields to null. occurrence and utteranceId are null unless needed to disambiguate. Never invent timestamps.':'')
+      ? 'Submit exactly one branch: add native source with empty changes/remove, edit native properties with empty source, or defer with a specific evidence-grounded reason when evidence is insufficient. Defer requires empty source/changes/remove; add/edit require empty reason. Null properties mean unchanged. Never combine branches.'+(retainedParameters?parameterContract:'')+(progressiveWorld?progressiveContract:'')+(speechAnchors?' speechAnchor must name an exact supplied evidence version and spoken phrase; host resolves measured times. For frame-only operations and deferrals, set all five speechAnchor fields to null. occurrence and utteranceId are null unless needed to disambiguate. Never invent timestamps.':'')
       : 'Submit one source-grounded causal visual brief, identifying uncertainty explicitly.',
     parameters: kind === 'scene'
       ? Type.Object({ source: Type.String() }, { additionalProperties: false })
-      : kind === 'world' ? worldSchema(speechAnchors,retainedParameters) : Type.Object({ claim: Type.String(), basis: Type.String(), operation: Type.String(),
+      : kind === 'world' ? worldSchema(speechAnchors,retainedParameters,progressiveWorld) : Type.Object({ claim: Type.String(), basis: Type.String(), operation: Type.String(),
         objects: Type.Array(Type.Object({ id: Type.String(), meaning: Type.String() }, { additionalProperties: false })),
         uncertainty: Type.String() }, { additionalProperties: false }),
     constrainedSampling: { type: 'json_schema', strict },
@@ -109,16 +120,38 @@ function validateSpeechAnchor(value:unknown):SpeechAnchor|null {
   return {evidenceId:item.evidenceId,version:item.version as number,phrase:boundedString(item.phrase,1000),
     occurrence:item.occurrence as number|null,utteranceId:item.utteranceId as string|null};
 }
-function validateWorld(args: unknown, speechAnchors=false,retainedParameters=false): WorldSubmission {
+function validateWorld(args: unknown, speechAnchors=false,retainedParameters=false,progressiveWorld=false): WorldSubmission {
   worldData(args);
   if(JSON.stringify(args).length>WORLD_LIMITS.patchBytes)throw new Error('World submission size limit exceeded');
-  const item=closed(args,['action','reason','source','changes','remove',...(speechAnchors?['speechAnchor']:[]),...(retainedParameters?['parameterProgramId','parameterValues']:[])]);
+  const item=closed(args,['action','reason','source','changes','remove',...(speechAnchors?['speechAnchor']:[]),...(retainedParameters?['parameterProgramId','parameterValues']:[]),...(progressiveWorld?['motionChanges','replacementProgramId']:[])]);
   const anchor=speechAnchors?{speechAnchor:validateSpeechAnchor(item.speechAnchor)}:{};
   if(!Array.isArray(item.changes)||item.changes.length>WORLD_LIMITS.changes||!Array.isArray(item.remove)||item.remove.length>WORLD_LIMITS.changes)throw new Error('World change/removal limit exceeded');
   if(retainedParameters&&(!Array.isArray(item.parameterValues)||item.parameterValues.length>32))throw new Error('World parameter limit exceeded');
+  const validId=(value:unknown):value is string=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$/.test(value);
+  const progressive=progressiveWorld?{motionChanges:[] as [],replacementProgramId:'' as const}:{};
+  if(progressiveWorld){
+    if(!Array.isArray(item.motionChanges)||item.motionChanges.length>32)throw new Error('World motion limit exceeded');
+    if(item.action==='motion'||item.action==='replace'){
+      if(item.reason!==''||item.changes.length||item.remove.length||retainedParameters&&(item.parameterProgramId!==''||(item.parameterValues as unknown[]).length))throw new Error('Cannot combine progressive and another world operation');
+      const parameters=retainedParameters?{parameterProgramId:'' as const,parameterValues:[] as []}:{};
+      if(item.action==='replace'){
+        if(item.motionChanges.length||!validId(item.replacementProgramId))throw new Error('Invalid replacement program or mixed motion');
+        return {action:'replace',source:boundedString(item.source,WORLD_LIMITS.sourceBytes),changes:[],remove:[],motionChanges:[],replacementProgramId:item.replacementProgramId,...parameters,...anchor};
+      }
+      if(item.source!==''||item.replacementProgramId!==''||!item.motionChanges.length)throw new Error('Invalid motion branch');
+      const ids=new Set<string>();
+      const motionChanges:WorldMotionChange[]=Array.from(item.motionChanges,value=>{
+        const change=closed(value,['id','velocity']),vector=change.velocity;
+        if(!validId(change.id)||ids.has(change.id))throw new Error('Invalid or duplicate motion ID');
+        if(!Array.isArray(vector)||vector.length!==3||!Array.from(vector).every(v=>typeof v==='number'&&Number.isFinite(v)&&Math.abs(v)<=1e6))throw new Error('Invalid motion velocity');
+        ids.add(change.id);return {id:change.id,velocity:[vector[0],vector[1],vector[2]]};
+      });
+      return {action:'motion',source:'',changes:[],remove:[],motionChanges,replacementProgramId:'',...parameters,...anchor};
+    }
+    if(item.motionChanges.length||item.replacementProgramId!=='')throw new Error('Other operations require empty progressive fields');
+  }
   if(retainedParameters&&item.action==='parameters'){
     if(item.source!==''||item.reason!==''||item.changes.length||item.remove.length)throw new Error('Cannot combine parameters and another world operation');
-    const validId=(value:unknown):value is string=>typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$/.test(value);
     if(!validId(item.parameterProgramId)||!(item.parameterValues as unknown[]).length)throw new Error('Invalid parameter program or empty values');
     const ids=new Set<string>();
     const parameterValues=Array.from(item.parameterValues as unknown[],value=>{
@@ -126,18 +159,18 @@ function validateWorld(args: unknown, speechAnchors=false,retainedParameters=fal
       if(!validId(parameter.id)||ids.has(parameter.id)||typeof parameter.value!=='number'||!Number.isFinite(parameter.value))throw new Error('Invalid or duplicate numeric parameter');
       ids.add(parameter.id);return {id:parameter.id,value:parameter.value};
     });
-    return {action:'parameters',source:'',changes:[],remove:[],parameterProgramId:item.parameterProgramId,parameterValues,...anchor};
+    return {action:'parameters',source:'',changes:[],remove:[],parameterProgramId:item.parameterProgramId,parameterValues,...progressive,...anchor};
   }
   if(retainedParameters&&(item.parameterProgramId!==''||(item.parameterValues as unknown[]).length))throw new Error('Non-parameter operations require empty parameter fields');
   const parameters=retainedParameters?{parameterProgramId:'' as const,parameterValues:[] as []}:{};
   if(item.action==='defer'){
     if(item.source!==''||item.changes.length||item.remove.length||speechAnchors&&anchor.speechAnchor!==null)throw new Error('Cannot combine deferral and world operation or speech anchor');
-    return {action:'defer',reason:boundedString(item.reason,512),source:'',changes:[],remove:[],...parameters,...anchor};
+    return {action:'defer',reason:boundedString(item.reason,512),source:'',changes:[],remove:[],...parameters,...progressive,...anchor};
   }
   if(item.reason!=='')throw new Error('World operations require empty reason');
   if(item.action==='add'){
     if(item.changes.length||item.remove.length)throw new Error('Cannot combine add and edit');
-    return {action:'add',source:boundedString(item.source,WORLD_LIMITS.sourceBytes),changes:[],remove:[],...parameters,...anchor};
+    return {action:'add',source:boundedString(item.source,WORLD_LIMITS.sourceBytes),changes:[],remove:[],...parameters,...progressive,...anchor};
   }
   if(item.action!=='edit'||item.source!==''||!item.changes.length&&!item.remove.length)throw new Error('Invalid world edit branch');
   const ids=new Set<string>();
@@ -163,13 +196,14 @@ function validateWorld(args: unknown, speechAnchors=false,retainedParameters=fal
     if(!Object.keys(props).length)throw new Error('World change must contain a property');
     return {id,props,duration:change.duration};
   });
-  return {action:'edit',source:'',changes,remove:item.remove.map(stableId),...parameters,...anchor};
+  return {action:'edit',source:'',changes,remove:item.remove.map(stableId),...parameters,...progressive,...anchor};
 }
-export function validateSubmission(kind: Kind, args: unknown, speechAnchors=false,retainedParameters=false): Submission {
+export function validateSubmission(kind: Kind, args: unknown, speechAnchors=false,retainedParameters=false,progressiveWorld=false): Submission {
   if(speechAnchors&&kind!=='world')throw new Error('Speech anchors require world submissions');
   if(retainedParameters&&kind!=='world')throw new Error('Retained parameters require world submissions');
+  if(progressiveWorld&&kind!=='world')throw new Error('Progressive operations require world submissions');
   if (kind === 'scene') return { source: boundedString(closed(args, ['source']).source, 256000) };
-  if (kind === 'world') return validateWorld(args,speechAnchors,retainedParameters);
+  if (kind === 'world') return validateWorld(args,speechAnchors,retainedParameters,progressiveWorld);
   const item = closed(args, ['claim', 'basis', 'operation', 'objects', 'uncertainty']);
   if (!Array.isArray(item.objects) || item.objects.length > 64) throw new Error('Invalid brief objects');
   const ids = new Set<string>();
@@ -185,7 +219,7 @@ export function validateSubmission(kind: Kind, args: unknown, speechAnchors=fals
 }
 
 /** toolcall_end arguments are authoritative, but incomplete/failed provider output is never accepted. */
-export function acceptSubmission(kind: Kind, completed: ToolCall[], terminal: ToolCall[], providerComplete: boolean, speechAnchors=false,retainedParameters=false): Submission {
+export function acceptSubmission(kind: Kind, completed: ToolCall[], terminal: ToolCall[], providerComplete: boolean, speechAnchors=false,retainedParameters=false,progressiveWorld=false): Submission {
   if (!providerComplete || completed.length !== 1 || terminal.length !== 1) throw new Error('Expected one successful completed tool call');
   const call = completed[0], final = terminal[0];
   if (call.name !== nameFor(kind) || final.name !== call.name || !call.id || call.id !== final.id) throw new Error('Tool call identity mismatch');
@@ -193,15 +227,15 @@ export function acceptSubmission(kind: Kind, completed: ToolCall[], terminal: To
     worldData(call.arguments);worldData(final.arguments);
     if(JSON.stringify(call.arguments)!==JSON.stringify(final.arguments))throw new Error('World wire arguments mismatch');
   }
-  const result = validateSubmission(kind, call.arguments,speechAnchors,retainedParameters);
-  if (JSON.stringify(result) !== JSON.stringify(validateSubmission(kind, final.arguments,speechAnchors,retainedParameters))) throw new Error('Tool call arguments mismatch');
+  const result = validateSubmission(kind, call.arguments,speechAnchors,retainedParameters,progressiveWorld);
+  if (JSON.stringify(result) !== JSON.stringify(validateSubmission(kind, final.arguments,speechAnchors,retainedParameters,progressiveWorld))) throw new Error('Tool call arguments mismatch');
   return result;
 }
 
 export function submissionTrace() {
   return { commentary: '', completed: [] as ToolCall[], toolCallCompleteMs: null as number | null, validToolCallCompleteMs: null as number | null };
 }
-export function observeSubmission(trace: ReturnType<typeof submissionTrace>, kind: Kind, event: AssistantMessageEvent, elapsedMs: number, speechAnchors=false,retainedParameters=false) {
+export function observeSubmission(trace: ReturnType<typeof submissionTrace>, kind: Kind, event: AssistantMessageEvent, elapsedMs: number, speechAnchors=false,retainedParameters=false,progressiveWorld=false) {
   if (event.type === 'text_delta') trace.commentary += event.delta;
   if (event.type === 'toolcall_end') {
     // Snapshot authoritative parsed arguments, never partial JSON or text commentary.
@@ -209,21 +243,21 @@ export function observeSubmission(trace: ReturnType<typeof submissionTrace>, kin
     trace.toolCallCompleteMs ??= elapsedMs;
     try {
       if (event.toolCall.name !== nameFor(kind)) throw new Error('Wrong submission tool');
-      validateSubmission(kind, event.toolCall.arguments,speechAnchors,retainedParameters);
+      validateSubmission(kind, event.toolCall.arguments,speechAnchors,retainedParameters,progressiveWorld);
       trace.validToolCallCompleteMs ??= elapsedMs;
     } catch { /* Retain invalid call evidence; acceptance rejects it. */ }
   }
 }
 
 /** Inspect only the known tool schema and options; never log messages, headers, keys or the full payload. */
-export function preparePayload(payload: unknown, kind: Kind, strict: Strict, tier: string, speechAnchors=false,retainedParameters=false) {
+export function preparePayload(payload: unknown, kind: Kind, strict: Strict, tier: string, speechAnchors=false,retainedParameters=false,progressiveWorld=false) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new AgentError('CONFIG', 'Invalid adapter payload.');
   const data = payload as Record<string, any>;
   const tools = data.tools;
   if (data.service_tier !== tier || data.tool_choice !== 'required' || !Array.isArray(tools) || tools.length !== 1
     || tools[0].type !== 'function' || tools[0].name !== nameFor(kind)
     || strict === 'require' && tools[0].strict !== true) throw new AgentError('CONFIG', 'Adapter did not forward required tool settings.');
-  const expected = submissionTool(kind, strict,speechAnchors,retainedParameters).parameters;
+  const expected = submissionTool(kind, strict,speechAnchors,retainedParameters,progressiveWorld).parameters;
   if (JSON.stringify(tools[0].parameters) !== JSON.stringify(expected)) throw new AgentError('CONFIG', 'Adapter changed the requested schema.');
   const outgoing = { ...data, parallel_tool_calls: false };
   const metadata = { toolChoice: data.tool_choice as string, parallelToolCalls: false,
@@ -256,6 +290,8 @@ export interface ProbeRunOptions {
   speechAnchors?: boolean;
   /** Opt-in world-only numeric control updates; host validates exposed IDs and bounds. */
   retainedParameters?: boolean;
+  /** Opt-in world-only late motion and complete native-program replacement. */
+  progressiveWorld?: boolean;
   /** Preserve a frozen experiment's supplied system prompt; strict tool validation still applies. */
   exactSystemPrompt?: boolean;
   /** Reuse or inject the existing provider runtime without changing request settings. */
@@ -282,6 +318,8 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   if(typeof speechAnchors!=='boolean'||speechAnchors&&kind!=='world')throw new AgentError('CONFIG','Speech anchors require world submissions.');
   const retainedParameters=options.retainedParameters??false;
   if(typeof retainedParameters!=='boolean'||retainedParameters&&kind!=='world')throw new AgentError('CONFIG','Retained parameters require world submissions.');
+  const progressiveWorld=options.progressiveWorld??false;
+  if(typeof progressiveWorld!=='boolean'||progressiveWorld&&kind!=='world')throw new AgentError('CONFIG','Progressive operations require world submissions.');
   const exactSystemPrompt=options.exactSystemPrompt??false;
   if(typeof exactSystemPrompt!=='boolean'||exactSystemPrompt&&!flags['system-file'])throw new AgentError('CONFIG','Exact system prompts require a boolean opt-in and a system file.');
   const which = (flags.case ?? 'cube') as ProbeCase | 'external', action = (flags.action ?? 'create') as 'create' | 'edit';
@@ -301,6 +339,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   prompts.systemPrompt += `\n\nSubmission contract: call ${nameFor(kind)} exactly once with the complete ${kind === 'scene' ? 'native scene source in its source field' : kind === 'world' ? 'world branch in the specified fields: add uses native source and empty changes/remove; edit uses empty source and existing stable IDs, nullable unchanged properties, and explicit durations; add/edit require empty reason. If evidence is insufficient or ambiguous, defer with a specific evidence-grounded reason (at most 512 UTF-8 bytes) and empty source/changes/remove. Never fabricate a scene or edit to fill missing evidence' : 'causal brief in the specified fields'}. Do not put the submission in prose or a code fence. This is a single request; tools will not execute and no repair turn follows.`;
   if(speechAnchors)prompts.systemPrompt+=' Speech anchor contract: speechAnchor is a required object. For speech-grounded add/edit, reference exact supplied evidenceId/version and spoken phrase (at most 1000 UTF-8 bytes); use occurrence or utteranceId only to disambiguate, otherwise null. Host resolves measured words; do not calculate or invent timestamps. For frame-only operations and every deferral, set all five speechAnchor fields to null. Schema validity does not prove phrase matching or evidence availability.';
   if(retainedParameters)prompts.systemPrompt+=parameterContract+(speechAnchors?' Speech-grounded parameter operations use the same exact supplied speechAnchor evidence contract.':'');
+  if(progressiveWorld)prompts.systemPrompt+=progressiveContract;
   }
   const images: ImageContent[] = [];
   let imageMetadata: { path: string; sha256: string; bytes: number; mimeType: string } | null = null;
@@ -313,7 +352,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
     images.push({ type: 'image', data: bytes.toString('base64'), mimeType });
     imageMetadata = { path, sha256: hash(bytes), bytes: bytes.length, mimeType };
   }
-  const tool = submissionTool(kind, strict,speechAnchors,retainedParameters);
+  const tool = submissionTool(kind, strict,speechAnchors,retainedParameters,progressiveWorld);
   const sourceHashes = Object.fromEntries(await Promise.all([
     ['probe', import.meta.url], ['prompts', new URL('./realtime-probe/prompts.ts', import.meta.url).href],
     ['auth', new URL('../src/agents/auth.ts', import.meta.url).href], ['config', new URL('../src/agents/config.ts', import.meta.url).href],
@@ -325,6 +364,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   const identity = { schemaVersion: 1, evidenceKind: 'single-structured-model-submission', kind, case: which, action,
     ...(speechAnchors?{speechAnchors:true}:{}),
     ...(retainedParameters?{retainedParameters:true}:{}),
+    ...(progressiveWorld?{progressiveWorld:true}:{}),
     ...(exactSystemPrompt?{exactSystemPrompt:true}:{}),
     format: kind === 'scene' ? 'native-js' : kind === 'world' ? 'world-operation' : 'causal-brief', model: config.model, provider: config.provider, authMode: config.authMode,
     thinkingRequested: config.thinking, serviceTierRequested: flags['service-tier'], strictRequested: strict,
@@ -361,7 +401,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
       ...(config.thinking === 'off' ? {} : { reasoningEffort: config.thinking }),
       maxTokens, timeoutMs, maxRetries: 0, signal: requestSignal, transport: 'sse',
       onPayload(payload) {
-        const prepared = preparePayload(payload, kind, strict, flags['service-tier'],speechAnchors,retainedParameters);
+        const prepared = preparePayload(payload, kind, strict, flags['service-tier'],speechAnchors,retainedParameters,progressiveWorld);
         payloadMetadata = prepared.metadata;
         return prepared.payload;
       },
@@ -383,7 +423,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
       requestSignal.throwIfAborted();
       const elapsedMs = performance.now() - requestStart;
       events.push({ type: event.type, elapsedMs, ...('delta' in event && typeof event.delta === 'string' ? { chars: event.delta.length } : {}) });
-      observeSubmission(trace, kind, event, elapsedMs,speechAnchors,retainedParameters);
+      observeSubmission(trace, kind, event, elapsedMs,speechAnchors,retainedParameters,progressiveWorld);
       if (event.type === 'done' || event.type === 'error') {
         providerTerminalMs = elapsedMs;
         final = event.type === 'done' ? event.message : event.error;
@@ -396,7 +436,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   } catch (error) { providerComplete = false; failure = safeFailure(error); }
   const { commentary, completed, toolCallCompleteMs, validToolCallCompleteMs } = trace;
   try {
-    accepted = acceptSubmission(kind, completed, final?.content.filter((part): part is ToolCall => part.type === 'toolCall') ?? [], providerComplete,speechAnchors,retainedParameters);
+    accepted = acceptSubmission(kind, completed, final?.content.filter((part): part is ToolCall => part.type === 'toolCall') ?? [], providerComplete,speechAnchors,retainedParameters,progressiveWorld);
   } catch { submissionFailure = 'Expected exactly one schema-valid completed submission matching a successful terminal response.'; }
   const status = accepted ? 'complete' : 'failed';
   const acceptedText = accepted === null ? null : kind === 'scene' && 'source' in accepted ? accepted.source : JSON.stringify(accepted, null, 2);

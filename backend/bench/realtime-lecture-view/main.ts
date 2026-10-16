@@ -217,9 +217,9 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
     const {commit,operation,changed}=await commitLectureSubmission(world,submission,packet.baseWorldRevision,
       `run-${current.sequence}-${packet.planId}`,upperNow()/1000,options);
     if(!changed){
-      terminal(current,attempt,'unchanged parameters: no visual change committed');
-      note(`${packet.planId}: unchanged parameters; no new revision or coverage credit.`);
-      status.textContent='No parameter change committed. Listening for more evidence.';return;
+      terminal(current,attempt,'unchanged operation: no visual change committed');
+      note(`${packet.planId}: unchanged operation; no new revision or coverage credit.`);
+      status.textContent='No visual change committed. Listening for more evidence.';return;
     }
     attempt.committedRevision = commit.revision; committedAt = stamp();
     committedContext.record({ revision: commit.revision, runId: current.id, planId: packet.planId,

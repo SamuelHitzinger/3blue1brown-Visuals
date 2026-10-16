@@ -1,4 +1,14 @@
 import {expect,test} from 'bun:test';
+
+test('motion journal rejects wrong revision, duplicate targets and non-finite velocity',()=>{
+  const record={revision:2,runId:'r',planId:'p',committedAtMs:2,evidence:{changes:[],context:[]},
+    operation:{action:'motion' as const,patch:{baseRevision:1,changes:[{id:'cube',velocity:[1,0,0] as [number,number,number]}]}}};
+  const good=new CommittedContextJournal();good.record(record);expect(good.snapshot(10000).records[0].operation).toEqual(record.operation);
+  for(const changes of [[],[{id:'cube',velocity:[NaN,0,0]}],[record.operation.patch.changes[0],record.operation.patch.changes[0]]]){
+    expect(()=>new CommittedContextJournal().record({...record,operation:{action:'motion',patch:{baseRevision:1,changes:changes as any}}})).toThrow();
+  }
+  expect(()=>new CommittedContextJournal().record({...record,operation:{...record.operation,patch:{...record.operation.patch,baseRevision:0}}})).toThrow();
+});
 import {CommittedContextJournal,type CommittedOperationInput} from './committed-context.js';
 
 const add=(revision=1,source='export default scene({},s=>{s.wait(8)});'):CommittedOperationInput=>({

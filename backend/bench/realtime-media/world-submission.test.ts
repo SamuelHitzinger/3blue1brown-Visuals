@@ -3,6 +3,22 @@ import {commitLectureSubmission} from './world-submission.js';
 import {CommittedContextJournal} from './committed-context.js';
 import {LiveWorld} from '../realtime-world/world.js';
 
+test('motion and replacement dispatch preserve transaction guards and exact journal history',async()=>{
+  const calls:unknown[]=[],options={signal:new AbortController().signal,beforeCommit:()=>{}};
+  const world={setMotion:async(...args:unknown[])=>{calls.push(args);return {revision:2,committedAt:100};},
+    replaceProgram:async(...args:unknown[])=>{calls.push(args);return {revision:3,committedAt:101};}} as unknown as LiveWorld;
+  const motion=await commitLectureSubmission(world,{action:'motion',motionChanges:[{id:'cube',velocity:[2,0,0]}]},1,'unused',100,options);
+  const replace=await commitLectureSubmission(world,{action:'replace',replacementProgramId:'body',source:'native-source'},2,'unused',101,options);
+  expect(calls).toEqual([[{baseRevision:1,changes:[{id:'cube',velocity:[2,0,0]}]},100,options],
+    [{id:'body',source:'native-source',baseRevision:2},101,options]]);
+  const journal=new CommittedContextJournal();
+  for(const result of [motion,replace])journal.record({revision:result.commit.revision,runId:'r',planId:'p'+result.commit.revision,
+    committedAtMs:result.commit.committedAt*1000,evidence:{changes:[],context:[]},operation:result.operation});
+  expect(journal.snapshot(10000).records.map(r=>r.operation)).toEqual([
+    {action:'motion',patch:{baseRevision:1,changes:[{id:'cube',velocity:[2,0,0]}]}},
+    {action:'replace',programId:'body',source:'native-source'}]);
+});
+
 test('parameter dispatch preserves revision, deadline guard and exact journal payload',async()=>{
   const calls:unknown[]=[],options={signal:new AbortController().signal,beforeCommit:()=>{}};
   const world={setParameters:async(...args:unknown[])=>{calls.push(args);return {revision:3,committedAt:10};}} as unknown as LiveWorld;

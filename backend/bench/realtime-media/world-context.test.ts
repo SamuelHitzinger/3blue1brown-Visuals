@@ -13,6 +13,15 @@ function journal(source='export default scene({},s=>s.wait(1));'){
 }
 function within(context:ReturnType<typeof buildWorldContext>,overhead=0){expect(JSON.stringify(context).length).toBeLessThanOrEqual(60000);expect(encoded(context)+overhead).toBeLessThanOrEqual(120000);}
 
+test('motion context keeps exact current velocity and explicit bounded omissions',()=>{
+  const summary=emptySummary();summary.motions=Array.from({length:2000},(_,i)=>({id:'body-'+i,velocity:[1,0,0] as [number,number,number],origin:[3,2,1] as [number,number,number],start:100}));
+  const context=buildWorldContext({summary,sampledRevision:0,sampledAt:null,requestOverheadBytes:110000,journal:new CommittedContextJournal()});
+  within(context,110000);expect(context.summary.motions.length).toBeGreaterThan(0);
+  expect(context.summary.motions[0]).toEqual(summary.motions[0]);
+  expect(context.omissions.motions+context.summary.motions.length).toBe(2000);expect(context.opaque).toBe(true);
+  context.summary.motions[0].velocity[0]=9;expect(summary.motions[0].velocity[0]).toBe(1);
+});
+
 test('bounds the real 20 sliders by 100 shared bindings reproduction without clipping parameters or journal source',async()=>{
   const source=`export default scene({},s=>{const p=Array.from({length:20},(_,i)=>s.slider('p'+i,{reactive:true,default:1,min:0,max:4}));for(let i=0;i<100;i++)s.bind(s.sphere('ball'+i),p,(...v)=>({radius:v.reduce((a,b)=>a+b,0)/20}));s.wait(10);});`;
   expect(source.length).toBeLessThan(400);
