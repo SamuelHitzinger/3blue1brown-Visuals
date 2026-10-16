@@ -119,11 +119,6 @@ export async function createLectureAssetSession(index:LocalAssetIndex,options:{i
       if(!Array.isArray(ids))throw Error('Select at most four unique indexed asset IDs');
       const staged=await stageAssets(nextIndex,ids,options.signal);
       options.signal?.throwIfAborted();
-      const guard:unknown=options.beforeCommit?.();
-      if(guard!==null&&(typeof guard==='object'||typeof guard==='function')&&typeof (guard as {then?:unknown}).then==='function'){
-        void Promise.resolve(guard).catch(()=>{});throw Error('beforeCommit must be synchronous');
-      }
-      options.signal?.throwIfAborted();
       // Read the latest state after staging; concurrent successful appends cannot be lost.
       const merged=new Map(entries);
       for(const [id,entry] of staged){
@@ -132,8 +127,15 @@ export async function createLectureAssetSession(index:LocalAssetIndex,options:{i
         if(!previous)merged.set(id,entry);
       }
       if(merged.size>maximumSessionAssets)throw Error('Lecture asset inventory exceeds 64 assets');
-      if(merged.size===entries.size)return structuredClone(manifest);
-      const next=snapshot(merged,manifest.revision+1);
+      const next=merged.size===entries.size?manifest:snapshot(merged,manifest.revision+1);
+      // Snapshot validation can be substantial. Check the original deadline only
+      // after that work, immediately before the synchronous publication below.
+      const guard:unknown=options.beforeCommit?.();
+      if(guard!==null&&(typeof guard==='object'||typeof guard==='function')&&typeof (guard as {then?:unknown}).then==='function'){
+        void Promise.resolve(guard).catch(()=>{});throw Error('beforeCommit must be synchronous');
+      }
+      options.signal?.throwIfAborted();
+      if(next===manifest)return structuredClone(manifest);
       entries=merged;manifest=next;inventories.add(next.inventoryId);
       return structuredClone(manifest);
     },

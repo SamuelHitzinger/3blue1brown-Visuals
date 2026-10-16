@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-16",
+  "scope": "Local publication to compiled, prepared and resolved geometry; optional offline snapshot readback is timed separately.",
+  "worldClock": "Controlled monotonic seconds for deterministic state assertions; elapsed work uses performance.now().",
+  "run": "rHJ4clR",
+  "receiptSha256": "3e281f554694362ef12ed3a4796c8ead25073ab525518226f9dd239cc526b8cd",
+  "model": {
+    "readsAfterCold": 1,
+    "readsAfterReuse": 1,
+    "parts": 46,
+    "sha256": "14f44b116cf0f9ed7092009fef76b48f620536133be08b10225f9c1533fb2480",
+    "triangles": 10784,
+    "resolvedTriangles": 10784,
+    "bytes": 598368
+  },
+  "registration": {
+    "initialHostAssets": 0,
+    "initialWorldModelRevision": 0,
+    "publishedAfterWorldCreated": true,
+    "hostRevision": 1,
+    "worldModelRevision": 1,
+    "initialInventoryId": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "currentInventoryId": "2871842543b864e32b1f15388f00d0ff3234c029b450c54982b1fa94937762eb"
+  },
+  "timings": {
+    "originMs": 226.8087,
+    "originalDeadlineMs": 10226.8087,
+    "publishMs": 31.66130000000001,
+    "indexMs": 6.331000000000017,
+    "hostRegistrationMs": 3.993499999999983,
+    "browserRegistrationMs": 2.016999999999996,
+    "coldCompilePrepareResolveMs": 43.44560000000001,
+    "reusedCompilePrepareResolveMs": 24.95569999999998,
+    "localPipelineMs": 93.1798,
+    "localPipelineWithin10s": true,
+    "offlineReadbackProcessMs": 1876.8839000000003
+  },
+  "invariants": {
+    "cancelledHostAdmissionUnpublished": true,
+    "deadlinePreserved": true,
+    "registrationDoesNotMutateScene": true,
+    "originalEpochPreserved": true,
+    "rotationPreserved": true,
+    "deformationPreserved": true,
+    "hostTransitionPreserved": true,
+    "cameraPreserved": true,
+    "graphAndSurfaceRetained": true,
+    "staleSnapshotIgnored": true,
+    "conflictingSnapshotRejected": true,
+    "idempotentRetry": true,
+    "cancelledCandidateUnpublished": true,
+    "sharedGeometryReused": true
+  },
+  "render": {
+    "backend": "native-webgpu",
+    "status": "offline-native-readback",
+    "liveSubmittedAtMs": null,
+    "pixelChecks": [
+      {
+        "path": "C:\\Users\\samue\\Stuff\\3yellow3white\\data\\realtime-workshop\\live-inventory-01\\rHJ4clR\\native-readback\\1280x720-0.png",
+        "graphPixels": 572,
+        "surfacePixels": 64941
+      },
+      {
+        "path": "C:\\Users\\samue\\Stuff\\3yellow3white\\data\\realtime-workshop\\live-inventory-01\\rHJ4clR\\native-readback\\960x720-0.png",
+        "graphPixels": 572,
+        "surfacePixels": 64941
+      }
+    ],
+    "hardwarePresentedAtMs": null,
+    "image1280Sha256": "cdfbae3c408db304d2c8d4b472db12be355ee25ce27a426b8419fa2c8e878f6a"
+  },
+  "limitations": [
+    "Local integration evidence only: arbitrary-subject retrieval, speech alignment, semantic relevance and visual explanation quality are unproved.",
+    "The local model is selected explicitly before the run; it is not fetched or selected by a language model. Mechanical test fixtures do not establish scientific coverage.",
+    "A static scientific representation is not a molecular motion simulation. Original provenance and representation caveats are retained.",
+    "The optional image is a native WebGPU readback of a frozen actual-world sample in an isolated renderer, not a live-browser submission or hardware presentation timestamp.",
+    "The world begins in 3D. This probe does not establish live 2D-to-3D camera switching, interactive input, clips or unlimited model residency."
+  ]
+}
