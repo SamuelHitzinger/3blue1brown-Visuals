@@ -27,3 +27,36 @@ Each task requests exactly eight seconds with a two-second final reading hold. T
 5. Overall acceptance: remains unproven until complete ingestion/ASR/model/resource/persistent-world/presentation timing and full-motion quality meet the ten-second goal across these strata. Do not average away high-detail failures behind easy cases.
 
 The existing 90,004-triangle GLB and deforming-surface profiler are separate **handwritten runtime** workloads. They measure renderer capacity and cold/warm preparation; they do not establish model authoring quality. Future rounds must add novel subjects, larger molecules, resource selection, corrections and sustained session behavior. This screen identifies failure modes; one sample per arm cannot estimate reliability or p95 latency.
+
+## Keep three kinds of complexity separate
+
+The eight cases are a breadth screen, not a full factorial experiment. Several
+pairs change both the visual detail and the requested explanation: the dense
+surface adds a moving slice, and full caffeine adds a hydrogen reveal. Their
+differences cannot be attributed solely to mesh density or atom count.
+
+For subsequent comparisons, record three independent axes:
+
+- **Subject reasoning:** one relationship, interacting relationships, or a
+  multistep mechanism. Record the required inference and its invariants.
+- **Visual detail:** sparse 2D geometry; dense 2D labels/curves; coarse 3D;
+  detailed 3D mesh, molecule or imported asset. Record entities, topology,
+  triangles, labels, attachments, occlusion and intermediate-frame readability.
+- **Change workload:** initial construction; transform existing objects; change
+  geometry/topology; introduce a new asset; correct earlier evidence. Measure
+  cold retrieval/preparation separately from cached reuse.
+
+Use controlled low/high-detail pairs with the same data, claim, motion and
+reading hold before adding harder reasoning. For example, change surface mesh
+resolution while retaining the identical slice operation; vary molecular sphere
+detail while retaining the same atoms, bonds and reveal. Removing atoms,
+annotations or causal steps is not an optimization unless both arms explicitly
+have that reduced requirement.
+
+Report pass counts and latency per stratum, including failures and deadline
+misses. Require a quality gate for each detailed 3D stratum; easy line plots
+cannot compensate for failed molecular or surface scenes. Keep an unseen
+subject/media holdout for each architecture candidate. Repeated attempts on the
+same eight tasks are development evidence, not unseen generalization evidence.
+
+These are evaluation requirements for the next round, not completed trials.
