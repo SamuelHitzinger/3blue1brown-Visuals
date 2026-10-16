@@ -1,7 +1,6 @@
 # Progressive animation prompt contract
 
-Status: proposed prompt and integration design, 2026-10-16. Not deployed and not
-yet measured with live model requests. This is a replacement policy for the live
+Status: design recorded 2026-10-16; progressive runtime and live-author integration now implemented on the development branch. See [implementation evidence](progressive-animation-checkpoint.md) for measured prefix tests and remaining gaps. This is a replacement policy for the live
 lecture author, not an extra paragraph to append to contradictory instructions.
 Keep the existing measured evidence, strict tool schema, asset provenance and
 native API documentation. Keep the image-only baseline author unchanged.
@@ -88,7 +87,7 @@ scene/evidence references and never publishes partial tool-argument text.
 
 ## Prefix examples
 
-These are desired decisions, not claims about implemented motion tools.
+These examples define intended decisions. The implementation checkpoint identifies which paths have been tested.
 
 | Evidence available now | Desired visible update | Still unknown |
 | --- | --- | --- |
@@ -108,7 +107,7 @@ the distinction between supported setup, dependent behavior and missing evidence
 
 ## Required host behavior
 
-Prompting alone cannot provide these missing runtime capabilities:
+Prompting alone cannot provide these host capabilities; the implementation checkpoint records coverage:
 
 1. **Early evidence delivery.** Dispatch on an independently supported fact rather
    than waiting for the whole lecture or a fixed long chunk. Partial transcripts
@@ -135,16 +134,16 @@ Prompting alone cannot provide these missing runtime capabilities:
    planner call before every visible update. Background retrieval or compilation
    must not block an independent supported update.
 
-## Current repository gap
+## Repository gaps recorded before implementation
 
-The live prompt currently asks for a supported causal operation before every
+The pre-implementation live prompt asked for a supported causal operation before every
 update (`realtime-lecture-join.ts:94`), repeats broad deferral guidance in the user
 request, and prohibits regenerating an existing construction. This conflicts
 with early noun-only setup and structural correction. Replace these clauses;
 do not merely append the new policy after them.
 
-Current `LiveWorld` supports native additions, finite property tweens and exposed
-numeric parameter updates. It does not support attaching a new continuous motion
+The pre-implementation `LiveWorld` supported native additions, finite property tweens and exposed
+numeric parameter updates. It did not support attaching a new continuous motion
 law to an existing arbitrary entity, rebasing callback-owned motion, replacing a
 program while migrating its identities, or general cross-program attachments.
 Callbacks retain their original epoch and clamp at authored duration. A direct
@@ -183,4 +182,4 @@ operations and matched prefix tests; it does not prove this prompt's performance
 - [Prompt engineering](https://developers.openai.com/api/docs/guides/prompt-engineering)
 
 Repository audit and the prior paired trial provide the specific local findings.
-No new model test or production behavior change is claimed by this document.
+This design is not a production-readiness claim. New implementation and model-test evidence are recorded separately in the checkpoint.

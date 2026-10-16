@@ -1,0 +1,195 @@
+{
+  "schemaVersion": 1,
+  "model": "gpt-6-luna",
+  "thinking": "off",
+  "serviceTierRequested": "priority",
+  "timeoutMs": 10000,
+  "retriesPerStep": 0,
+  "measurement": "Request dispatch to accepted tool completion; excludes speech capture and presentation. Local compile/commit times measured separately without GPU preparation.",
+  "runs": [
+    {
+      "run": "progressive-model-01",
+      "scenarioChecksPassed": 8,
+      "steps": 8,
+      "rows": [
+        {
+          "id": "cube",
+          "action": "add",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 2620.1163,
+          "localCommitMs": 35.739300000000185,
+          "serviceTierActual": "default",
+          "outputTokens": 174,
+          "submissionSha256": "0ef546acbd86696e8e58d9dee06131216c5bfe596f0eacc7091e81f2d31af403"
+        },
+        {
+          "id": "incomplete",
+          "action": "defer",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 1949.518,
+          "localCommitMs": null,
+          "serviceTierActual": "default",
+          "outputTokens": 109,
+          "submissionSha256": "d9549437718ea9e4ae06b6b2fadd6507852ddd65da5bdc8a09daca61eb2aa6eb"
+        },
+        {
+          "id": "velocity",
+          "action": "motion",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 1685.1778000000004,
+          "localCommitMs": 0.8055999999996857,
+          "serviceTierActual": "default",
+          "outputTokens": 87,
+          "submissionSha256": "fd0b635d523c1f884c1b0964a965828dbcacfa6d5baa18fbe2d95f5d0551db9f"
+        },
+        {
+          "id": "reverse",
+          "action": "motion",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 3222.5632000000005,
+          "localCommitMs": 0.2856000000010681,
+          "serviceTierActual": "default",
+          "outputTokens": 88,
+          "submissionSha256": "502dfa48d0dec4980e7daa90618d4b659fbfc8612bb4c46ef4477164940c7e2e"
+        },
+        {
+          "id": "stop",
+          "action": "motion",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 2670.4146999999994,
+          "localCommitMs": 0.22750000000087311,
+          "serviceTierActual": "default",
+          "outputTokens": 85,
+          "submissionSha256": "f3f5093608e4e840b995570c7932d95352100205ffbdea1fb00d4e460859f917"
+        },
+        {
+          "id": "structure",
+          "action": "replace",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 4991.3200000000015,
+          "localCommitMs": 17.238900000000285,
+          "serviceTierActual": "default",
+          "outputTokens": 174,
+          "submissionSha256": "c018d89462f8f88508577e68e3d2a758ab2b9127b10594afd735539e266f3ad7"
+        },
+        {
+          "id": "surface",
+          "action": "add",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 2131.9912000000004,
+          "localCommitMs": 26.75840000000244,
+          "serviceTierActual": "default",
+          "outputTokens": 189,
+          "submissionSha256": "1b332fcdb5cddf623852391c59e29824a00321ec9bf916eea95814357dc00788"
+        },
+        {
+          "id": "molecule",
+          "action": "add",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 5892.6932000000015,
+          "localCommitMs": 18.490900000000693,
+          "serviceTierActual": "default",
+          "outputTokens": 493,
+          "submissionSha256": "571c71becb175b81a5807c4c6bb8ffd7eb7a7e89313de971faf222eab9c73d4b"
+        }
+      ]
+    },
+    {
+      "run": "progressive-model-02",
+      "scenarioChecksPassed": 8,
+      "steps": 8,
+      "rows": [
+        {
+          "id": "cube",
+          "action": "add",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 3978.5467000000003,
+          "localCommitMs": 34.54439999999977,
+          "serviceTierActual": "default",
+          "outputTokens": 163,
+          "submissionSha256": "c23940499b833fab7a251f1ad580f704903bcb811cbcd19f104bb04e17df101c"
+        },
+        {
+          "id": "incomplete",
+          "action": "defer",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 3561.4402,
+          "localCommitMs": null,
+          "serviceTierActual": "default",
+          "outputTokens": 114,
+          "submissionSha256": "967efc0f7feda195a0621366c854163e47cd84b69c541dac8b149c4995c4c689"
+        },
+        {
+          "id": "velocity",
+          "action": "motion",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 2403.592099999999,
+          "localCommitMs": 0.6891000000014174,
+          "serviceTierActual": "default",
+          "outputTokens": 87,
+          "submissionSha256": "fd0b635d523c1f884c1b0964a965828dbcacfa6d5baa18fbe2d95f5d0551db9f"
+        },
+        {
+          "id": "reverse",
+          "action": "motion",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 3875.6098,
+          "localCommitMs": 0.20340000000032887,
+          "serviceTierActual": "default",
+          "outputTokens": 88,
+          "submissionSha256": "502dfa48d0dec4980e7daa90618d4b659fbfc8612bb4c46ef4477164940c7e2e"
+        },
+        {
+          "id": "stop",
+          "action": "motion",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 1480.3671999999988,
+          "localCommitMs": 0.1679999999996653,
+          "serviceTierActual": "default",
+          "outputTokens": 85,
+          "submissionSha256": "f3f5093608e4e840b995570c7932d95352100205ffbdea1fb00d4e460859f917"
+        },
+        {
+          "id": "structure",
+          "action": "replace",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 2241.2706,
+          "localCommitMs": 17.145199999999022,
+          "serviceTierActual": "default",
+          "outputTokens": 163,
+          "submissionSha256": "8b48ec6b743ab7907dd23e2df7cc249fc5b4d07693bdd0dd63609992741190e3"
+        },
+        {
+          "id": "surface",
+          "action": "add",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 2294.375899999999,
+          "localCommitMs": 26.676100000000588,
+          "serviceTierActual": "default",
+          "outputTokens": 202,
+          "submissionSha256": "f736bd282b2720615576f712ac1fafc7d94accd9b9817a6856d4452861d3a83c"
+        },
+        {
+          "id": "molecule",
+          "action": "add",
+          "scenarioCheckStatus": "passed",
+          "validToolCallCompleteMs": 4907.421999999999,
+          "localCommitMs": 18.90299999999843,
+          "serviceTierActual": "default",
+          "outputTokens": 460,
+          "submissionSha256": "5e76b602071c10870797e1341860cc57f0f9997e35308b3ce10f99674b06dbc3"
+        }
+      ]
+    }
+  ],
+  "qualityAudit": {
+    "firstRun": "Molecule overlaps A; flat strokes instead of round spatial bonds. Original partial checks missed both.",
+    "secondRun": "Molecule separated and round bonds present, but three purported double bonds are radial ticks instead of parallel second bonds. Scientific quality failed despite eight partial scenario checks passing. A label also remains unattached during motion."
+  },
+  "limits": [
+    "Two sequential runs of one synthetic prefix sequence, not a latency percentile study.",
+    "Priority requested; provider reported default for every response.",
+    "Adapter omitted requested output-token cap.",
+    "No complete connectivity, occlusion, baseline-parity or speech-to-screen certification."
+  ]
+}
