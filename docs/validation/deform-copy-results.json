@@ -1,0 +1,569 @@
+{
+  "baselineRef": "c1298f469501abe7e20098dc159cbb559654e8d8",
+  "scope": "Timings cover CPU SceneProgram.update only; native-transform control instead times evaluateScene. Separate native pixel comparison is quality evidence, not FPS, GPU performance, model-generation or end-to-end latency proof.",
+  "nativeVisual": {
+    "evidenceRoot": "data/realtime-workshop/deform-visual-01",
+    "video": "baseline-candidate.mp4",
+    "sha256": "a558639551d10e6447f6fe1fe64351133e9fcdc468c20a1cec6837aca57372f8",
+    "durationSeconds": 8,
+    "fps": 24,
+    "exactSceneFramePairs": 192,
+    "exactRgbaPairs": 173,
+    "totalRgbaPairs": 192,
+    "differingChannelsTotal": 25,
+    "maxChannelDelta": 1,
+    "rootRecomputedPixelsAndMovieHash": true,
+    "freshReview": "No perceptible degradation in six sampled frame pairs and poster; shared clipping and weak depth references remain. Not full-motion or lesson-quality approval."
+  },
+  "attempts": [
+    {
+      "id": "deform-copy-diagnostic-01",
+      "status": "Timing and returned-update equality valid; active-frame equality claim invalid (unmerged initial bindings). Unsafe diagnostic never promote."
+    },
+    {
+      "id": "deform-copy-candidate-01",
+      "status": "Failed before timing: strict compiler bytes differed by checkout CRLF; retry checks normalized equality."
+    },
+    {
+      "id": "deform-copy-candidate-02",
+      "status": "Guarded timing and returned-update equality valid; active-frame/normal/draw checks invalid (unmerged initial bindings). Superseded by candidate03."
+    },
+    {
+      "id": "deform-copy-candidate-03",
+      "status": "Corrected frame merge and analytic motion checks passed. Authoritative guarded comparison."
+    }
+  ],
+  "guarded": {
+    "baselineRef": "c1298f469501abe7e20098dc159cbb559654e8d8",
+    "comparison": "candidate",
+    "unsafeDiagnosticOnly": false,
+    "exactPairs": 100,
+    "additionalRenderPairs": 15,
+    "results": [
+      {
+        "id": "surface-10",
+        "stage": "QuickJS-update",
+        "grid": 10,
+        "vertices": 121,
+        "triangles": 200,
+        "sourceSha256": "f1a9e6019df1a67c4792f7dce030a6b0e8aea896e31868b675953a4ef4be5a45",
+        "setupMs": {
+          "baseline": 39.4118,
+          "candidate": 17.87009999999998
+        },
+        "exactPairs": 20,
+        "renderChecks": [
+          {
+            "time": 3.603,
+            "exact": true,
+            "hashes": {
+              "baseline": "ff5fe4bbe4145d756b540540dbd153a8072b770f0f2f5d74c270e2dbe09cfb38",
+              "candidate": "ff5fe4bbe4145d756b540540dbd153a8072b770f0f2f5d74c270e2dbe09cfb38"
+            }
+          },
+          {
+            "time": 0.25,
+            "exact": true,
+            "hashes": {
+              "baseline": "3eebcfa891624c826f181e16532aa885b0f68046506c54001ecd94509dcb840d",
+              "candidate": "3eebcfa891624c826f181e16532aa885b0f68046506c54001ecd94509dcb840d"
+            }
+          },
+          {
+            "time": 2,
+            "exact": true,
+            "hashes": {
+              "baseline": "5b948c8240b3d0583633e1a61fd0220f52d7d73b77462206f4fc4570cb597464",
+              "candidate": "5b948c8240b3d0583633e1a61fd0220f52d7d73b77462206f4fc4570cb597464"
+            }
+          }
+        ],
+        "baseline": {
+          "samples": 20,
+          "medianMs": 0.5335999999999785,
+          "minMs": 0.4937999999999647,
+          "maxMs": 0.66700000000003,
+          "meanMs": 0.554004999999998,
+          "registeredCallbacks": 20
+        },
+        "candidate": {
+          "samples": 20,
+          "medianMs": 0.4684499999999616,
+          "minMs": 0.431699999999978,
+          "maxMs": 0.6537000000000148,
+          "meanMs": 0.49628999999999623,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "surface-20",
+        "stage": "QuickJS-update",
+        "grid": 20,
+        "vertices": 441,
+        "triangles": 800,
+        "sourceSha256": "5c3e97cf9b87106736c130241f42b655d9fa9fa7cf7233ef3a30282c5c506f0c",
+        "setupMs": {
+          "baseline": 20.845200000000034,
+          "candidate": 20.668900000000008
+        },
+        "exactPairs": 20,
+        "renderChecks": [
+          {
+            "time": 3.603,
+            "exact": true,
+            "hashes": {
+              "baseline": "30b67a3e9c211383e3b284388e364bea7a94b0d967d4767c023a23d6cb46bb81",
+              "candidate": "30b67a3e9c211383e3b284388e364bea7a94b0d967d4767c023a23d6cb46bb81"
+            }
+          },
+          {
+            "time": 0.25,
+            "exact": true,
+            "hashes": {
+              "baseline": "7364194c0b480974565afc892c222624b71d1d80020e8f540578953762f368af",
+              "candidate": "7364194c0b480974565afc892c222624b71d1d80020e8f540578953762f368af"
+            }
+          },
+          {
+            "time": 2,
+            "exact": true,
+            "hashes": {
+              "baseline": "a3cd8fdab00040c4b2f2ad5d1903f9a1ae2595ec33cedde5a4f779de061a4bf4",
+              "candidate": "a3cd8fdab00040c4b2f2ad5d1903f9a1ae2595ec33cedde5a4f779de061a4bf4"
+            }
+          }
+        ],
+        "baseline": {
+          "samples": 20,
+          "medianMs": 1.7462500000000034,
+          "minMs": 1.7122999999999706,
+          "maxMs": 2.6282000000000494,
+          "meanMs": 1.808110000000002,
+          "registeredCallbacks": 20
+        },
+        "candidate": {
+          "samples": 20,
+          "medianMs": 1.48305000000002,
+          "minMs": 1.4440000000000168,
+          "maxMs": 1.5767000000000166,
+          "meanMs": 1.4888050000000022,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "surface-40",
+        "stage": "QuickJS-update",
+        "grid": 40,
+        "vertices": 1681,
+        "triangles": 3200,
+        "sourceSha256": "5c3c7e58cc7e38e9c3af39dac29cf76f012d1b8a3b6ae687ec92fe73f6c6b222",
+        "setupMs": {
+          "baseline": 45.36029999999994,
+          "candidate": 46.145599999999945
+        },
+        "exactPairs": 20,
+        "renderChecks": [
+          {
+            "time": 3.603,
+            "exact": true,
+            "hashes": {
+              "baseline": "7acf962eceef699e0f038be008af755dc5dbf085f9bd9da647df5d74b45ea684",
+              "candidate": "7acf962eceef699e0f038be008af755dc5dbf085f9bd9da647df5d74b45ea684"
+            }
+          },
+          {
+            "time": 0.25,
+            "exact": true,
+            "hashes": {
+              "baseline": "30fb6fc2034193ab7cf52080b15f7c7c5d374d83016e833702bf4ca1805a41b8",
+              "candidate": "30fb6fc2034193ab7cf52080b15f7c7c5d374d83016e833702bf4ca1805a41b8"
+            }
+          },
+          {
+            "time": 2,
+            "exact": true,
+            "hashes": {
+              "baseline": "5e907af744fbf92af3e22ad6176f7438e76815c0140fc95113999444258ff409",
+              "candidate": "5e907af744fbf92af3e22ad6176f7438e76815c0140fc95113999444258ff409"
+            }
+          }
+        ],
+        "baseline": {
+          "samples": 20,
+          "medianMs": 6.562099999999987,
+          "minMs": 6.510200000000054,
+          "maxMs": 7.137900000000059,
+          "meanMs": 6.609105,
+          "registeredCallbacks": 20
+        },
+        "candidate": {
+          "samples": 20,
+          "medianMs": 5.576000000000022,
+          "minMs": 5.5049999999999955,
+          "maxMs": 6.56129999999996,
+          "meanMs": 5.626125000000002,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "reactive-transform",
+        "stage": "QuickJS-update",
+        "grid": 0,
+        "sourceSha256": "9110fab350aa5b6568ecbff7d5169c97d61f6538d70e3b756622ad369574b298",
+        "setupMs": {
+          "baseline": 11.930900000000065,
+          "candidate": 11.632200000000012
+        },
+        "exactPairs": 20,
+        "renderChecks": [
+          {
+            "time": 3.603,
+            "exact": true,
+            "hashes": {
+              "baseline": "d7c1b56241767caafcc61847baa4c50290d123969ed7c98b5b3bb040cb2920d4",
+              "candidate": "d7c1b56241767caafcc61847baa4c50290d123969ed7c98b5b3bb040cb2920d4"
+            }
+          },
+          {
+            "time": 0.25,
+            "exact": true,
+            "hashes": {
+              "baseline": "87d0b850224280a4a2a9e8b840bcfa02e1e0acbd79292d42a35d51b312d82fa7",
+              "candidate": "87d0b850224280a4a2a9e8b840bcfa02e1e0acbd79292d42a35d51b312d82fa7"
+            }
+          },
+          {
+            "time": 2,
+            "exact": true,
+            "hashes": {
+              "baseline": "1464f56a8b044d670e8160ab525eb3a905b03a5fc9f000b51a58abeef6079942",
+              "candidate": "1464f56a8b044d670e8160ab525eb3a905b03a5fc9f000b51a58abeef6079942"
+            }
+          }
+        ],
+        "baseline": {
+          "samples": 20,
+          "medianMs": 0.02179999999998472,
+          "minMs": 0.0204999999998563,
+          "maxMs": 0.047100000000000364,
+          "meanMs": 0.02363500000001295,
+          "registeredCallbacks": 20
+        },
+        "candidate": {
+          "samples": 20,
+          "medianMs": 0.022199999999884312,
+          "minMs": 0.020699999999806096,
+          "maxMs": 0.04429999999979373,
+          "meanMs": 0.024559999999985392,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "native-transform",
+        "stage": "evaluateScene",
+        "grid": 0,
+        "sourceSha256": "b5acee92c7d5c68759e74bdb1b0258633ba9a9380ed2b766f3b5045424c99819",
+        "setupMs": {
+          "baseline": 11.891399999999976,
+          "candidate": 11.592600000000175
+        },
+        "exactPairs": 20,
+        "renderChecks": [
+          {
+            "time": 3.603,
+            "exact": true,
+            "hashes": {
+              "baseline": "c039815451b1759ff9dbeaa54b8e68f5ce9f9880787ef74000cf911af121e9c4",
+              "candidate": "c039815451b1759ff9dbeaa54b8e68f5ce9f9880787ef74000cf911af121e9c4"
+            }
+          },
+          {
+            "time": 0.25,
+            "exact": true,
+            "hashes": {
+              "baseline": "0622e83144f89831224884a314a1346b81fcfc7f43eacbe87836e67aa9c1c837",
+              "candidate": "0622e83144f89831224884a314a1346b81fcfc7f43eacbe87836e67aa9c1c837"
+            }
+          },
+          {
+            "time": 2,
+            "exact": true,
+            "hashes": {
+              "baseline": "5d9b31f39820ce872db371a062b3525d80842e3305de1e5c27a9a1a688a2ed18",
+              "candidate": "5d9b31f39820ce872db371a062b3525d80842e3305de1e5c27a9a1a688a2ed18"
+            }
+          }
+        ],
+        "baseline": {
+          "samples": 20,
+          "medianMs": 0.012200000000007094,
+          "minMs": 0.010999999999967258,
+          "maxMs": 0.019700000000057116,
+          "meanMs": 0.01343499999999267,
+          "registeredCallbacks": 0
+        },
+        "candidate": {
+          "samples": 20,
+          "medianMs": 0.01155000000005657,
+          "minMs": 0.01089999999999236,
+          "maxMs": 0.04539999999997235,
+          "meanMs": 0.014380000000016935,
+          "registeredCallbacks": 0
+        }
+      }
+    ]
+  },
+  "unsafeDiagnostic": {
+    "baselineRef": "c1298f469501abe7e20098dc159cbb559654e8d8",
+    "unsafeDiagnosticOnly": true,
+    "exactPairs": 100,
+    "results": [
+      {
+        "id": "surface-10",
+        "stage": "QuickJS-update",
+        "grid": 10,
+        "vertices": 121,
+        "triangles": 200,
+        "sourceSha256": "f1a9e6019df1a67c4792f7dce030a6b0e8aea896e31868b675953a4ef4be5a45",
+        "setupMs": {
+          "baseline": 38.98139999999998,
+          "unsafe": 17.061300000000017
+        },
+        "exactPairs": 20,
+        "baseline": {
+          "samples": 20,
+          "medianMs": 0.532100000000014,
+          "minMs": 0.4855000000000018,
+          "maxMs": 0.7171000000000163,
+          "meanMs": 0.5542900000000003,
+          "registeredCallbacks": 20
+        },
+        "unsafe": {
+          "samples": 20,
+          "medianMs": 0.37779999999997926,
+          "minMs": 0.33950000000004366,
+          "maxMs": 0.5541000000000054,
+          "meanMs": 0.39178500000000727,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "surface-20",
+        "stage": "QuickJS-update",
+        "grid": 20,
+        "vertices": 441,
+        "triangles": 800,
+        "sourceSha256": "5c3e97cf9b87106736c130241f42b655d9fa9fa7cf7233ef3a30282c5c506f0c",
+        "setupMs": {
+          "baseline": 21.06899999999996,
+          "unsafe": 20.03109999999998
+        },
+        "exactPairs": 20,
+        "baseline": {
+          "samples": 20,
+          "medianMs": 1.714300000000037,
+          "minMs": 1.6147000000000276,
+          "maxMs": 3.5634000000000015,
+          "meanMs": 1.784185000000005,
+          "registeredCallbacks": 20
+        },
+        "unsafe": {
+          "samples": 20,
+          "medianMs": 1.1750499999999704,
+          "minMs": 1.0914000000000215,
+          "maxMs": 1.254099999999994,
+          "meanMs": 1.1810999999999978,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "surface-40",
+        "stage": "QuickJS-update",
+        "grid": 40,
+        "vertices": 1681,
+        "triangles": 3200,
+        "sourceSha256": "5c3c7e58cc7e38e9c3af39dac29cf76f012d1b8a3b6ae687ec92fe73f6c6b222",
+        "setupMs": {
+          "baseline": 45.15070000000003,
+          "unsafe": 42.30600000000004
+        },
+        "exactPairs": 20,
+        "baseline": {
+          "samples": 20,
+          "medianMs": 6.369050000000016,
+          "minMs": 6.219799999999964,
+          "maxMs": 7.609100000000012,
+          "meanMs": 6.470515000000001,
+          "registeredCallbacks": 20
+        },
+        "unsafe": {
+          "samples": 20,
+          "medianMs": 4.2065000000000055,
+          "minMs": 4.11749999999995,
+          "maxMs": 5.931500000000028,
+          "meanMs": 4.291615000000007,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "reactive-transform",
+        "stage": "QuickJS-update",
+        "grid": 0,
+        "sourceSha256": "9110fab350aa5b6568ecbff7d5169c97d61f6538d70e3b756622ad369574b298",
+        "setupMs": {
+          "baseline": 11.912699999999973,
+          "unsafe": 12.726099999999974
+        },
+        "exactPairs": 20,
+        "baseline": {
+          "samples": 20,
+          "medianMs": 0.02410000000003265,
+          "minMs": 0.021299999999996544,
+          "maxMs": 0.0745000000000573,
+          "meanMs": 0.027325000000007548,
+          "registeredCallbacks": 20
+        },
+        "unsafe": {
+          "samples": 20,
+          "medianMs": 0.02085000000005266,
+          "minMs": 0.019400000000018736,
+          "maxMs": 0.029899999999997817,
+          "meanMs": 0.022270000000003166,
+          "registeredCallbacks": 20
+        }
+      },
+      {
+        "id": "native-transform",
+        "stage": "evaluateScene",
+        "grid": 0,
+        "sourceSha256": "b5acee92c7d5c68759e74bdb1b0258633ba9a9380ed2b766f3b5045424c99819",
+        "setupMs": {
+          "baseline": 12.248199999999997,
+          "unsafe": 12.21180000000004
+        },
+        "exactPairs": 20,
+        "baseline": {
+          "samples": 20,
+          "medianMs": 0.014250000000004093,
+          "minMs": 0.011200000000030741,
+          "maxMs": 0.023400000000037835,
+          "meanMs": 0.015260000000000672,
+          "registeredCallbacks": 0
+        },
+        "unsafe": {
+          "samples": 20,
+          "medianMs": 0.014599999999973079,
+          "minMs": 0.011800000000107502,
+          "maxMs": 0.052900000000022374,
+          "meanMs": 0.017385000000001583,
+          "registeredCallbacks": 0
+        }
+      }
+    ]
+  },
+  "receipts": [
+    {
+      "id": "deform-copy-diagnostic-01",
+      "manifestSha256": "a3accb860e28a35049e2ba48d8f8f0207ec73c2365cc8c2ab4fc487094a7c845",
+      "files": {
+        "baseline-compiler.ts": "24e9ec387fd2e008d0b5aa467d5ef4bc9142c1003e3113ccaffc8e86117cfa0f",
+        "baseline-runtime.ts": "ec1f9f7e4cd9f4dd9db18f0d88e5f82c5b82cef3215f589961e0b44a2d29ac10",
+        "correction.json": "96702889ef96eb572c87b9aed543c2bb49d180266cb49f48003c1b6fe34d87ae",
+        "original-compiler.ts": "ca10ea270a107231f6786bf6734be46d1b52e579e376dc71c4d31413db08cbf7",
+        "original-runtime.ts": "43ef09d2543f0e025357fb1152a49e66b03eed8b76224ef3ff37677ae85556eb",
+        "probe.ts": "b8b331a9bc998d3b1537abe31867fa66211f523bb85c5f911caa157db5aee77f",
+        "provenance.json": "9bbe5a252faf64506e2b5dee8da012699854aacdc45eb9077eda27f0b608ae1e",
+        "summary.json": "875c2a3f92f1dab8b577a63a22ac19c8d2136e97bea634f18458338f721f0e94",
+        "unsafe-compiler.ts": "8213b563067b75f097ab115b2d813643039b22336b45394412f140b00f256c02",
+        "unsafe-runtime.ts": "d215e96e4ef14efa64d87c4bfff80281398d6ce6a62d171a4a209b1e27c18641",
+        "surface-10/raw.json": "d346e28536f933453556303042131059a0854f18e7c9ce90b23abc28095acc57",
+        "surface-10/source.js": "f1a9e6019df1a67c4792f7dce030a6b0e8aea896e31868b675953a4ef4be5a45",
+        "surface-10/summary.json": "8c2919ee94de5bc727f40f1b315cc2dd63e432569ac1585d76751e1147590624",
+        "native-transform/raw.json": "7c9799c98b3e4749cdecc532436b4d40f08731ed8a22e60f7c539e3bdb7dedbb",
+        "native-transform/source.js": "b5acee92c7d5c68759e74bdb1b0258633ba9a9380ed2b766f3b5045424c99819",
+        "native-transform/summary.json": "8d5b5193fa86675d06f3ad877394165cab9803e47c1b381b24ec5e48b3864166",
+        "surface-40/raw.json": "b1639adb50ae33391caa4903f7fa68acbe7108bf534e4ac688b480d0ce4e3e3d",
+        "surface-40/source.js": "5c3c7e58cc7e38e9c3af39dac29cf76f012d1b8a3b6ae687ec92fe73f6c6b222",
+        "surface-40/summary.json": "f02c219dc3ac1036ab7028e4a0b01e7937215c306615024058585e664b9840f8",
+        "reactive-transform/raw.json": "a2b292aa7fb0ab649b3c36e90654559c4b29dac8549b71d5116b96079791b0b8",
+        "reactive-transform/source.js": "9110fab350aa5b6568ecbff7d5169c97d61f6538d70e3b756622ad369574b298",
+        "reactive-transform/summary.json": "53f2f3dcfc5f14b57240588d82c86808569ac5a4379fc0adca788457cdcbec85",
+        "surface-20/raw.json": "bd36bbc5bcfd608cb6c275add7834bd6f2eb65473e3119c280684e9cd9185d82",
+        "surface-20/source.js": "5c3e97cf9b87106736c130241f42b655d9fa9fa7cf7233ef3a30282c5c506f0c",
+        "surface-20/summary.json": "b25e41d5fdac1efab847325256c496bb7e9abf2d4a34d40742479b13fae6838a"
+      }
+    },
+    {
+      "id": "deform-copy-candidate-01",
+      "manifestSha256": "460d9f72c5d45c169f951c38080cf3cb9e485b5a3c672f910535140573b4cf65",
+      "files": {
+        "failure.json": "1e4fc8f269b3ba78043656b6f500d979d2d3df6a4fc60cdf603ed07cd6014b3e",
+        "original-compiler.ts": "ca10ea270a107231f6786bf6734be46d1b52e579e376dc71c4d31413db08cbf7",
+        "original-runtime.ts": "43ef09d2543f0e025357fb1152a49e66b03eed8b76224ef3ff37677ae85556eb"
+      }
+    },
+    {
+      "id": "deform-copy-candidate-02",
+      "manifestSha256": "ad1b6b99dd199a953305a85564fa79f3fa57c319aa9fafe1e5c44b2cc87dd14a",
+      "files": {
+        "baseline-compiler.ts": "24e9ec387fd2e008d0b5aa467d5ef4bc9142c1003e3113ccaffc8e86117cfa0f",
+        "baseline-runtime.ts": "ec1f9f7e4cd9f4dd9db18f0d88e5f82c5b82cef3215f589961e0b44a2d29ac10",
+        "candidate-compiler.ts": "4b2b7c383a3b7d60c9743b576a2ea74eebd4b48bd1eb820abb8587ed01a52944",
+        "candidate-runtime.ts": "55eb650ee7b215b3d8c1018502ddb9e7bab76bdddf0ec4f92c9bb3899057ffb5",
+        "correction.json": "96702889ef96eb572c87b9aed543c2bb49d180266cb49f48003c1b6fe34d87ae",
+        "original-candidate-runtime.ts": "e12d0eae0dfbc08631a6e51532ea87ef2b1c9545d502de5a7a3ac7415405d3d8",
+        "original-compiler.ts": "ca10ea270a107231f6786bf6734be46d1b52e579e376dc71c4d31413db08cbf7",
+        "original-runtime.ts": "43ef09d2543f0e025357fb1152a49e66b03eed8b76224ef3ff37677ae85556eb",
+        "probe.ts": "615db276478a8438dc164dc83c082f1b5d158cd1362b00ff3302691f4d08fa27",
+        "provenance.json": "006b1112aa7968c2b3b8922ca0c79e5d345f4e6eb0800678a86cf881a69be4ba",
+        "summary.json": "580f479db5161d30bec308e18723c4f72a95bc8fa29d513f06cab5846aef8361",
+        "surface-20/raw.json": "0fb7ca91273f53c92f6a65c4a60fd42b83561e3fa04911fdbc6af478be45b9f9",
+        "surface-20/source.js": "5c3e97cf9b87106736c130241f42b655d9fa9fa7cf7233ef3a30282c5c506f0c",
+        "surface-20/summary.json": "d7a77fd9d7f10ca8c93f60ffdc1bd20b0201c3b5c515c02e5e0ad77ec088c1c3",
+        "native-transform/raw.json": "b83e0d2a35cbd342f4b9c79f0239bde5b885064aaa05fa9a235729758b0b0035",
+        "native-transform/source.js": "b5acee92c7d5c68759e74bdb1b0258633ba9a9380ed2b766f3b5045424c99819",
+        "native-transform/summary.json": "ef08ae109b45642986a94d0b5e4cbe578bc981ed8c9159c0c5486c6919c58075",
+        "surface-40/raw.json": "294b1b08de00458532ff4bffeb9d15131ca522e8c2c2cc8ca41faa4b91e8667e",
+        "surface-40/source.js": "5c3c7e58cc7e38e9c3af39dac29cf76f012d1b8a3b6ae687ec92fe73f6c6b222",
+        "surface-40/summary.json": "023f363a362b9880e96963537fd3f6a1a16ae61c9fb4980665025d9c03610295",
+        "surface-10/raw.json": "ddf31aae1b74d46cc32ca06b428d893b572bc857b5deabf4b1eebf663ecce186",
+        "surface-10/source.js": "f1a9e6019df1a67c4792f7dce030a6b0e8aea896e31868b675953a4ef4be5a45",
+        "surface-10/summary.json": "2fae0305ab7f7b61da454750d6e45f3e9f852fcc909774abbcca01cba7393d8a",
+        "reactive-transform/raw.json": "4e7db5cf2c92f1cd8e2f82b638c18aa6be1de27b500eb426aca18b1a70aa210b",
+        "reactive-transform/source.js": "9110fab350aa5b6568ecbff7d5169c97d61f6538d70e3b756622ad369574b298",
+        "reactive-transform/summary.json": "354703ba162d6ce63b9e19800e1562ccb97cec04f472f774baef9b273eabac30"
+      }
+    },
+    {
+      "id": "deform-copy-candidate-03",
+      "manifestSha256": "32e73164bdd764e311040dad4bd6528a34cd2cd7618442950462161c69123a20",
+      "files": {
+        "baseline-compiler.ts": "24e9ec387fd2e008d0b5aa467d5ef4bc9142c1003e3113ccaffc8e86117cfa0f",
+        "baseline-runtime.ts": "ec1f9f7e4cd9f4dd9db18f0d88e5f82c5b82cef3215f589961e0b44a2d29ac10",
+        "candidate-compiler.ts": "4b2b7c383a3b7d60c9743b576a2ea74eebd4b48bd1eb820abb8587ed01a52944",
+        "candidate-runtime.ts": "55eb650ee7b215b3d8c1018502ddb9e7bab76bdddf0ec4f92c9bb3899057ffb5",
+        "original-candidate-runtime.ts": "e12d0eae0dfbc08631a6e51532ea87ef2b1c9545d502de5a7a3ac7415405d3d8",
+        "original-compiler.ts": "ca10ea270a107231f6786bf6734be46d1b52e579e376dc71c4d31413db08cbf7",
+        "original-runtime.ts": "43ef09d2543f0e025357fb1152a49e66b03eed8b76224ef3ff37677ae85556eb",
+        "probe.ts": "61c5ebafefd3be008271f3f3900a89c719beb82be24a00d7cceca965903511c6",
+        "provenance.json": "225182b93ac038e7d3ed017bd556ea3316c6dbde804e0323fd478c31f509671d",
+        "summary.json": "89a0bc690952bd977d449a8806e5422134446e4c4c2116c2bbc66853b157a10f",
+        "native-transform/raw.json": "c91d667afec901d58729da81727c17b0b590da78df0840e930bb56c2d6c7b0ff",
+        "native-transform/source.js": "b5acee92c7d5c68759e74bdb1b0258633ba9a9380ed2b766f3b5045424c99819",
+        "native-transform/summary.json": "fa585d0f1bc82f44b7a2de7c365cbc8b19861c2fef6c8c03e92a1b590c4e803f",
+        "surface-20/raw.json": "8c396f2621b09d18d5979935cf4b65fff9969136ea3c22f060e45bf4fee2fe6f",
+        "surface-20/source.js": "5c3e97cf9b87106736c130241f42b655d9fa9fa7cf7233ef3a30282c5c506f0c",
+        "surface-20/summary.json": "fde71533811fb1eea72ce1894273a58e2b34556a526301eb1e99bf27a9a0c10b",
+        "surface-10/raw.json": "fce8af47ecdefc9da8546b79b1db5b7d36d0a0534647fe9a728d770baa3f60e6",
+        "surface-10/source.js": "f1a9e6019df1a67c4792f7dce030a6b0e8aea896e31868b675953a4ef4be5a45",
+        "surface-10/summary.json": "9853366955e1449182a080d0b3a25c27d2fbff0ec82de13eebd6c1cd92e1014a",
+        "reactive-transform/raw.json": "68ec1c043a149b09f1d93dd6ddbf1675f82ded630bd9f2e9178e5d2da0bbebf8",
+        "reactive-transform/source.js": "9110fab350aa5b6568ecbff7d5169c97d61f6538d70e3b756622ad369574b298",
+        "reactive-transform/summary.json": "f5dcf77b952bacc244fd27c4bfc9aae25d36a3cb15ec675988c4edb9bf322490",
+        "surface-40/raw.json": "5a8105412362b37997cc0f8bdbbbb93e9858191d280b85731314ddf56d3b8954",
+        "surface-40/source.js": "5c3c7e58cc7e38e9c3af39dac29cf76f012d1b8a3b6ae687ec92fe73f6c6b222",
+        "surface-40/summary.json": "226909785c0ce7177cbef8705c5765f5ee9750fc603e2be30e78270ef09d0647"
+      }
+    }
+  ]
+}

@@ -32,6 +32,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
   const assets = domainFactories.createAssetBuilders(input.assetCatalog);
   const scientific = domainFactories.createScientificStateBuilders();
   const clone = <T>(value: T): T => JSON.parse(JSON.stringify(value));
+  const ownedDeformations = new WeakSet<object>();
   const vector = (value: number[] = [0, 0, 0]): Vec3 => [value[0] ?? 0, value[1] ?? 0, value[2] ?? 0];
   const rotation = (value: number | number[] = 0): Vec3 => typeof value === "number" ? [0, 0, value] : vector(value);
   const viewport = (value: Vec2): Vec2 => { if(!Array.isArray(value)||value.length!==2)throw new Error("Viewport offset requires two coordinates");return [value[0],value[1]]; };
@@ -500,11 +501,21 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
       if(geometry.asset) throw new Error('Referenced model assets cannot deform');
       if (geometry.kind !== 'mesh' || typeof callback !== 'function') throw new Error('s.deform requires a mesh and a callback');
       const rest = geometry.vertices!.map(point => vector(point));
-      context.bind(target, dependencies, (...values) => ({ vertices: rest.map((point, index) => {
-        const result = callback([...point], index, ...values);
-        if (!Array.isArray(result) || result.length !== 3) throw new Error('s.deform callback must return a Vec3');
-        return [...result] as Vec3;
-      }) }));
+      context.bind(target, dependencies, (...values) => {
+        let plain = true;
+        const vertices = rest.map((point, index) => {
+          const result = callback([...point], index, ...values);
+          if (!Array.isArray(result) || result.length !== 3) throw new Error('s.deform callback must return a Vec3');
+          const copied = [...result] as Vec3;
+          if ('toJSON' in copied || !copied.every(n => Number.isFinite(n) && !Object.is(n, -0))) plain = false;
+          return copied;
+        });
+        const properties = { vertices };
+        // Both callback inputs and results are detached. Primitive coordinates
+        // need no second JSON copy; retain normalization/hooks for other values.
+        if (plain && !('toJSON' in properties) && !('toJSON' in vertices)) ownedDeformations.add(properties);
+        return properties;
+      });
     },
     toggle: (id, spec) => control(id, { ...spec, kind: "toggle" }) as boolean,
     select: (id, spec) => control(id, { ...spec, kind: "select" }) as string,
@@ -584,7 +595,7 @@ export function buildScene(options: SceneOptions, builder: (context: SceneContex
     }
     if (properties.position !== undefined) properties.position = vector(properties.position);
     if (properties.rotation !== undefined) properties.rotation = rotation(properties.rotation);
-    return { target: binding.target, ...(binding.slot !== undefined ? { slot: binding.slot } : {}), properties: clone(properties) };
+    return { target: binding.target, ...(binding.slot !== undefined ? { slot: binding.slot } : {}), properties: ownedDeformations.has(output) ? properties : clone(properties) };
   });
   const initialUpdates = update(Object.fromEntries(controls.map(c => [c.id, c.value])), controls.map(c => c.id), 0);
   const reactiveBindings = callbacks.map((binding, i) => ({ target: binding.target, ...(binding.slot !== undefined ? { slot: binding.slot } : {}), controls: binding.controls, ...(binding.time ? { time: true as const } : {}), properties: initialUpdates[i].properties }));
