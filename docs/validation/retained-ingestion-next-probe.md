@@ -1,5 +1,10 @@
 # Next retained-world ingestion probe
 
+Subsequent execution: [first joined public-lecture checkpoint](lecture-join-checkpoint.md).
+The integration now has measured browser publication, but produced one static
+addition, five deferrals and no retained edit. Explanatory quality failed.
+The audit below records the pre-implementation state, not current API status.
+
 Audit: 2026-10-16, branch `codex/animation-authoring-efficiency`, HEAD `4c21005`.
 This report is based on current source, not a new inference or timing run. No
 media was uploaded, no model request was made, and no implementation was changed.

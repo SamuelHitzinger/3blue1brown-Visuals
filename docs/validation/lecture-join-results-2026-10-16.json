@@ -1,0 +1,312 @@
+{
+  "date": "2026-10-16",
+  "runId": "d9d30bcb-a22a-4faf-9724-bd7a49ef563e",
+  "evidenceKind": "paced-public-media-joined-browser-run",
+  "model": "gpt-6-luna",
+  "thinking": "off",
+  "serviceTierRequested": "priority",
+  "serviceTierActual": "default",
+  "sourceOffsetSec": 885,
+  "sourceDurationSec": 20,
+  "rawWindowSec": 4,
+  "deadlineMs": 10000,
+  "providerAttempts": 6,
+  "acceptedAdds": 1,
+  "acceptedEdits": 0,
+  "acceptedDeferrals": 5,
+  "qualityAcceptedVisualOperations": 0,
+  "clock": {
+    "mapping": "single-round-trip offset bracket, drift unmeasured",
+    "offsetLowerMs": 39102.41169998808,
+    "offsetUpperMs": 39108.2117,
+    "uncertaintyWidthMs": 5.800000011920929
+  },
+  "plans": [
+    {
+      "planId": "plan-1",
+      "operation": "defer",
+      "changes": [
+        {
+          "id": "chunk-0000",
+          "version": 1,
+          "sourceStartMs": 885000,
+          "sourceEndMs": 889000,
+          "recognitionOrFrameLoadMs": 278.4553999999989
+        }
+      ],
+      "contextIds": [],
+      "providerTerminalMs": 1110.671199999997,
+      "outputTokens": 65,
+      "serviceTierActual": "default",
+      "sourceEndpointToResponseMs": [
+        1587.2804999880755,
+        1593.0804999999964
+      ],
+      "requestToResponseMs": 1128.7999999970198,
+      "submissionSha256": "e4493ed8631e85e828d1db14341fdb89734e2fcae3a024bf90b13f327ce38366",
+      "promptSha256": "67449545a60acd2eb1c5f061db57e895e2a45226f7a889ef44c3f865c85b047a",
+      "providerReceiptSha256": "fa5b1eec07f8fb2cf6db18f0b7cbdeb69362dc791ac655c3eee6d8136fcc1a00",
+      "schedulerStatus": "retired"
+    },
+    {
+      "planId": "plan-2",
+      "operation": "defer",
+      "changes": [
+        {
+          "id": "chunk-0001",
+          "version": 1,
+          "sourceStartMs": 889000,
+          "sourceEndMs": 893000,
+          "recognitionOrFrameLoadMs": 240.916999999994
+        }
+      ],
+      "contextIds": [
+        "chunk-0000"
+      ],
+      "providerTerminalMs": 1214.0535000000018,
+      "outputTokens": 68,
+      "serviceTierActual": "default",
+      "sourceEndpointToResponseMs": [
+        1636.9804999910557,
+        1642.7805000029766
+      ],
+      "requestToResponseMs": 1229.0,
+      "submissionSha256": "245b543543c6d164a3bce02d99cd9c0c462e28d8877209360905f8bae1ffbbda",
+      "promptSha256": "aacef77084af8477420c4ec9074957a239e65273c6cde2695e4551bedde0530f",
+      "providerReceiptSha256": "1b55d92ebee49d775f3ef7cbae9ba1ea8f250e2ce8f4a753ad701b9dedda19ad",
+      "schedulerStatus": "retired"
+    },
+    {
+      "planId": "plan-3",
+      "operation": "add",
+      "changes": [
+        {
+          "id": "chunk-0002",
+          "version": 1,
+          "sourceStartMs": 893000,
+          "sourceEndMs": 897000,
+          "recognitionOrFrameLoadMs": 245.0040999999983
+        }
+      ],
+      "contextIds": [
+        "chunk-0000",
+        "chunk-0001"
+      ],
+      "providerTerminalMs": 1955.9496,
+      "outputTokens": 175,
+      "serviceTierActual": "default",
+      "sourceEndpointToResponseMs": [
+        2379.7804999880755,
+        2385.5804999999964
+      ],
+      "requestToResponseMs": 1970.7999999970198,
+      "submissionSha256": "0bf3da72ffdf2750e7aa75e630b7b80a9514a4cd14fdeb3462b162d2a9d226d7",
+      "promptSha256": "7c6eb5849899295203098ca77d21e549ce19a73f1f43ddfe1fa998361b4e44f1",
+      "providerReceiptSha256": "4764357594fc188fc813e9f2796dd6b5587cbd523ebe7d853d8083bc3b4e1d1b",
+      "schedulerStatus": "complete",
+      "worldRevision": 1,
+      "sourceEndpointToCommitMs": [
+        2551.880499997016,
+        2557.680500008937
+      ],
+      "sourceEndpointToRenderSubmitMs": [
+        2561.880499997016,
+        2567.680500008937
+      ],
+      "sourceWindowStartToRenderSubmitMs": [
+        6561.880499997016,
+        6567.680500008937
+      ],
+      "availabilityToRenderSubmitMs": [
+        2316.876399997018,
+        2322.676400008939
+      ],
+      "requestToRenderSubmitMs": 2152.9000000059605,
+      "responseToCommitMs": 172.1000000089407,
+      "commitToRenderSubmitMs": 10.0,
+      "hardwarePresentedAtMs": null,
+      "semanticCompletion": "unknown"
+    },
+    {
+      "planId": "plan-4",
+      "operation": "defer",
+      "changes": [
+        {
+          "id": "frame-900",
+          "version": 1,
+          "sourceStartMs": 900000,
+          "sourceEndMs": 900000,
+          "recognitionOrFrameLoadMs": 5.72269999999844
+        }
+      ],
+      "contextIds": [
+        "chunk-0000",
+        "chunk-0001",
+        "chunk-0002"
+      ],
+      "providerTerminalMs": 1096.277900000001,
+      "outputTokens": 72,
+      "serviceTierActual": "default",
+      "sourceEndpointToResponseMs": [
+        1269.180499994036,
+        1274.9805000059569
+      ],
+      "requestToResponseMs": 1111.7000000029802,
+      "submissionSha256": "f41215049e06742ad48ff76c17085f9fa619df73e1e454a6f10b9b6a930483ff",
+      "promptSha256": "f70807b5f02c54649a9398d1973069858819acfc15126e33a2d0c0cd91cbcf2b",
+      "providerReceiptSha256": "91df7ea01e52e1697351f8ef6d608e3fe0e9a53a1f1cfd797a35655baa279899",
+      "schedulerStatus": "retired"
+    },
+    {
+      "planId": "plan-5",
+      "operation": "defer",
+      "changes": [
+        {
+          "id": "chunk-0003",
+          "version": 1,
+          "sourceStartMs": 897000,
+          "sourceEndMs": 901000,
+          "recognitionOrFrameLoadMs": 225.34589999999298
+        }
+      ],
+      "contextIds": [
+        "chunk-0000",
+        "chunk-0001",
+        "chunk-0002",
+        "frame-900"
+      ],
+      "providerTerminalMs": 1214.5113999999958,
+      "outputTokens": 71,
+      "serviceTierActual": "default",
+      "sourceEndpointToResponseMs": [
+        1638.2804999880755,
+        1644.0804999999964
+      ],
+      "requestToResponseMs": 1228.3999999910593,
+      "submissionSha256": "ec144ef7c00f57771e42deb6cb6b3475619ba3f74cbf33e1c3aa747d8067f313",
+      "promptSha256": "2b12050c7ecf90cee7d813b220846508965c392d5f83e77ac14df2476cf4d4a5",
+      "providerReceiptSha256": "01e4e97c8f3d672010706f297d2a012c2a2fd854ec59f0d3fa2030e8deed5df1",
+      "schedulerStatus": "retired"
+    },
+    {
+      "planId": "plan-6",
+      "operation": "defer",
+      "changes": [
+        {
+          "id": "chunk-0004",
+          "version": 1,
+          "sourceStartMs": 901000,
+          "sourceEndMs": 905000,
+          "recognitionOrFrameLoadMs": 223.41240000000107
+        }
+      ],
+      "contextIds": [
+        "chunk-0000",
+        "chunk-0001",
+        "chunk-0002",
+        "frame-900",
+        "chunk-0003"
+      ],
+      "providerTerminalMs": 1027.9038,
+      "outputTokens": 62,
+      "serviceTierActual": "default",
+      "sourceEndpointToResponseMs": [
+        1449.0804999999964,
+        1454.8805000119173
+      ],
+      "requestToResponseMs": 1041.6000000089407,
+      "submissionSha256": "193fb43aa7d3b1beaee7b8da0ac7e0c3567955db111f50cc79a1f0fde0710361",
+      "promptSha256": "a2a59332d16be704540b592aad56256b5653eecdfa96496377006d5818de531a",
+      "providerReceiptSha256": "503dec54541d394c9bdecd1c8d3b5baac3661b0ad92f4ac67bda0dd6dc017803",
+      "schedulerStatus": "retired"
+    }
+  ],
+  "captures": {
+    "count": 180,
+    "coverageWallMs": 7117,
+    "lastAbsent": {
+      "name": "capture-0161.jpg",
+      "startWallMs": 1792112128254,
+      "endWallMs": 1792112128297,
+      "beforeMarker": "Revision 0 \u00b7 renderer submitted \u00b7 browser 23252.4 ms \u00b7 conservative server 62360.6 ms",
+      "afterMarker": "Revision 0 \u00b7 renderer submitted \u00b7 browser 23293.0 ms \u00b7 conservative server 62401.2 ms"
+    },
+    "firstNonempty": {
+      "name": "capture-0162.jpg",
+      "startWallMs": 1792112128297,
+      "endWallMs": 1792112128358,
+      "beforeMarker": "Revision 1 \u00b7 renderer submitted \u00b7 browser 23319.6 ms \u00b7 conservative server 62427.8 ms",
+      "afterMarker": "Revision 1 \u00b7 renderer submitted \u00b7 browser 23352.3 ms \u00b7 conservative server 62460.5 ms"
+    },
+    "inspection": "Original screenshots 0161 and 0162 visually inspected. Canvas-only bright-pixel scan found first nonempty at 0162; indices 162 through 179 are nonempty.",
+    "firstNonemptyAfterMarkerUpperMinusEndpointMs": 2600.3687999999966,
+    "lastAbsentSha256": "3adf7121f5ba39173940dc2889a3e0cdf318bb53bff8712ed71877e2ea8a210c",
+    "firstNonemptySha256": "8ee4a75e53de551a31e94a23b67541880072d649dcd9a5fa5a54e93a3477bd39",
+    "finalSha256": "d064a5b54843eedde38ea4d96a8c717f1be9439bda40475599a7d237ed676994",
+    "metadataSha256": "9d0c6f5e4ec85770ed464ca9ef743e9572121ef3f576b8c49d830951c9ae2435"
+  },
+  "sourceSnapshots": [
+    {
+      "source": "backend/bench/realtime-lecture-join.ts",
+      "snapshot": "backend__bench__realtime-lecture-join.ts",
+      "sha256": "B0E54D55538198CFBBC0FEF1284A54EE95C29DB0BC77EC88564C93F269BC7781"
+    },
+    {
+      "source": "backend/bench/realtime-lecture-view/main.ts",
+      "snapshot": "backend__bench__realtime-lecture-view__main.ts",
+      "sha256": "BFF9391ACA251799BFAFFE5E987DB616014AA4AB819DB28F1CD5CF1FAC00CE4A"
+    },
+    {
+      "source": "backend/bench/realtime-lecture-view/index.html",
+      "snapshot": "backend__bench__realtime-lecture-view__index.html",
+      "sha256": "C015FD6F802644BBB90A30918DDFB7646064A754BCEA7BCBB687C19CCC341406"
+    },
+    {
+      "source": "backend/bench/realtime-tool-probe.ts",
+      "snapshot": "backend__bench__realtime-tool-probe.ts",
+      "sha256": "56BC0B21CE78A026996B3621AAD1FEDA8868590B4B8939F7D81A601192F7D706"
+    },
+    {
+      "source": "backend/bench/realtime-media-stream.ts",
+      "snapshot": "backend__bench__realtime-media-stream.ts",
+      "sha256": "51303C750C51D877B61CE658ABF24CAF0BB92B9AE522F2AC5A1DF4148FBD595D"
+    },
+    {
+      "source": "backend/bench/realtime-media/events.ts",
+      "snapshot": "backend__bench__realtime-media__events.ts",
+      "sha256": "292CA13C5D091CF51965A5444754D6DEEF6A619F55502F58A0C980DC82E51665"
+    },
+    {
+      "source": "backend/bench/realtime-media/replay.ts",
+      "snapshot": "backend__bench__realtime-media__replay.ts",
+      "sha256": "85F7D25E58A0AC8FAE3CCE0908F2351F5DC1F5DDE8B6169B7839AFB0FF8BDDB1"
+    },
+    {
+      "source": "backend/bench/realtime-world/world.ts",
+      "snapshot": "backend__bench__realtime-world__world.ts",
+      "sha256": "1B5ACADD0D63C46C7EB898E14EFD5ACF09ED8CAD708DA30807E7BC067EDD0909"
+    },
+    {
+      "source": "shared/animlib/dist/renderer.js",
+      "snapshot": "shared__animlib__dist__renderer.js",
+      "sha256": "6625B8DC134D9A4CAB69B6D666F609E92DE8CF3AD066788171FF167809CFAE4F"
+    }
+  ],
+  "review": {
+    "reviewer": "/root/joined_visual_critic",
+    "reasoning": "revise",
+    "readability": "revise",
+    "referenceStyle": "revise",
+    "technicalDelivery": "unverified",
+    "modality": "One final browser screenshot, exact source, available speech evidence, later board frame, three reference images. No sample playback."
+  },
+  "limitations": [
+    "Paced recorded public source, not microphone capture.",
+    "Five deferrals are uncovered, not visual successes.",
+    "Single static addition is unsupported at its initial evidence boundary and fails explanatory-quality review.",
+    "No real corrections, later edits, ongoing motion preservation, assets, or speech-to-action alignment exercised.",
+    "Browser screenshots cover approximately seven seconds, not the whole run; no hardware presentation timestamp.",
+    "No matched quality baseline for this joined run; earlier source-grounded comparisons have different evidence boundaries.",
+    "One run cannot establish arbitrary-subject reliability or p95."
+  ]
+}

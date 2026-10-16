@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live lecture · continuous world</title>
+<style>
+  :root{color-scheme:dark;font:16px/1.45 system-ui;background:#10121a;color:#eef0f7}
+  *{box-sizing:border-box}body{margin:0}header,footer{padding:18px 24px}header{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  h1{font-size:20px;font-weight:550;margin:0}button{font:inherit;padding:8px 18px;border:1px solid #56627a;border-radius:6px;background:#215d71;color:inherit;cursor:pointer}
+  button:disabled{opacity:.45;cursor:default}#stop{background:#262e3d}.controls{display:flex;gap:8px;margin-left:auto}
+  #status{margin:0 24px 12px;color:#c2ccdd;min-height:24px}canvas{display:block;width:100%;aspect-ratio:16/9;background:#080b14}
+  #marker{display:block;padding:10px 24px;font:13px ui-monospace,monospace;color:#c2ccdd;border-bottom:1px solid #30394a}
+  footer{font-size:13px;color:#9caac0}footer p{margin:0 0 12px}summary{cursor:pointer}#history{padding-left:22px;max-height:230px;overflow:auto}#history li{padding:3px 0;overflow-wrap:anywhere}
+</style>
+<header><h1>Live lecture · continuous world</h1><div class="controls"><button id="start" disabled>Start</button><button id="stop" disabled>Stop</button></div></header>
+<p id="status" role="status">Preparing renderer…</p>
+<main><canvas width="1280" height="720" aria-label="Continuous lecture explanation"></canvas></main>
+<output id="marker">Revision 0 · waiting for clock measurement</output>
+<footer><p id="clock">Clock measurement pending.</p><p>Measured output is renderer submission, not hardware presentation. Visual quality and scientific correctness require separate review.</p>
+<details open><summary>Run history</summary><ol id="history" aria-live="polite"></ol></details></footer>
+<script type="module" src="/main.ts"></script>
+</html>
