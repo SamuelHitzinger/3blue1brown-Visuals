@@ -29,7 +29,7 @@ beforeEach(() => {
   vi.stubGlobal('ResizeObserver', class { observe() {} disconnect() {} });
   vi.stubGlobal('requestAnimationFrame', () => 1);
   vi.stubGlobal('cancelAnimationFrame', () => {});
-  vi.spyOn(CanvasRenderer.prototype, 'render').mockImplementation(() => {});
+  vi.spyOn(CanvasRenderer.prototype, 'render').mockReturnValue(true);
 });
 afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 

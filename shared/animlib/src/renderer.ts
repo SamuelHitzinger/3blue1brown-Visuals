@@ -211,8 +211,7 @@ export class CanvasRenderer {
     try {
       // Restored contexts have already invalidated every old GL handle.
       const gl=this.gl.gl;this.gl=new WebGLBackend(gl,this.models?.images);this.contextLost=false;this.ready=true;this.resize();
-      if(this.lastFrame&&this.lastOptions)this.render(this.lastFrame,this.lastOptions);
-      this.backendRecovered(generation);
+      if(this.lastFrame&&this.lastOptions&&this.render(this.lastFrame,this.lastOptions))this.backendRecovered(generation);
     } catch(error){this.reportError(error instanceof Error?error:new Error(String(error)));}
   };
   private fallback(reason:unknown):void {
@@ -347,7 +346,7 @@ export class CanvasRenderer {
       if(this.disposed||this.device!==device||!this.ready)return;
       const generation=this.errorGeneration;
       this.errorKind='backend';
-      try {this.fallback(new Error(lost));if(this.lastFrame&&this.lastOptions)this.render(this.lastFrame,this.lastOptions);this.backendRecovered(generation);}
+      try {this.fallback(new Error(lost));if(this.lastFrame&&this.lastOptions&&this.render(this.lastFrame,this.lastOptions))this.backendRecovered(generation);}
       catch(error){this.reportError(error instanceof Error?error:new Error(String(error)));}
     });
     const module=device.createShaderModule({code:modelShader});
@@ -430,8 +429,9 @@ export class CanvasRenderer {
     // GPU errors require actual backend recovery. Clear before reentrant callbacks.
     if(this.errorKind==='budget'){this.errorKind=undefined;this.onRecovered?.();}
   }
-  render(frame:Frame,options:CompiledScene['options']):void {
-    if(!this.ready||this.contextLost||this.disposed)return;
+  /** True only after backend submission; does not confirm GPU completion or hardware presentation. */
+  render(frame:Frame,options:CompiledScene['options']):boolean {
+    if(!this.ready||this.contextLost||this.disposed)return false;
     this.lastFrame=frame;this.lastOptions=options;this.regions=frame.views??[];
     frame=this.models?.resolve(frame)??frame;
     const {width,height}=this.size;
@@ -441,7 +441,7 @@ export class CanvasRenderer {
     try {
       const focused=[camera,...this.regions.map(v=>v.camera)].map(c=>normalizeFocus(c.focus)).filter(f=>f&&f.aperture>0);
       focusPreflight(this.canvas.width,this.canvas.height,focused.map(f=>({samples:f!.samples,vertices:0})));
-    }catch(error){this.reportError(error instanceof Error?error:new Error(String(error)));return;}
+    }catch(error){this.reportError(error instanceof Error?error:new Error(String(error)));return false;}
     this.retained.beginFrame();
     const retention=retentionForFrame({...frame,lighting})?this.retained:undefined;
     const mainItems=addPlanarShadows(buildDrawItems(frame,camera,width,height,palette,undefined,false,retention,undefined,this.assetGeometry),lighting,camera,palette);
@@ -485,7 +485,11 @@ export class CanvasRenderer {
     for(const batch of ordered)for(const item of batch.items){data.set(item.vertices,offset);offset+=item.vertices.length;}
     this.retained.endFrame();
     const clear=parseColor(palette.resolve(options.background));
-    if(this.gl){this.gl.render(data,ordered,clear,this.canvas.width,this.canvas.height);this.frameRendered();return;}
+    if(this.gl){
+      this.gl.render(data,ordered,clear,this.canvas.width,this.canvas.height);
+      if(!this.ready||this.contextLost||this.disposed)return false;
+      this.frameRendered();return true;
+    }
     const device=this.device!;
     this.modelTextures??=new GPUModelTextures(device,this.models?.images??new Map());
     this.gpuRetained??=new GPURetained(device);
@@ -538,17 +542,19 @@ export class CanvasRenderer {
     device.queue.submit([encoder.finish()]);
     this.gpuRetained.endFrame();this.gpuImages?.endFrame();
     this.frameRendered();
+    return true;
     } catch(error) {
-      if(error instanceof VertexBufferLimitError||error instanceof FocusBudgetError){this.reportError(error);return;}
+      if(error instanceof VertexBufferLimitError||error instanceof FocusBudgetError){this.reportError(error);return false;}
       this.errorKind='backend';
       // Frame acquisition can fail before device.lost reaches the playback loop.
       if(this.device&&!this.disposed) {
         const generation=this.errorGeneration;
-        try {this.fallback(error);this.render(frame,options);this.backendRecovered(generation);return;}
+        try {this.fallback(error);const submitted=this.render(frame,options);if(submitted)this.backendRecovered(generation);return submitted;}
         catch(fallbackError){error=fallbackError;}
       }
       this.ready=false;
       this.reportError(error instanceof Error?error:new Error(String(error)));
+      return false;
     }
   }
   dispose():void {

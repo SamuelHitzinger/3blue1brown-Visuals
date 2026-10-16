@@ -639,7 +639,7 @@ it('cancels capture before replacing the active compilation, even when a later s
 it('keeps backend errors blocking even if another scene is submitted',async()=>{
   const player=createPlayer({canvas:new Canvas() as unknown as HTMLCanvasElement});
   const failure=new Error('Device failed and fallback unavailable');
-  vi.spyOn(CanvasRenderer.prototype,'render').mockImplementationOnce(function(this:CanvasRenderer){this.onError?.(failure);});
+  vi.spyOn(CanvasRenderer.prototype,'render').mockImplementationOnce(function(this:CanvasRenderer){this.onError?.(failure);return false;});
   const scenes=[{id:'small',source:"export default scene({},s=>{s.rectangle('r');s.wait(1)});"}];
   try{
     expect((await player.submit({type:'load',scenes})).ok).toBe(true);
