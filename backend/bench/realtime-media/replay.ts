@@ -12,15 +12,18 @@ export interface LocalAsrTrial {
 }
 export type AsrAvailability=
   |{kind:'observed';inferenceStartedAtMs:number;inferenceCompletedAtMs:number}
-  |{kind:'measured-duration-replay';inferenceStartedAtMs:number};
+  |{kind:'measured-duration-replay';inferenceStartedAtMs:number}
+  /** Both stamps are observed in this host's clock, not converted worker timestamps. */
+  |{kind:'observed-host-bracket';chunkSentAtMs:number;trialReceivedAtMs:number};
 export interface AsrInput {
   id:string;version:number;sourceId:string;trialRef:string;trial:LocalAsrTrial;
   availability:AsrAvailability;state?:'partial'|'stable';
 }
 export interface FrameInput {id:string;version:number;sourceId:string;sourceTimeMs:number;arrivedAtMs:number;frameRef:string}
-type AsrMetadata={trialRef:string;timing:ReturnType<typeof measuredTiming>;availability:{
-  kind:AsrAvailability['kind'];inferenceStartedAtMs:number;inferenceCompletedAtMs:number;inferenceMs:number;
-}};
+type AsrMetadata={trialRef:string;timing:ReturnType<typeof measuredTiming>;availability:
+  |{kind:'observed'|'measured-duration-replay';inferenceStartedAtMs:number;inferenceCompletedAtMs:number;inferenceMs:number}
+  |{kind:'observed-host-bracket';chunkSentAtMs:number;trialReceivedAtMs:number;inferenceMs:number}
+};
 export type PacketEvidence=AvailableEvidence&{asr?:AsrMetadata};
 export interface EvidencePacket {
   schemaVersion:1;planId:string;evidenceRevision:number;baseWorldRevision:number;plannedAtMs:number;
@@ -99,14 +102,19 @@ export class MediaReplay {
     const timing=measuredTiming({id:'window',durationSec:duration,sourceOffsetSec:trial.sourceWindowStartSec,segments:trial.segments});
     check(trial.segments.map(segment=>segment.text).join('').trim()===trial.text,'ASR trial text disagrees with measured segments');
     check(input.state===undefined||input.state==='partial'||input.state==='stable','Invalid ASR state');
-    check(availability.kind==='observed'||availability.kind==='measured-duration-replay','Invalid ASR availability kind');
-    stamp(availability.inferenceStartedAtMs);
+    check(availability.kind==='observed'||availability.kind==='measured-duration-replay'||availability.kind==='observed-host-bracket','Invalid ASR availability kind');
+    const started=availability.kind==='observed-host-bracket'?availability.chunkSentAtMs:availability.inferenceStartedAtMs;
+    stamp(started);
     const sourceReadyAtMs=this.sourceTime(input.sourceId,trial.sourceWindowEndSec*1000);
-    check(availability.inferenceStartedAtMs>=sourceReadyAtMs,'ASR inference cannot start before its complete source window is available');
-    const completed=availability.kind==='observed'?availability.inferenceCompletedAtMs:availability.inferenceStartedAtMs+trial.inferenceMs;
+    check(started>=sourceReadyAtMs,'ASR inference or dispatch cannot start before its complete source window is available');
+    const completed=availability.kind==='observed-host-bracket'?availability.trialReceivedAtMs:
+      availability.kind==='observed'?availability.inferenceCompletedAtMs:started+trial.inferenceMs;
     stamp(completed);
-    check(completed>=availability.inferenceStartedAtMs+trial.inferenceMs-1e-5,'ASR completion omits measured inference time');
-    const data:AsrMetadata={trialRef:input.trialRef,timing,availability:{kind:availability.kind,inferenceStartedAtMs:availability.inferenceStartedAtMs,inferenceCompletedAtMs:completed,inferenceMs:trial.inferenceMs}};
+    check(completed>=started+trial.inferenceMs-1e-5,'ASR completion omits measured inference time');
+    const measuredAvailability:AsrMetadata['availability']=availability.kind==='observed-host-bracket'
+      ?{kind:availability.kind,chunkSentAtMs:started,trialReceivedAtMs:completed,inferenceMs:trial.inferenceMs}
+      :{kind:availability.kind,inferenceStartedAtMs:started,inferenceCompletedAtMs:completed,inferenceMs:trial.inferenceMs};
+    const data:AsrMetadata={trialRef:input.trialRef,timing,availability:measuredAvailability};
     const identity=key(input.id,input.version),previous=this.metadata.get(identity),size=bytes(data);
     if(previous)check(JSON.stringify(previous.data)===JSON.stringify(data),'Conflicting ASR measurement for the same evidence version');
     else check(this.metadataBytes+size<=this.maxMetadataBytes,'ASR metadata budget reached; persist and start a bounded window');
@@ -130,7 +138,7 @@ export class MediaReplay {
     return {signal:plan.signal,packet:{schemaVersion:1,planId:plan.id,evidenceRevision:plan.evidenceRevision,baseWorldRevision:options.worldRevision,plannedAtMs:plan.plannedAtMs,
       changes:plan.changes.map(enrich),context:plan.context.map(enrich),usedPartialEvidence:plan.usedPartialEvidence,
       lastRequiredAvailableAtMs:plan.lastRequiredAvailableAtMs,deadlineMs:plan.deadlineMs,earliestChangeDeadlineMs:plan.earliestChangeDeadlineMs,obligations:structuredClone(plan.obligations),
-      limitation:'Measured-duration replay is not live capture proof. Frames are references, not inspected images. ASR words are uncorrected estimates. Render submission is not hardware presentation or semantic completion.'}};
+      limitation:'Measured-duration replay is not live capture proof. Observed host brackets include queueing and transport, not exact worker inference endpoints. Frames are references, not inspected images. ASR words are uncorrected estimates. Render submission is not hardware presentation or semantic completion.'}};
   }
   /** atMs is the measured render-submission time (or failure time), in the host clock.
    * Record immediately and monotonically; never replace it with world commit time.

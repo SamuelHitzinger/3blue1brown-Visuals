@@ -107,3 +107,24 @@ test('ASR metadata is independently bounded and same-version word timing changes
   const receipt=replay.commit(request.packet.planId,{status:'render-submitted',atMs:1400,committedAtMs:1300,baseWorldRevision:1,worldRevision:2,currentWorldRevision:3});
   expect(receipt.status).toBe('failed');expect(receipt.timing.withinDeadline).toBe(false);replay.dispose();
 });
+
+test('observed host bracket uses actual receipt availability without inventing a cross-process inference clock',()=>{
+  const replay=bridge();
+  replay.ingestAsrTrial({...asr(),availability:{kind:'observed-host-bracket',chunkSentAtMs:1010,trialReceivedAtMs:1350}});
+  expect(replay.take(1349,{worldRevision:0})).toBeNull();
+  const request=replay.take(1350,{worldRevision:0})!;
+  expect(request.packet.changes[0]).toMatchObject({sourceReadyAtMs:1000,availableAtMs:1350,captureDelayMs:350});
+  expect(request.packet.changes[0].asr?.availability).toEqual({kind:'observed-host-bracket',chunkSentAtMs:1010,trialReceivedAtMs:1350,inferenceMs:200});
+  expect(request.packet.changes[0].asr?.availability).not.toHaveProperty('inferenceStartedAtMs');
+  expect(request.packet.earliestChangeDeadlineMs).toBe(11350);
+  expect(request.packet.limitation).toContain('queueing and transport');
+  replay.dispose();
+});
+
+test('host brackets reject early source dispatch, reversed receipt, and omission of measured recognition duration',()=>{
+  const replay=bridge();
+  for(const [sent,received] of [[999,1500],[1200,1100],[1000,1199]]){
+    expect(()=>replay.ingestAsrTrial({...asr(),availability:{kind:'observed-host-bracket',chunkSentAtMs:sent,trialReceivedAtMs:received}})).toThrow();
+  }
+  expect(replay.summary().bufferedEvents).toBe(0);replay.dispose();
+});

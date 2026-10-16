@@ -49,7 +49,8 @@ type Program = { id: string; compiler: SourceCompiler; scene: CompiledScene; ids
 type Candidate = { id: string; compiler: SourceCompiler; controller: AbortController; scene?: CompiledScene };
 type Sample = { program: Program; scene: CompiledScene };
 const geometryKeys = new Set(['radius','vertices','normals','material','texture','scalarColors','points']);
-const limits = { sourceBytes: 128_000, patchBytes: 1_000_000, changes: 256, vertices: 100_000 };
+export const WORLD_LIMITS = Object.freeze({ sourceBytes: 128_000, patchBytes: 1_000_000, changes: 256, vertices: 100_000 });
+const limits = WORLD_LIMITS;
 function check(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 function id(value: unknown): asserts value is string { check(typeof value==='string'&&/^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$/.test(value),'Invalid stable ID'); }
 function time(value: unknown): asserts value is number { check(typeof value==='number'&&Number.isFinite(value)&&value>=0&&value<=1e12,'Invalid world time'); }

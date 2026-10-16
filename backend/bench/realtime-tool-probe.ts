@@ -10,24 +10,48 @@ import { agentConfig, AgentError } from '../src/agents/config.js';
 import { safeFailure } from './realtime-probe/metrics.js';
 import { buildPrompt, cases } from './realtime-probe/prompts.js';
 import type { ProbeCase } from './realtime-probe/prompts.js';
+import { WORLD_LIMITS } from './realtime-world/world.js';
+import type { WorldPatch } from './realtime-world/world.js';
+import { Color, validateColor } from '../../shared/animlib/src/palette.js';
 
-type Kind = 'scene' | 'brief';
+type Kind = 'scene' | 'brief' | 'world';
 type Strict = 'require' | 'prefer';
 type SceneSubmission = { source: string };
 type BriefSubmission = { claim: string; basis: string; operation: string; objects: { id: string; meaning: string }[]; uncertainty: string };
-type Submission = SceneSubmission | BriefSubmission;
+type WorldChange = { id: string; props: Pick<WorldPatch['changes'][number]['props'], 'position' | 'rotation' | 'scale' | 'opacity' | 'fill'>; duration: number };
+/** Normalized native properties: required wire nulls are omitted here, never interpreted as values. */
+export type WorldSubmission = { action: 'add'; source: string; changes: []; remove: [] }
+  | { action: 'edit'; source: ''; changes: WorldChange[]; remove: string[] };
+type Submission = SceneSubmission | BriefSubmission | WorldSubmission;
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const save = (path: string, value: unknown) => writeFile(path, JSON.stringify(value, null, 2), { flag: 'wx' });
 const nameFor = (kind: Kind) => `submit_${kind}`;
-const help = 'run --kind=scene|brief --model=ID --thinking=off|minimal|low|medium|high|xhigh|max --service-tier=priority|default --out=NEW_DIRECTORY [--case=cube|curve|diagram|external] [--action=create|edit] [--strict=require|prefer] [--prompt-file=PATH] [--system-file=PATH] [--image=PNG_OR_JPEG] [--timeout-ms=90000] [--max-tokens=2048]. Case defaults to cube, action to create, kind to scene, strict to require. External and brief require prompt-file. This makes exactly one real request and never executes the result.';
+const help = 'run --kind=scene|brief|world --model=ID --thinking=off|minimal|low|medium|high|xhigh|max --service-tier=priority|default --out=NEW_DIRECTORY [--case=cube|curve|diagram|external] [--action=create|edit] [--strict=require|prefer] [--prompt-file=PATH] [--system-file=PATH] [--image=PNG_OR_JPEG] [--timeout-ms=90000] [--max-tokens=2048]. Case defaults to cube, action to create, kind to scene, strict to require. External and brief require prompt-file. World requires case=external, prompt-file and system-file. This makes exactly one real request and never executes the result.';
+
+function worldSchema() {
+  const id = Type.String({ pattern: '^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$' });
+  // Pi rejects structured anyOf unions; nullable type arrays preserve its strict subset.
+  const vector = Type.Unsafe({ type: ['array','null'], items: {type:'number',minimum:-1e6,maximum:1e6}, minItems:3, maxItems:3 });
+  const scalar = (max: number) => Type.Unsafe({ type:['number','null'], minimum:0, maximum:max });
+  return Type.Object({
+    action: Type.String({enum:['add','edit']}), source: Type.String({maxLength:WORLD_LIMITS.sourceBytes}),
+    changes: Type.Array(Type.Object({ id, props: Type.Object({
+      position:vector, rotation:vector, scale:scalar(1e6), opacity:scalar(1),
+      fill:Type.Unsafe({type:['string','null'],enum:[...Object.values(Color),null]}),
+    },{additionalProperties:false}), duration:Type.Number({minimum:0,maximum:60}) },{additionalProperties:false}),{maxItems:WORLD_LIMITS.changes}),
+    remove:Type.Array(id,{maxItems:WORLD_LIMITS.changes}),
+  },{additionalProperties:false});
+}
 
 export function submissionTool(kind: Kind, strict: Strict = 'require'): Tool {
   return {
     name: nameFor(kind),
-    description: kind === 'scene' ? 'Submit the complete native scene source exactly once.' : 'Submit one source-grounded causal visual brief, identifying uncertainty explicitly.',
+    description: kind === 'scene' ? 'Submit the complete native scene source exactly once.' : kind === 'world'
+      ? 'Submit exactly one operation: add native source with empty changes/remove, or edit native properties with empty source. Null properties mean unchanged. Never combine add and edit.'
+      : 'Submit one source-grounded causal visual brief, identifying uncertainty explicitly.',
     parameters: kind === 'scene'
       ? Type.Object({ source: Type.String() }, { additionalProperties: false })
-      : Type.Object({ claim: Type.String(), basis: Type.String(), operation: Type.String(),
+      : kind === 'world' ? worldSchema() : Type.Object({ claim: Type.String(), basis: Type.String(), operation: Type.String(),
         objects: Type.Array(Type.Object({ id: Type.String(), meaning: Type.String() }, { additionalProperties: false })),
         uncertainty: Type.String() }, { additionalProperties: false }),
     constrainedSampling: { type: 'json_schema', strict },
@@ -45,8 +69,56 @@ function boundedString(value: unknown, bytes: number, allowEmpty = false): strin
   if (typeof value !== 'string' || (!allowEmpty && !value.trim()) || Buffer.byteLength(value) > bytes) throw new Error('Invalid submission string');
   return value;
 }
+function worldData(value: unknown, depth = 0): void {
+  if(depth>16)throw new Error('World input nesting limit exceeded');
+  if(value===null||typeof value==='string'||typeof value==='boolean')return;
+  if(typeof value==='number'&&Number.isFinite(value))return;
+  if(!value||typeof value!=='object'||!Array.isArray(value)&&![Object.prototype,null].includes(Object.getPrototypeOf(value)))throw new Error('World input must be finite plain JSON');
+  const descriptors=Object.getOwnPropertyDescriptors(value);
+  if(Reflect.ownKeys(value).length>20000||Object.getOwnPropertySymbols(value).length)throw new Error('Invalid world input members');
+  for(const [key,descriptor]of Object.entries(descriptors)){
+    if(['__proto__','constructor','prototype'].includes(key)||descriptor.get||descriptor.set)throw new Error('Unsafe world input member');
+    worldData(descriptor.value,depth+1);
+  }
+}
+function validateWorld(args: unknown): WorldSubmission {
+  worldData(args);
+  if(JSON.stringify(args).length>WORLD_LIMITS.patchBytes)throw new Error('World submission size limit exceeded');
+  const item=closed(args,['action','source','changes','remove']);
+  if(!Array.isArray(item.changes)||item.changes.length>WORLD_LIMITS.changes||!Array.isArray(item.remove)||item.remove.length>WORLD_LIMITS.changes)throw new Error('World change/removal limit exceeded');
+  if(item.action==='add'){
+    if(item.changes.length||item.remove.length)throw new Error('Cannot combine add and edit');
+    return {action:'add',source:boundedString(item.source,WORLD_LIMITS.sourceBytes),changes:[],remove:[]};
+  }
+  if(item.action!=='edit'||item.source!==''||!item.changes.length&&!item.remove.length)throw new Error('Invalid world edit branch');
+  const ids=new Set<string>();
+  const stableId=(value:unknown)=>{
+    if(typeof value!=='string'||!/^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$/.test(value)||ids.has(value))throw new Error('Invalid or duplicate world ID');
+    ids.add(value);return value;
+  };
+  const changes:WorldChange[]=item.changes.map(value=>{
+    const change=closed(value,['id','props','duration']), id=stableId(change.id);
+    if(typeof change.duration!=='number'||!Number.isFinite(change.duration)||change.duration<0||change.duration>60)throw new Error('Invalid world transition duration');
+    const wire=closed(change.props,['position','rotation','scale','opacity','fill']),props:WorldChange['props']={};
+    for(const key of ['position','rotation']as const)if(wire[key]!==null){
+      const vector=wire[key];
+      if(!Array.isArray(vector)||vector.length!==3||!Array.from(vector).every(v=>typeof v==='number'&&Number.isFinite(v)&&Math.abs(v)<=1e6))throw new Error('Invalid world vector');
+      props[key]=[vector[0],vector[1],vector[2]];
+    }
+    for(const key of ['scale','opacity']as const)if(wire[key]!==null){
+      const value=wire[key];
+      if(typeof value!=='number'||!Number.isFinite(value)||value<0||value>(key==='opacity'?1:1e6))throw new Error('Invalid world scalar');
+      props[key]=value;
+    }
+    if(wire.fill!==null){if(typeof wire.fill!=='string')throw new Error('World fill requires a palette token');validateColor(wire.fill);props.fill=wire.fill;}
+    if(!Object.keys(props).length)throw new Error('World change must contain a property');
+    return {id,props,duration:change.duration};
+  });
+  return {action:'edit',source:'',changes,remove:item.remove.map(stableId)};
+}
 export function validateSubmission(kind: Kind, args: unknown): Submission {
   if (kind === 'scene') return { source: boundedString(closed(args, ['source']).source, 256000) };
+  if (kind === 'world') return validateWorld(args);
   const item = closed(args, ['claim', 'basis', 'operation', 'objects', 'uncertainty']);
   if (!Array.isArray(item.objects) || item.objects.length > 64) throw new Error('Invalid brief objects');
   const ids = new Set<string>();
@@ -66,6 +138,10 @@ export function acceptSubmission(kind: Kind, completed: ToolCall[], terminal: To
   if (!providerComplete || completed.length !== 1 || terminal.length !== 1) throw new Error('Expected one successful completed tool call');
   const call = completed[0], final = terminal[0];
   if (call.name !== nameFor(kind) || final.name !== call.name || !call.id || call.id !== final.id) throw new Error('Tool call identity mismatch');
+  if(kind==='world'){
+    worldData(call.arguments);worldData(final.arguments);
+    if(JSON.stringify(call.arguments)!==JSON.stringify(final.arguments))throw new Error('World wire arguments mismatch');
+  }
   const result = validateSubmission(kind, call.arguments);
   if (JSON.stringify(result) !== JSON.stringify(validateSubmission(kind, final.arguments))) throw new Error('Tool call arguments mismatch');
   return result;
@@ -123,16 +199,34 @@ async function promptFile(path: string) {
   return text;
 }
 
-export async function main(args = process.argv.slice(2)) {
-  if (['help', '--help'].includes(args[0])) { console.log(help); return; }
+export interface ProbeRunOptions {
+  signal?: AbortSignal;
+  /** Reuse or inject the existing provider runtime without changing request settings. */
+  createRuntime?: typeof createModelRuntime;
+}
+type DeepReadonly<T> = T extends object ? { readonly [K in keyof T]: DeepReadonly<T[K]> } : T;
+function immutable<T>(value: T): DeepReadonly<T> {
+  if (value && typeof value === 'object') {
+    for (const child of Object.values(value)) immutable(child);
+    Object.freeze(value);
+  }
+  return value as DeepReadonly<T>;
+}
+
+/** Same single-request protocol and write-once evidence as the CLI, without process-global output/status.
+ * Acceptance is a provider receipt, not authorization to publish into a retained world. The caller must
+ * recheck its signal, base revision and deadline at publication, including cancellation during evidence writes.
+ */
+export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   if (args[0] !== 'run') throw new AgentError('CONFIG', help);
   const flags = argumentsFor(args.slice(1));
   const kind = (flags.kind ?? 'scene') as Kind, strict = (flags.strict ?? 'require') as Strict;
   const which = (flags.case ?? 'cube') as ProbeCase | 'external', action = (flags.action ?? 'create') as 'create' | 'edit';
   if (!flags.model || !flags.thinking || !flags.out || !['priority', 'default'].includes(flags['service-tier'])
-    || !['scene', 'brief'].includes(kind) || !['require', 'prefer'].includes(strict)
+    || !['scene', 'brief', 'world'].includes(kind) || !['require', 'prefer'].includes(strict)
     || (!Object.hasOwn(cases, which) && which !== 'external') || !['create', 'edit'].includes(action)
-    || (which === 'external' || kind === 'brief') && !flags['prompt-file']) throw new AgentError('CONFIG', help);
+    || (which === 'external' || kind === 'brief') && !flags['prompt-file']
+    || kind === 'world' && (which !== 'external' || !flags['prompt-file'] || !flags['system-file'])) throw new AgentError('CONFIG', help);
   const config = agentConfig({ ...process.env, AGENT_MODEL: flags.model, AGENT_THINKING: flags.thinking });
   const timeoutMs = Number(flags['timeout-ms'] ?? 90000), maxTokens = Number(flags['max-tokens'] ?? 2048);
   if (!Number.isInteger(timeoutMs) || timeoutMs < 100 || timeoutMs > 300000 || !Number.isInteger(maxTokens) || maxTokens < 64 || maxTokens > 16384) throw new AgentError('CONFIG', help);
@@ -140,7 +234,7 @@ export async function main(args = process.argv.slice(2)) {
     : { systemPrompt: 'Read the supplied evidence and produce a compact causal visual brief. Ground claims and objects in the evidence IDs provided in the prompt. State uncertainty; do not invent unreadable details.', prompt: '' };
   if (flags['prompt-file']) prompts.prompt = await promptFile(flags['prompt-file']);
   if (flags['system-file']) prompts.systemPrompt = await promptFile(flags['system-file']);
-  prompts.systemPrompt += `\n\nSubmission contract: call ${nameFor(kind)} exactly once with the complete ${kind === 'scene' ? 'native scene source in its source field' : 'causal brief in the specified fields'}. Do not put the submission in prose or a code fence. This is a single request; tools will not execute and no repair turn follows.`;
+  prompts.systemPrompt += `\n\nSubmission contract: call ${nameFor(kind)} exactly once with the complete ${kind === 'scene' ? 'native scene source in its source field' : kind === 'world' ? 'world operation in the specified fields: add uses native source and empty changes/remove; edit uses empty source and existing stable IDs, nullable unchanged properties, and explicit durations' : 'causal brief in the specified fields'}. Do not put the submission in prose or a code fence. This is a single request; tools will not execute and no repair turn follows.`;
   const images: ImageContent[] = [];
   let imageMetadata: { path: string; sha256: string; bytes: number; mimeType: string } | null = null;
   if (flags.image) {
@@ -156,12 +250,13 @@ export async function main(args = process.argv.slice(2)) {
   const sourceHashes = Object.fromEntries(await Promise.all([
     ['probe', import.meta.url], ['prompts', new URL('./realtime-probe/prompts.ts', import.meta.url).href],
     ['auth', new URL('../src/agents/auth.ts', import.meta.url).href], ['config', new URL('../src/agents/config.ts', import.meta.url).href],
+    ...(kind === 'world' ? [['world', new URL('./realtime-world/world.ts', import.meta.url).href]] : []),
   ].map(async ([name, path]) => [name, hash(await readFile(fileURLToPath(path)))])));
   const directory = resolve(flags.out);
   await mkdir(dirname(directory), { recursive: true });
   try { await mkdir(directory); } catch { throw new AgentError('CONFIG', 'Output directory must be new; retained runs cannot be overwritten.'); }
   const identity = { schemaVersion: 1, evidenceKind: 'single-structured-model-submission', kind, case: which, action,
-    format: kind === 'scene' ? 'native-js' : 'causal-brief', model: config.model, provider: config.provider, authMode: config.authMode,
+    format: kind === 'scene' ? 'native-js' : kind === 'world' ? 'world-operation' : 'causal-brief', model: config.model, provider: config.provider, authMode: config.authMode,
     thinkingRequested: config.thinking, serviceTierRequested: flags['service-tier'], strictRequested: strict,
     maxTokensRequested: maxTokens, timeoutMs, maxRetries: 0, transportRequested: 'sse', systemPromptOverridden: !!flags['system-file'],
     promptSha256: hash(JSON.stringify(prompts)), promptBytes: Buffer.byteLength(prompts.systemPrompt + prompts.prompt),
@@ -179,17 +274,22 @@ export async function main(args = process.argv.slice(2)) {
   let payloadMetadata: ReturnType<typeof preparePayload>['metadata'] | null = null, actualTier: string | null = null;
   let modelMetadata: { id: string; api: string; reasoning: boolean; thinkingLevelMap: unknown; maxTokens: number } | null = null;
   const trace = submissionTrace(), events: { type: string; elapsedMs: number; chars?: number }[] = [];
+  let requestSignal = options.signal;
   try {
-    const runtime = await createModelRuntime(config);
+    requestSignal?.throwIfAborted();
+    const runtime = await (options.createRuntime ?? createModelRuntime)(config, { signal: options.signal });
+    requestSignal?.throwIfAborted();
     const model = runtime.getModel(config.provider, config.model);
     if (!model) throw new AgentError('MODEL', 'Model is absent from local provider catalog.');
     modelMetadata = { id: model.id, api: model.api, reasoning: model.reasoning, thinkingLevelMap: model.thinkingLevelMap ?? null, maxTokens: model.maxTokens };
     if (!['openai-responses', 'openai-codex-responses'].includes(model.api)) throw new AgentError('CONFIG', 'Requires a Responses adapter with explicit serviceTier support.');
     if (model.thinkingLevelMap?.[config.thinking] === null) throw new AgentError('CONFIG', 'Requested reasoning level is unsupported.');
-    const options: StreamOptions & { serviceTier: 'priority' | 'default'; toolChoice: 'required'; reasoningEffort?: Exclude<typeof config.thinking, 'off'> } = {
+    const timeout = AbortSignal.timeout(timeoutMs);
+    requestSignal = options.signal ? AbortSignal.any([options.signal, timeout]) : timeout;
+    const requestOptions: StreamOptions & { serviceTier: 'priority' | 'default'; toolChoice: 'required'; reasoningEffort?: Exclude<typeof config.thinking, 'off'> } = {
       serviceTier: flags['service-tier'] as 'priority' | 'default', toolChoice: 'required',
       ...(config.thinking === 'off' ? {} : { reasoningEffort: config.thinking }),
-      maxTokens, timeoutMs, maxRetries: 0, signal: AbortSignal.timeout(timeoutMs), transport: 'sse',
+      maxTokens, timeoutMs, maxRetries: 0, signal: requestSignal, transport: 'sse',
       onPayload(payload) {
         const prepared = preparePayload(payload, kind, strict, flags['service-tier']);
         payloadMetadata = prepared.metadata;
@@ -207,9 +307,10 @@ export async function main(args = process.argv.slice(2)) {
     requestStart = performance.now();
     // Direct API options preserve serviceTier; streamSimple in Pi 1.1.0 omits it.
     const stream = model.api === 'openai-responses'
-      ? runtime.stream(model as Model<'openai-responses'>, context, options)
-      : runtime.stream(model as Model<'openai-codex-responses'>, context, options);
+      ? runtime.stream(model as Model<'openai-responses'>, context, requestOptions)
+      : runtime.stream(model as Model<'openai-codex-responses'>, context, requestOptions);
     for await (const event of stream) {
+      requestSignal.throwIfAborted();
       const elapsedMs = performance.now() - requestStart;
       events.push({ type: event.type, elapsedMs, ...('delta' in event && typeof event.delta === 'string' ? { chars: event.delta.length } : {}) });
       observeSubmission(trace, kind, event, elapsedMs);
@@ -220,6 +321,7 @@ export async function main(args = process.argv.slice(2)) {
         if (!providerComplete) failure = safeFailure(new Error('Provider did not complete successfully'));
       }
     }
+    requestSignal.throwIfAborted();
     if (!final) failure = safeFailure(new Error('Incomplete provider stream'));
   } catch (error) { providerComplete = false; failure = safeFailure(error); }
   const { commentary, completed, toolCallCompleteMs, validToolCallCompleteMs } = trace;
@@ -227,8 +329,9 @@ export async function main(args = process.argv.slice(2)) {
     accepted = acceptSubmission(kind, completed, final?.content.filter((part): part is ToolCall => part.type === 'toolCall') ?? [], providerComplete);
   } catch { submissionFailure = 'Expected exactly one schema-valid completed submission matching a successful terminal response.'; }
   const status = accepted ? 'complete' : 'failed';
-  const acceptedText = accepted === null ? null : 'source' in accepted ? accepted.source : JSON.stringify(accepted, null, 2);
+  const acceptedText = accepted === null ? null : kind === 'scene' && 'source' in accepted ? accepted.source : JSON.stringify(accepted, null, 2);
   const report = { ...identity, status, finishedAt: new Date().toISOString(), elapsedMs: performance.now() - started,
+    ...(kind === 'world' ? { worldOperation: accepted && 'action' in accepted ? accepted.action : null } : {}),
     requestStartedAt, requestElapsedMs: requestStart === null ? null : performance.now() - requestStart,
     toolCallCompleteMs, validToolCallCompleteMs, providerTerminalMs, providerComplete, submissionAccepted: accepted !== null,
     completedToolCalls: completed.length, payloadSent: payloadMetadata, serviceTierActual: actualTier,
@@ -247,13 +350,23 @@ export async function main(args = process.argv.slice(2)) {
   await save(join(directory, 'terminal-tool-calls.json'), final?.content.filter(part => part.type === 'toolCall') ?? []);
   if (accepted !== null) {
     await save(join(directory, 'submission.json'), accepted);
-    if ('source' in accepted) await writeFile(join(directory, 'source.js'), accepted.source, { flag: 'wx' });
+    if (kind === 'world') await save(join(directory, 'world.json'), accepted);
+    else if ('source' in accepted) await writeFile(join(directory, 'source.js'), accepted.source, { flag: 'wx' });
     else await save(join(directory, 'brief.json'), accepted);
   }
   await save(join(directory, 'events.json'), events);
   await save(join(directory, 'result.json'), report);
-  console.log(JSON.stringify({ status, result: join(directory, 'result.json'), toolCallCompleteMs, validToolCallCompleteMs,
-    providerTerminalMs, providerComplete, submissionAccepted: accepted !== null, serviceTierActual: actualTier, failure, submissionFailure }, null, 2));
+  return immutable(structuredClone({ report, submission: accepted, resultPath: join(directory, 'result.json'),
+    submissionPath: accepted === null ? null : join(directory, 'submission.json') }));
+}
+
+export async function main(args = process.argv.slice(2)) {
+  if (['help', '--help'].includes(args[0])) { console.log(help); return; }
+  const result = await runProbe(args);
+  const { status, toolCallCompleteMs, validToolCallCompleteMs, providerTerminalMs, providerComplete,
+    submissionAccepted, serviceTierActual, failure, submissionFailure } = result.report;
+  console.log(JSON.stringify({ status, result: result.resultPath, toolCallCompleteMs, validToolCallCompleteMs,
+    providerTerminalMs, providerComplete, submissionAccepted, serviceTierActual, failure, submissionFailure }, null, 2));
   if (status !== 'complete') process.exitCode = 1;
 }
 
