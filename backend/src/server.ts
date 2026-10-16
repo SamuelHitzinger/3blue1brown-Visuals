@@ -11,6 +11,7 @@ import { LectureService } from './lectures.js';
 import { catalogRoutes } from './visualization-catalog.js';
 import type { LectureCaptureService } from './lecture-capture.js';
 import type { LectureLiveBridge } from './lecture-live-bridge.js';
+import { LectureAnimationService } from './lecture-animation.js';
 
 const defaultFrontendDir = fileURLToPath(new URL("../../frontend/site/", import.meta.url));
 
@@ -23,13 +24,14 @@ function inside(root: string, path: string) {
   return suffix !== ".." && !suffix.startsWith(`..${sep}`) && !isAbsolute(suffix);
 }
 
-export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets(), lectureService?: LectureService, captureService?: LectureCaptureService, liveBridge?: LectureLiveBridge) {
+export function createHandler(frontendDir = defaultFrontendDir, videoService?: VideoService, narrationService?: NarrationService, models = new ModelAssets(), lectureService?: LectureService, captureService?: LectureCaptureService, liveBridge?: LectureLiveBridge, animationService?: LectureAnimationService) {
   const root = resolve(frontendDir);
   let videos = videoService;
   const narration = narrationRoutes(narrationService);
   const studyPlans = studyPlanRoutes();
   const catalog = catalogRoutes();
   let lectures = lectureService;
+  let animation = animationService;
 
   async function serveFile(path: string) {
     const candidate = resolve(root, path);
@@ -59,6 +61,10 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     if (path === '/api/visualization-catalog' || path.startsWith('/api/visualization-catalog/')) return catalog(request);
     if (path === '/api/lectures' || path.startsWith('/api/lectures/')) {
       lectures ??= new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'));
+      if (/^\/api\/lectures\/[^/]+\/animation$/.test(path)) {
+        animation ??= new LectureAnimationService(lectures);
+        return animation.handle(request);
+      }
       return lectures.handle(request);
     }
     if (path === '/api/models' || path.startsWith('/api/models/')) return models.handle(request);

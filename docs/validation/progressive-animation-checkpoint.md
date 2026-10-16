@@ -11,7 +11,7 @@
 - Strict opt-in tool branches, bounded current-motion context, operation history, browser dispatch, and existing speech/deadline guards carry both new operations. The live caller enables them; legacy probe schemas remain unchanged when disabled.
 - Prompt guidance distinguishes factual correction from a new physical event, documents round spatial bonds, and asks for placement against existing scene content.
 
-The implementation lives in the retained-world/live-lecture path under `backend/bench`. It is not a separate production deployment or a change to the image-only baseline author.
+The initial implementation lived in the retained-world/live-lecture path under `backend/bench`. The runtime has since moved to `animlib/live` and is connected to the main lecture screen; see the [main-app integration checkpoint](live-lecture-animation-checkpoint.md). The image-only baseline author is unchanged.
 
 ## Model evidence
 

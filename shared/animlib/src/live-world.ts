@@ -1,4 +1,4 @@
-/** Experimental persistent world. No production player or scene protocol changes.
+/** Persistent world shared by the live lecture screen and verification tools.
  * New sandbox programs own new IDs. Host property overrides layer over freshly
  * sampled old programs, retaining their untouched tracks and time callbacks.
  * Reactive sliders are host-controlled numeric parameters, without control UI.

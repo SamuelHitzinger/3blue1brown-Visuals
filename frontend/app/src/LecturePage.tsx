@@ -10,6 +10,7 @@ import LecturePhoto from './LecturePhoto'
 import NotebookLines from './NotebookLines'
 import LectureDiagram, { ConceptText } from './LectureDiagram'
 import CapturePairingPanel from './CapturePairingPanel'
+import LiveLectureCanvas from './LiveLectureCanvas'
 import { finishLecture, hasLectureVisual, mergeLectureSnapshot, patchLecture, synthesizeLecture, visualizeConcept, watchLectureSnapshots } from './lectures'
 
 function readDraft(key: string): string | null { try { return localStorage.getItem(key) } catch { return null } }
@@ -60,6 +61,7 @@ export default function LecturePage({ id, onBack, suspended, courses = [] }: { i
     </header>
     {(error || loadError) && <p className="learning-error" role="alert">{error || loadError} {loadError && <button onClick={() => setReload(value => value + 1)}>Reconnect</button>}</p>}
     <CapturePairingPanel key={id} lectureId={id} autoPair={!session.finishedAt}/>
+    <LiveLectureCanvas key={`live-${id}`} lectureId={id} suspended={suspended} sourceRevision={session.sourceRevision} finished={!!session.finishedAt}/>
     <div className="notebook-layout">
     <article className="lecture-main-column notebook-paper">
       <section className="learning-panel lecture-notes-panel" aria-labelledby="generated-notes-heading">
