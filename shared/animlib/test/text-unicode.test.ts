@@ -3,6 +3,21 @@ import { textTex } from '../src/render-geometry.js';
 import { layoutLatex } from '../src/latex.js';
 
 describe('Unicode scripts in plain text labels', () => {
+  it('renders the actual live lecture label without losing its German umlaut', () => {
+    const layout = layoutLatex(textTex('A · starke Bindungskräfte'));
+    expect(layout).toEqual(layoutLatex(String.raw`\text{A · starke Bindungskr\(\ddot{\mathrm{a}}\)fte}`));
+    expect(layout.paths.flatMap(path => path.contours.flat()).every(point => point.every(Number.isFinite))).toBe(true);
+    expect(layout).not.toEqual(layoutLatex(textTex('A · starke Bindungskrafte')));
+  });
+
+  it.each(['ä', 'ö', 'ü', 'Ä', 'Ö', 'Ü'])('preserves upright base and diaeresis for %s, including decomposed input', character => {
+    const base = character.normalize('NFD')[0];
+    const actual = layoutLatex(textTex(character));
+    expect(actual).toEqual(layoutLatex(`\\text{\\(\\ddot{\\mathrm{${base}}}\\)}`));
+    expect(actual).toEqual(layoutLatex(textTex(character.normalize('NFD'))));
+    expect(actual.paths.length).toBeGreaterThan(layoutLatex(textTex(base)).paths.length);
+  });
+
   it.each([
     ['ω² = k/m > 0', String.raw`\text{\(\omega\)}^{\text{2}}\text{ = k/m > 0}`],
     ['× ω²', String.raw`\text{× \(\omega\)}^{\text{2}}`],

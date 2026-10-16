@@ -52,6 +52,60 @@ test('selects bounded whole source batches and only earlier context',async()=>{
  expect(input!.changes.map(source=>source.sequence)).toEqual([2,3,4,5]);expect(input!.context.map(source=>source.sequence)).toEqual([1]);
  expect(response.sourceCursor).toBe(5);expect(response.submission.action).toBe('defer');
 });
+
+test('preserves arrived visual evidence and capture provenance without claiming speech times',async()=>{
+ let input:LectureAnimationInput|undefined;const {id,lectures,animation}=await setup(async value=>{input=value;return submission;});
+ const capture={kind:'photo' as const,itemId:crypto.randomUUID(),sequence:7,capturedAt:'2026-10-16T12:00:00.000Z',visualEvidence:'Three blue nodes form a triangle; red arrow connects left to top.'};
+ lectures.appendSource('user:alice',id,'photo','A graph diagram.',capture);
+ expect((await animation.handle(request(id))).status).toBe(200);
+ expect(input!.changes[0]).toMatchObject({text:'A graph diagram.',capture});
+});
+
+test('uses latest already-arrived frame beyond audio batch without skipping queued audio',async()=>{
+ let frame:unknown,selected:LectureAnimationInput|undefined;const {id,lectures,append}=await setup();
+ const resolved:string[]=[];
+ const animation=new LectureAnimationService(lectures,{generate:async(input,_signal,image)=>{selected=input;frame=image;expect(JSON.stringify(input)).not.toContain('bytes');return submission;},
+  resolveFrame:(owner,lectureId,sourceId)=>{expect(owner).toBe('user:alice');expect(lectureId).toBe(id);resolved.push(sourceId);return {bytes:new Uint8Array([255,216,255,1]),mimeType:'image/jpeg'};}});animations.push(animation);
+ for(let i=0;i<6;i++)append(`Audio ${i}`);
+ const photo=lectures.appendSource('user:alice',id,'photo','A diagram',{kind:'photo',itemId:crypto.randomUUID(),sequence:1,capturedAt:'2026-10-16T12:00:00.000Z'}).sources.at(-1)!;
+ const first=await animation.handle(request(id));expect(first.status).toBe(200);expect(resolved).toEqual([photo.id]);
+ expect((await first.json()).sourceCursor).toBe(4);
+ expect(selected!.changes.map(source=>source.sequence)).toEqual([1,2,3,4]);
+ expect(selected!.context.map(source=>source.id)).toEqual([photo.id]);
+ expect((await animation.handle(request(id,{...body,sourceCursor:4}))).status).toBe(200);expect(resolved).toEqual([photo.id,photo.id]);
+ expect(selected!.changes.map(source=>source.sequence)).toEqual([5,6,7]);
+ expect(selected!.context.some(source=>source.id===photo.id)).toBe(false);
+ expect(frame).toMatchObject({sourceId:photo.id,capturedAt:photo.capture!.capturedAt,mimeType:'image/jpeg'});
+});
+
+test('retains latest prior visual source beyond four recent audio sources, without duplicate context',async()=>{
+ let input:LectureAnimationInput|undefined;const {id,lectures,animation,append}=await setup(async value=>{input=value;return submission;});
+ const photo=(sequence:number)=>({kind:'photo' as const,itemId:crypto.randomUUID(),sequence,capturedAt:'2026-10-16T12:00:00.000Z',visualEvidence:`Diagram ${sequence}`});
+ lectures.appendSource('user:alice',id,'old-photo','Old diagram',photo(1));
+ lectures.appendSource('user:alice',id,'current-photo','Current diagram',photo(2));
+ for(let i=0;i<6;i++)append(`Audio ${i}`);
+ append('New arriving detail');
+ expect((await animation.handle(request(id,{...body,sourceCursor:8}))).status).toBe(200);
+ expect(input!.context.map(source=>source.sequence)).toEqual([2,5,6,7,8]);
+ expect((await animation.handle(request(id,{...body,sourceCursor:2}))).status).toBe(200);
+ expect(input!.context.map(source=>source.sequence)).toEqual([1,2]);
+});
+
+test('rejects changed visual evidence before publication even when source text stays identical',async()=>{
+ const entered=deferred(),gate=deferred<unknown>();const {id,lectures,animation}=await setup(async()=>{entered.resolve();return gate.promise;});
+ lectures.appendSource('user:alice',id,'photo','Same caption',{kind:'photo',itemId:crypto.randomUUID(),sequence:1,capturedAt:'2026-10-16T12:00:00.000Z',visualEvidence:'Blue triangle'});
+ const pending=animation.handle(request(id));await entered.promise;
+ const original=lectures.getOwned.bind(lectures);
+ lectures.getOwned=(owner,lectureId)=>{const session=original(owner,lectureId);if(session?.sources[0].capture)session.sources[0].capture.visualEvidence='Red square';return session;};
+ gate.resolve(submission);expect((await pending).status).toBe(409);
+});
+
+test('fails explicitly rather than clipping oversized retained photo context',async()=>{
+ let calls=0;const {id,lectures,animation,append}=await setup(async()=>{calls++;return submission;});
+ lectures.appendSource('user:alice',id,'photo','Diagram '.repeat(1200),{kind:'photo',itemId:crypto.randomUUID(),sequence:1,capturedAt:'2026-10-16T12:00:00.000Z'});
+ append('New detail');
+ expect((await animation.handle(request(id,{...body,sourceCursor:1}))).status).toBe(413);expect(calls).toBe(0);
+});
 test('keeps one underlying generation active per lecture through request cancellation',async()=>{
  const entered=deferred(),gate=deferred<unknown>();let signal:AbortSignal|undefined;
  const {id,animation,append}=await setup(async(_,s)=>{signal=s;entered.resolve();return gate.promise;});append('Evidence.');

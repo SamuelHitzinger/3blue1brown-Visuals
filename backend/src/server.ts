@@ -62,7 +62,7 @@ export function createHandler(frontendDir = defaultFrontendDir, videoService?: V
     if (path === '/api/lectures' || path.startsWith('/api/lectures/')) {
       lectures ??= new LectureService(process.env.LECTURE_DB_PATH ?? join(dirname(process.env.VIDEO_DB_PATH ?? 'data/videos.sqlite'), 'lectures.sqlite'));
       if (/^\/api\/lectures\/[^/]+\/animation$/.test(path)) {
-        animation ??= new LectureAnimationService(lectures);
+        animation ??= new LectureAnimationService(lectures,{resolveFrame:(owner,lectureId,sourceId)=>captureService?.readAnimationFrame(owner,lectureId,sourceId)});
         return animation.handle(request);
       }
       return lectures.handle(request);

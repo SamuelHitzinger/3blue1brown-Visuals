@@ -66,6 +66,37 @@ test('retained photo snippets are cropped, owner-scoped, and removed with the le
   expect((await s.capture.handleOwner(ownerRequest(path))).status).toBe(404);
 });
 
+test('animation frame cache resolves only arrived owner sources and evicts old frames', async () => {
+ const s=await setup();
+ const ids:string[]=[];
+ for(let i=0;i<9;i++){
+  await s.capture.handleDevice(deviceRequest('/items',s.token,'POST',form(metadata(`frame-${i}`))));
+  await until(s.status,value=>value.processed===i+1);
+  ids.push(s.lectures.getOwned('user:alice',s.lecture.id)!.sources.at(-1)!.id);
+ }
+ expect(s.capture.readAnimationFrame('user:alice',s.lecture.id,ids[0])).toBeUndefined();
+ const frame=s.capture.readAnimationFrame('user:alice',s.lecture.id,ids[8]);
+ expect(frame?.bytes).toEqual(jpeg);expect(frame?.mimeType).toBe('image/jpeg');
+ frame!.bytes[0]=0;
+ expect(s.capture.readAnimationFrame('user:alice',s.lecture.id,ids[8])!.bytes[0]).toBe(255);
+ expect(s.capture.readAnimationFrame('user:bob',s.lecture.id,ids[8])).toBeUndefined();
+ expect(s.capture.readAnimationFrame('user:alice',s.lecture.id,crypto.randomUUID())).toBeUndefined();
+ await s.lectures.handle(ownerRequest(`/api/lectures/${s.lecture.id}`,'DELETE'));
+ expect(s.capture.readAnimationFrame('user:alice',s.lecture.id,ids[8])).toBeUndefined();
+ await s.capture.close();expect(s.capture.readAnimationFrame('user:alice',s.lecture.id,ids[8])).toBeUndefined();
+});
+
+test('uploaded frame cannot resolve before its extracted source has arrived',async()=>{
+ let release!:(text:string)=>void;const gate=new Promise<string>(resolve=>{release=resolve;});
+ const s=await setup({extract:async()=>gate});
+ const upload=await(await s.capture.handleDevice(deviceRequest('/items',s.token,'POST',form()))).json();
+ expect(s.lectures.getOwned('user:alice',s.lecture.id)!.sources).toEqual([]);
+ expect(s.capture.readAnimationFrame('user:alice',s.lecture.id,upload.id)).toBeUndefined();
+ release('Arrived diagram');await until(s.status,value=>value.processed===1);
+ const source=s.lectures.getOwned('user:alice',s.lecture.id)!.sources[0];
+ expect(s.capture.readAnimationFrame('user:alice',s.lecture.id,source.id)?.bytes).toEqual(jpeg);
+});
+
 test('slow photos leave extraction capacity for newly arriving audio', async () => {
   const started: string[] = [];
   let release!: () => void;

@@ -25,9 +25,13 @@ import type { AssetGeometryResolver } from './asset-types.js';
 
 function literalTextTex(text:string):string {
   const escaped=text.replace(/[\\{}$&#%_^~]/g,c=>({'\\':String.raw`\backslash `,'{':String.raw`\{`,'}':String.raw`\}`,'$':String.raw`\$`,'&':String.raw`\&`,'#':String.raw`\#`,'%':String.raw`\%`,'_':String.raw`\_`,'^':String.raw`\textasciicircum `,'~':String.raw`\textasciitilde `}[c]!));
-  // Lowercase Greek is bundled in MathJax's math font, not its text font.
-  // Switch only these glyphs to math; retain literal letters and surrounding spaces.
-  return String.raw`\text{`+escaped.replace(/[α-ω]/g,c=>String.raw`\(`+c+String.raw`\)`)+ '}';
+  // MathJax lacks precomposed umlauts in its vector font. Compose their actual
+  // diaeresis over upright Latin glyphs; do not discard accents or use italics.
+  // Lowercase Greek likewise needs the math font. Keep surrounding text spacing.
+  return String.raw`\text{`+escaped.normalize('NFC').replace(/[α-ωäöüÄÖÜ]/g,c=>{
+    const glyph='äöüÄÖÜ'.includes(c)?`\\ddot{\\mathrm{${c.normalize('NFD')[0]}}}`:c;
+    return String.raw`\(`+glyph+String.raw`\)`;
+  })+ '}';
 }
 /** Unicode scripts need TeX layout: the bundled font has baseline digits, not
  * standalone superscript/subscript glyphs. Keep literal text escaping intact. */

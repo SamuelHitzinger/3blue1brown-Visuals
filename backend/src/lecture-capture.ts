@@ -109,6 +109,8 @@ export class LectureCaptureService {
   private closePromise?: Promise<void>;
   private unsubscribe: () => void;
   private active = new Map<string, { lecture: string; kind: 'audio' | 'photo'; controller: AbortController; done: Promise<void> }>();
+  /** Short-lived original frames for live animation, never persisted after extraction. */
+  private animationFrames = new Map<string,{owner:string;lecture:string;bytes:Uint8Array}>();
   private now: () => number;
   constructor(path: string, private lectures: LectureService, private options: LectureCaptureOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -151,6 +153,14 @@ export class LectureCaptureService {
   }
   private pair(id: string) { return this.db.query('SELECT * FROM capture_pairings WHERE id = ?').get(id) as PairRow | null; }
   private item(id: string) { return this.db.query('SELECT * FROM capture_items WHERE id = ?').get(id) as ItemRow | null; }
+  readAnimationFrame(owner:string,lectureId:string,sourceId:string):{bytes:Uint8Array;mimeType:'image/jpeg'}|undefined{
+    if(this.stopped)return;
+    const source=this.lectures.getOwned(owner,lectureId)?.sources.find(source=>source.id===sourceId);
+    if(source?.capture?.kind!=='photo')return;
+    const frame=this.animationFrames.get(source.capture.itemId);
+    if(frame?.owner!==owner||frame.lecture!==lectureId)return;
+    return {bytes:new Uint8Array(frame.bytes),mimeType:'image/jpeg'};
+  }
   private state(pairing: PairRow): CaptureStatus['state'] {
     if (pairing.revoked) return 'revoked';
     if ((pairing.device_hash ? pairing.device_expires! : pairing.pair_expires) <= this.now()) return 'expired';
@@ -206,6 +216,7 @@ export class LectureCaptureService {
     }
   }
   private removeLecture(id: string) {
+    for(const [item,frame] of this.animationFrames)if(frame.lecture===id)this.animationFrames.delete(item);
     for (const work of this.active.values()) if (work.lecture === id) work.controller.abort();
     this.db.transaction(() => {
       this.db.query('DELETE FROM capture_items WHERE lecture = ?').run(id);
@@ -277,7 +288,7 @@ export class LectureCaptureService {
   }
   close(): Promise<void> {
     if (this.closePromise) return this.closePromise;
-    this.stopped = true; this.unsubscribe();
+    this.stopped = true; this.unsubscribe();this.animationFrames.clear();
     for (const work of this.active.values()) work.controller.abort();
     this.closePromise = Promise.all([...this.active.values()].map(work => work.done)).then(() => { this.db.close(); });
     return this.closePromise;
@@ -416,6 +427,8 @@ export class LectureCaptureService {
         this.db.query('UPDATE capture_pairings SET last_seen = ? WHERE id = ?').run(this.now(), pair.id);
       })();
       if (metadata.kind === 'photo') {
+        this.animationFrames.set(id,{owner:pair.owner,lecture:pair.lecture,bytes:new Uint8Array(media)});
+        while(this.animationFrames.size>8)this.animationFrames.delete(this.animationFrames.keys().next().value!);
         try { this.options.onPhotoAccepted?.(pair.owner, pair.lecture, id, metadata, mime, media); }
         catch { console.warn('A captured photo could not be shared with the lecture bridge. Normal extraction will continue.'); }
       }
