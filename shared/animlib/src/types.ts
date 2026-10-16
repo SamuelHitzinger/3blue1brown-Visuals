@@ -450,6 +450,13 @@ export interface OverlapDiagnostic {
   /** A point inside an actual glyph intersection, suitable for a debug marker. */
   witness: Vec2;
 }
+/** Advisory projected paint intersection; does not establish depth-buffer visibility. */
+export interface LabelStrokeDiagnostic extends Omit<OverlapDiagnostic, 'severity' | 'kind' | 'elements'> {
+  /** Distinct label and line/arrow/path IDs, sorted lexically. */
+  elements: [string, string];
+  severity: 'warning';
+  kind: 'text-stroke-overlap';
+}
 export interface OverlapOptions {
   assetGeometry?: AssetGeometryResolver;
   /** Logical canvas size in CSS pixels. Required: projection depends on aspect ratio. */

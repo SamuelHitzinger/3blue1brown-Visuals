@@ -87,6 +87,47 @@ test('initial approval preserves exact source and never calls repair',async()=>{
   expect(result).toBe(source);expect(calls).toBe(1);
 });
 
+test.each([false, true])('review requests one-pass stroke evidence; supplied=%s stays advisory', async supplied => {
+  const input = await fixture(); let reviews = 0;
+  await reviewGeneratedScene({...input,
+    renderFrames: async args => {
+      expect(args.includeStrokeWarnings).toBe(true);
+      return {...await evidence(input.directory), ...(supplied ? {strokeWarnings: {records: [{time: 4, width: 1280, height: 720,
+        warning: {kind: 'text-stroke-overlap' as const, severity: 'warning' as const, elements: ['label', 'leader'] as [string,string],
+          bounds: {left: 1, top: 2, right: 3, bottom: 4}, elementBounds: [{left:0,top:0,right:4,bottom:4},{left:1,top:2,right:3,bottom:4}] as [{left:number,top:number,right:number,bottom:number},{left:number,top:number,right:number,bottom:number}], witness: [2,3] as [number,number]}}], truncated: false, elapsedMs: 1}} : {})};
+    },
+    runner: {async run(task) {
+      reviews++; expect(task.logContext?.stage).toBe('review');
+      if (supplied) {
+        expect(task.prompt).toContain('Advisory projected text/stroke crossings');
+        expect(task.prompt).toContain('may be intentional');
+        expect(task.prompt).toContain('not depth or semantic proof');
+        expect(task.prompt).toContain('leader');
+      } else expect(task.prompt).not.toContain('Advisory projected text/stroke crossings');
+      return '{"approved":true,"findings":[]}';
+    }}
+  });
+  expect(reviews).toBe(1);
+});
+
+test('review digest stays compact while receipt retains bounded full diagnostics', async () => {
+  const input = await fixture(), bounds = {left:1,top:2,right:3,bottom:4};
+  await reviewGeneratedScene({...input,renderFrames:async()=>({...await evidence(input.directory),strokeWarnings:{records:Array.from({length:40},(_,i)=>({
+    time:4,width:1280,height:720,warning:{kind:'text-stroke-overlap' as const,severity:'warning' as const,
+      elements:['label-'+i+'x'.repeat(240),'line-'+i+'y'.repeat(240)] as [string,string],bounds,
+      elementBounds:[bounds,bounds] as [typeof bounds,typeof bounds],witness:[2,3] as [number,number],unexpected:'EXTRA'.repeat(10000)},
+  })),truncated:false,elapsedMs:2}}),runner:{async run(task){
+    const digest=task.prompt.split('Advisory projected text/stroke crossings')[1].split('\nEarlier verification')[0];
+    expect(digest.length).toBeLessThan(4000);
+    expect(digest).not.toContain('elementBounds');expect(digest).not.toContain('EXTRA');
+    expect(digest).toContain('omittedRecords');expect(digest).toContain('"truncated":true');
+    return '{"approved":true,"findings":[]}';
+  }}});
+  const receipt=JSON.parse(await readFile(join(input.directory,'scene-0.visual-review.json'),'utf8'));
+  expect(receipt.evidence.strokeWarnings.records).toHaveLength(32);
+  expect(receipt.evidence.strokeWarnings.records[0].warning.elementBounds).toEqual([bounds,bounds]);
+});
+
 test('caller-owned review policy excludes video guidance and style reference through repairs', async () => {
   const input = await fixture(), tasks: AgentTask[] = [];
   const path = join(input.directory, 'notebook-frame.png');
@@ -194,7 +235,7 @@ test('sampling includes camera transition interior, end points and a nonzero ope
 test('visual cap survives restart without starting round 51',async()=>{
   const input=await fixture();
   const policy = { id: 'legacy-budget-test', guidance: 'Verify.', repairGuidance: 'Repair.' };
-  await writeFile(join(input.directory,'scene-0.visual-state.json'),JSON.stringify({contextHash:sourceHash(JSON.stringify({input:input.input,policy,authorContract:input.task.systemPrompt})),source,attempt:50,phase:'review',history:[]}));
+  await writeFile(join(input.directory,'scene-0.visual-state.json'),JSON.stringify({contextHash:sourceHash(JSON.stringify({input:input.input,policy,authorContract:input.task.systemPrompt,evidenceVersion:2})),source,attempt:50,phase:'review',history:[]}));
   let calls=0;
   await expect(reviewGeneratedScene({...input,policy,runner:{async run(){calls++;return '';}}})).rejects.toMatchObject({code:'RECOVERY_EXHAUSTED'});
   expect(calls).toBe(0);

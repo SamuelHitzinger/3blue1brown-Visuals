@@ -4,7 +4,7 @@ export { SceneSequence } from "./sequence.js";
 export { evaluateScene } from "./timeline.js";
 export { withOfflineScene } from './offline-sampling.js';
 export type { OfflineSceneSampler } from './offline-sampling.js';
-export { detectOverlaps, detectSceneOverlaps } from "./overlap.js";
+export { detectOverlaps, detectSceneOverlaps, detectLabelStrokeOverlaps } from "./overlap.js";
 export { validateRenderableScene } from './render-validation.js';
 export { getLocalBounds, getWorldBounds, getCameraBounds, getScreenBounds } from "./bounds.js";
 export { Color, THREE_BLUE_ONE_BROWN_PALETTE } from "./palette.js";

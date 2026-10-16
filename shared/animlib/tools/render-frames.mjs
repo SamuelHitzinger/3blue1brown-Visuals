@@ -4,7 +4,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { deflateSync } from 'node:zlib';
 import { CanvasRenderer } from '../dist/renderer.js';
-import { withOfflineScene, SceneCompileError } from '../dist/core.js';
+import { withOfflineScene, SceneCompileError, detectLabelStrokeOverlaps } from '../dist/core.js';
 import { loadAssetRegistry } from './load-assets.mjs';
 import { createOfflineModelStore } from './load-models.mjs';
 import { dirname, resolve } from 'node:path';
@@ -44,6 +44,8 @@ async function main() {
     globalThis.devicePixelRatio=1;
     const gpu=create([]);
     const manifest={backend:'native-webgpu',frames:[],sheets:[]};
+    const warningKeys=new Set();
+    if(input.includeStrokeWarnings===true)manifest.strokeWarnings={records:[],truncated:false,elapsedMs:0};
     await mkdir(input.directory,{recursive:true});
     for(const [width,height] of [[1280,720],[960,720]]) {
       const adapter=await gpu.requestAdapter();
@@ -62,11 +64,25 @@ async function main() {
           const times=input.times.slice(start,start+6),sheetH=cellH*Math.ceil(times.length/2),sheet=new Uint8Array(sheetW*sheetH*4);
           for(let i=3;i<sheet.length;i+=4)sheet[i]=255;
           for(const [index,time] of times.entries()) {
-            renderer.render(sampler.sample(time),compiled.options);
+            // Match renderer occlusion to real imported triangles, not metadata bounds.
+            // CanvasRenderer's repeated resolve leaves already resolved elements intact.
+            const frame=models.resolve(sampler.sample(time));
+            renderer.render(frame,compiled.options);
             const pixels=await readPixels(device,texture,format);
             if(errors.length)throw new Error(errors.join('\n'));
             const path=join(input.directory,`${width}x${height}-${start+index}.png`);
             await writeFile(path,png(width,height,pixels));manifest.frames.push({time,width,height,path});
+            if(manifest.strokeWarnings) {
+              const report=manifest.strokeWarnings,started=performance.now();
+              try {for(const warning of detectLabelStrokeOverlaps(frame,{width,height,palette:compiled.options.palette,assetGeometry:sampler.assetGeometry})) {
+                const key=JSON.stringify([time,width,height,[...warning.elements].sort()]);
+                if(warningKeys.has(key))continue;
+                if(report.records.length>=32){report.truncated=true;continue;}
+                warningKeys.add(key);
+                report.records.push({time,width,height,warning});
+              }} catch {report.truncated=true;report.failedFrames=(report.failedFrames??0)+1;}
+              finally {report.elapsedMs+=performance.now()-started;}
+            }
             // Area-average downsample for review sheets; individual PNGs retain native resolution.
             for(let y=0;y<cellH;y++)for(let x=0;x<cellW;x++) {
               const dest=((Math.floor(index/2)*cellH+y)*sheetW+(index%2)*cellW+x)*4;

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { compileSource } from 'animlib/core';
 import type { CompiledScene, Frame } from 'animlib/core';
 import type { AgentRunner, AgentTask, AgentRunMetrics } from './runtime.js';
-import { renderSceneFrames } from './frame-renderer.js';
+import { renderSceneFrames, parseFrameEvidence } from './frame-renderer.js';
 import type { FrameRenderer } from './frame-renderer.js';
 import { applyVisualEdits, parseVisualVerification, sourceHash } from './visual-edits.js';
 import type { VisualVerification } from './visual-edits.js';
@@ -82,7 +82,7 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
   const policy = options.policy ?? await videoReviewPolicy();
   const { guidance, repairGuidance, styleReference } = policy;
   // Never resume an approval/repair checkpoint under a different product policy.
-  const contextHash = sourceHash(JSON.stringify({ input, policy, authorContract: options.task.systemPrompt }));
+  const contextHash = sourceHash(JSON.stringify({ input, policy, authorContract: options.task.systemPrompt, evidenceVersion: 2 }));
   const initialSourceSha256 = sourceHash(options.source);
   const checkpoint = join(directory, `scene-${index}.visual-state.json`);
   const approvalPath = join(directory, `scene-${index}.visual-review.json`);
@@ -208,7 +208,7 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
           if (evidencePlan.uncoveredDefectTimes.length) return exhaust(`Known defect timestamps are outside the candidate duration or exceed the bounded evidence budget: ${JSON.stringify(evidencePlan.uncoveredDefectTimes)}. Approval requires their verification.`);
           validating = false;
           evidence = await (options.renderFrames ?? renderSceneFrames)({ source: state.source, previousFrame: input.previousFrame,
-            models: options.models, times: evidencePlan.samples.map(sample => sample.time), directory: attemptDirectory, signal });
+            models: options.models, times: evidencePlan.samples.map(sample => sample.time), directory: attemptDirectory, signal, includeStrokeWarnings: true });
           break;
         } catch (error) {
           signal.throwIfAborted();
@@ -221,13 +221,24 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
       }
       if (evidence) {
         signal.throwIfAborted();
+        evidence = parseFrameEvidence(JSON.stringify(evidence));
         const selectedImages = selectReviewImages(evidence, evidencePlan!);
         state.evidenceImages = selectedImages.map(image => image.path);
         images = await loadImages(state.evidenceImages);
         const sampleMap = selectedImages.map(({ path: _path, ...image }, i) => ({ image: i + 1, ...image }));
+        let strokeAdvisory = '';
+        if (evidence.strokeWarnings) {
+          const report = evidence.strokeWarnings, records = [];
+          for (const record of report.records.slice(0, 12)) {
+            const compact = {time:record.time,viewport:[record.width,record.height],elements:record.warning.elements,witness:record.warning.witness};
+            if (JSON.stringify([...records,compact]).length > 3500) break;
+            records.push(compact);
+          }
+          strokeAdvisory = `\nAdvisory projected text/stroke crossings (sampled geometry, may be intentional; not depth or semantic proof). Check corresponding pixels before treating any crossing as a defect; never reject or repair from this list alone. ${JSON.stringify({records,omittedRecords:report.records.length-records.length,truncated:report.truncated,failedFrames:report.failedFrames??0})}`;
+        }
         const output = await run({
           systemPrompt: `${authorContract}\n\n${guidance}`,
-          prompt: `Verify all supplied rendered evidence in one comprehensive pass. Contact sheets are reduced overview images read left-to-right, then top-to-bottom; each cell is one whole viewport. Native-frame images retain full viewport resolution for fine detail. Sampling is partial, not continuous-motion or interaction proof. Image map: ${JSON.stringify(sampleMap)}. Evidence plan: ${JSON.stringify(evidencePlan)}.${styleReference ? ' Last image is style reference.' : ''}\nEarlier verification (preserve corrections and check regressions): ${JSON.stringify(state.history)}\nAuthoritative request:\n${options.task.prompt}\nCurrent candidate source (SHA-256 ${sourceHash(state.source)}):\n${state.source}`,
+          prompt: `Verify all supplied rendered evidence in one comprehensive pass. Contact sheets are reduced overview images read left-to-right, then top-to-bottom; each cell is one whole viewport. Native-frame images retain full viewport resolution for fine detail. Sampling is partial, not continuous-motion or interaction proof. Image map: ${JSON.stringify(sampleMap)}. Evidence plan: ${JSON.stringify(evidencePlan)}.${styleReference ? ' Last image is style reference.' : ''}${strokeAdvisory}\nEarlier verification (preserve corrections and check regressions): ${JSON.stringify(state.history)}\nAuthoritative request:\n${options.task.prompt}\nCurrent candidate source (SHA-256 ${sourceHash(state.source)}):\n${state.source}`,
           images, signal, outputMode: 'submit-only', logContext: { videoId, sceneIndex: index, stage: 'review' },
           validate: async output => { parseVisualVerification(output, input.scene.durationSec); },
         }, attemptDirectory, 'review');

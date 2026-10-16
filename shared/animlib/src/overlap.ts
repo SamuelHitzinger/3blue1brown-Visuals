@@ -4,10 +4,13 @@ import { paletteResolver } from './palette.js';
 import { buildDrawItems } from './render-geometry.js';
 import { SpatialFrame } from './spatial.js';
 import { evaluateScene } from './timeline.js';
-import type { CompiledScene, Frame, OverlapBounds, OverlapDiagnostic, OverlapOptions, SceneOverlapOptions, SceneOverlapSample, Vec2, Vec3 } from './types.js';
+import { morphOutline } from './geometry.js';
+import { morphPathContours } from './path.js';
+import type { CompiledScene, Frame, LabelStrokeDiagnostic, OverlapBounds, OverlapDiagnostic, OverlapOptions, SceneOverlapOptions, SceneOverlapSample, Vec2, Vec3 } from './types.js';
 
 interface Primitive { points: Vec2[]; bounds: OverlapBounds; }
-interface Footprint { id: string; ancestors: Set<string>; bounds: OverlapBounds; primitives: Primitive[]; }
+interface Footprint { id: string; component: 'content' | 'stroke'; ancestors: Set<string>; bounds: OverlapBounds; primitives: Primitive[]; }
+type IntersectionDiagnostic = Pick<OverlapDiagnostic, 'elements' | 'bounds' | 'elementBounds' | 'witness'>;
 const AREA_EPSILON = 1e-7; // CSS pixels squared; excludes edge contact and floating-point slivers.
 const MAX_SAMPLES = 100_000;
 
@@ -50,15 +53,62 @@ export function detectOverlaps(frame: Frame, options: OverlapOptions): OverlapDi
 }
 
 function inspectFrame(frame: Frame, options: OverlapOptions, excluded: ReadonlySet<string> = new Set()): OverlapDiagnostic[] {
+  return inspectPaint(frame, options, false, excluded).map(({ elements, bounds, elementBounds, witness }) => ({
+    elements, severity: 'unacceptable', kind: 'text-overlap', bounds, elementBounds, witness,
+  }));
+}
+
+/** Advisory projected glyph/stroke intersections, not depth-buffer visibility or occlusion proof. */
+export function detectLabelStrokeOverlaps(frame: Frame, options: OverlapOptions): LabelStrokeDiagnostic[] {
+  const pairs = new Map<string, LabelStrokeDiagnostic>();
+  for (const diagnostic of inspectPaint(frame, options, true)) {
+    const key = JSON.stringify(diagnostic.elements), previous = pairs.get(key);
+    // Both elements can carry glyph and stroke paint during a crossfade.
+    if (previous) {
+      previous.bounds = union(previous.bounds, diagnostic.bounds);
+      previous.elementBounds = [union(previous.elementBounds[0], diagnostic.elementBounds[0]), union(previous.elementBounds[1], diagnostic.elementBounds[1])];
+    } else pairs.set(key, { ...diagnostic, severity: 'warning', kind: 'text-stroke-overlap' });
+  }
+  return [...pairs.values()];
+}
+
+function inspectPaint(frame: Frame, options: OverlapOptions, labelStroke: boolean, excluded: ReadonlySet<string> = new Set()): IntersectionDiagnostic[] {
   const minOpacity = validateOptions(options), palette = paletteResolver(options.palette), space = new SpatialFrame(frame);
   const footprints = new Map<string, Footprint>();
+  const strokeIds = new Set<string>(), elementIds = labelStroke ? new Set<string>() : undefined;
+  if (elementIds) for (const element of frame.elements) {
+    const geometries = element.morph
+      ? element.morph.progress <= 0 ? [element.morph.from] : element.morph.progress >= 1 ? [element.morph.to] : [element.morph.from, element.morph.to]
+      : [element.geometry];
+    if (geometries.some(g => ['line', 'arrow', 'path'].includes(g.kind))) strokeIds.add(element.id);
+    if (strokeIds.has(element.id) || geometries.some(g => ['text', 'latex'].includes(g.kind))) elementIds.add(element.id);
+  }
+  const isStroke = (kind: string): boolean => ['line', 'arrow', 'path'].includes(kind);
+  const strokeFrame = labelStroke ? { ...frame, elements: frame.elements.map(element => {
+    const morph = element.morph;
+    if (!strokeIds.has(element.id) || !morph || morph.progress <= 0 || morph.progress >= 1
+      || isStroke(morph.from.kind) && isStroke(morph.to.kind)) return element;
+    // Matching outlines render as one interpolated path. Otherwise the renderer
+    // crossfades independent branches: exclude nonstroke branches, retaining the
+    // exact branch alpha. The original frame remains authoritative for glyphs.
+    if (morphPathContours(morph.from, morph.to, morph.progress) || morphOutline(morph.from, morph.to, morph.progress)) return element;
+    const empty = { kind: 'text' as const, text: '' };
+    return { ...element, geometry: isStroke(morph.from.kind) ? morph.from : morph.to,
+      morph: { ...morph, from: isStroke(morph.from.kind) ? morph.from : empty, to: isStroke(morph.to.kind) ? morph.to : empty } };
+  }) } : frame;
   const regions = [{ camera: frame.camera, rect: [0, 0, 1, 1], id: undefined as string | undefined },
     ...(frame.views ?? []).map(view => ({ camera: view.camera, rect: view.rect, id: view.id }))];
   for (const region of regions) {
     const [left, top, w, h] = region.rect, width = w * options.width, height = h * options.height;
     if (width <= 0 || height <= 0) continue;
-    for (const item of buildDrawItems(frame, region.camera, width, height, palette, region.id, true, undefined, undefined, options.assetGeometry)) {
-      if (item.component !== 'content' || excluded.has(item.elementId)) continue;
+    // elementIds skips unrelated mesh tessellation. buildDrawItems deliberately expands
+    // this selection when label anchor policies need authoritative opaque occluders.
+    const items = buildDrawItems(frame, region.camera, width, height, palette, region.id, true, undefined, elementIds, options.assetGeometry)
+      .filter(item => item.component === 'content');
+    if (labelStroke && strokeIds.size) items.push(...buildDrawItems(strokeFrame, region.camera, width, height, palette, region.id, false, undefined, strokeIds, options.assetGeometry)
+      .filter(item => item.component === 'stroke'));
+    for (const item of items) {
+      if (excluded.has(item.elementId)) continue;
       const data = item.vertices, opacity = data[6] * (item.groups ?? []).reduce((n, group) => n * group.opacity, 1);
       if (opacity <= 0 || opacity < minOpacity) continue;
       for (let i = 0; i < data.length; i += 3 * VERTEX_FLOATS) {
@@ -68,16 +118,17 @@ function inspectFrame(frame: Frame, options: OverlapOptions, excluded: ReadonlyS
         points = clip(clip(clip(clip(points, p => p[0]), p => options.width - p[0]), p => p[1]), p => options.height - p[1]);
         if (!points.every(p => p.every(Number.isFinite)) || Math.abs(signedArea(points)) <= AREA_EPSILON) continue;
         const box = bounds(points), primitive = { points, bounds: box };
-        const footprint = footprints.get(item.elementId);
+        const key = `${item.component}:${item.elementId}`, footprint = footprints.get(key);
         if (footprint) { footprint.primitives.push(primitive); footprint.bounds = union(footprint.bounds, box); }
-        else footprints.set(item.elementId, { id: item.elementId, ancestors: new Set(space.chain(item.elementId).map(e => e.id)), bounds: box, primitives: [primitive] });
+        else footprints.set(key, { id: item.elementId, component: item.component as 'content' | 'stroke', ancestors: new Set(space.chain(item.elementId).map(e => e.id)), bounds: box, primitives: [primitive] });
       }
     }
   }
-  const ordered = [...footprints.values()].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0), diagnostics: OverlapDiagnostic[] = [];
+  const ordered = [...footprints.values()].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : a.component < b.component ? -1 : a.component > b.component ? 1 : 0), diagnostics: IntersectionDiagnostic[] = [];
   for (const footprint of ordered) footprint.primitives.sort((a, b) => a.bounds.left - b.bounds.left);
   for (let i = 0; i < ordered.length; i++) for (let j = i + 1; j < ordered.length; j++) {
     const a = ordered[i], b = ordered[j];
+    if (a.id === b.id || labelStroke && a.component === b.component) continue;
     if (!intersects(a.bounds, b.bounds) || options.ignorePairs?.some(([x, y]) =>
       a.ancestors.has(x) && b.ancestors.has(y) || a.ancestors.has(y) && b.ancestors.has(x))) continue;
     let overlapBounds: OverlapBounds | undefined, witness: Vec2 | undefined;
@@ -91,8 +142,7 @@ function inspectFrame(frame: Frame, options: OverlapOptions, excluded: ReadonlyS
       witness ??= polygon.reduce<Vec2>((sum, p) => [sum[0] + p[0] / polygon.length, sum[1] + p[1] / polygon.length], [0, 0]);
     }
     if (!overlapBounds || !witness) continue;
-    diagnostics.push({ elements: [a.id, b.id], severity: 'unacceptable', kind: 'text-overlap',
-      bounds: overlapBounds, elementBounds: [a.bounds, b.bounds], witness });
+    diagnostics.push({ elements: [a.id, b.id], bounds: overlapBounds, elementBounds: [a.bounds, b.bounds], witness });
   }
   return diagnostics;
 }

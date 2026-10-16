@@ -60,3 +60,50 @@ subject/media holdout for each architecture candidate. Repeated attempts on the
 same eight tasks are development evidence, not unseen generalization evidence.
 
 These are evaluation requirements for the next round, not completed trials.
+
+## Next coverage matrix after the user's renewed breadth requirement
+
+Keep the ten-second response budget separate from the eight-second animation
+duration. Current evidence spans five subjects, but no stratum has passed the
+complete speech-to-explanation-to-visible-update requirement. Existing model
+screens, manual quality recovery and runtime probes are different evidence types.
+
+| Case family | Detail levels | Required operation | Evaluation role |
+| --- | --- | --- | --- |
+| Parabola point and ordinate | 17/65/129 curve samples | Same point trajectory with attached ordinate and value | Development control |
+| Saddle slice | 10/20/40 cells per axis | Same plane, traces, labels and motion; measure approximation error | Development control |
+| Full caffeine | Atom detail 0/1/2; same 24 atoms and 25 bonds | Rigid motion and local labels; preserve bond endpoints and distances | Development control |
+| Unseen measured series | Sparse/dense 2D, exact supplied JSON | Compare at shared input, correct one datum without changing other data/scales | Data holdout |
+| RC charging | Simple circuit through linked circuit/curve | Explain supplied relation, change resistance, preserve initial condition | Subject holdout |
+| Unseen parametric surface | Coarse/detailed 3D | Contour or tangent operation, parameter correction, attached labels | Geometry holdout |
+| Unseen complete organic conformer | Medium/high atom detail, verified source | Highlight group without deforming topology, then rotate/translate | Molecule/data holdout |
+| New static GLB and distractor | Detailed imported geometry | Correct selection, named-part/group edit, cached reuse | Retrieval holdout |
+| Sustained speech corrections | Mixed sparse/dense 2D and 3D | Resolve referent, correct during preparation, retain unrelated motion | Causal/session holdout |
+
+These rows specify future cases, not completed trials. Freeze candidate code and
+prompt before revealing held-out media wording, data/asset identities and relation
+structure. Merely changing coefficients in an existing task is not an unseen
+subject test. Verify scientific sources before creating each held-out fixture.
+
+For each case, record initial construction and retained edits separately. Capture
+source-window start, decisive evidence endpoint, ASR completion, queueing,
+retrieval, model completion, preparation, world commit, renderer submission and
+first observed browser change. Preserve the original obligation's deadline
+through correction/queueing. Report wrong outputs, late results and inappropriate
+deferrals; a quick empty response does not satisfy visual coverage. Present
+matched baseline/candidate motion with identical requirements at both widths.
+
+Distinguish preselected startup inventory, first decode in the running session,
+cached reuse and genuinely new mid-session assets. The current joined host freezes
+inventory before world creation; mid-session registration remains unsupported.
+Animation clips/skinning have metadata tests only, with zero clips in the current
+installed corpus; they cannot be reported as working runtime capabilities.
+
+Current evidence: [eight-case model screen](complexity-screen-checkpoint.md),
+[controlled detail](controlled-detail-checkpoint.md),
+[manual quality recovery](quality-revision-checkpoint-2026-10-16.md),
+[retained edit](retained-complex-edit-probe.md),
+[speech/browser join](lecture-join-checkpoint.md),
+[large static asset](lecture-static-assets-checkpoint.md), and
+[five-workload diagnostic check](stroke-preflight-checkpoint-2026-10-16.md).
+None substitutes for the per-stratum end-to-end quality and deadline gate.
