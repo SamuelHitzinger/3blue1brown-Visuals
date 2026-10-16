@@ -1,0 +1,285 @@
+{
+  "date": "2026-10-16",
+  "kind": "manual-quality-recovery-not-generation-benchmark",
+  "providerRequests": 0,
+  "reports": [
+    {
+      "id": "surface",
+      "sourceSha256": {
+        "baseline": "92806d3575a48ee6704ea5a6965a5979d80b6dc091e96261f945e360472ed3a6",
+        "revised": "f596eb264b266afaea250faa94f71ce513a3ff7584658042824871fce3d56819"
+      },
+      "sampleTimes": [
+        0,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6,
+        3.8,
+        4,
+        4.2,
+        4.4,
+        4.6,
+        4.8,
+        5,
+        5.2,
+        5.4,
+        5.6,
+        5.8,
+        6,
+        6.2,
+        6.4,
+        6.6,
+        6.8,
+        7,
+        7.2,
+        7.4,
+        7.6,
+        7.8,
+        8
+      ],
+      "unchangedPhysicalEntities": 7,
+      "triangles": 3202,
+      "bondStrokes": 0,
+      "physicalStateExactlyPreserved": true,
+      "duration": 8,
+      "holdSeconds": 2,
+      "limitation": "Sampled state comparison, not scientific mechanism or visual-quality approval. Surface triangle count includes 2 slicing-plane triangles."
+    },
+    {
+      "id": "molecule",
+      "sourceSha256": {
+        "baseline": "4e575ab1eec4c21f6594fad16f39d602473343e9d56ac1eacd4eb0f3f5829802",
+        "revised": "2473bfa5cd809a59e21664368257276105f5be38c2e6d2f8a209306b8f8b70d0"
+      },
+      "sampleTimes": [
+        0,
+        0.2,
+        0.4,
+        0.6,
+        0.8,
+        1,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2,
+        2.2,
+        2.4,
+        2.6,
+        2.8,
+        3,
+        3.2,
+        3.4,
+        3.6,
+        3.8,
+        4,
+        4.2,
+        4.4,
+        4.6,
+        4.8,
+        5,
+        5.2,
+        5.4,
+        5.6,
+        5.8,
+        6,
+        6.2,
+        6.4,
+        6.6,
+        6.8,
+        7,
+        7.2,
+        7.4,
+        7.6,
+        7.8,
+        8
+      ],
+      "unchangedPhysicalEntities": 77,
+      "triangles": 3072,
+      "bondStrokes": 29,
+      "physicalStateExactlyPreserved": true,
+      "duration": 8,
+      "holdSeconds": 2,
+      "limitation": "Sampled state comparison, not scientific mechanism or visual-quality approval. Surface triangle count includes 2 slicing-plane triangles."
+    }
+  ],
+  "movies": [
+    {
+      "id": "surface",
+      "sha256": "96b8125c2b053d4784545874d30ea832ef364fe97a4290c6bc9ca4c45cfc1852",
+      "width": 2560,
+      "height": 720,
+      "fps": 24,
+      "frames": 192,
+      "duration": 8,
+      "audio": false,
+      "offlineRenderEncodeMs": 3501.9199,
+      "bytes": 699950,
+      "path": "data/realtime-workshop/quality-revision-01/surface/comparison-AB.mp4"
+    },
+    {
+      "id": "molecule",
+      "sha256": "f6cf89231d6a3d56c750639226647d65f243606eb14feca5f7261c6cd8283e5c",
+      "width": 2560,
+      "height": 720,
+      "fps": 24,
+      "frames": 192,
+      "duration": 8,
+      "audio": false,
+      "offlineRenderEncodeMs": 3080.8950999999997,
+      "bytes": 487165,
+      "path": "data/realtime-workshop/quality-revision-01/molecule/comparison-AB.mp4"
+    }
+  ],
+  "review": {
+    "agent": "/root/fresh_visual_quality_critic",
+    "modality": "Dense sampled-frame review, not playback",
+    "preferred": {
+      "surface": "A (revised)",
+      "molecule": "B (revised)"
+    },
+    "revisedGates": {
+      "reasoning": "ready within requested operation",
+      "readability": "ready",
+      "referenceStyle": "ready for visible composition; temporal polish unverified",
+      "technicalDelivery": "ready based on supplied records"
+    },
+    "scope": "Two detailed scenes only; neither generalization nor latency established"
+  },
+  "verification": {
+    "annotationTests": 51,
+    "targetedStrictTypeScript": "pass"
+  },
+  "artifacts": [
+    {
+      "path": "data/realtime-workshop/quality-revision-01/invariants.ts",
+      "bytes": 2711,
+      "sha256": "c4c704ba525e5a391dca3b74abbfd1da4882923f7280f9d1472af6f6b771d857"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/surface/baseline.js",
+      "bytes": 2124,
+      "sha256": "92806d3575a48ee6704ea5a6965a5979d80b6dc091e96261f945e360472ed3a6"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/surface/revised.js",
+      "bytes": 2229,
+      "sha256": "f596eb264b266afaea250faa94f71ce513a3ff7584658042824871fce3d56819"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/surface/style-contract.md",
+      "bytes": 2412,
+      "sha256": "95b3ce7d2bbbce34d406e9efc6618383b9f8748076df9f5f613838096db707d1"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/surface/render-motion.mjs",
+      "bytes": 5231,
+      "sha256": "f7f39f5c7ee99b672a8ebc9ce72f43b319b9f410ed754cc2f7b96952c86fd77d"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/surface-ordered-01.png",
+      "bytes": 264612,
+      "sha256": "bc9a55b2800bc01e9a173914deaa4a89463c5e755fc57fb8d44e042700acd42c"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/surface-ordered-02.png",
+      "bytes": 276372,
+      "sha256": "9e4fb2a753507daf4462643ed40a272b3c6216631fd39355ac99f894db76ad1d"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/surface-ordered-03.png",
+      "bytes": 279764,
+      "sha256": "0de4dbaaae9a3f9be27d544c53354f2c55536a0c2e51431e39edf1edc60151d8"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/surface-ordered-04.png",
+      "bytes": 278421,
+      "sha256": "12734e420df39e815ca5174b8e1fa0f631167f4a848ea96ff18cb616b0efac8c"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/surface-native-2.png",
+      "bytes": 215142,
+      "sha256": "71b01de61024d2a91089f9440ee0323e5ba67702bdd8087a1bfcc07701472c89"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/surface-native-4.png",
+      "bytes": 228689,
+      "sha256": "8876241dbd1e5588dd2c8d5c9f36c38cf4e7a7e26134ee1d1d7a4494d9b919b4"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/surface-native-6.png",
+      "bytes": 224147,
+      "sha256": "b50e4412727bc9452f5fa70a84a8523f9871db1302805039b59fa0ed35ea4ac7"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/molecule/baseline.js",
+      "bytes": 4773,
+      "sha256": "4e575ab1eec4c21f6594fad16f39d602473343e9d56ac1eacd4eb0f3f5829802"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/molecule/revised.js",
+      "bytes": 5507,
+      "sha256": "2473bfa5cd809a59e21664368257276105f5be38c2e6d2f8a209306b8f8b70d0"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/molecule/style-contract.md",
+      "bytes": 1828,
+      "sha256": "70b2fa049ba941a54e55c736f3299d1940eebd243745b7d2a12ec979912dfdca"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/molecule/render-motion.mjs",
+      "bytes": 5231,
+      "sha256": "f7f39f5c7ee99b672a8ebc9ce72f43b319b9f410ed754cc2f7b96952c86fd77d"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/molecule-ordered-01.png",
+      "bytes": 178308,
+      "sha256": "4f82fa4d320584c84b6f63f13f40f8739ec1061253ddb496d594ee624d153fd6"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/molecule-ordered-02.png",
+      "bytes": 205575,
+      "sha256": "06e38ce2d78db57b754e0d5c6442132ffda0230c94b4a0f6b7af26d6dfad64a1"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/molecule-ordered-03.png",
+      "bytes": 218045,
+      "sha256": "830211d4744a781e877e67d6a363609510042fce820d8bd05ac2e6d02b57b876"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/molecule-ordered-04.png",
+      "bytes": 215567,
+      "sha256": "2201d04da107f8a3d657313740afa38f9e6c9f8af52fff448b181452a28c72a7"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/molecule-native-2.png",
+      "bytes": 157255,
+      "sha256": "aaee0ffd7357b6365d9e1ff438203da51e23fee81dba6d2afdc69ab70b0d3126"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/molecule-native-4.png",
+      "bytes": 184749,
+      "sha256": "638418e193e3e7d5555f45407c5a3a5ebc982992f0658c9562bdd9fcf039a5f5"
+    },
+    {
+      "path": "data/realtime-workshop/quality-revision-01/blind-review/molecule-native-6.png",
+      "bytes": 183923,
+      "sha256": "e25c78e03250a8b1ee73168ada32a230991cb43f414d00cecef969cb2337a3b5"
+    }
+  ]
+}

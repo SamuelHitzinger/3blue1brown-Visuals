@@ -5,6 +5,11 @@ preserving the existing explanation. They use saved model-authored baselines,
 with one deterministic source substitution each. **These are detail-sensitivity
 tests, not new model trials or baseline-versus-optimized speed results.**
 
+Subsequent [quality-recovery comparisons](quality-revision-checkpoint-2026-10-16.md)
+repair presentation defects in the high-detail originals without lowering detail.
+Their new sampled-frame verdict does not replace this historical detail test or
+establish a generation speedup.
+
 ## What actually ran
 
 | Construction | Lower detail | Higher detail | Preserved in both |
