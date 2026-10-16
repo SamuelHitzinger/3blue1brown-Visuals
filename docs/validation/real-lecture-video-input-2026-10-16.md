@@ -29,6 +29,7 @@ The user approved the audio and frame/transcript destinations, then explicitly r
 | `real-lecture-live-06` | Reproduced initial timeout. Provider began tool output at 1.309 s and was still emitting it at 9.877 s (2,791 characters observed); no completed submission. Request setup was approximately 8 ms. |
 | `real-lecture-live-07` | Compact prompt and source budget completed model request in 3.342 s, but shortened prompt omitted the required scene-module wrapper. Compiler rejected the bare body; no scene was published. Wrapper contract was restored before the next trial. |
 | `real-lecture-live-08` | First rendered scaffold reached next browser frame opportunity 7.419 s after replay start. Initial model call 7.203 s; following edits 2.402–3.821 s. No timeout in eight requests; final request failed validation because one all-null property entry accompanied otherwise valid edits. The scaffold rendered, but explanatory coverage remained incomplete. |
+| `real-lecture-live-09` | First scene and an edit rendered without timeout, then the model requested an edit to `C`, which had never been created. Renderer correctly rejected it; existing scene stayed visible. This exposed the need to constrain edit target IDs in the generation schema rather than relying only on prose. |
 
 All directories are beneath `data/realtime-workshop/`; each contains `events.jsonl`, provider receipts, and screenshots. Inputs are in `real-lecture-audio-01/manifest-video.json`. Frames were extracted at exact excerpt times 0, 5, …, 55 seconds, using explicit input seeks. Failed trials are evidence, not successful quality results.
 
@@ -51,4 +52,6 @@ The main-app loop retries only HTTP 504 request failures, at most twice after on
 
 Fully validated all-null property entries now normalize away instead of rejecting otherwise valid edits. An entirely unchanged edit becomes an explicit defer; invalid fields, duplicate IDs, invalid durations and receipt mismatches still reject. The exact run-08 failing response was replayed through validation successfully, preserving its four meaningful entries.
 
-Verification: probe and animation suites 57 tests / 572 assertions pass; focused live-loop tests 11 pass; production app build passes. Real playback verification is recorded separately from these offline checks.
+Live edit, removal and motion targets are also constrained to IDs in the current sampled world, both in the model tool schema and receipt validation. Visible letters and geometric vertices are not automatically object IDs. Newly authored source can still create fresh IDs. Runtime revision and target checks remain authoritative; this generation constraint does not grant permissions or establish the truth of client state.
+
+Verification: probe and animation suites 60 tests / 600 assertions pass; focused live-loop tests 11 pass; production app build passes. Real playback verification is recorded separately from these offline checks.

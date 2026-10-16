@@ -13,6 +13,52 @@ import { submissionTool, validateSubmission, acceptSubmission, preparePayload, s
 const source = 'export default scene({}, s => {\n  s.text("label", { text: "quoted \\\"word\\\"" });\n});';
 const call = { type: 'toolCall' as const, id: 'call-1', name: 'submit_scene', arguments: { source } };
 
+test('existing entity targets constrain only edit removal and motion IDs through strict adapter schema',()=>{
+ const ids=['A','B'];
+ const tool=submissionTool('world','require',false,true,true,undefined,ids),parameters=tool.parameters as any;
+ for(const field of ['changes','motionChanges'])expect(parameters.properties[field].items.properties.id.enum).toEqual(ids);
+ expect(parameters.properties.remove.items.enum).toEqual(ids);
+ expect(parameters.properties.parameterValues.items.properties.id).not.toHaveProperty('enum');
+ const payload={tools:convertResponsesTools([tool],{supportsStrictMode:true}),tool_choice:'required',service_tier:'priority'};
+ expect(preparePayload(payload,'world','require','priority',false,true,true,undefined,ids).metadata.tools[0].parameters).toEqual(parameters);
+ expect(()=>preparePayload(payload,'world','require','priority',false,true,true)).toThrow('schema');
+ expect((submissionTool('world').parameters as any).properties.changes.items.properties.id).not.toHaveProperty('enum');
+ expect((submissionTool('world','require',false,false,false,undefined,[]).parameters as any).properties.changes.items.properties.id).not.toHaveProperty('enum');
+});
+
+test('existing target validation rejects guessed IDs including no-ops but permits new source IDs',()=>{
+ const edit={action:'edit',reason:'',source:'',changes:[{id:'A',props:propsWire({fill:'BLUE'}),duration:0}],remove:[]};
+ expect(validateSubmission('world',edit,false,false,false,undefined,['A','B'])).toMatchObject({action:'edit'});
+ for(const wire of [{...edit,changes:[{...edit.changes[0],id:'C'}]},
+  {...edit,changes:[{id:'C',props:propsWire(),duration:0}]},{...edit,changes:[],remove:['C']}]){
+  expect(()=>validateSubmission('world',wire,false,false,false,undefined,['A','B'])).toThrow('target');
+  expect(()=>validateSubmission('world',wire,false,false,false,undefined,[])).toThrow('target');
+ }
+ const motion={action:'motion',reason:'',source:'',changes:[],remove:[],motionChanges:[{id:'C',velocity:[1,0,0]}],replacementProgramId:''};
+ expect(()=>validateSubmission('world',motion,false,false,true,undefined,['A'])).toThrow('target');
+ expect(validateSubmission('world',{...motion,motionChanges:[{id:'A',velocity:[1,0,0]}]},false,false,true,undefined,['A'])).toMatchObject({action:'motion'});
+ expect(validateSubmission('world',{action:'add',reason:'',source:'export default scene({},s=>s.circle("C"));',changes:[],remove:[]},false,false,false,undefined,[])).toMatchObject({action:'add'});
+ expect(validateSubmission('world',{...edit,changes:[{...edit.changes[0],id:'C'}]})).toMatchObject({action:'edit'});
+});
+
+test('runProbe validates supplied target inventory and rejects provider guesses despite schema',async()=>{
+ let opened=false;const never=(async()=>{opened=true;throw Error('Must not dispatch');}) as typeof createModelRuntime;
+ const {args}=await requestArgs('world');
+ for(const existingEntityIds of [['A','A'],['bad id'],Array.from({length:4097},(_,i)=>`e${i}`),'A' as unknown as string[]])
+  await expect(probe.runProbe(args,{existingEntityIds,createRuntime:never})).rejects.toMatchObject({code:'CONFIG'});
+ expect(opened).toBe(false);
+ for(const id of ['A','C']){
+  const {args,directory}=await requestArgs('world'),system=join(directory,'..','system.txt');await writeFile(system,'Target test.');
+  const wire={...call,name:'submit_world',arguments:{action:'edit',reason:'',source:'',changes:[{id,props:propsWire({fill:'BLUE'}),duration:0}],remove:[]}},message=terminalFor(wire);
+  const result=await probe.runProbe([...args,`--system-file=${system}`],{existingEntityIds:['A','B'],createRuntime:runtimeFor(async function*(options){
+   const tools=convertResponsesTools([submissionTool('world','require',false,false,false,undefined,['A','B'])],{supportsStrictMode:true});
+   await options.onPayload!({tools,tool_choice:'required',service_tier:'priority'},{} as Parameters<NonNullable<StreamOptions['onPayload']>>[1]);
+   yield {type:'toolcall_end',contentIndex:0,toolCall:wire,partial:message};yield {type:'done',reason:'toolUse',message};
+  })});
+  expect(result.report.status).toBe(id==='A'?'complete':'failed');if(id==='C'){expect(result.submission).toBeNull();expect(result.report.validToolCallCompleteMs).toBeNull();}
+ }
+});
+
 test('source budget reaches actual strict schema and cannot be widened by adapter',()=>{
  for(const kind of ['scene','world'] as const){
   const tool=submissionTool(kind,'require',false,false,false,1600);

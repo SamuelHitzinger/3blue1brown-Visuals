@@ -44,20 +44,26 @@ function checkSourceBudget(kind:Kind,sourceMaxChars?:number):void{
   if(sourceMaxChars!==undefined&&(kind==='brief'||!Number.isInteger(sourceMaxChars)||sourceMaxChars<64||sourceMaxChars>WORLD_LIMITS.sourceBytes))
     throw new AgentError('CONFIG',`Source budget requires scene/world and an integer from 64 to ${WORLD_LIMITS.sourceBytes}.`);
 }
-function worldSchema(speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number) {
+function checkExistingIds(kind:Kind,ids?:readonly string[]):void{
+  if(ids!==undefined&&(kind!=='world'||!Array.isArray(ids)||ids.length>4096||new Set(ids).size!==ids.length
+    ||!Array.from(ids).every(id=>typeof id==='string'&&/^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$/.test(id))))
+    throw new AgentError('CONFIG','Existing entity IDs require a world submission and at most 4096 unique valid IDs.');
+}
+function worldSchema(speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number,existingEntityIds?:readonly string[]) {
   const id = Type.String({ pattern: '^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$' });
+  const targetId=existingEntityIds?.length?Type.String({pattern:'^[A-Za-z0-9][A-Za-z0-9_./-]{0,127}$',enum:[...existingEntityIds]}):id;
   // Pi rejects structured anyOf unions; nullable type arrays preserve its strict subset.
   const vector = Type.Unsafe({ type: ['array','null'], items: {type:'number',minimum:-1e6,maximum:1e6}, minItems:3, maxItems:3 });
   const scalar = (max: number) => Type.Unsafe({ type:['number','null'], minimum:0, maximum:max });
   return Type.Object({
     action: Type.String({enum:['add','edit','defer',...(retainedParameters?['parameters']:[]),...(progressiveWorld?['motion','replace']:[])]}), reason: Type.String({maxLength:512}), source: Type.String({maxLength:sourceMaxChars??WORLD_LIMITS.sourceBytes}),
-    changes: Type.Array(Type.Object({ id, props: Type.Object({
+    changes: Type.Array(Type.Object({ id:targetId, props: Type.Object({
       position:vector, rotation:vector, scale:scalar(1e6), opacity:scalar(1),
       fill:Type.Unsafe({type:['string','null'],enum:[...Object.values(Color),null]}),
     },{additionalProperties:false}), duration:Type.Number({minimum:0,maximum:60}) },{additionalProperties:false}),{maxItems:WORLD_LIMITS.changes}),
-    remove:Type.Array(id,{maxItems:WORLD_LIMITS.changes}),
+    remove:Type.Array(targetId,{maxItems:WORLD_LIMITS.changes}),
     ...(progressiveWorld?{
-      motionChanges:Type.Array(Type.Object({id,velocity:Type.Array(Type.Number({minimum:-1e6,maximum:1e6}),{minItems:3,maxItems:3})},{additionalProperties:false}),{maxItems:32}),
+      motionChanges:Type.Array(Type.Object({id:targetId,velocity:Type.Array(Type.Number({minimum:-1e6,maximum:1e6}),{minItems:3,maxItems:3})},{additionalProperties:false}),{maxItems:32}),
       replacementProgramId:Type.String({pattern:'^(?:[A-Za-z0-9][A-Za-z0-9_./-]{0,127})?$'}),
     }:{}),
     ...(retainedParameters?{
@@ -73,8 +79,9 @@ function worldSchema(speechAnchors=false,retainedParameters=false,progressiveWor
   },{additionalProperties:false});
 }
 
-export function submissionTool(kind: Kind, strict: Strict = 'require', speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number): Tool {
+export function submissionTool(kind: Kind, strict: Strict = 'require', speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number,existingEntityIds?:readonly string[]): Tool {
   checkSourceBudget(kind,sourceMaxChars);
+  checkExistingIds(kind,existingEntityIds);
   if(speechAnchors&&kind!=='world')throw new Error('Speech anchors require world submissions');
   if(retainedParameters&&kind!=='world')throw new Error('Retained parameters require world submissions');
   if(progressiveWorld&&kind!=='world')throw new Error('Progressive operations require world submissions');
@@ -85,7 +92,7 @@ export function submissionTool(kind: Kind, strict: Strict = 'require', speechAnc
       : 'Submit one source-grounded causal visual brief, identifying uncertainty explicitly.',
     parameters: kind === 'scene'
       ? Type.Object({ source: Type.String(sourceMaxChars===undefined?{}:{maxLength:sourceMaxChars}) }, { additionalProperties: false })
-      : kind === 'world' ? worldSchema(speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars) : Type.Object({ claim: Type.String(), basis: Type.String(), operation: Type.String(),
+      : kind === 'world' ? worldSchema(speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds) : Type.Object({ claim: Type.String(), basis: Type.String(), operation: Type.String(),
         objects: Type.Array(Type.Object({ id: Type.String(), meaning: Type.String() }, { additionalProperties: false })),
         uncertainty: Type.String() }, { additionalProperties: false }),
     constrainedSampling: { type: 'json_schema', strict },
@@ -208,15 +215,27 @@ function validateWorld(args: unknown, speechAnchors=false,retainedParameters=fal
     ...parameters,...progressive,...(speechAnchors?{speechAnchor:null}:{})};
   return {action:'edit',source:'',changes:effectiveChanges,remove,...parameters,...progressive,...anchor};
 }
-export function validateSubmission(kind: Kind, args: unknown, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number): Submission {
+export function validateSubmission(kind: Kind, args: unknown, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number,existingEntityIds?:readonly string[]): Submission {
   checkSourceBudget(kind,sourceMaxChars);
+  checkExistingIds(kind,existingEntityIds);
   const suppliedSource=sourceMaxChars!==undefined&&args&&typeof args==='object'?Object.getOwnPropertyDescriptor(args,'source')?.value:undefined;
   if(typeof suppliedSource==='string'&&Array.from(suppliedSource).length>sourceMaxChars!)throw new Error('Submission source exceeds requested character budget');
   if(speechAnchors&&kind!=='world')throw new Error('Speech anchors require world submissions');
   if(retainedParameters&&kind!=='world')throw new Error('Retained parameters require world submissions');
   if(progressiveWorld&&kind!=='world')throw new Error('Progressive operations require world submissions');
   if (kind === 'scene') return { source: boundedString(closed(args, ['source']).source, 256000) };
-  if (kind === 'world') return validateWorld(args,speechAnchors,retainedParameters,progressiveWorld);
+  if (kind === 'world') {
+    const result=validateWorld(args,speechAnchors,retainedParameters,progressiveWorld);
+    if(existingEntityIds!==undefined){
+      // validateWorld has checked the complete raw record, including no-ops.
+      // Check original targets before normalization can discard unchanged IDs.
+      const raw=args as {action:string;changes:{id:string}[];remove:string[];motionChanges?:{id:string}[]};
+      const targets=raw.action==='edit'?[...raw.changes.map(change=>change.id),...raw.remove]:raw.action==='motion'?raw.motionChanges!.map(change=>change.id):[];
+      const allowed=new Set(existingEntityIds);
+      if(targets.some(id=>!allowed.has(id)))throw new Error('Unknown existing entity target');
+    }
+    return result;
+  }
   const item = closed(args, ['claim', 'basis', 'operation', 'objects', 'uncertainty']);
   if (!Array.isArray(item.objects) || item.objects.length > 64) throw new Error('Invalid brief objects');
   const ids = new Set<string>();
@@ -232,7 +251,7 @@ export function validateSubmission(kind: Kind, args: unknown, speechAnchors=fals
 }
 
 /** toolcall_end arguments are authoritative, but incomplete/failed provider output is never accepted. */
-export function acceptSubmission(kind: Kind, completed: ToolCall[], terminal: ToolCall[], providerComplete: boolean, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number): Submission {
+export function acceptSubmission(kind: Kind, completed: ToolCall[], terminal: ToolCall[], providerComplete: boolean, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number,existingEntityIds?:readonly string[]): Submission {
   if (!providerComplete || completed.length !== 1 || terminal.length !== 1) throw new Error('Expected one successful completed tool call');
   const call = completed[0], final = terminal[0];
   if (call.name !== nameFor(kind) || final.name !== call.name || !call.id || call.id !== final.id) throw new Error('Tool call identity mismatch');
@@ -240,15 +259,15 @@ export function acceptSubmission(kind: Kind, completed: ToolCall[], terminal: To
     worldData(call.arguments);worldData(final.arguments);
     if(JSON.stringify(call.arguments)!==JSON.stringify(final.arguments))throw new Error('World wire arguments mismatch');
   }
-  const result = validateSubmission(kind, call.arguments,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars);
-  if (JSON.stringify(result) !== JSON.stringify(validateSubmission(kind, final.arguments,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars))) throw new Error('Tool call arguments mismatch');
+  const result = validateSubmission(kind, call.arguments,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds);
+  if (JSON.stringify(result) !== JSON.stringify(validateSubmission(kind, final.arguments,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds))) throw new Error('Tool call arguments mismatch');
   return result;
 }
 
 export function submissionTrace() {
   return { commentary: '', completed: [] as ToolCall[], toolCallCompleteMs: null as number | null, validToolCallCompleteMs: null as number | null };
 }
-export function observeSubmission(trace: ReturnType<typeof submissionTrace>, kind: Kind, event: AssistantMessageEvent, elapsedMs: number, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number) {
+export function observeSubmission(trace: ReturnType<typeof submissionTrace>, kind: Kind, event: AssistantMessageEvent, elapsedMs: number, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number,existingEntityIds?:readonly string[]) {
   if (event.type === 'text_delta') trace.commentary += event.delta;
   if (event.type === 'toolcall_end') {
     // Snapshot authoritative parsed arguments, never partial JSON or text commentary.
@@ -256,21 +275,21 @@ export function observeSubmission(trace: ReturnType<typeof submissionTrace>, kin
     trace.toolCallCompleteMs ??= elapsedMs;
     try {
       if (event.toolCall.name !== nameFor(kind)) throw new Error('Wrong submission tool');
-      validateSubmission(kind, event.toolCall.arguments,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars);
+      validateSubmission(kind, event.toolCall.arguments,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds);
       trace.validToolCallCompleteMs ??= elapsedMs;
     } catch { /* Retain invalid call evidence; acceptance rejects it. */ }
   }
 }
 
 /** Inspect only the known tool schema and options; never log messages, headers, keys or the full payload. */
-export function preparePayload(payload: unknown, kind: Kind, strict: Strict, tier: string, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number) {
+export function preparePayload(payload: unknown, kind: Kind, strict: Strict, tier: string, speechAnchors=false,retainedParameters=false,progressiveWorld=false,sourceMaxChars?:number,existingEntityIds?:readonly string[]) {
   if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw new AgentError('CONFIG', 'Invalid adapter payload.');
   const data = payload as Record<string, any>;
   const tools = data.tools;
   if (data.service_tier !== tier || data.tool_choice !== 'required' || !Array.isArray(tools) || tools.length !== 1
     || tools[0].type !== 'function' || tools[0].name !== nameFor(kind)
     || strict === 'require' && tools[0].strict !== true) throw new AgentError('CONFIG', 'Adapter did not forward required tool settings.');
-  const expected = submissionTool(kind, strict,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars).parameters;
+  const expected = submissionTool(kind, strict,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds).parameters;
   if (JSON.stringify(tools[0].parameters) !== JSON.stringify(expected)) throw new AgentError('CONFIG', 'Adapter changed the requested schema.');
   const outgoing = { ...data, parallel_tool_calls: false };
   const metadata = { toolChoice: data.tool_choice as string, parallelToolCalls: false,
@@ -307,6 +326,8 @@ export interface ProbeRunOptions {
   progressiveWorld?: boolean;
   /** Optional per-request source length cap (Unicode code points); existing byte limits still apply. */
   sourceMaxChars?: number;
+  /** Optional authoring inventory for edit/remove/motion targets; host authorization is unchanged. */
+  existingEntityIds?: readonly string[];
   /** Preserve a frozen experiment's supplied system prompt; strict tool validation still applies. */
   exactSystemPrompt?: boolean;
   /** Reuse or inject the existing provider runtime without changing request settings. */
@@ -330,6 +351,8 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   const flags = argumentsFor(args.slice(1));
   const kind = (flags.kind ?? 'scene') as Kind, strict = (flags.strict ?? 'require') as Strict;
   const sourceMaxChars=options.sourceMaxChars;checkSourceBudget(kind,sourceMaxChars);
+  checkExistingIds(kind,options.existingEntityIds);
+  const existingEntityIds=options.existingEntityIds===undefined?undefined:[...options.existingEntityIds];
   const speechAnchors=options.speechAnchors??false;
   if(typeof speechAnchors!=='boolean'||speechAnchors&&kind!=='world')throw new AgentError('CONFIG','Speech anchors require world submissions.');
   const retainedParameters=options.retainedParameters??false;
@@ -368,7 +391,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
     images.push({ type: 'image', data: bytes.toString('base64'), mimeType });
     imageMetadata = { path, sha256: hash(bytes), bytes: bytes.length, mimeType };
   }
-  const tool = submissionTool(kind, strict,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars);
+  const tool = submissionTool(kind, strict,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds);
   const sourceHashes = Object.fromEntries(await Promise.all([
     ['probe', import.meta.url], ['prompts', new URL('./realtime-probe/prompts.ts', import.meta.url).href],
     ['auth', new URL('../src/agents/auth.ts', import.meta.url).href], ['config', new URL('../src/agents/config.ts', import.meta.url).href],
@@ -383,6 +406,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
     ...(progressiveWorld?{progressiveWorld:true}:{}),
     ...(exactSystemPrompt?{exactSystemPrompt:true}:{}),
     ...(sourceMaxChars===undefined?{}:{sourceMaxChars}),
+    ...(existingEntityIds===undefined?{}:{existingEntityIds}),
     format: kind === 'scene' ? 'native-js' : kind === 'world' ? 'world-operation' : 'causal-brief', model: config.model, provider: config.provider, authMode: config.authMode,
     thinkingRequested: config.thinking, serviceTierRequested: flags['service-tier'], strictRequested: strict,
     maxTokensRequested: maxTokens, timeoutMs, maxRetries: 0, transportRequested: 'sse', systemPromptOverridden: !!flags['system-file'],
@@ -418,7 +442,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
       ...(config.thinking === 'off' ? {} : { reasoningEffort: config.thinking }),
       maxTokens, timeoutMs, maxRetries: 0, signal: requestSignal, transport: 'sse',
       onPayload(payload) {
-        const prepared = preparePayload(payload, kind, strict, flags['service-tier'],speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars);
+        const prepared = preparePayload(payload, kind, strict, flags['service-tier'],speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds);
         payloadMetadata = prepared.metadata;
         return prepared.payload;
       },
@@ -440,7 +464,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
       requestSignal.throwIfAborted();
       const elapsedMs = performance.now() - requestStart;
       events.push({ type: event.type, elapsedMs, ...('delta' in event && typeof event.delta === 'string' ? { chars: event.delta.length } : {}) });
-      observeSubmission(trace, kind, event, elapsedMs,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars);
+      observeSubmission(trace, kind, event, elapsedMs,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds);
       if (event.type === 'done' || event.type === 'error') {
         providerTerminalMs = elapsedMs;
         final = event.type === 'done' ? event.message : event.error;
@@ -453,7 +477,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   } catch (error) { providerComplete = false; failure = safeFailure(error); }
   const { commentary, completed, toolCallCompleteMs, validToolCallCompleteMs } = trace;
   try {
-    accepted = acceptSubmission(kind, completed, final?.content.filter((part): part is ToolCall => part.type === 'toolCall') ?? [], providerComplete,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars);
+    accepted = acceptSubmission(kind, completed, final?.content.filter((part): part is ToolCall => part.type === 'toolCall') ?? [], providerComplete,speechAnchors,retainedParameters,progressiveWorld,sourceMaxChars,existingEntityIds);
   } catch { submissionFailure = 'Expected exactly one schema-valid completed submission matching a successful terminal response.'; }
   const status = accepted ? 'complete' : 'failed';
   const acceptedText = accepted === null ? null : kind === 'scene' && 'source' in accepted ? accepted.source : JSON.stringify(accepted, null, 2);
