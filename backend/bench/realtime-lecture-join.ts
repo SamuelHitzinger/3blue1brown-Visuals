@@ -194,11 +194,16 @@ export async function main(){
       const prefix='../../../shared/animlib/src/';if(source.startsWith(prefix))return join(repo,'shared/animlib/dist',source.slice(prefix.length));
     }},{name:'lecture-join-api',configureServer(vite){vite.middlewares.use(async(req,res,next)=>{
       const url=new URL(req.url??'/',origin),route=url.pathname;
-      if(!['/clock','/start','/events','/generate','/cancel','/receipt','/stop','/frame.jpg','/lecture-assets','/lecture-assets/file','/lecture-assets/register'].includes(route))return next();
+      if(!['/clock','/start','/events','/generate','/cancel','/receipt','/stop','/frame.jpg','/lecture-assets','/lecture-assets/file','/lecture-assets/parts','/lecture-assets/register'].includes(route))return next();
       res.setHeader('Cache-Control','no-store');
       const json=(value:unknown,status=200)=>{if(res.destroyed)return;if(res.headersSent){res.end();return;}res.statusCode=status;res.setHeader('Content-Type','application/json');res.end(JSON.stringify(value));};
       try{
         if(route==='/lecture-assets'&&req.method==='GET'){json(assets.manifest());return;}
+        if(route==='/lecture-assets/parts'&&req.method==='GET'){
+          const number=(name:string)=>url.searchParams.has(name)?Number(url.searchParams.get(name)):undefined;
+          json(assets.parts({assetId:url.searchParams.get('assetId')??'',query:url.searchParams.get('query')??'',
+            offset:number('offset'),limit:number('limit')}));return;
+        }
         if(route==='/lecture-assets/file'&&req.method==='GET'){
           const bytes=assets.file(url.searchParams.get('assetId')??'');check(bytes,'Unknown indexed model');
           res.setHeader('Content-Type','model/gltf-binary');res.setHeader('Content-Length',bytes.length);res.end(bytes);return;

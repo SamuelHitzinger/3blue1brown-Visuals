@@ -74,6 +74,69 @@ test('explicit selection rejects unknown, duplicate, too many and unsupported so
   expect((await createLectureAssetSession(index,{ids:[]})).manifest().assets).toEqual({});
 }));
 
+test('frozen part lookup pages every exact ID and prioritizes late matches without changing identity',()=>fixture(async f=>{
+  const published=await f.store.publish(await triangle('component',40),{source:'complex assembly'}),index=await f.index();
+  const session=await createLectureAssetSession(index),before=session.manifest(),reads=index.metrics().metadataReads;
+  const collected=[];
+  for(let offset=0;;){
+    const page=session.parts({assetId:published.id,offset,limit:13});
+    expect(page.inventoryId).toBe(before.inventoryId);expect(page.total).toBe(40);
+    collected.push(...page.parts);if(page.nextOffset===null)break;offset=page.nextOffset;
+  }
+  expect(collected).toEqual(published.asset.metadata.parts.map(({id,name})=>({id,name})));
+  const result=session.parts({assetId:published.id,query:'component-39',limit:1});
+  expect(result.parts).toEqual([collected[39]]);
+  const candidates=session.candidates('component-39');
+  expect(candidates.assets[0].namedParts[0]).toEqual(collected[39]);
+  expect(candidates.assets[0].namedParts).toHaveLength(24);expect(candidates.assets[0].omittedParts).toBe(16);
+  result.parts[0].name='corrupt';expect(session.parts({assetId:published.id,query:collected[39].id,limit:1}).parts[0]).toEqual(collected[39]);
+  await writeFile(publicationRecord(index,published).assetPath,'changed after freeze');
+  expect(session.parts({assetId:published.id,offset:39}).parts).toEqual([collected[39]]);
+  expect(session.manifest()).toEqual(before);expect(index.metrics().metadataReads).toBe(reads);
+  expect(session.parts({assetId:published.id,query:'zzunmatched'}).parts).toEqual([]);
+  expect(session.parts({assetId:published.id,offset:256}).nextOffset).toBeNull();
+  for(const request of [{assetId:'../unknown'},{assetId:published.id,query:'x'.repeat(241)},
+    {assetId:published.id,offset:-1},{assetId:published.id,offset:257},{assetId:published.id,limit:0},
+    {assetId:published.id,limit:21},{assetId:published.id,offset:0.5}])expect(()=>session.parts(request)).toThrow();
+}));
+
+test('part pages preserve duplicate names, bound encoded bytes, and continue without losing IDs',()=>fixture(async f=>{
+  const io=new WebIO().registerExtensions([KHRMaterialsUnlit]),doc=await io.readBinary(await triangle('part',40));
+  for(const node of doc.getRoot().listNodes())node.setName('\u0001'.repeat(250));
+  const published=await f.store.publish(new Uint8Array(await io.writeBinary(doc))),session=await createLectureAssetSession(await f.index());
+  const ids:string[]=[];
+  for(let offset=0;;){
+    const page=session.parts({assetId:published.id,offset,limit:20});
+    expect(Buffer.byteLength(JSON.stringify(page),'utf8')).toBeLessThanOrEqual(16000);
+    expect(page.parts.length).toBeGreaterThan(0);expect(page.parts.length).toBeLessThan(20);
+    ids.push(...page.parts.map(part=>part.id));
+    for(const part of page.parts)expect(part.name).toBe('\u0001'.repeat(250));
+    if(page.nextOffset===null)break;expect(page.nextOffset).toBeGreaterThan(offset);offset=page.nextOffset;
+  }
+  expect(ids).toEqual(published.asset.metadata.parts.map(part=>part.id));
+  expect(new Set(ids).size).toBe(40);
+}));
+
+test('literal short and punctuation-bearing part names outrank token matches without merging duplicates',()=>fixture(async f=>{
+  const io=new WebIO().registerExtensions([KHRMaterialsUnlit]),doc=await io.readBinary(await triangle('part',40));
+  const names=Array.from({length:40},(_,i)=>i===38?'A':i===39?'In':i===37?'C-alpha':i===36?'A':'C alpha');
+  doc.getRoot().listNodes().forEach((node,i)=>node.setName(names[i]));
+  const published=await f.store.publish(new Uint8Array(await io.writeBinary(doc))),session=await createLectureAssetSession(await f.index());
+  for(const query of ['A','In','C-alpha']){
+    const expected=published.asset.metadata.parts.filter(part=>part.name===query).map(({id,name})=>({id,name}));
+    expect(session.parts({assetId:published.id,query}).parts.slice(0,expected.length)).toEqual(expected);
+    expect(session.candidates(query).assets[0].namedParts.slice(0,expected.length)).toEqual(expected);
+  }
+}));
+
+test('exact part IDs take precedence over another part named with the same ID',()=>fixture(async f=>{
+  const io=new WebIO().registerExtensions([KHRMaterialsUnlit]),doc=await io.readBinary(await triangle('part',40));
+  doc.getRoot().listNodes()[0].setName('node-39');
+  const published=await f.store.publish(new Uint8Array(await io.writeBinary(doc))),session=await createLectureAssetSession(await f.index());
+  const result=session.parts({assetId:published.id,query:'node-39'});
+  expect(result.parts[0].id).toBe('node-39');expect(result.parts[1]).toEqual({id:'node-0',name:'node-39'});
+}));
+
 test('default inventory contains at most four unique published static models',()=>fixture(async f=>{
   for(let i=0;i<6;i++)await f.store.publish(await triangle('triangle-'+i));
   const session=await createLectureAssetSession(await f.index());

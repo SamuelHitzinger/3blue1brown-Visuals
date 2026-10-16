@@ -6,7 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {createCatalogSearchIndex} from '../../src/visualization-catalog.js';
 import {ModelAssets} from '../../src/model-assets.js';
 import {loadAssetRegistry} from '../../../shared/animlib/tools/load-assets.mjs';
-import {canonicalAssetJSON} from '../../../shared/animlib/src/asset-validation.js';
+import {assetId,canonicalAssetJSON} from '../../../shared/animlib/src/asset-validation.js';
 import {validateModelMetadata} from '../../../shared/animlib/src/model-metadata.js';
 import type {AssetRegistry} from '../../../shared/animlib/src/asset-types.js';
 import type {ModelAsset,Bounds3D} from 'animlib/core';
@@ -21,13 +21,31 @@ export interface LocalAssetRecord {
   dimensions:{size:number[];bounds?:Bounds3D;units:string|null;source:'package-descriptor'|'published-metadata'|'gltf-mesh-local'|'image-manifest'}|null;
   parts:number|null;triangles:number|null;
   provenance:{source:string|null;sourceHash:string|null;creator:string|null;license:string|null;fidelity:string|null};
-  animation:{status:'none'|'present'|'unknown';clips:LocalAnimationClip[];inspection:'native-static-format'|'gltf-json'|'unavailable';reason?:string};
+  animation:{status:'none'|'present'|'unknown';clips:LocalAnimationClip[];inspection:'native-static-format'|'gltf-json'|'unavailable';reason?:string;omittedClips?:number};
   runtime:{liveWorld:boolean;route:'native-registry'|'published-models'|'needs-import-validation'|'data-only';clipPlayback:false};
   data?:{keys:string[]};limitations:string[];
 }
 export interface LocalAssetQuery {query?:string;kind?:LocalAssetRecord['kind'];format?:LocalAssetFormat;animated?:boolean;limit?:number;offset?:number}
 export interface LocalAssetIndexOptions {fixtureRoot?:string;modelDirectory?:string|null;dataRoots?:string[];maxFiles?:number;maxBytes?:number}
-type Internal={record:LocalAssetRecord;manifestDigest?:string;model?:ModelAsset;modelDirectory?:string;dependencies:{id:string;hash:string}[]};
+type Internal={record:LocalAssetRecord;manifestDigest?:string;model?:ModelAsset;modelDirectory?:string;dependencies:{id:string;hash:string}[];searchNames:string[];clips:Omit<LocalAnimationClip,'path'|'jsonPointer'>[];clipCount:number};
+const nameTokens=(value:string):string[]=>value.normalize('NFKD').replace(/\p{M}/gu,'').toLowerCase().match(/[\p{L}\p{N}]+/gu)??[];
+/** Preserve exact clip addresses while bounding each returned descriptor. Full
+ * names live only in the host index; selection still validates original bytes. */
+function projectedRecord(item:Internal,query=''):LocalAssetRecord{
+  const record=structuredClone(item.record);if(!item.clipCount)return record;
+  record.animation.clips=[];record.animation.omittedClips=item.clipCount;
+  const literal=query.trim(),tokens=nameTokens(literal),score=(name:string|null)=>literal&&name===literal?2:tokens.length&&tokens.every(token=>nameTokens(name??'').includes(token))?1:0;
+  const clips=[...item.clips].sort((a,b)=>score(b.name)-score(a.name)||a.index-b.index);
+  let bytes=Buffer.byteLength(JSON.stringify(record));
+  for(const clip of clips){
+    const full={...clip,path:record.assetPath,jsonPointer:`/animations/${clip.index}`},charge=Buffer.byteLength(JSON.stringify(full))+(record.animation.clips.length?1:0);
+    if(bytes+charge>28_000)continue;
+    record.animation.clips.push(full);bytes+=charge;
+  }
+  const omitted=item.clipCount-record.animation.clips.length;
+  if(omitted)record.animation.omittedClips=omitted;else delete record.animation.omittedClips;
+  return record;
+}
 const root=fileURLToPath(new URL('../../../shared/animlib/',import.meta.url));
 const hash=(bytes:string|Uint8Array)=>createHash('sha256').update(bytes).digest('hex');
 const text=(value:unknown):string|null=>typeof value==='string'&&value.length<=8192?value:null;
@@ -65,7 +83,12 @@ function meshBounds(json:any):Bounds3D|null{
 export async function createLocalAssetIndex(options:LocalAssetIndexOptions={}){
   const started=performance.now(),maxFiles=options.maxFiles??512,maxBytes=options.maxBytes??64*1024*1024;
   if(!Number.isSafeInteger(maxFiles)||maxFiles<1||maxFiles>2000||!Number.isSafeInteger(maxBytes)||maxBytes<1||maxBytes>128*1024*1024)throw Error('Invalid asset index limits');
-  const counters={metadataReads:0,bytesRead:0,queries:0,cacheHits:0,nativeLoads:0,publishedLoads:0};
+  const counters={metadataReads:0,bytesRead:0,queries:0,cacheHits:0,nativeLoads:0,publishedLoads:0,searchNames:0,searchMetadataBytes:0,omittedSearchNames:0,clipMetadataBytes:0,omittedClipDetails:0};
+  // Search terms stay host-only. Conservative accounting estimates copied
+  // strings/phrases/postings; these counters are not measured JS heap usage.
+  // Search names and compact clip details each have an aggregate budget below,
+  // independent of the existing source-read and returned-descriptor budgets.
+  const searchBudget=Math.min(maxBytes,8*1024*1024),namesPerRecord=1024;
   const issues:{path:string;reason:string}[]=[],files=new Map<string,{bytes:Buffer;json?:any}>(),entries=new Map<string,Internal>();
   const fixtureRoot=await realpath(resolve(options.fixtureRoot??join(root,'fixtures')));
   const modelDirectory=options.modelDirectory===null?null:resolve(options.modelDirectory??fileURLToPath(new URL('../../data/models/',import.meta.url)));
@@ -101,7 +124,8 @@ export async function createLocalAssetIndex(options:LocalAssetIndexOptions={}){
     animation:{status:'unknown',clips:[],inspection:'unavailable'},runtime:{liveWorld:false,route:'data-only',clipPlayback:false},limitations:[]});
   for(const [path,mode] of candidates){
     try{
-      const payload=await read(path,mode.published||extname(path)==='.glb'?32*1024*1024:1024*1024),record=base(path,payload.bytes),internal:Internal={record,dependencies:[]};
+      const payload=await read(path,mode.published||extname(path)==='.glb'?32*1024*1024:1024*1024),record=base(path,payload.bytes),internal:Internal={record,dependencies:[],searchNames:[],clips:[],clipCount:0};
+      let names:string[]=[];
       if(extname(path)==='.gltf'||extname(path)==='.glb'){
         record.kind='model';record.format=extname(path)==='.glb'?'source-glb':'source-gltf';record.manifestPath=null;record.runtime={liveWorld:false,route:'needs-import-validation',clipPlayback:false};
         try{const document=extname(path)==='.glb'?glbJSON(payload.bytes):JSON.parse(payload.bytes.toString('utf8'));record.animation=inspectGLTF(document,path);const bounds=meshBounds(document);if(bounds)record.dimensions=shape(bounds,null,'gltf-mesh-local');}
@@ -118,6 +142,7 @@ export async function createLocalAssetIndex(options:LocalAssetIndexOptions={}){
           record.assetId=`model-${asset.sha256}${asset.provenanceSha256?'-'+asset.provenanceSha256:''}`;record.title=text(scientific?.molecular?.title)??text(scientific?.fixtureId)??record.assetId;
           record.assetPath=modelPath;record.sha256=asset.sha256;record.bytes=binary.bytes.length;record.kind='model';record.format='published-glb';record.dimensions=shape(asset.metadata.bounds,text(scientific?.units),'published-metadata');
           record.parts=asset.metadata.parts.length;record.triangles=asset.metadata.triangles;record.provenance=provenance(scientific?.provenance??value.provenance);
+          names=asset.metadata.parts.flatMap(part=>[part.id,part.name]);
           try{record.animation=inspectGLTF(glbJSON(binary.bytes),modelPath);}catch(error){record.animation.reason=(error as Error).message;}
           record.runtime={liveWorld:record.animation.status==='none',route:'published-models',clipPlayback:false};record.limitations.push('LiveWorld requires host-supplied ModelStore.metadata, a model preparation hook and the renderer ModelStore. Clip, skin and morph-target playback are not supported.');
           internal.model=asset;internal.modelDirectory=dirname(path);internal.manifestDigest=hash(payload.bytes);
@@ -133,17 +158,44 @@ export async function createLocalAssetIndex(options:LocalAssetIndexOptions={}){
           else{
             if(!Array.isArray(value.parts)||value.parts.length>128)throw Error('Invalid native part inventory');record.parts=value.parts.length;record.triangles=value.parts.reduce((sum:number,part:any)=>sum+part.triangleCount,0);
             if(validBounds(descriptor?.bounds))record.dimensions=shape(descriptor.bounds,text(value.units),'package-descriptor');
-            for(const part of value.parts)if(part.imageTexture?.image)internal.dependencies.push(part.imageTexture.image);
+            // Native packages name parts by their validated IDs; there is no
+            // separate display-name field in the native manifest contract.
+            for(const part of value.parts){assetId(part.id);names.push(part.id);if(part.imageTexture?.image)internal.dependencies.push(part.imageTexture.image);}
           }
           record.limitations.push('Bounds come from existing preparation metadata; selected registry loading revalidates binary hashes and descriptor identity. Static geometry does not supply a motion clip.');
-        }else if(mode.data){record.provenance=provenance(value?.provenance);record.data={keys:value&&typeof value==='object'&&!Array.isArray(value)?Object.keys(value).slice(0,64):[]};record.limitations.push('Local JSON data, not an executable animation. No scientific or license claims are inferred when provenance is missing.');}
+        }else if(mode.data){record.provenance=provenance(value?.provenance);names=value&&typeof value==='object'&&!Array.isArray(value)?Object.keys(value):[];record.data={keys:names.slice(0,64)};record.limitations.push('Local JSON data, not an executable animation. No scientific or license claims are inferred when provenance is missing.');}
         else continue;
       }
+      names.push(...record.animation.clips.flatMap(clip=>clip.name===null?[]:[clip.name]));
+      let clipBytes=0;internal.clipCount=record.animation.clips.length;
+      for(const {name,index,durationSeconds} of record.animation.clips){
+        const charge=(name?.length??0)*2+256;
+        if(charge>searchBudget-counters.clipMetadataBytes-clipBytes)continue;
+        internal.clips.push({name,index,durationSeconds});clipBytes+=charge;
+      }
+      const omittedClips=internal.clipCount-internal.clips.length;
+      if(omittedClips)record.limitations.push(`Clip detail memory budget omitted ${omittedClips} clips; omitted metadata is unknown, not absent.`);
+      record.animation.clips=[];
+      let searchBytes=0,omitted=0;
+      for(const name of new Set(names)){
+        if(!name)continue;
+        if(internal.searchNames.length>=namesPerRecord){omitted++;continue;}
+        const normalized=name.normalize('NFKD').replace(/\p{M}/gu,''),tokens=normalized.match(/[\p{L}\p{N}]+/gu)??[];
+        const charge=name.length*2+normalized.length*8+tokens.length*256+256;
+        if(charge>searchBudget-counters.searchMetadataBytes-searchBytes){omitted++;continue;}
+        internal.searchNames.push(name);searchBytes+=charge;
+      }
+      if(omitted)record.limitations.push(`Search metadata omitted ${omitted} names under the per-record/aggregate memory budget; unindexed names are unknown, not absent.`);
       if(record.provenance.fidelity)record.limitations.push(record.provenance.fidelity);
-      if(Buffer.byteLength(JSON.stringify(record))>28_000)throw Error('Asset descriptor response too large');entries.set(record.id,internal);
+      const projected=projectedRecord(internal);if(Buffer.byteLength(JSON.stringify(projected))>28_000)throw Error('Asset descriptor response too large');internal.record=projected;entries.set(record.id,internal);
+      counters.searchNames+=internal.searchNames.length;counters.searchMetadataBytes+=searchBytes;counters.omittedSearchNames+=omitted;
+      counters.clipMetadataBytes+=clipBytes;counters.omittedClipDetails+=omittedClips;
     }catch(error){issues.push({path,reason:(error as Error).message});}
   }
-  const search=createCatalogSearchIndex([...entries.values()].map(({record:r}):CatalogEntry=>({id:r.id,title:r.title.slice(0,120),description:[r.assetId,r.provenance.source,r.provenance.fidelity].filter(Boolean).join(' ').slice(0,500),tier:'resource',domains:[r.kind,r.format],tags:[r.assetId,basename(dirname(r.assetPath))],aliases:[r.assetId],capabilities:[r.format,r.kind,...(r.animation.status==='present'?['animated']:[])],relatedIds:[],readiness:r.runtime.liveWorld?'ready':'reference',document:'resources/native-model-packages.md',provenance:r.provenance.source??'Local source; provenance not supplied',limitations:r.limitations})));
+  // Unlike the short description, names are independent fields: a late part or
+  // clip cannot disappear behind earlier text. These are private search aliases,
+  // not extra payload in returned records or additional playback capabilities.
+  const search=createCatalogSearchIndex([...entries.values()].map(({record:r,searchNames}):CatalogEntry=>({id:r.id,title:r.title.slice(0,120),description:[r.assetId,r.provenance.source,r.provenance.fidelity].filter(Boolean).join(' ').slice(0,500),tier:'resource',domains:[r.kind,r.format],tags:[r.assetId,basename(dirname(r.assetPath))],aliases:[r.assetId,...searchNames],capabilities:[r.format,r.kind,...(r.animation.status==='present'?['animated']:[])],relatedIds:[],readiness:r.runtime.liveWorld?'ready':'reference',document:'resources/native-model-packages.md',provenance:r.provenance.source??'Local source; provenance not supplied',limitations:r.limitations})));
   type QueryPage={entries:LocalAssetRecord[];total:number;offset:number;limit:number;nextOffset?:number};
   const cache=new Map<string,QueryPage>();const buildMs=performance.now()-started;
   const selected=(ids:string[])=>{
@@ -168,8 +220,14 @@ export async function createLocalAssetIndex(options:LocalAssetIndexOptions={}){
       counters.queries++;const key=JSON.stringify({query,kind,format,animated,offset,limit}),prior=cache.get(key);
       if(prior){counters.cacheHits++;cache.delete(key);cache.set(key,prior);return {...structuredClone(prior),metrics:{cacheHit:true,lookupMs:performance.now()-start}};}
       const capabilities=[kind,format,animated===true?'animated':undefined].filter((v):v is string=>!!v);const found:LocalAssetRecord[]=[];
-      for(let page=0,total=1;page<total;page+=20){const result=search.search({query,...(capabilities.length?{capabilities}:{}),offset:page,limit:20});total=result.total;for(const entry of result.entries){const item=entries.get(entry.id)!.record;if(animated!==false||item.animation.status==='none')found.push(item);}}
-      const response:QueryPage={entries:structuredClone(found.slice(offset,offset+limit)),total:found.length,offset,limit};
+      const seen=new Set<string>(),literal=query.trim();
+      // Literal IDs/names retain stopwords and punctuation. Exact duplicate
+      // names remain separate candidates; generic ranking follows unchanged.
+      const exactRank=(item:Internal)=>!literal?0:item.record.id===literal?3:item.record.assetId===literal?2:item.searchNames.includes(literal)?1:0;
+      const exact=[...entries.values()].filter(item=>exactRank(item)&&(!kind||item.record.kind===kind)&&(!format||item.record.format===format)&&(animated===undefined||item.record.animation.status===(animated?'present':'none'))).sort((a,b)=>exactRank(b)-exactRank(a));
+      for(const item of exact){found.push(item.record);seen.add(item.record.id);}
+      for(let page=0,total=1;page<total;page+=20){const result=search.search({query,...(capabilities.length?{capabilities}:{}),offset:page,limit:20});total=result.total;for(const entry of result.entries){const item=entries.get(entry.id)!.record;if(!seen.has(item.id)&&(animated!==false||item.animation.status==='none')){found.push(item);seen.add(item.id);}}}
+      const response:QueryPage={entries:found.slice(offset,offset+limit).map(record=>projectedRecord(entries.get(record.id)!,query)),total:found.length,offset,limit};
       while(Buffer.byteLength(JSON.stringify(response))>63_500&&response.entries.length>1)response.entries.pop();
       if(offset+response.entries.length<response.total)response.nextOffset=offset+response.entries.length;
       if(cache.size>=64)cache.delete(cache.keys().next().value!);cache.set(key,response);return {...structuredClone(response),metrics:{cacheHit:false,lookupMs:performance.now()-start}};

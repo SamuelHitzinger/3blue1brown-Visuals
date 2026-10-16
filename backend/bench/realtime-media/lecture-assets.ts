@@ -7,6 +7,7 @@ import type {ModelProvenance} from '../../src/model-assets.js';
 import type {BundledModelContext} from '../../src/bundled-models.js';
 import type {createLocalAssetIndex,LocalAssetRecord} from './asset-index.js';
 import {validateLectureModelInventory} from './inventory-sync.js';
+import {createCatalogSearchIndex,type CatalogSearchIndex} from '../../src/visualization-catalog.js';
 
 type LocalAssetIndex=Awaited<ReturnType<typeof createLocalAssetIndex>>;
 type ScientificProvenance=BundledModelContext['provenance'];
@@ -21,6 +22,8 @@ export interface LectureAssetDescriptor {
 }
 export interface LectureAssetManifest {inventoryId:string;revision:number;assets:Record<string,ModelAsset>}
 export interface LectureAssetCandidates {inventoryId:string;assets:LectureAssetDescriptor[];omittedAssets:number}
+export interface LecturePartQuery {assetId:string;query?:string;offset?:number;limit?:number}
+export interface LecturePartPage {inventoryId:string;assetId:string;parts:{id:string;name:string}[];total:number;offset:number;limit:number;nextOffset:number|null}
 const maximumAssets=4,maximumSessionAssets=64,maximumParts=24,maximumContextBytes=16000;
 const hash=(value:string|Uint8Array)=>createHash('sha256').update(value).digest('hex');
 const supported=(entry:LocalAssetRecord)=>entry.format==='published-glb'&&entry.animation.status==='none'&&entry.runtime.liveWorld;
@@ -44,8 +47,27 @@ function describeProvenance(value:ModelProvenance):Pick<LectureAssetDescriptor,'
 }
 
 type FrozenAsset={asset:ModelAsset;bytes:Buffer;descriptor:LectureAssetDescriptor;provenance:ModelProvenance;
-  index:LocalAssetIndex;recordId:string;identity:string};
+  index:LocalAssetIndex;recordId:string;identity:string;partSearch:CatalogSearchIndex};
 export interface LectureAssetAppendOptions {signal?:AbortSignal;beforeCommit?:()=>void}
+
+function matchingParts(entry:FrozenAsset,query:string):{id:string;name:string}[]{
+  if(!query.trim())return entry.asset.metadata.parts.map(({id,name})=>({id,name}));
+  // A chain can be named "A" or "In". Catalog stopwords and punctuation
+  // normalization must not erase literal identities or merge equal names.
+  const literal=query.trim(),parts=entry.asset.metadata.parts;
+  const matches=[...parts.filter(part=>part.id===literal),...parts.filter(part=>part.name===literal&&part.id!==literal)].map(({id,name})=>({id,name}));
+  const seen=new Set(matches.map(part=>part.id));
+  for(let offset=0,total=1;offset<total;offset+=20){
+    const page=entry.partSearch.search({query,offset,limit:20});total=page.total;
+    for(const {id,title} of page.entries)if(!seen.has(id)){seen.add(id);matches.push({id,name:title});}
+  }
+  return matches;
+}
+function candidateDescriptor(entry:FrozenAsset,query:string):LectureAssetDescriptor{
+  const matched=matchingParts(entry,query),seen=new Set(matched.map(part=>part.id));
+  const namedParts=[...matched,...entry.asset.metadata.parts.filter(part=>!seen.has(part.id)).map(({id,name})=>({id,name}))].slice(0,maximumParts);
+  return {...entry.descriptor,namedParts,omittedParts:entry.asset.metadata.parts.length-namedParts.length};
+}
 
 async function stageAssets(index:LocalAssetIndex,ids?:string[],signal?:AbortSignal){
   signal?.throwIfAborted();
@@ -89,8 +111,12 @@ async function stageAssets(index:LocalAssetIndex,ids?:string[],signal?:AbortSign
       counts:{parts:original.metadata.parts.length,triangles:original.metadata.triangles},namedParts,omittedParts:original.metadata.parts.length-namedParts.length,
       ...describeProvenance(provenance.get(record.assetId)!),limitations:[...record.limitations],clipPlayback:false};
     const completeProvenance=provenance.get(record.assetId)!;
+    // Full validated metadata is host-owned. The generic search index ranks exact
+    // IDs and names without adding the complete inventory to model prompts.
+    const partSearch=createCatalogSearchIndex(original.metadata.parts.map(({id,name})=>({id,title:name,description:'',
+      tier:'resource',domains:[],tags:[],aliases:[],capabilities:[],relatedIds:[],readiness:'ready',document:'',provenance:'',limitations:[]})));
     staged.set(record.assetId,{asset,bytes,descriptor,provenance:completeProvenance,index,recordId:record.id,
-      identity:hash(JSON.stringify({asset,descriptor,provenance:completeProvenance}))});
+      identity:hash(JSON.stringify({asset,descriptor,provenance:completeProvenance})),partSearch});
   }
   return staged;
 }
@@ -140,20 +166,34 @@ export async function createLectureAssetSession(index:LocalAssetIndex,options:{i
       return structuredClone(manifest);
     },
     file(assetId:string):Buffer|undefined{const bytes=entries.get(assetId)?.bytes;return bytes?Buffer.from(bytes):undefined;},
+    parts(input:LecturePartQuery):LecturePartPage{
+      if(!input||typeof input!=='object'||Array.isArray(input))throw Error('Invalid lecture part query');
+      const {assetId,query='',offset=0,limit=20}=input;
+      const entry=entries.get(assetId);
+      if(typeof assetId!=='string'||!entry)throw Error('Unknown registered model');
+      if(typeof query!=='string'||query.length>240||!Number.isInteger(offset)||offset<0||offset>256||!Number.isInteger(limit)||limit<1||limit>20)throw Error('Invalid lecture part query');
+      const all=matchingParts(entry,query);
+      const page:LecturePartPage={inventoryId:manifest.inventoryId,assetId,parts:all.slice(offset,offset+limit),total:all.length,offset,limit,nextOffset:null};
+      for(;;){
+        page.nextOffset=offset+page.parts.length<all.length?offset+page.parts.length:null;
+        if(Buffer.byteLength(JSON.stringify(page),'utf8')<=maximumContextBytes)return page;
+        page.parts.pop();if(!page.parts.length)throw Error('Lecture part exceeds response byte limit');
+      }
+    },
     candidates(query:string):LectureAssetCandidates{
       if(typeof query!=='string'||query.length>240)throw Error('Invalid lecture asset query');
       const start=performance.now();queries++;
       const result:LectureAssetCandidates={inventoryId:manifest.inventoryId,assets:[],omittedAssets:0};
       if(query.trim()){
         const matches:LectureAssetDescriptor[]=[];
-        const sources=new Map<LocalAssetIndex,Map<string,LectureAssetDescriptor>>();
+        const sources=new Map<LocalAssetIndex,Map<string,FrozenAsset>>();
         for(const entry of entries.values()){
           let descriptors=sources.get(entry.index);if(!descriptors){descriptors=new Map();sources.set(entry.index,descriptors);}
-          descriptors.set(entry.recordId,entry.descriptor);
+          descriptors.set(entry.recordId,entry);
         }
         for(const [source,descriptors] of sources)for(let offset=0,total=1;offset<total;){
           const page=source.query({query,format:'published-glb',animated:false,offset,limit:20});total=page.total;offset=page.nextOffset??total;
-          for(const record of page.entries){const descriptor=descriptors.get(record.id);if(descriptor)matches.push(descriptor);}
+          for(const record of page.entries){const entry=descriptors.get(record.id);if(entry)matches.push(candidateDescriptor(entry,query));}
         }
         result.omittedAssets=matches.length;
         for(const descriptor of matches){
