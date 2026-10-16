@@ -1,7 +1,7 @@
 import { type WorldPatch } from '../realtime-world/world.js';
-import { createAssetBackedWorld } from '../realtime-media/asset-world.js';
+import { createAssetBackedWorld,registerAssetBackedModels } from '../realtime-media/asset-world.js';
+import {validateLectureModelInventory,reconcileLectureModelInventory,type LectureModelInventory} from '../realtime-media/inventory-sync.js';
 import { ModelStore } from '../../../shared/animlib/src/model-store.js';
-import type { ModelAsset } from '../../../shared/animlib/src/model-types.js';
 import { MediaReplay, type AsrInput, type EvidencePacket, type LocalAsrTrial } from '../realtime-media/replay.js';
 import type { SourceClock } from '../realtime-media/events.js';
 import { CommittedContextJournal } from '../realtime-media/committed-context.js';
@@ -46,21 +46,16 @@ function stamp(): Stamp {
   return { browserAtMs, serverLowerMs: browserAtMs + clock.offsetLowerMs, serverUpperMs: browserAtMs + clock.offsetUpperMs };
 }
 const upperNow = () => stamp().serverUpperMs;
-async function loadModelInventory():Promise<{inventoryId:string;assets:Record<string,ModelAsset>}> {
+async function loadModelInventory():Promise<LectureModelInventory> {
   status.textContent = 'Loading indexed model inventory…';
   try {
     const response = await fetch('/lecture-assets', { cache: 'no-store', signal: AbortSignal.timeout(10000) });
     const value = await response.json();
-    if (!response.ok || !/^[a-f0-9]{64}$/.test(value.inventoryId) || !value.assets || typeof value.assets !== 'object'
-      || Array.isArray(value.assets) || Object.keys(value.assets).length > 4) throw new Error('Invalid indexed model inventory');
-    for (const [id,asset] of Object.entries(value.assets) as [string,ModelAsset][]) {
-      if (asset.kind !== 'model' || asset.url !== `/lecture-assets/file?assetId=${encodeURIComponent(id)}`
-        || !/^[a-f0-9]{64}$/.test(asset.sha256 ?? '')) throw new Error('Invalid indexed model route or hash');
-    }
-    return value;
+    if (!response.ok) throw new Error('Invalid indexed model inventory');
+    return validateLectureModelInventory(value);
   } catch (error) { status.textContent = `Asset initialization failed: ${message(error)}`; throw error; }
 }
-const modelInventory = await loadModelInventory();
+let modelInventory = await loadModelInventory();
 const models = new ModelStore(modelInventory.assets);
 // The world and the scheduler always use the same conservative mapped clock.
 const world = createAssetBackedWorld(models, { clock: () => upperNow() / 1000, prepare: async (scene, assets, signal) => {
@@ -209,6 +204,11 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
     if (!Number.isFinite(result.deadlineServerMs) || result.deadlineServerMs > attempt.deadline) throw new Error('Invalid operation deadline');
     attempt.deadline = result.deadlineServerMs;
     clearTimeout(timer); timer = setTimeout(expire, Math.max(0, attempt.deadline - upperNow()));
+    guard(current, attempt);
+    modelInventory = reconcileLectureModelInventory(modelInventory,result.modelInventory,additions=>{
+      const registered=registerAssetBackedModels(world,models,additions,{signal:attempt.controller.signal,beforeCommit:()=>guard(current,attempt)});
+      receipt(current,packet.planId,{type:'model-inventory-appended',...stamp(),...registered});
+    },()=>guard(current,attempt));
     guard(current, attempt);
     const submission = result.submission as Submission | null;
     const speechAnchor = result.resolvedSpeechAnchor as ResolvedOperationSpeechAnchor | null;

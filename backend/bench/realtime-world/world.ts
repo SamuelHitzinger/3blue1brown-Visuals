@@ -43,6 +43,13 @@ export interface WorldTransactionOptions {
   /** Synchronous evidence/deadline check immediately before publication. */
   beforeCommit?: () => void;
 }
+/** Host-only metadata append. Staging does not expose models to new programs. */
+export interface WorldModelRegistration {
+  revision: number;
+  added: string[];
+  assertCurrent(): void;
+  commit(): number;
+}
 type Property = keyof ReactiveProperties;
 type Override = { from: unknown; to: unknown; start: number; duration: number };
 type Program = { id: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean;
@@ -61,6 +68,7 @@ function json(value: unknown, depth=0): void {
   if(typeof value==='number'){check(Number.isFinite(value),'Input must be finite');return;}
   check(typeof value==='object'&&value!==null,'Input must contain JSON values');
   check(Array.isArray(value)||Object.getPrototypeOf(value)===Object.prototype||Object.getPrototypeOf(value)===null,'Input must contain plain data');
+  check(Object.getOwnPropertySymbols(value).length===0,'Unsafe input member');
   check(Object.keys(value).length<=20_000,'Input item limit exceeded');
   for(const [key,descriptor] of Object.entries(Object.getOwnPropertyDescriptors(value))){
     check(!['__proto__','prototype','constructor'].includes(key)&&!descriptor.get&&!descriptor.set,'Unsafe input member');
@@ -104,6 +112,7 @@ function beforeCommit(options:WorldTransactionOptions):void{
 
 export class LiveWorld {
   private version=0;
+  private inventoryVersion=0;
   private stopped=false;
   private programs=new Map<string,Program>();
   private pending=new Set<Candidate>();
@@ -135,6 +144,7 @@ export class LiveWorld {
     this.renderOptions={mode:'2d',end:'hold',orbit:false,background:this.palette.background,palette:this.palette};
   }
   get revision(){return this.version;}
+  get modelInventoryRevision(){return this.inventoryVersion;}
   get rendererOptions():CompiledScene['options']{return structuredClone(this.renderOptions);}
   private alive(){check(!this.stopped,'World disposed');}
   private fresh(revision:number){this.alive();check(Number.isSafeInteger(revision)&&revision===this.version,'Stale world revision');}
@@ -143,6 +153,25 @@ export class LiveWorld {
   private cancelOthers(except?:Candidate){for(const candidate of this.pending)if(candidate!==except)candidate.controller.abort(new Error('Stale world revision'));}
   private cleanup(program:Program){if(program.retired&&program.readers===0){delete program.terminalScene;program.compiler.dispose();}}
   private retire(program:Program){program.retired=true;this.cleanup(program);}
+
+  stageModelRegistration(additions:Record<string,ModelMetadata>):WorldModelRegistration{
+    this.alive();json(additions);
+    check(additions&&typeof additions==='object'&&!Array.isArray(additions),'Invalid model inventory');
+    const input=structuredClone(additions),next={...this.models},added:string[]=[];
+    for(const [key,metadata] of Object.entries(input)){
+      check(key.length>0&&key.length<=256,'Invalid model inventory ID');validateModelMetadata(metadata);
+      if(Object.hasOwn(next,key))check(JSON.stringify(next[key])===JSON.stringify(metadata),`Model inventory is immutable: ${key}`);
+      else{next[key]=metadata;added.push(key);}
+    }
+    check(Object.keys(next).length<=64,'World model inventory limit exceeded');
+    const revision=this.inventoryVersion;
+    const assertCurrent=()=>{this.alive();check(this.inventoryVersion===revision,'Stale model inventory revision');};
+    return {revision,added:[...added],assertCurrent,commit:()=>{
+      assertCurrent();
+      if(added.length){this.models=next;this.inventoryVersion++;}
+      return this.inventoryVersion;
+    }};
+  }
 
   private inspect(scene:CompiledScene):Set<string>{
     validateCompiledScene(scene,this.options.assets?.catalog);
@@ -168,14 +197,14 @@ export class LiveWorld {
     check(this.programs.size<this.maxPrograms&&this.pending.size<this.maxPending,'World program/pending limit exceeded');
     check(!this.programs.has(request.id)&&![...this.pending].some(candidate=>candidate.id===request.id),'Duplicate program ID');
     // Copy before awaiting: callers cannot change the submitted transaction.
-    const input=structuredClone(request);
+    const input=structuredClone(request),models=this.models;
     const candidate:Candidate={id:input.id,compiler:new SourceCompiler(),controller:new AbortController()};
     const cancel=()=>candidate.controller.abort(options.signal?.reason);
     options.signal?.addEventListener('abort',cancel,{once:true});
     this.pending.add(candidate);let published=false;
     try{
       // No previous frame: the sandbox cannot acquire or mutate existing IDs.
-      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models:this.models}));
+      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models}));
       this.fresh(input.baseRevision);candidate.controller.signal.throwIfAborted();this.inspect(scene);
       this.assetGeometry.prepare(scene);
       if(this.options.prepare)await aborted(candidate.controller.signal,this.options.prepare(scene,this.assetGeometry,candidate.controller.signal));

@@ -1,6 +1,7 @@
 import {expect,test} from 'bun:test';
 import {EventEmitter} from 'node:events';
-import {selectEvidence,generationDeadline,openEventStream,endEventStreams,watchDisconnect,cancelGeneration,requireAssetInventory,joinedSpeechEvidence,finalizeSpeechAnchor,type JoinedEvidence} from './realtime-lecture-join.js';
+import {selectEvidence,generationDeadline,openEventStream,endEventStreams,watchDisconnect,cancelGeneration,joinedSpeechEvidence,finalizeSpeechAnchor,type JoinedEvidence} from './realtime-lecture-join.js';
+import {requireKnownAssetInventory} from './realtime-media/lecture-asset-registration.js';
 
 const speech:JoinedEvidence={id:'chunk-0000',version:1,kind:'transcript',sourceId:'lecture',sourceStartMs:0,sourceEndMs:4000,
   sourceReadyAtMs:5000,availableAtMs:5300,text:'uncertain speech',trialRef:'local:trial'};
@@ -19,10 +20,10 @@ test('server ledger retains measured speech with exact evidence identity through
  expect(()=>joinedSpeechEvidence({...input,availableAtMs:4900})).toThrow('availability');
 });
 
-test('stale or missing browser asset inventory cannot start or generate against a different host snapshot',()=>{
- const current='a'.repeat(64);
- expect(()=>requireAssetInventory(current,current)).not.toThrow();
- for(const value of [undefined,null,'b'.repeat(64),{},''])expect(()=>requireAssetInventory(value,current)).toThrow('inventory');
+test('known earlier inventory can reconcile while unknown or missing inventories are rejected',()=>{
+ const earlier='a'.repeat(64),current='b'.repeat(64),session={knowsInventory:(id:string)=>[earlier,current].includes(id)};
+ for(const value of [earlier,current])expect(()=>requireKnownAssetInventory(value,session)).not.toThrow();
+ for(const value of [undefined,null,'c'.repeat(64),{},''])expect(()=>requireKnownAssetInventory(value,session)).toThrow('inventory');
 });
 
 test('only released exact evidence versions can enter a model request',()=>{

@@ -4,10 +4,13 @@ import {mkdtemp,mkdir,writeFile,rm} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {basename,join} from 'node:path';
 import {createModelGLB} from 'animlib/core';
+import {WebIO} from '@gltf-transform/core';
+import {KHRMaterialsUnlit} from '@gltf-transform/extensions';
 import {ModelAssets} from '../../src/model-assets.js';
 import type {BundledModelContext} from '../../src/bundled-models.js';
 import {createLocalAssetIndex} from './asset-index.js';
 import {createLectureAssetSession} from './lecture-assets.js';
+import {validateLectureModelInventory} from './inventory-sync.js';
 
 async function fixture(run:(value:{root:string;fixtures:string;store:ModelAssets;index:()=>ReturnType<typeof createLocalAssetIndex>})=>Promise<void>){
   const root=await mkdtemp(join(tmpdir(),'lecture-assets-')),fixtures=join(root,'fixtures');
@@ -158,4 +161,105 @@ test('named-part cap reports omitted parts and oversized scientific context is o
   const limited=await createLectureAssetSession(next,{ids:[selected.id]}),omitted=limited.candidates('protein');
   expect(omitted.assets).toEqual([]);expect(omitted.omittedAssets).toBe(1);
   expect(Buffer.byteLength(JSON.stringify(omitted),'utf8')).toBeLessThanOrEqual(16000);
+}));
+
+test('append admits later publications while preserving snapshots, old bytes and inventory ancestry',()=>fixture(async f=>{
+  const firstBytes=await triangle('first'),first=await f.store.publish(firstBytes,{source:'first model'});
+  const session=await createLectureAssetSession(await f.index()),before=session.manifest();
+  expect(before.revision).toBe(0);
+  const context=scientific(),bytes=await triangle('later'),later=await f.store.publish(bytes,{scientific:context}),next=await f.index();
+  const after=await session.append(next,[publicationRecord(next,later).id]);
+  expect(after.revision).toBe(1);expect(after.inventoryId).not.toBe(before.inventoryId);
+  expect(session.knowsInventory(before.inventoryId)).toBe(true);expect(session.knowsInventory(after.inventoryId)).toBe(true);
+  expect(session.knowsInventory('0'.repeat(64))).toBe(false);
+  expect(Object.keys(before.assets)).toEqual([first.id]);expect(Object.keys(after.assets).sort()).toEqual([first.id,later.id].sort());
+  expect(session.file(first.id)).toEqual(Buffer.from(firstBytes));expect(session.file(later.id)).toEqual(Buffer.from(bytes));
+  expect(session.file('unknown')).toBeUndefined();
+  expect(session.candidates('protein')).toMatchObject({inventoryId:after.inventoryId,assets:[{assetId:later.id,provenance:{scientific:context}}]});
+  expect(session.candidates('first model').assets.map(asset=>asset.assetId)).toContain(first.id);
+  expect(await session.append(next,[publicationRecord(next,later).id])).toEqual(after);
+  after.assets[later.id].metadata.parts[0].name='corrupt';expect(session.manifest().assets[later.id].metadata.parts[0].name).toBe('later');
+}));
+
+test('append rejects stale batches and cancellation before publishing any member',()=>fixture(async f=>{
+  const session=await createLectureAssetSession(await f.index(),{ids:[]}),before=session.manifest();
+  const good=await f.store.publish(await triangle('good')),bad=await f.store.publish(await triangle('bad')),next=await f.index();
+  const ids=[publicationRecord(next,good).id,publicationRecord(next,bad).id];
+  await writeFile(publicationRecord(next,bad).assetPath,'changed');
+  await expect(session.append(next,ids)).rejects.toThrow(/changed|hash/i);
+  expect(session.manifest()).toEqual(before);expect(session.file(good.id)).toBeUndefined();
+  const controller=new AbortController();
+  await expect(session.append(next,[ids[0]],{signal:controller.signal,beforeCommit:()=>controller.abort(Error('deadline'))})).rejects.toThrow(/deadline/);
+  expect(session.manifest()).toEqual(before);expect(session.candidates('good').assets).toEqual([]);
+  await expect(session.append(next,[ids[0]],{beforeCommit:()=>{throw Error('expired');}})).rejects.toThrow(/expired/);
+  expect(session.manifest()).toEqual(before);
+}));
+
+test('append rejects changed provenance under an existing runtime identity',()=>fixture(async f=>{
+  const bytes=await triangle(),first=await f.store.publish(bytes,{source:'original',license:'CC0-1.0'});
+  const session=await createLectureAssetSession(await f.index()),before=session.manifest();
+  const changed=await f.store.publish(bytes,{source:'changed'}),good=await f.store.publish(await triangle('good')),next=await f.index();
+  expect(changed.id).toBe(first.id);
+  await expect(session.append(next,[publicationRecord(next,good).id,publicationRecord(next,changed).id])).rejects.toThrow(/immutable|conflict/i);
+  expect(session.manifest()).toEqual(before);expect(session.file(good.id)).toBeUndefined();
+  expect(session.candidates('original').assets[0].provenance.source).toBe('original');
+}));
+
+test('concurrent appends merge against the latest inventory without losing either publication',()=>fixture(async f=>{
+  const session=await createLectureAssetSession(await f.index(),{ids:[]});
+  const a=await f.store.publish(await triangle('a'),{source:'alpha'}),b=await f.store.publish(await triangle('b'),{source:'beta'}),next=await f.index();
+  let release!:()=>void,entered!:()=>void;const gate=new Promise<void>(resolve=>{release=resolve;}),started=new Promise<void>(resolve=>{entered=resolve;});
+  // Real file validation/loading still runs; only one I/O completion is held to force the race.
+  const slow={...next,loadPublishedModels:async(ids:string[])=>{const result=await next.loadPublishedModels(ids);entered();await gate;return result;}};
+  const pending=session.append(slow,[publicationRecord(next,a).id]);await started;
+  const middle=await session.append(next,[publicationRecord(next,b).id]);release();const after=await pending;
+  expect(middle.revision).toBe(1);expect(after.revision).toBe(2);expect(session.knowsInventory(middle.inventoryId)).toBe(true);
+  expect(Object.keys(after.assets).sort()).toEqual([a.id,b.id].sort());
+  expect(session.candidates('alpha').assets[0].assetId).toBe(a.id);expect(session.candidates('beta').assets[0].assetId).toBe(b.id);
+}));
+
+test('append separates the four-item batch limit from the 64-asset lifetime limit',()=>fixture(async f=>{
+  const publications=[];for(let i=0;i<65;i++)publications.push(await f.store.publish(await triangle('asset-'+i),{source:'limit test'}));
+  const next=await f.index(),records=[];
+  for(let offset=0;offset<65;offset+=20)records.push(...next.query({format:'published-glb',offset,limit:20}).entries);
+  const session=await createLectureAssetSession(next,{ids:[]});
+  await expect(session.append(next,records.slice(0,5).map(record=>record.id))).rejects.toThrow(/four|4/i);
+  for(let offset=0;offset<64;offset+=4)await session.append(next,records.slice(offset,offset+4).map(record=>record.id));
+  const before=session.manifest();expect(Object.keys(before.assets)).toHaveLength(64);
+  await expect(session.append(next,[records[64].id])).rejects.toThrow(/64|limit/i);
+  expect(session.manifest()).toEqual(before);expect(session.file(records[64].assetId)).toBeUndefined();
+  expect(await session.append(next,[records[0].id])).toEqual(before);
+}));
+
+for(const budget of ['bytes','nodes'] as const)test(`append rejects cumulative browser ${budget} overflow before publishing its inventory`,()=>fixture(async f=>{
+  // Real static publications have individually valid, maximal part inventories.
+  // Long UTF-8 names hit the wire budget first; short names hit the node budget.
+  const count=budget==='bytes'?12:40;
+  for(let i=0;i<count;i++){
+    const io=new WebIO().registerExtensions([KHRMaterialsUnlit]);
+    const doc=await io.readBinary(await triangle((budget==='bytes'?'界'.repeat(245):'part')+i,128)),scene=doc.getRoot().getDefaultScene()!;
+    // Imported models support 256 nodes; the convenience generator is capped at 128.
+    for(const node of scene.listChildren())scene.addChild(doc.createNode(node.getName()).setMesh(node.getMesh()));
+    await f.store.publish(new Uint8Array(await io.writeBinary(doc)));
+  }
+  const next=await f.index(),records=[];
+  for(let offset=0;offset<count;offset+=20)records.push(...next.query({format:'published-glb',offset,limit:20}).entries);
+  const session=await createLectureAssetSession(next,{ids:[]});let failed=false;
+  for(const record of records){
+    const before=session.manifest();
+    expect(()=>validateLectureModelInventory(before)).not.toThrow();
+    const candidate=await createLectureAssetSession(next,{ids:[record.id]});
+    const combined={...before,revision:before.revision+1,assets:{...before.assets,...candidate.manifest().assets}};
+    let browserRejects=false;try{validateLectureModelInventory(combined);}catch{browserRejects=true;}
+    if(!browserRejects){await session.append(next,[record.id]);continue;}
+    // Independently identify which envelope limit the constructed real metadata hits.
+    const bytes=Buffer.byteLength(JSON.stringify(combined),'utf8');
+    expect(bytes>2*1024*1024).toBe(budget==='bytes');
+    let guardCalled=false;
+    await expect(session.append(next,[record.id],{beforeCommit:()=>{guardCalled=true;}})).rejects.toThrow(/inventory/i);
+    expect(guardCalled).toBe(false);
+    expect(session.manifest()).toEqual(before);expect(()=>validateLectureModelInventory(session.manifest())).not.toThrow();
+    expect(session.file(record.assetId)).toBeUndefined();failed=true;break;
+  }
+  expect(failed).toBe(true);
 }));

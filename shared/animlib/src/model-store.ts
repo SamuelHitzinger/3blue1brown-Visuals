@@ -5,6 +5,27 @@ import type { Asset, CompiledScene, Frame, Geometry } from './types.js';
 import type { ModelAsset, ModelMetadata } from './model-types.js';
 export type ResolvedModelGeometry = Geometry & { _model?: ModelPrimitive; _modelKey?: string };
 export interface DecodedModelImage { width: number; height: number; pixels: Uint8Array<ArrayBuffer> }
+
+// Inspect descriptors before reading values: neither validation nor cloning may
+// execute caller-owned getters. Undefined optional fields are valid typed input.
+function dataProperties(value: object): [string, PropertyDescriptor][] {
+  const prototype=Object.getPrototypeOf(value);
+  if(prototype!==null&&prototype!==(Array.isArray(value)?Array.prototype:Object.prototype))throw new Error('Model assets must contain plain data');
+  return Reflect.ownKeys(value).map(key=>{
+    if(typeof key!=='string'||key==='__proto__'||key==='constructor'||key==='prototype')throw new Error('Invalid model asset key');
+    const descriptor=Object.getOwnPropertyDescriptor(value,key)!;
+    if(!('value' in descriptor))throw new Error('Model assets must not contain accessors');
+    return [key,descriptor];
+  });
+}
+function validatePlainData(value: unknown, ancestors=new Set<object>()): void {
+  if(value===null||value===undefined||typeof value==='string'||typeof value==='boolean')return;
+  if(typeof value==='number'&&Number.isFinite(value))return;
+  if(typeof value!=='object'||ancestors.has(value))throw new Error('Model assets must contain acyclic plain data');
+  ancestors.add(value);
+  for(const [,descriptor] of dataProperties(value))validatePlainData(descriptor.value,ancestors);
+  ancestors.delete(value);
+}
 export class ModelStore {
   readonly metadata: Record<string,ModelMetadata> = Object.create(null);
   readonly images = new Map<ModelImage,DecodedModelImage>();
@@ -21,14 +42,25 @@ export class ModelStore {
   }) { this.register(assets); }
   register(assets:Record<string,Asset>):void {
     if(this.disposed)throw new Error('Model store is disposed');
-    const candidates=Object.entries(assets).filter((e):e is [string,ModelAsset]=>e[1].kind==='model');
-    for(const [id,a] of candidates) {
-      if(!id||id.length>256||!a.url||a.sha256!==undefined&&!/^[a-f0-9]{64}$/.test(a.sha256))throw new Error('Invalid model asset');
+    if(!assets||typeof assets!=='object'||Array.isArray(assets))throw new Error('Invalid model assets');
+    const candidates: [string,ModelAsset,ModelMetadata][]=[];
+    for(const [id,descriptor] of dataProperties(assets)) {
+      if(!descriptor.enumerable)continue;
+      const value=descriptor.value;
+      if(!value||typeof value!=='object')throw new Error('Invalid model asset');
+      const kind=Object.getOwnPropertyDescriptor(value,'kind');
+      if(kind&&!('value' in kind))throw new Error('Model assets must not contain accessors');
+      if(kind?.value!=='model')continue;
+      validatePlainData(value);
+      const a=structuredClone(value) as ModelAsset;
+      const hash=(h:unknown):boolean=>h===undefined||typeof h==='string'&&/^[a-f0-9]{64}$/.test(h);
+      if(!id||id.length>256||typeof a.url!=='string'||!a.url||!hash(a.sha256)||!hash(a.provenanceSha256))throw new Error('Invalid model asset');
       validateModelMetadata(a.metadata);
       const previous=this.assets.get(id);
-      if(previous && (previous.sha256 ? previous.sha256!==a.sha256 : previous.url!==a.url) || previous && JSON.stringify(previous.metadata)!==JSON.stringify(a.metadata))throw new Error(`Model asset is immutable: ${id}`);
+      if(previous&&((previous.sha256?previous.sha256!==a.sha256:previous.url!==a.url)||previous.provenanceSha256!==a.provenanceSha256||JSON.stringify(previous.metadata)!==JSON.stringify(a.metadata)))throw new Error(`Model asset is immutable: ${id}`);
+      candidates.push([id,a,structuredClone(a.metadata)]);
     }
-    for(const [id,a] of candidates) { this.assets.set(id,structuredClone(a));this.metadata[id]=structuredClone(a.metadata); }
+    for(const [id,a,metadata] of candidates) { this.assets.set(id,a);this.metadata[id]=metadata; }
   }
   private async load(id:string):Promise<ModelData> {
     const a=this.assets.get(id);if(!a)throw new Error(`Unknown model asset: ${id}`);
