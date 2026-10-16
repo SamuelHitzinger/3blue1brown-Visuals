@@ -21,7 +21,8 @@ type BriefSubmission = { claim: string; basis: string; operation: string; object
 type WorldChange = { id: string; props: Pick<WorldPatch['changes'][number]['props'], 'position' | 'rotation' | 'scale' | 'opacity' | 'fill'>; duration: number };
 /** Normalized native properties: required wire nulls are omitted here, never interpreted as values. */
 export type WorldSubmission = { action: 'add'; source: string; changes: []; remove: [] }
-  | { action: 'edit'; source: ''; changes: WorldChange[]; remove: string[] };
+  | { action: 'edit'; source: ''; changes: WorldChange[]; remove: string[] }
+  | { action: 'defer'; reason: string; source: ''; changes: []; remove: [] };
 type Submission = SceneSubmission | BriefSubmission | WorldSubmission;
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const save = (path: string, value: unknown) => writeFile(path, JSON.stringify(value, null, 2), { flag: 'wx' });
@@ -34,7 +35,7 @@ function worldSchema() {
   const vector = Type.Unsafe({ type: ['array','null'], items: {type:'number',minimum:-1e6,maximum:1e6}, minItems:3, maxItems:3 });
   const scalar = (max: number) => Type.Unsafe({ type:['number','null'], minimum:0, maximum:max });
   return Type.Object({
-    action: Type.String({enum:['add','edit']}), source: Type.String({maxLength:WORLD_LIMITS.sourceBytes}),
+    action: Type.String({enum:['add','edit','defer']}), reason: Type.String({maxLength:512}), source: Type.String({maxLength:WORLD_LIMITS.sourceBytes}),
     changes: Type.Array(Type.Object({ id, props: Type.Object({
       position:vector, rotation:vector, scale:scalar(1e6), opacity:scalar(1),
       fill:Type.Unsafe({type:['string','null'],enum:[...Object.values(Color),null]}),
@@ -47,7 +48,7 @@ export function submissionTool(kind: Kind, strict: Strict = 'require'): Tool {
   return {
     name: nameFor(kind),
     description: kind === 'scene' ? 'Submit the complete native scene source exactly once.' : kind === 'world'
-      ? 'Submit exactly one operation: add native source with empty changes/remove, or edit native properties with empty source. Null properties mean unchanged. Never combine add and edit.'
+      ? 'Submit exactly one branch: add native source with empty changes/remove, edit native properties with empty source, or defer with a specific evidence-grounded reason when evidence is insufficient. Defer requires empty source/changes/remove; add/edit require empty reason. Null properties mean unchanged. Never combine branches.'
       : 'Submit one source-grounded causal visual brief, identifying uncertainty explicitly.',
     parameters: kind === 'scene'
       ? Type.Object({ source: Type.String() }, { additionalProperties: false })
@@ -84,8 +85,13 @@ function worldData(value: unknown, depth = 0): void {
 function validateWorld(args: unknown): WorldSubmission {
   worldData(args);
   if(JSON.stringify(args).length>WORLD_LIMITS.patchBytes)throw new Error('World submission size limit exceeded');
-  const item=closed(args,['action','source','changes','remove']);
+  const item=closed(args,['action','reason','source','changes','remove']);
   if(!Array.isArray(item.changes)||item.changes.length>WORLD_LIMITS.changes||!Array.isArray(item.remove)||item.remove.length>WORLD_LIMITS.changes)throw new Error('World change/removal limit exceeded');
+  if(item.action==='defer'){
+    if(item.source!==''||item.changes.length||item.remove.length)throw new Error('Cannot combine deferral and world operation');
+    return {action:'defer',reason:boundedString(item.reason,512),source:'',changes:[],remove:[]};
+  }
+  if(item.reason!=='')throw new Error('World operations require empty reason');
   if(item.action==='add'){
     if(item.changes.length||item.remove.length)throw new Error('Cannot combine add and edit');
     return {action:'add',source:boundedString(item.source,WORLD_LIMITS.sourceBytes),changes:[],remove:[]};
@@ -234,7 +240,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
     : { systemPrompt: 'Read the supplied evidence and produce a compact causal visual brief. Ground claims and objects in the evidence IDs provided in the prompt. State uncertainty; do not invent unreadable details.', prompt: '' };
   if (flags['prompt-file']) prompts.prompt = await promptFile(flags['prompt-file']);
   if (flags['system-file']) prompts.systemPrompt = await promptFile(flags['system-file']);
-  prompts.systemPrompt += `\n\nSubmission contract: call ${nameFor(kind)} exactly once with the complete ${kind === 'scene' ? 'native scene source in its source field' : kind === 'world' ? 'world operation in the specified fields: add uses native source and empty changes/remove; edit uses empty source and existing stable IDs, nullable unchanged properties, and explicit durations' : 'causal brief in the specified fields'}. Do not put the submission in prose or a code fence. This is a single request; tools will not execute and no repair turn follows.`;
+  prompts.systemPrompt += `\n\nSubmission contract: call ${nameFor(kind)} exactly once with the complete ${kind === 'scene' ? 'native scene source in its source field' : kind === 'world' ? 'world branch in the specified fields: add uses native source and empty changes/remove; edit uses empty source and existing stable IDs, nullable unchanged properties, and explicit durations; add/edit require empty reason. If evidence is insufficient or ambiguous, defer with a specific evidence-grounded reason (at most 512 UTF-8 bytes) and empty source/changes/remove. Never fabricate a scene or edit to fill missing evidence' : 'causal brief in the specified fields'}. Do not put the submission in prose or a code fence. This is a single request; tools will not execute and no repair turn follows.`;
   const images: ImageContent[] = [];
   let imageMetadata: { path: string; sha256: string; bytes: number; mimeType: string } | null = null;
   if (flags.image) {

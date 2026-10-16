@@ -69,6 +69,11 @@ test('real Pi conversion sends strict closed JSON schema and a forced single too
     expect(prepared.metadata.tools[0].strict).toBe(true);
     expect(prepared.metadata.tools[0].parameters.additionalProperties).toBe(false);
     expect(prepared.metadata.tools[0].parameters.required).toContain(kind === 'scene' ? 'source' : kind === 'world' ? 'action' : 'claim');
+    if (kind === 'world') {
+      expect(prepared.metadata.tools[0].parameters.required).toContain('reason');
+      expect(prepared.metadata.tools[0].parameters.properties.action.enum).toEqual(['add','edit','defer']);
+      expect(prepared.metadata.tools[0].parameters.properties.reason.maxLength).toBe(512);
+    }
     expect(JSON.stringify(prepared.metadata)).not.toContain('private prompt');
     expect(() => preparePayload({ ...prepared.payload, service_tier: 'default' }, kind, 'require', 'priority')).toThrow();
     expect(() => preparePayload({ ...prepared.payload, tool_choice: 'auto' }, kind, 'require', 'priority')).toThrow();
@@ -146,17 +151,19 @@ test('library pre-abort writes failed evidence without dispatch, stdout or exit-
 });
 
 const worldSource = 'export default scene({end:"hold",orbit:false},s=>{s.circle("dot",{radius:.2,fill:"BLUE"});s.circle("old",{radius:.1});s.wait(8)});';
-const addWorld = { action: 'add' as const, source: worldSource, changes: [], remove: [] };
+const addWorld = { action: 'add' as const, reason: '', source: worldSource, changes: [], remove: [] };
 const propsWire = (props: Record<string, unknown> = {}) => ({ position: null, rotation: null, scale: null, opacity: null, fill: null, ...props });
-const editWorld = { action: 'edit' as const, source: '', changes: [{ id: 'dot', props: propsWire({ position: [2,0,0], fill: 'TEAL' }), duration: 2 }], remove: ['old'] };
+const editWorld = { action: 'edit' as const, reason: '', source: '', changes: [{ id: 'dot', props: propsWire({ position: [2,0,0], fill: 'TEAL' }), duration: 2 }], remove: ['old'] };
+const deferWorld = { action: 'defer' as const, reason: 'Evidence e1 does not identify what moved or its destination.', source: '', changes: [], remove: [] };
 
 test('world validates one branch and normalizes only nullable native patch fields', () => {
-  expect(validateSubmission('world', addWorld)).toEqual(addWorld);
+  const {reason: _reason, ...normalizedAdd} = addWorld;
+  expect(validateSubmission('world', addWorld)).toEqual(normalizedAdd);
   expect(validateSubmission('world', editWorld)).toEqual({ action: 'edit', source: '',
     changes: [{ id: 'dot', props: { position: [2,0,0], fill: 'TEAL' }, duration: 2 }], remove: ['old'] });
   const worldCall = { ...call, name: 'submit_world', arguments: editWorld as ToolCall['arguments'] };
   expect(acceptSubmission('world', [worldCall], [worldCall], true)).toEqual(validateSubmission('world', editWorld));
-  const reordered = { ...worldCall, arguments: { source: '', action: 'edit', changes: editWorld.changes, remove: ['old'] } as ToolCall['arguments'] };
+  const reordered = { ...worldCall, arguments: { source: '', action: 'edit', reason: '', changes: editWorld.changes, remove: ['old'] } as ToolCall['arguments'] };
   expect(() => acceptSubmission('world', [worldCall], [reordered], true)).toThrow();
 });
 
@@ -177,7 +184,51 @@ test('world rejects branch mixing, unsupported properties, malformed bounds and 
     {...editWorld,changes:[{id:'dot',props:{position:[0,0,0]},duration:0}]},
     JSON.parse('{"action":"edit","source":"","changes":[],"remove":["old"],"__proto__":{}}'),
   ]) expect(() => validateSubmission('world', invalid)).toThrow();
-  expect(validateSubmission('world', {action:'edit',source:'',changes:[],remove:['old']})).toEqual({action:'edit',source:'',changes:[],remove:['old']});
+  expect(validateSubmission('world', {action:'edit',reason:'',source:'',changes:[],remove:['old']})).toEqual({action:'edit',source:'',changes:[],remove:['old']});
+});
+
+test('world deferral requires a bounded evidence reason, empty operation and exact terminal agreement', () => {
+  expect(validateSubmission('world', deferWorld)).toEqual(deferWorld);
+  const boundaryReason = {...deferWorld,reason:'é'.repeat(256)};
+  expect(validateSubmission('world', boundaryReason)).toEqual(boundaryReason);
+  for (const invalid of [
+    {...deferWorld,reason:''}, {...deferWorld,reason:'  '}, {...deferWorld,reason:123},
+    {...deferWorld,reason:'é'.repeat(257)}, {...deferWorld,reason:'x'.repeat(513)},
+    {...deferWorld,source:worldSource}, {...deferWorld,changes:editWorld.changes}, {...deferWorld,remove:['old']},
+    {...deferWorld,extra:true}, {...addWorld,reason:'unknown'}, {...editWorld,reason:' '},
+    {action:'defer',source:'',changes:[],remove:[]}, {action:'add',source:worldSource,changes:[],remove:[]},
+  ]) expect(()=>validateSubmission('world',invalid)).toThrow();
+  const deferred = {...call,name:'submit_world',arguments:deferWorld};
+  expect(acceptSubmission('world',[deferred],[deferred],true)).toEqual(deferWorld);
+  expect(()=>acceptSubmission('world',[deferred],[{...deferred,arguments:{...deferWorld,reason:'Changed reason'}}],true)).toThrow();
+  expect(()=>acceptSubmission('world',[deferred],[deferred],false)).toThrow();
+  expect(()=>acceptSubmission('world',[deferred,deferred],[deferred],true)).toThrow();
+});
+
+for (const cancelled of [false,true]) test(`world deferral receipt preserves evidence and terminal cancellation=${cancelled}`, async () => {
+  const {directory,args}=await requestArgs('world'), system=join(directory,'..','system.txt'), controller=new AbortController();
+  await writeFile(system,'Defer when incoming evidence is insufficient.');
+  const deferred={...call,name:'submit_world',arguments:deferWorld}, message=terminalFor(deferred);
+  const result=await probe.runProbe([...args,`--system-file=${system}`],{signal:controller.signal,createRuntime:runtimeFor(async function*(){
+    yield {type:'toolcall_end',contentIndex:0,toolCall:deferred,partial:message};
+    yield {type:'done',reason:'toolUse',message};
+    if(cancelled)controller.abort();
+  })});
+  expect(result.report.submissionAccepted).toBe(!cancelled);
+  expect(result.report.worldOperation).toBe(cancelled?null:'defer');
+  expect(result.report.action).toBe('create');
+  expect(result.submission).toEqual(cancelled?null:deferWorld);
+  expect(JSON.parse(await readFile(join(directory,'completed-tool-calls.json'),'utf8'))[0].arguments).toEqual(deferWorld);
+  expect(await readFile(join(directory,'source.js'),'utf8').catch(e=>e.code)).toBe('ENOENT');
+  if(cancelled){
+    expect(result.report.status).toBe('failed');
+    expect(await readFile(join(directory,'world.json'),'utf8').catch(e=>e.code)).toBe('ENOENT');
+  }else{
+    expect(result.report.status).toBe('complete');
+    expect(JSON.parse(await readFile(join(directory,'world.json'),'utf8'))).toEqual(deferWorld);
+    expect(JSON.parse(await readFile(result.submissionPath!,'utf8'))).toEqual(deferWorld);
+    expect(Object.isFrozen(result.submission)).toBe(true);
+  }
 });
 
 test('world requires external evidence and system instructions before opening a runtime', async () => {
@@ -209,7 +260,8 @@ test('accepted world evidence stays separate and exact native add/edit fixtures 
       const accepted=structuredClone(result.submission) as probe.WorldSubmission | null;
       if(!accepted||!('action' in accepted))throw Error('Expected world submission');
       if(accepted.action==='add')await world.addProgram({id:'program-1',source:accepted.source,baseRevision:world.revision},0);
-      else await world.apply({baseRevision:world.revision,changes:accepted.changes,remove:accepted.remove},0);
+      else if(accepted.action==='edit')await world.apply({baseRevision:world.revision,changes:accepted.changes,remove:accepted.remove},0);
+      else throw Error('Unexpected deferral');
     }
     const halfway=await world.sample(1),end=await world.sample(2);
     expect(halfway.elements.find(e=>e.id==='dot')!.position).toEqual([1,0,0]);

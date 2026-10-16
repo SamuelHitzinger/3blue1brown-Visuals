@@ -163,6 +163,18 @@ export class MediaReplay {
       committedAtMs:input.status==='render-submitted'?input.committedAtMs:null,renderSubmittedAtMs:input.status==='render-submitted'?input.atMs:null,
       worldRevision:input.status==='render-submitted'?input.worldRevision:null,obligations:structuredClone(pending.plan.obligations),hardwarePresentedAtMs:null,semanticCompletion:'unknown'};
   }
+  /** Stop this active attempt without retry or a fabricated world/render receipt.
+   * Reasons such as deadline-expired, unsupported, or deferred remain failures
+   * of coverage, even when retirement occurs before the original deadline.
+   */
+  retire(planId:string,atMs:number,reason:string):PlanReceipt{
+    this.alive();stamp(atMs);
+    const pending=this.plans.get(planId);check(pending&&!pending.plan.signal.aborted,'Plan is not active');
+    check(atMs>=pending.plan.plannedAtMs,'Retirement measurement precedes dispatch');
+    try{
+      const receipt=this.scheduler.retire(planId,atMs,reason);this.plans.delete(planId);return receipt;
+    }finally{this.prune();}
+  }
   drainReceipts(){return this.scheduler.drainReceipts();}
   summary(){return {...this.scheduler.summary(),metadataRecords:this.metadata.size,metadataBytes:this.metadataBytes};}
   dispose(){if(this.disposed)return;this.scheduler.dispose();this.metadata.clear();this.metadataBytes=0;this.plans.clear();this.disposed=true;}

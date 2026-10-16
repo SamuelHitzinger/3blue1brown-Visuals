@@ -23,7 +23,7 @@ export interface EvidencePlan {
   usedPartialEvidence:boolean;signal:AbortSignal;
 }
 export interface PlanReceipt {
-  planId:string;status:'complete'|'failed'|'cancelled';reason?:string;finishedAtMs:number;
+  planId:string;status:'complete'|'failed'|'cancelled'|'retired';reason?:string;finishedAtMs:number;
   evidenceRevision:number;lastRequiredAvailableAtMs:number;deadlineMs:number;earliestChangeDeadlineMs:number;
   inputToResultMs:number;withinDeadline:boolean;allChangesWithinDeadline:boolean;usedPartialEvidence:boolean;
   dependencies:{id:string;version:number}[];
@@ -161,6 +161,15 @@ export class EvidenceScheduler {
   fail(planId:string,nowMs:number,reason='request-failed'):PlanReceipt{
     this.advance(nowMs);const plan=this.active.get(planId);check(plan,'Plan is not active (completed, failed or superseded)');check(typeof reason==='string'&&reason.length<=256,'Invalid failure reason');
     this.capacity();return this.finish(plan,'failed',nowMs,reason,true);
+  }
+  /** Explicit terminal non-success for this active plan: abort it without retry.
+   * Retained evidence remains available as context; newer versions are still
+   * independent obligations. Ordinary fail() continues to requeue changes.
+   */
+  retire(planId:string,nowMs:number,reason:string):PlanReceipt{
+    check(typeof reason==='string'&&reason.trim().length>0&&reason.length<=256,'Invalid retirement reason');
+    this.advance(nowMs);const plan=this.active.get(planId);check(plan,'Plan is not active (completed, failed or superseded)');
+    this.capacity();return this.finish(plan,'retired',nowMs,reason,false);
   }
   drainReceipts():PlanReceipt[]{const result=structuredClone(this.receipts);this.receipts=[];return result;}
   summary(){return {revision:this.version,asOfMs:this.nowMs,bufferedEvents:this.staged.length,retainedEvidence:this.current.size,pendingChanges:this.dirty.size,activePlans:this.active.size,receipts:this.receipts.length,disposed:this.disposed};}

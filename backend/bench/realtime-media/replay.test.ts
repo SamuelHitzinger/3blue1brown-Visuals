@@ -128,3 +128,29 @@ test('host brackets reject early source dispatch, reversed receipt, and omission
   }
   expect(replay.summary().bufferedEvents).toBe(0);replay.dispose();
 });
+
+test('media retirement emits only a terminal timing receipt and unblocks later evidence',()=>{
+  const replay=bridge();replay.ingestAsrTrial(asr());const old=replay.take(1200,{worldRevision:7})!;
+  replay.ingestFrame({id:'later',version:1,sourceId:'lecture',sourceTimeMs:12000,arrivedAtMs:12000,frameRef:'media:later.png'});
+  const receipt=replay.retire(old.packet.planId,12000,'deadline-expired');
+  expect(receipt).toMatchObject({status:'retired',reason:'deadline-expired',deadlineMs:11200,
+    withinDeadline:false,allChangesWithinDeadline:false,dependencies:[{id:'speech',version:1}]});
+  expect(receipt).not.toHaveProperty('renderSubmittedAtMs');expect(receipt).not.toHaveProperty('worldRevision');
+  expect(old.signal.aborted).toBe(true);
+  expect(()=>replay.commit(old.packet.planId,{status:'failed',atMs:12001,reason:'retry'})).toThrow(/active/i);
+  const later=replay.take(12001,{worldRevision:7})!;expect(later.packet.changes.map(event=>event.id)).toEqual(['later']);
+  replay.retire(later.packet.planId,12002,'unsupported');expect(replay.take(12002,{worldRevision:7})).toBeNull();
+  expect(replay.drainReceipts().map(item=>item.status)).toEqual(['retired','retired']);replay.dispose();
+});
+
+test('media retirement rejects revoked and unknown plans while preserving the correction',()=>{
+  const replay=bridge();replay.ingestAsrTrial(asr());const old=replay.take(1200,{worldRevision:0})!;
+  const correction=asr(2,' corrected');correction.availability={kind:'observed',inferenceStartedAtMs:1300,inferenceCompletedAtMs:1500};
+  replay.ingestAsrTrial(correction);
+  expect(()=>replay.retire(old.packet.planId,1500,'deferred')).toThrow(/active/i);
+  expect(()=>replay.retire('unknown',1500,'unsupported')).toThrow(/active/i);
+  const next=replay.take(1500,{worldRevision:0})!;expect(next.packet.changes[0]).toMatchObject({version:2,text:'corrected'});
+  expect(()=>replay.retire(next.packet.planId,1499,'unsupported')).toThrow(/dispatch/i);
+  expect(next.signal.aborted).toBe(false);replay.retire(next.packet.planId,1500,'deferred');
+  expect(replay.take(1500,{worldRevision:0})).toBeNull();replay.dispose();
+});

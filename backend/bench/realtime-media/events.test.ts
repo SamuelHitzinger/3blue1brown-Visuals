@@ -140,3 +140,47 @@ test('disposal aborts active work and retains a cancellation receipt',()=>{
   expect(plan.signal.aborted).toBe(true);expect(queue.summary().activePlans).toBe(0);
   expect(queue.drainReceipts()[0]).toMatchObject({status:'cancelled',reason:'disposed'});
 });
+
+test('expired retirement is terminal and cannot starve a later arrival',()=>{
+  const queue=scheduler({quietMs:0,maxWaitMs:0,maxActivePlans:1,maxEventsPerPlan:1});
+  queue.ingest(speech('expired',1,0));const expired=queue.take(0)!;
+  queue.ingest(speech('later',1,10001));
+  const receipt=queue.retire(expired.id,10001,'deadline-expired');
+  expect(receipt).toMatchObject({status:'retired',reason:'deadline-expired',deadlineMs:10000,earliestChangeDeadlineMs:10000,
+    finishedAtMs:10001,inputToResultMs:10001,withinDeadline:false,allChangesWithinDeadline:false,dependencies:[{id:'expired',version:1}]});
+  expect(expired.signal.aborted).toBe(true);
+  const later=queue.take(10001)!;expect(later.changes.map(event=>event.id)).toEqual(['later']);
+  queue.retire(later.id,10002,'unsupported');expect(queue.take(10002)).toBeNull();
+  expect(queue.summary()).toMatchObject({activePlans:0,pendingChanges:0,retainedEvidence:2});
+  expect(queue.drainReceipts().map(item=>item.status)).toEqual(['retired','retired']);
+});
+
+test('ordinary failure still retries while explicit deferred retirement does not',()=>{
+  const queue=scheduler({quietMs:0,maxWaitMs:0});queue.ingest(speech('a',1,0));const first=queue.take(0)!;
+  expect(queue.fail(first.id,100,'temporary-failure')).toMatchObject({status:'failed',reason:'temporary-failure'});
+  const retry=queue.take(100)!;expect(retry.changes.map(event=>event.id)).toEqual(['a']);expect(retry.deadlineMs).toBe(10000);
+  const retired=queue.retire(retry.id,200,'deferred');
+  expect(retired).toMatchObject({status:'retired',reason:'deferred',withinDeadline:false,allChangesWithinDeadline:false});
+  expect(queue.take(200)).toBeNull();
+  expect(()=>queue.retire(retry.id,201,'unsupported')).toThrow(/active/i);
+  expect(()=>queue.retire('unknown',202,'unsupported')).toThrow(/active/i);
+});
+
+test('retirement activates queued corrections first without discarding newer or unrelated changes',()=>{
+  const queue=scheduler({quietMs:0,maxWaitMs:0});queue.ingest(speech('a',1,0));queue.ingest(speech('b',1,0));
+  const old=queue.take(0)!;queue.ingest(speech('a',2,200));queue.ingest(speech('c',1,250));
+  expect(()=>queue.retire(old.id,250,'unsupported')).toThrow(/active/i);
+  expect(old.signal.aborted).toBe(true);
+  const next=queue.take(250)!;
+  expect(next.changes.map(event=>[event.id,event.version]).sort()).toEqual([['a',2],['b',1],['c',1]]);
+  expect(queue.drainReceipts()).toMatchObject([{status:'cancelled',reason:'evidence-revised'}]);
+});
+
+test('retirement requires an explicit bounded reason and does not drop pending partial evidence',()=>{
+  const queue=scheduler({quietMs:0,maxWaitMs:0});queue.ingest(speech('a',1,0));queue.ingest(speech('partial',1,0,'partial'));
+  const plan=queue.take(0)!;
+  for(const reason of ['', '   ', 'x'.repeat(257)])expect(()=>queue.retire(plan.id,1,reason)).toThrow(/reason/i);
+  expect(plan.signal.aborted).toBe(false);queue.retire(plan.id,2,'unsupported');
+  expect(queue.summary().pendingChanges).toBe(1);expect(queue.take(2)).toBeNull();
+  queue.ingest(speech('partial',2,3));expect(queue.take(3)?.changes.map(event=>[event.id,event.version])).toEqual([['partial',2]]);
+});
