@@ -1,0 +1,2 @@
+# Public fixture digests refer to exact committed bytes on every checkout.
+*.json -text

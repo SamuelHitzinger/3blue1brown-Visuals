@@ -1,0 +1,102 @@
+{
+  "version": 1,
+  "id": "caffeine-3d-complexity",
+  "dataFile": "caffeine-cid2519.data.json",
+  "dataSha256": "c9258f019dcaad8754b4f171dd379f6b78e33bd27b8aa90b949378cd7079dce1",
+  "binding": "DATA",
+  "source": {
+    "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2519/JSON?record_type=3d",
+    "file": "pubchem-caffeine-cid2519-3d.json",
+    "sha256": "47431d2119cac4bf9230e0f7838b2dd731ca7840958c4f2f2a44d9276944bacc",
+    "bytes": 11816,
+    "retrievedAt": "2026-10-15T23:51:34.176Z",
+    "compoundIndex": 0,
+    "coordinateSetIndex": 0,
+    "conformerIndex": 0,
+    "coordinateTypeCodes": [
+      2,
+      5,
+      10
+    ],
+    "coordinateTypeSchema": "https://www.ncbi.nlm.nih.gov/IEB/ToolBox/CPP_DOC/asn_spec/PC-CoordinateType.html"
+  },
+  "formulaSource": {
+    "url": "https://pubchem.ncbi.nlm.nih.gov/rest/pug/compound/cid/2519/property/MolecularFormula/JSON",
+    "file": "pubchem-caffeine-cid2519-formula.json",
+    "sha256": "eb7179bfbfa7cab87bc0de391dd09dde1fba6eb0d3c3d9b81788021317290b07",
+    "bytes": 132
+  },
+  "transformation": "Mapped coordinates by PubChem atom ID, copied numeric XYZ values and bond endpoint/order arrays without coordinate transforms, rounding, geometry inference or topology inference. center/bounds are separately derived framing metadata.",
+  "fidelity": "One PubChem computed 3D conformer. Not an experimental structure, molecular dynamics, reaction path, electron density or atomic-radius measurement. Display sphere sizes, stick widths, offsets for multiple bonds and element colors are illustration choices.",
+  "hostContract": {
+    "prelude": "const DATA = <JSON.parse(dataFile) serialized with JSON.stringify>;\n",
+    "delivery": "Declare the exact data binding before the model call. Prefix returned raw source deterministically before compilation; preserve raw source, data SHA-256, prelude and combined-source hash. No numeric array echo or scene repair.",
+    "schema": "DATA: {atoms:[{id:number,element:string,position:[x,y,z]}],bonds:[{from:number,to:number,order:number}],units:\"angstrom\",center:[x,y,z],bounds:{min,max,size},counts,selections:{heavyAtomIds:number[],heavyBondIndices:number[]},elementColors:{C,H,N,O},name,formula,cid}",
+    "sourceCoordinates": "DATA.atoms[].position are the uncentered source coordinates. For display, subtract DATA.center and apply one uniform scale; never change relative molecular geometry."
+  },
+  "promptContext": {
+    "name": "Caffeine",
+    "formula": "C8H10N4O2",
+    "units": "angstrom",
+    "counts": {
+      "atoms": 24,
+      "heavyAtoms": 14,
+      "hydrogens": 10,
+      "bonds": 25,
+      "heavyBonds": 15,
+      "elements": {
+        "C": 8,
+        "H": 10,
+        "N": 4,
+        "O": 2
+      }
+    },
+    "bounds": {
+      "min": [
+        -3.1271,
+        -3.1973,
+        -0.8992
+      ],
+      "max": [
+        4.1992,
+        3.1651,
+        0.9004
+      ],
+      "size": [
+        7.3263,
+        6.362399999999999,
+        1.7995999999999999
+      ]
+    },
+    "center": [
+      0.5360500000000001,
+      -0.016100000000000003,
+      0.0005999999999999894
+    ],
+    "elementColors": {
+      "C": "GREY_B",
+      "H": "WHITE",
+      "N": "BLUE",
+      "O": "RED"
+    },
+    "sharedInstructions": "Author a real 3D ball-and-stick caffeine view from DATA. Use bounded loops and existing scene primitives; do not reconstruct or emit atom coordinate arrays. Respect atom IDs and exact listed bond orders. Apply one rigid group transform for any view rotation; do not invent atomic motion or chemistry. Keep the molecule readable against the dark scene, show its formula and a compact element legend, and identify it as a computed conformer. Element colors are palette tokens C=GREY_B,H=WHITE,N=BLUE,O=RED."
+  },
+  "variants": {
+    "low": {
+      "label": "Heavy atoms, low mesh detail",
+      "atomSelection": "DATA.atoms.filter(atom => atom.element !== \"H\")",
+      "bondSelection": "Both endpoint IDs must be in DATA.selections.heavyAtomIds",
+      "expectedAtoms": 14,
+      "expectedBonds": 15,
+      "instructions": "Show all 14 heavy atoms and their 15 bonds using low-detail atom geometry. Explicitly label that hydrogens are omitted. Preserve double-bond order as a visual bond convention."
+    },
+    "high": {
+      "label": "All atoms, higher mesh detail",
+      "atomSelection": "DATA.atoms",
+      "bondSelection": "DATA.bonds",
+      "expectedAtoms": 24,
+      "expectedBonds": 25,
+      "instructions": "Show all 24 atoms including 10 hydrogens and all 25 bonds, with visibly smoother 3D atom geometry and double-bond depiction. Keep H atoms smaller as a display convention, preserve exact coordinate geometry, and use a modest continuous rigid rotation to reveal depth."
+    }
+  }
+}

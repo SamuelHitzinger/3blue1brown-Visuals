@@ -29,7 +29,14 @@ async function evidence(directory: string) {
   return { meta, prompts };
 }
 
-export async function loadPair(baselineDirectory: string, candidateDirectory: string, briefDirectory?: string) {
+export interface PairOptions {
+  /** Trusted host declaration, never inferred from generated code. */
+  declaredData?: { path: string; sha256: string };
+  /** Preserve verified failed submissions for an audit UI; never mark them playable. */
+  reportCompilationFailures?: boolean;
+}
+
+export async function loadPair(baselineDirectory: string, candidateDirectory: string, briefDirectory?: string, options: PairOptions = {}) {
   const directories = [baselineDirectory, candidateDirectory].map(path => resolve(path));
   if (directories[0] === directories[1]) throw new Error('Pass two different probe directories.');
   const inputs = await Promise.all(directories.map(async directory => ({ directory, ...await evidence(directory), ...await loadProbeSource(directory) })));
@@ -49,11 +56,30 @@ export async function loadPair(baselineDirectory: string, candidateDirectory: st
       throw new Error(`Unmatched sent author setting: ${field}`);
     }
   }
-  const compiled = await Promise.all(inputs.map(input => compileSource(input.source)));
-  const duration = compiled[0].duration;
-  if (!Number.isFinite(duration) || duration <= 0 || duration > 300 || Math.abs(duration - compiled[1].duration) > 0.002) {
-    throw new Error('Scene duration must be positive, at most 300 seconds, and equal in both arms.');
+  let prelude = '', declaredData: { sha256: string; bytes: number } | null = null;
+  if (options.declaredData) {
+    if (!a.prompts.prompt.includes('Host defines read-only lexical DATA')) throw new Error('Host DATA declaration is absent from the verified shared prompt.');
+    const bytes = await readFile(resolve(options.declaredData.path));
+    if (hash(bytes) !== options.declaredData.sha256) throw new Error('Declared host data hash mismatch.');
+    // Identical deterministic prelude to the offline matrix renderer; no model-source repair.
+    prelude = `const DATA=${JSON.stringify(JSON.parse(bytes.toString('utf8')))};\n`;
+    declaredData = { sha256: hash(bytes), bytes: bytes.length };
   }
+  const executions = inputs.map(input => prelude + input.source);
+  const compiled = await Promise.all(executions.map(async source => {
+    try { return { duration: (await compileSource(source)).duration, compileError: null as string | null }; }
+    catch (error) {
+      if (!options.reportCompilationFailures) throw error;
+      return { duration: null, compileError: error instanceof Error ? error.message : String(error) };
+    }
+  }));
+  const durations = compiled.map(result => result.duration);
+  const pairError = compiled.some(result => result.compileError) ? 'Compilation failed; synchronized pair playback unavailable.'
+    : durations.some(value => value === null || !Number.isFinite(value) || value <= 0 || value > 300)
+      || Math.abs(durations[0]! - durations[1]!) > .002
+      ? 'Scene duration must be positive, at most 300 seconds, and equal in both arms.' : null;
+  if (pairError && !options.reportCompilationFailures) throw new Error(pairError);
+  const duration = pairError ? null : durations[0]!;
   let brief: { sha256: string; providerTerminalMs: number | null; toolCallCompleteMs: number | null; model: string; serviceTierActual: string | null } | null = null;
   if (briefDirectory) {
     const directory = resolve(briefDirectory), { meta, prompts } = await evidence(directory);
@@ -73,13 +99,14 @@ export async function loadPair(baselineDirectory: string, candidateDirectory: st
   const arms = inputs.map((input, index) => {
     const authorMs = milliseconds(input.meta.providerTerminalMs);
     return { label: index === 0 ? 'A' : 'B', role: index === 0 ? 'baseline' : 'candidate', source: input.source,
-      sourceSha256: input.rawSha256, probeResultSha256: input.probeResultSha256, duration: compiled[index].duration,
+      sourceSha256: input.rawSha256, executionSource: executions[index], executionSourceSha256: hash(executions[index]),
+      probeResultSha256: input.probeResultSha256, duration: compiled[index].duration, compileError: compiled[index].compileError,
       providerTerminalMs: authorMs, toolCallCompleteMs: milliseconds(input.meta.validToolCallCompleteMs),
       outputTokens: input.meta.tokens?.output ?? null, sourceBytes: input.meta.submissionBytes,
       modelStageSumMs: brief?.providerTerminalMs !== null && brief?.providerTerminalMs !== undefined && authorMs !== null
         ? brief.providerTerminalMs + authorMs : null };
   });
-  return { duration, arms, brief, limitation, engine: 'Both arms use the current shared/animlib/dist build.',
+  return { duration, playable: !pairError, pairError, arms, brief, declaredData, limitation, engine: 'Both arms use the current shared/animlib/dist build.',
     match: { userPromptSha256: hash(a.prompts.prompt), imageSha256: a.meta.image?.sha256 ?? null,
       systemPromptsEqual: a.prompts.systemPrompt === b.prompts.systemPrompt,
       systemPromptHashes: inputs.map(input => hash(input.prompts.systemPrompt)),

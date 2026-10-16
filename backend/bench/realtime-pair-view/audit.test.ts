@@ -72,3 +72,49 @@ test('unverified brief or prompt evidence cannot contribute perception cost', as
   await writeFile(join(c, 'prompt.json'), JSON.stringify({ systemPrompt: 'changed', prompt: 'changed' }));
   await expect(loadPair(c, d)).rejects.toThrow('prompt hash');
 });
+
+async function source(directory: string, value: string) {
+  await writeFile(join(directory, 'source.js'), value);
+  await patch(directory, 'submissionSha256', hash(value));
+  await patch(directory, 'submissionBytes', Buffer.byteLength(value));
+}
+
+test('declared host data is hashed separately and exact model source remains untouched', async () => {
+  const [a, b] = await pair(), data = '{"seconds":8}', path = join(a, 'data.json');
+  await writeFile(path, data);
+  for (const directory of [a, b]) {
+    const prompts = JSON.parse(await readFile(join(directory, 'prompt.json'), 'utf8'));
+    prompts.prompt += '\nHost defines read-only lexical DATA before your exact submitted source is compiled.';
+    await writeFile(join(directory, 'prompt.json'), JSON.stringify(prompts));
+    await patch(directory, 'promptSha256', hash(JSON.stringify(prompts)));
+    await source(directory, 'export default scene({}, s => { s.wait(DATA.seconds); });');
+  }
+  const loaded = await loadPair(a, b, undefined, { declaredData: { path, sha256: hash(data) } });
+  expect(loaded.duration).toBe(8);
+  expect(loaded.arms[0].source.startsWith('export default')).toBe(true);
+  expect(loaded.arms[0].executionSource).toBe('const DATA={"seconds":8};\n' + loaded.arms[0].source);
+  expect(loaded.arms[0].executionSourceSha256).toBe(hash(loaded.arms[0].executionSource));
+  expect(loaded.declaredData?.sha256).toBe(hash(data));
+  await expect(loadPair(a, b, undefined, { declaredData: { path, sha256: 'wrong' } })).rejects.toThrow('data hash');
+  const [c, d] = await pair();
+  await expect(loadPair(c, d, undefined, { declaredData: { path, sha256: hash(data) } })).rejects.toThrow('DATA declaration');
+});
+
+test('diagnostic mode keeps failures and unequal durations without admitting invalid provenance', async () => {
+  const [a, b] = await pair();
+  await source(b, 'export default scene({}, s => { s.invented(); });');
+  await expect(loadPair(a, b)).rejects.toThrow();
+  const failed = await loadPair(a, b, undefined, { reportCompilationFailures: true });
+  expect(failed.playable).toBe(false);
+  expect(failed.duration).toBeNull();
+  expect(failed.arms[0].duration).toBe(8);
+  expect(failed.arms[1].compileError).toBeTruthy();
+  expect(failed.arms[1].providerTerminalMs).toBe(7000);
+  await source(b, 'export default scene({}, s => { s.wait(7); });');
+  const unequal = await loadPair(a, b, undefined, { reportCompilationFailures: true });
+  expect(unequal.playable).toBe(false);
+  expect(unequal.pairError).toContain('equal');
+  expect(unequal.arms.map(arm => arm.duration)).toEqual([8, 7]);
+  await patch(b, 'thinkingRequested', 'high');
+  await expect(loadPair(a, b, undefined, { reportCompilationFailures: true })).rejects.toThrow('setting');
+});
