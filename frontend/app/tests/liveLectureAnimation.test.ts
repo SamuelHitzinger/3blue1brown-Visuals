@@ -1,12 +1,36 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { LiveAnimationLoop, acceptLiveAnimation, markLiveAnimationRendered, readLiveAnimationReply } from '../src/liveLectureAnimation.ts'
+import { LiveAnimationLoop, LiveAnimationTiming, acceptLiveAnimation, markLiveAnimationRendered, readLiveAnimationReply } from '../src/liveLectureAnimation.ts'
+import type { LiveAnimationTimingEvent } from '../src/liveLectureAnimation.ts'
 import type { LiveAnimationReply } from '../src/liveLectureAnimation.ts'
 import * as runtime from 'animlib/live'
 
 function deferred<T>() { let resolve!: (value: T) => void; const promise = new Promise<T>(yes => { resolve = yes }); return { promise, resolve } }
 const tick = () => new Promise(resolve => setTimeout(resolve, 0))
 const packet = (cursor: number, revision: number, submission: Exclude<LiveAnimationReply, { idle: true }>['submission']): LiveAnimationReply => ({ sourceCursor: cursor, baseRevision: revision, programId: `source-${cursor}`, submission, evidence: { changes: [{ id: `source-${cursor}`, version: 1 }], context: [] } })
+
+test('benchmark timing ties first render to accepted source, excludes idle and deduplicates frames', () => {
+  const events: LiveAnimationTimingEvent[] = []; let time = 10
+  const timing = new LiveAnimationTiming(event => events.push(event), () => time++, 1000)
+  const idle: LiveAnimationReply = { sourceCursor: 0, baseRevision: 0, idle: true }
+  timing.responded(timing.requested(0, 0), idle); timing.committed(idle, 0, 0)
+  assert.equal(timing.rendered(0, 'webgpu'), undefined)
+  const reply = packet(1, 0, { action: 'add', source: 'native source' })
+  timing.responded(timing.requested(0, 0), reply); timing.committed(reply, 0, 1)
+  assert.equal(timing.rendered(2, 'webgpu'), undefined)
+  const frameOpportunity = timing.rendered(1, 'webgpu')
+  assert.equal(timing.rendered(1, 'webgpu'), undefined)
+  assert.equal(events.at(-1)?.kind, 'render-submitted')
+  frameOpportunity!()
+  assert.deepEqual(events.slice(-3).map(event => event.kind), ['commit', 'render-submitted', 'next-frame-opportunity'])
+  for (const event of events.slice(-3)) {
+    assert.equal(event.requestId, 2); assert.deepEqual(event.sourceIds, ['source-1'])
+    assert.equal(event.epochMs, 1000 + event.monotonicMs)
+  }
+  const deferredReply = packet(2, 1, { action: 'defer', reason: 'pending' })
+  timing.responded(timing.requested(1, 1), deferredReply); timing.committed(deferredReply, 1, 1)
+  assert.equal(timing.rendered(1, 'webgpu'), undefined)
+})
 
 test('stop rejects a late provider result; restart stays serial and keeps the unconsumed cursor', async () => {
   const first = deferred<unknown>(), second = deferred<unknown>(), cursors: number[] = [], accepted: number[] = []

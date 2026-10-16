@@ -1,0 +1,129 @@
+{
+  "test": "Paced synthetic speech through actual capture ingestion, ElevenLabs ASR, OpenAI model and main-app WebGPU renderer",
+  "excluded": "Phone/network hardware, MediaRecorder encoding and physical monitor presentation. Notes synthesis disabled in isolated fixture.",
+  "outcomes": [
+    {
+      "cue": "create",
+      "text": "Consider a cube.",
+      "status": "applied-not-necessarily-visible",
+      "sourceIds": [
+        "d797c6f0-955e-4ba6-8bf9-58ee405e8d38"
+      ],
+      "transcriptUsed": [
+        "Consider a cube"
+      ],
+      "completePhraseCoveredByRequest": true,
+      "fromSpeechStartToFrameOpportunityMs": 8050.013,
+      "fromSpeechEndToRenderSubmissionMs": 7074.425,
+      "fromSpeechEndToFrameOpportunityMs": 7075.825,
+      "stagesMs": {
+        "speechEndToLastUsedSource": 1574.125,
+        "sourceToBrowserRequest": 416,
+        "requestToResponse": 5029.6,
+        "responseToCommit": 51.8,
+        "commitToRender": 2.9,
+        "renderToNextFrameOpportunity": 1.4
+      },
+      "renderBackend": "webgpu"
+    },
+    {
+      "cue": "motion",
+      "text": "The cube moves right at one unit per second.",
+      "status": "applied-not-necessarily-visible",
+      "sourceIds": [
+        "0120095a-9e10-448d-b8ba-9b4f8e86ff36",
+        "3ea66a4c-350f-4d4c-9fc8-6db6bd62ce8c"
+      ],
+      "transcriptUsed": [
+        "The cube moves right",
+        "The cube moves right at one unit per"
+      ],
+      "completePhraseCoveredByRequest": false,
+      "fromSpeechStartToFrameOpportunityMs": 5221.213,
+      "fromSpeechEndToRenderSubmissionMs": 2922.95,
+      "fromSpeechEndToFrameOpportunityMs": 2928.65,
+      "stagesMs": {
+        "speechEndToLastUsedSource": 90.75,
+        "sourceToBrowserRequest": 87.1,
+        "requestToResponse": 2742.9,
+        "responseToCommit": 0.6,
+        "commitToRender": 1.6,
+        "renderToNextFrameOpportunity": 5.7
+      },
+      "renderBackend": "webgpu"
+    },
+    {
+      "cue": "stop",
+      "text": "Stop the cube.",
+      "status": "applied-not-necessarily-visible",
+      "sourceIds": [
+        "81c701f8-8301-4c2f-b3bc-2029bb621097"
+      ],
+      "transcriptUsed": [
+        "Stop the cube."
+      ],
+      "completePhraseCoveredByRequest": true,
+      "fromSpeechStartToFrameOpportunityMs": 10318.338,
+      "fromSpeechEndToRenderSubmissionMs": 9357.55,
+      "fromSpeechEndToFrameOpportunityMs": 9362.65,
+      "stagesMs": {
+        "speechEndToLastUsedSource": 1461.25,
+        "sourceToBrowserRequest": 2537.1,
+        "requestToResponse": 5356.6,
+        "responseToCommit": 0.4,
+        "commitToRender": 2.2,
+        "renderToNextFrameOpportunity": 5.1
+      },
+      "renderBackend": "webgpu"
+    },
+    {
+      "cue": "replace",
+      "text": "Change the cube into a sphere.",
+      "status": "not-applied",
+      "speechStartEpochMs": 1792137701051.0625,
+      "speechEndEpochMs": 1792137702675.3125
+    }
+  ],
+  "transcription": {
+    "count": 23,
+    "minMs": 187.17,
+    "medianMs": 473.647,
+    "maxMs": 922.175,
+    "empty": 14
+  },
+  "modelDecisions": [
+    {
+      "action": "add",
+      "sourceCursor": 1
+    },
+    {
+      "action": "motion",
+      "sourceCursor": 3
+    },
+    {
+      "action": "defer",
+      "reason": "The supplied phrase completes the speed statement, but the cube already has the stated rightward motion at one unit per second; no new visual delta is supported.",
+      "sourceCursor": 4
+    },
+    {
+      "action": "defer",
+      "reason": "“Stop the queue” is a queue-control instruction, not supported lecture content about the cube; it does not substantiate a visual change to the cube or its motion.",
+      "sourceCursor": 5
+    },
+    {
+      "action": "motion",
+      "sourceCursor": 6
+    },
+    {
+      "action": "defer",
+      "reason": "“Change the cube” is ambiguous, and “Change the cube into a sphere” has no measured transcript timing under the supplied anchor contract. Defer the shape change rather than risk an untimely or unsupported update.",
+      "sourceCursor": 9
+    }
+  ],
+  "visualReview": {
+    "create": "Cube visible in first-visible.png.",
+    "motion": "Applied exact speed before complete per-second evidence reached the request; not a grounded exact-speed success.",
+    "stop": "Applied after cube left viewport; final screenshot blank, so not a visible stop success.",
+    "replace": "Model deferred despite complete shape evidence; no replacement rendered."
+  }
+}

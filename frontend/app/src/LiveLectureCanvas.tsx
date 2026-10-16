@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { acceptLiveAnimation, LiveAnimationLoop, markLiveAnimationRendered, readLiveAnimationReply } from './liveLectureAnimation'
+import { acceptLiveAnimation, LiveAnimationLoop, LiveAnimationTiming, markLiveAnimationRendered, readLiveAnimationReply } from './liveLectureAnimation'
 import type { LiveAnimationReply } from './liveLectureAnimation'
 import './live-lecture-canvas.css'
 
@@ -19,6 +19,8 @@ export default function LiveLectureCanvas({ lectureId, suspended, sourceRevision
     if (!target) return
     let alive = true, resources: Resources | undefined, initializing: Promise<Resources> | undefined, animationFrame = 0, rendering = false, renderFailed = false
     const runId = `lecture-${crypto.randomUUID()}`
+    const timing = new URLSearchParams(location.search).get('liveTiming') === '1'
+      ? new LiveAnimationTiming(event => console.info('LIVE_ANIMATION_TIMING ' + JSON.stringify({ lectureId, runId, ...event }))) : undefined
     setHasScene(false); setState({ active: false, message: 'Start to visualize new lecture content as it arrives.', error: '' })
     const available = () => {
       if (!alive || blocked.current.suspended || blocked.current.finished || document.hidden) throw Error('Live animation updates are paused.')
@@ -60,6 +62,7 @@ export default function LiveLectureCanvas({ lectureId, suspended, sourceRevision
         const world = current.runtime.buildWorldContext({ summary: current.world.summary(), sampledRevision: revision, sampledAt,
           frame, journal: current.journal, requestOverheadBytes: 80000 })
         if (alive) setState({ active: true, message: 'Following the latest lecture content…', error: '' })
+        const requestId = timing?.requested(sourceCursor, revision)
         const response = await fetch(`/api/lectures/${encodeURIComponent(lectureId)}/animation`, { method: 'POST',
           headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.any([signal, AbortSignal.timeout(30000)]),
           body: JSON.stringify({ sourceCursor, baseRevision: revision, world }) })
@@ -68,13 +71,16 @@ export default function LiveLectureCanvas({ lectureId, suspended, sourceRevision
         if (!response.ok) throw Error(typeof (result as { detail?: unknown })?.detail === 'string' ? (result as { detail: string }).detail : 'The live animation could not update. Try again.')
         const reply = readLiveAnimationReply(result, sourceCursor)
         if (reply.baseRevision !== revision) throw Error('The animation response does not match the requested scene.')
+        if (requestId !== undefined) timing?.responded(requestId, reply)
         return reply
       },
       accept: async (reply: LiveAnimationReply, signal, guard) => {
         const current = resources
         if (!current) throw Error('The live animation is not ready.')
         const beforeCommit = () => { available(); guard() }
+        const previousRevision = current.world.revision
         const message = await acceptLiveAnimation(current.runtime, current.world, current.journal, runId, reply, signal, beforeCommit)
+        timing?.committed(reply, previousRevision, current.world.revision)
         if (alive && current.world.revision > 0) setHasScene(true)
         return message
       },
@@ -91,6 +97,8 @@ export default function LiveLectureCanvas({ lectureId, suspended, sourceRevision
           if (alive && !blocked.current.suspended && revision === current.world.revision) {
             if (!current.renderer.render(frame, current.world.rendererOptions)) throw Error('The live animation renderer could not submit a frame.')
             markLiveAnimationRendered(current.journal, revision)
+            const nextFrame = timing?.rendered(revision, current.renderer.backend)
+            if (nextFrame) requestAnimationFrame(() => { if (alive && !document.hidden) nextFrame() })
           }
         } catch (error) { fail(error) } finally { rendering = false }
       }

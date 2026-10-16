@@ -103,3 +103,47 @@ export async function acceptLiveAnimation(runtime: Pick<typeof import('animlib/l
 export function markLiveAnimationRendered(journal: CommittedContextJournal, revision: number) {
   return revision > 0 ? journal.markRendered(revision) : false
 }
+
+export type LiveAnimationTimingEvent = { kind: string; epochMs: number; monotonicMs: number; wallClockMs: number; timeOriginMs: number; requestId: number; [key: string]: unknown }
+
+/** Explicit local benchmark only. Submission is not GPU completion or physical
+ * display. The following rAF is a browser frame opportunity, not a paint receipt.
+ */
+export class LiveAnimationTiming {
+  private serial = 0
+  private requests = new WeakMap<object, number>()
+  private revisions = new Map<number, { requestId: number; sourceIds: string[]; action: string }>()
+  private emit: (event: LiveAnimationTimingEvent) => void
+  private now: () => number
+  private timeOrigin: number
+  constructor(emit: (event: LiveAnimationTimingEvent) => void,
+    now = () => performance.now(), timeOrigin = performance.timeOrigin) { this.emit = emit; this.now = now; this.timeOrigin = timeOrigin }
+  private event(kind: string, requestId: number, details: Record<string, unknown> = {}) {
+    const monotonicMs = this.now()
+    this.emit({ kind, requestId, monotonicMs, epochMs: this.timeOrigin + monotonicMs,
+      wallClockMs: Date.now(), timeOriginMs: this.timeOrigin, ...details })
+  }
+  requested(sourceCursor: number, baseRevision: number) {
+    const requestId = ++this.serial
+    this.event('request-start', requestId, { sourceCursor, baseRevision }); return requestId
+  }
+  responded(requestId: number, reply: LiveAnimationReply) {
+    this.requests.set(reply, requestId)
+    this.event('response', requestId, { sourceCursor: reply.sourceCursor, baseRevision: reply.baseRevision,
+      action: 'idle' in reply ? 'idle' : reply.submission.action, sourceIds: 'idle' in reply ? [] : reply.evidence.changes.map(ref => ref.id) })
+  }
+  committed(reply: LiveAnimationReply, previousRevision: number, revision: number) {
+    const requestId = this.requests.get(reply)
+    if (requestId === undefined || 'idle' in reply || revision <= previousRevision) return
+    const details = { requestId, sourceIds: reply.evidence.changes.map(ref => ref.id), action: reply.submission.action }
+    this.revisions.set(revision, details)
+    this.event('commit', requestId, { ...details, revision })
+  }
+  rendered(revision: number, backend: string | undefined): (() => void) | undefined {
+    const details = this.revisions.get(revision)
+    if (!details) return
+    this.revisions.delete(revision)
+    this.event('render-submitted', details.requestId, { ...details, revision, backend })
+    return () => this.event('next-frame-opportunity', details.requestId, { ...details, revision, backend })
+  }
+}
