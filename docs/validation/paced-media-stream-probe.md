@@ -153,6 +153,12 @@ Three separate fault-injection runs are retained:
   release. This validates the real process abort path while source pacing waits.
 
 No failed run was overwritten or folded into successful content evidence.
+After both independent-review cancellation fixes, a new four-second public
+smoke (`mit-paced-stream-postreview-01`) completed normally: one chunk, one trial,
+128,000 PCM bytes, explicit shutdown, exit code zero and `workerClosed=true`.
+Release lag was 1.385 ms; host source-endpoint to trial receipt was 273.145 ms,
+including 268.356 ms of first-chunk recognition. This verifies the normal process
+path after those fixes; it is not a second sustained-session benchmark.
 Successful run 01 predates the later cleanup/exit-detail and producer-source
 snapshot additions. Current runs additionally save `producer-source.ts` and its
 SHA-256 in `started.json`; the worker independently retains its source hash.
