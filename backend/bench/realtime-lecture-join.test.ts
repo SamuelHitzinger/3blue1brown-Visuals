@@ -1,11 +1,23 @@
 import {expect,test} from 'bun:test';
 import {EventEmitter} from 'node:events';
-import {selectEvidence,generationDeadline,openEventStream,endEventStreams,watchDisconnect,cancelGeneration,requireAssetInventory,type JoinedEvidence} from './realtime-lecture-join.js';
+import {selectEvidence,generationDeadline,openEventStream,endEventStreams,watchDisconnect,cancelGeneration,requireAssetInventory,joinedSpeechEvidence,finalizeSpeechAnchor,type JoinedEvidence} from './realtime-lecture-join.js';
 
 const speech:JoinedEvidence={id:'chunk-0000',version:1,kind:'transcript',sourceId:'lecture',sourceStartMs:0,sourceEndMs:4000,
   sourceReadyAtMs:5000,availableAtMs:5300,text:'uncertain speech',trialRef:'local:trial'};
 const frame:JoinedEvidence={id:'frame-1',version:1,kind:'frame',sourceId:'lecture',sourceStartMs:8000,sourceEndMs:8000,
   sourceReadyAtMs:9000,availableAtMs:9010,frameRef:'local:frame'};
+
+test('server ledger retains measured speech with exact evidence identity through request selection',()=>{
+ const trial={windowStartSec:0,windowEndSec:4,sourceWindowStartSec:885,sourceWindowEndSec:889,availableAfterSourceSec:889,inferenceMs:200,text:'minus x',
+  segments:[{text:'minus x',words:[{word:'minus',startSec:1,endSec:2,sourceStartSec:886,sourceEndSec:887,probability:.9},
+   {word:'x',startSec:2,endSec:3,sourceStartSec:887,sourceEndSec:888,probability:.8}]}]};
+ const input={id:'chunk-0',version:2,sourceId:'lecture',trial,trialRef:'local:trial',clock:{sourceStartMs:885000,monotonicStartMs:1000},sourceReadyAtMs:5000,availableAtMs:5300};
+ const item=joinedSpeechEvidence(input),selected=selectEvidence([{id:item.id,version:2}],new Map([[item.id,item]]),6000)[0];
+ expect(selected.speech?.timing.scene.utterances[0].words[0]).toMatchObject({id:'window.u1.w1',text:'minus',startSec:1,endSec:2});
+ expect(selected.speech?.timing.sourceOffsetSec).toBe(885);
+ expect(()=>joinedSpeechEvidence({...input,sourceReadyAtMs:4000})).toThrow('clock');
+ expect(()=>joinedSpeechEvidence({...input,availableAtMs:4900})).toThrow('availability');
+});
 
 test('stale or missing browser asset inventory cannot start or generate against a different host snapshot',()=>{
  const current='a'.repeat(64);
@@ -27,6 +39,27 @@ test('raw source endpoint deadline cannot be rebased by fresh context or caller'
   expect(generationDeadline([speech,frame],30000,10000)).toBe(15000);
   expect(()=>generationDeadline([speech],20000,15001)).toThrow('expired');
   expect(()=>generationDeadline([],20000,6000)).toThrow();
+});
+
+test('anchor finalization rechecks authoritative versions after receipt persistence yields',async()=>{
+ const ledger=new Map([[frame.id,frame]]);let release!:()=>void;
+ const wait=new Promise<void>(resolve=>{release=resolve;});
+ const pending=finalizeSpeechAnchor({submission:{action:'add',source:'source',changes:[],remove:[],speechAnchor:null},
+  changes:[{id:frame.id,version:1}],context:[],ledger,deadline:20000,now:()=>10000,signal:new AbortController().signal,persist:()=>wait});
+ ledger.set(frame.id,{...frame,version:2});release();
+ await expect(pending).rejects.toThrow('Evidence not available');
+});
+
+test('anchor finalization cannot publish after persistence exhausts the narrowed budget',async()=>{
+ const trial={windowStartSec:0,windowEndSec:4,sourceWindowStartSec:0,sourceWindowEndSec:4,availableAfterSourceSec:4,inferenceMs:200,text:'move',
+  segments:[{text:'move',words:[{word:'move',startSec:0,endSec:1,sourceStartSec:0,sourceEndSec:1,probability:.9}]}]};
+ const item=joinedSpeechEvidence({id:'speech',version:1,sourceId:'lecture',trial,trialRef:'trial',clock:{monotonicStartMs:1000},sourceReadyAtMs:5000,availableAtMs:5300});
+ let now=6000;const receipts:any[]=[];
+ const input={submission:{action:'add' as const,source:'source',changes:[] as [],remove:[] as [],speechAnchor:{evidenceId:'speech',version:1,phrase:'move',occurrence:null,utteranceId:null}},
+  changes:[{id:'speech',version:1}],context:[],ledger:new Map([['speech',item]]),deadline:15000,now:()=>now,signal:new AbortController().signal,
+  persist:async(receipt:unknown)=>{receipts.push(receipt);now=12500;}};
+ await expect(finalizeSpeechAnchor(input)).rejects.toThrow('phrase deadline');
+ expect(receipts[0].operationDeadline).toBe(12000);
 });
 
 class Response extends EventEmitter {

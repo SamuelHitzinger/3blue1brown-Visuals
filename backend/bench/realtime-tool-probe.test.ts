@@ -155,6 +155,62 @@ const addWorld = { action: 'add' as const, reason: '', source: worldSource, chan
 const propsWire = (props: Record<string, unknown> = {}) => ({ position: null, rotation: null, scale: null, opacity: null, fill: null, ...props });
 const editWorld = { action: 'edit' as const, reason: '', source: '', changes: [{ id: 'dot', props: propsWire({ position: [2,0,0], fill: 'TEAL' }), duration: 2 }], remove: ['old'] };
 const deferWorld = { action: 'defer' as const, reason: 'Evidence e1 does not identify what moved or its destination.', source: '', changes: [], remove: [] };
+const speechAnchor = {evidenceId:'chunk-0001',version:2,phrase:'moves to the right',occurrence:null,utteranceId:null};
+const emptySpeechAnchor = {evidenceId:null,version:null,phrase:null,occurrence:null,utteranceId:null};
+
+test('speech anchor schema is an opt-in strict object with null scalar sentinel and unchanged legacy world contract', () => {
+  const legacy=submissionTool('world'),anchored=submissionTool('world','require',true);
+  const parameters=anchored.parameters as Record<string,any>;
+  expect((legacy.parameters as Record<string,any>).properties).not.toHaveProperty('speechAnchor');
+  expect(parameters.required).toContain('speechAnchor');
+  expect(parameters.properties.speechAnchor.type).toBe('object');
+  expect(parameters.properties.speechAnchor.properties.evidenceId.type).toEqual(['string','null']);
+  expect(parameters.properties.speechAnchor.required).toEqual(['evidenceId','version','phrase','occurrence','utteranceId']);
+  const converted=convertResponsesTools([anchored],{supportsStrictMode:true});
+  const payload={tools:converted,tool_choice:'required',service_tier:'priority'};
+  expect(preparePayload(payload,'world','require','priority',true).metadata.tools[0].parameters).toEqual(parameters);
+  expect(()=>preparePayload(payload,'world','require','priority')).toThrow('schema');
+  expect(()=>submissionTool('scene','require',true)).toThrow();
+});
+
+test('speech anchors preserve exact qualified identity and reject invalid, ambiguous wire shapes', () => {
+  const anchored={...addWorld,speechAnchor};
+  expect(validateSubmission('world',anchored,true)).toMatchObject({action:'add',speechAnchor});
+  expect(validateSubmission('world',{...editWorld,speechAnchor:emptySpeechAnchor},true)).toHaveProperty('speechAnchor',null);
+  expect(validateSubmission('world',{...deferWorld,speechAnchor:emptySpeechAnchor},true)).toMatchObject({...deferWorld,speechAnchor:null});
+  expect(()=>validateSubmission('world',anchored)).toThrow();
+  expect(()=>validateSubmission('world',addWorld,true)).toThrow();
+  expect(()=>validateSubmission('world',{...deferWorld,speechAnchor},true)).toThrow();
+  const badAnchors=[null,{},[],{...emptySpeechAnchor,phrase:'partial sentinel'},{...speechAnchor,extra:1},{...speechAnchor,evidenceId:'bad id'},{...speechAnchor,evidenceId:'x'.repeat(193)},
+    {...speechAnchor,version:0},{...speechAnchor,version:1.2},{...speechAnchor,version:Number.MAX_SAFE_INTEGER+1},
+    {...speechAnchor,phrase:''},{...speechAnchor,phrase:'é'.repeat(501)},
+    {...speechAnchor,occurrence:0},{...speechAnchor,occurrence:1.5},{...speechAnchor,occurrence:10001},
+    {...speechAnchor,utteranceId:''},{...speechAnchor,utteranceId:'x'.repeat(193)}];
+  for(const anchor of badAnchors)expect(()=>validateSubmission('world',{...addWorld,speechAnchor:anchor},true)).toThrow();
+  const wire={...call,name:'submit_world',arguments:anchored};
+  const trace=submissionTrace();
+  observeSubmission(trace,'world',{type:'toolcall_end',contentIndex:0,toolCall:wire,partial:terminalFor(wire)},250,true);
+  expect(trace.validToolCallCompleteMs).toBe(250);
+  expect(acceptSubmission('world',trace.completed,[wire],true,true)).toMatchObject({speechAnchor});
+  expect(()=>acceptSubmission('world',trace.completed,[{...wire,arguments:{...anchored,speechAnchor:{...speechAnchor,version:3}}}],true,true)).toThrow();
+});
+
+test('opt-in library request records anchored schema and preserves accepted speech anchor without provider access', async () => {
+  const {directory,args}=await requestArgs('world'),system=join(directory,'..','system.txt');
+  await writeFile(system,'Use measured speech evidence.');
+  const wire={...call,name:'submit_world',arguments:{...addWorld,speechAnchor}},message=terminalFor(wire);
+  const result=await probe.runProbe([...args,`--system-file=${system}`],{speechAnchors:true,createRuntime:runtimeFor(async function*(options){
+    const tools=convertResponsesTools([submissionTool('world','require',true)],{supportsStrictMode:true});
+    await options.onPayload!({tools,tool_choice:'required',service_tier:'priority'},{} as Parameters<NonNullable<StreamOptions['onPayload']>>[1]);
+    yield {type:'toolcall_end',contentIndex:0,toolCall:wire,partial:message};
+    yield {type:'done',reason:'toolUse',message};
+  })});
+  expect(result.report.submissionAccepted).toBe(true);expect(result.report.validToolCallCompleteMs).not.toBeNull();
+  expect(result.submission).toMatchObject({speechAnchor});
+  expect(result.report).toHaveProperty('speechAnchors',true);
+  expect(JSON.parse(await readFile(join(directory,'started.json'),'utf8'))).toHaveProperty('speechAnchors',true);
+  expect(JSON.parse(await readFile(join(directory,'world.json'),'utf8'))).toMatchObject({speechAnchor});
+});
 
 test('world validates one branch and normalizes only nullable native patch fields', () => {
   const {reason: _reason, ...normalizedAdd} = addWorld;

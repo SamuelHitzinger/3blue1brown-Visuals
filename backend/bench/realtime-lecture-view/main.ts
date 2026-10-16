@@ -5,6 +5,7 @@ import type { ModelAsset } from '../../../shared/animlib/src/model-types.js';
 import { MediaReplay, type AsrInput, type EvidencePacket, type LocalAsrTrial } from '../realtime-media/replay.js';
 import type { SourceClock } from '../realtime-media/events.js';
 import { CommittedContextJournal } from '../realtime-media/committed-context.js';
+import { measureSpeechRender,type ResolvedOperationSpeechAnchor } from '../realtime-media/speech-anchor.js';
 import { CanvasRenderer } from '../../../shared/animlib/src/renderer.js';
 import type { Frame } from '../../../shared/animlib/src/types.js';
 
@@ -188,7 +189,8 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
   };
   signal.addEventListener('abort', onCorrection, { once: true });
   if (signal.aborted) onCorrection();
-  const timer = setTimeout(() => { terminal(current, attempt, 'source-deadline-expired'); cancelServer(current, attempt); }, Math.max(0, attempt.deadline - upperNow()));
+  const expire = () => { terminal(current, attempt, 'source-deadline-expired'); cancelServer(current, attempt); };
+  let timer = setTimeout(expire, Math.max(0, attempt.deadline - upperNow()));
   let committedAt: Stamp | undefined;
   try {
     guard(current, attempt);
@@ -204,8 +206,14 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
       evidence: packet.changes.map(({ id, version }) => ({ id, version })), context: packet.context.map(({ id, version }) => ({ id, version })) });
     status.textContent = 'Generating from available lecture evidence… existing world remains visible.';
     const result = await post('/generate', request, attempt.controller.signal);
+    if (!Number.isFinite(result.deadlineServerMs) || result.deadlineServerMs > attempt.deadline) throw new Error('Invalid operation deadline');
+    attempt.deadline = result.deadlineServerMs;
+    clearTimeout(timer); timer = setTimeout(expire, Math.max(0, attempt.deadline - upperNow()));
     guard(current, attempt);
     const submission = result.submission as Submission | null;
+    const speechAnchor = result.resolvedSpeechAnchor as ResolvedOperationSpeechAnchor | null;
+    receipt(current, packet.planId, { type:'speech-anchor-resolved',...stamp(),speechAnchor,deadlineServerMs:attempt.deadline,
+      speechTiming: speechAnchor ? 'measured-asr-estimate' : 'not-speech-aligned' });
     receipt(current, packet.planId, { type: 'generation-received', ...stamp(), requestId: result.requestId, action: submission?.action ?? null });
     if (!submission) throw new Error('No accepted model submission');
     if (submission.action === 'defer') {
@@ -237,7 +245,8 @@ async function generate(current: Run, packet: EvidencePacket, signal: AbortSigna
       committedAtMs: commit.committedAt * 1000, baseWorldRevision: packet.baseWorldRevision, worldRevision: commit.revision, currentWorldRevision: world.revision });
     attempt.terminal = true;
     committedContext.markRendered(commit.revision);
-    receipt(current, packet.planId, { type: 'render-submitted', ...submitted, committedBrowserAtMs: committedAt.browserAtMs, outcome });
+    receipt(current, packet.planId, { type: 'render-submitted', ...submitted, committedBrowserAtMs: committedAt.browserAtMs, outcome,
+      speechAnchor, speechTiming: speechAnchor ? measureSpeechRender(speechAnchor,submitted) : null });
     drain(current);
     note(`${packet.planId}: revision ${commit.revision} submitted to renderer (${submission.action}); pixels and correctness unverified.`);
     status.textContent = `Revision ${commit.revision} submitted. Listening for more evidence.`;
