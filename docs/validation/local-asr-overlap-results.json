@@ -1,0 +1,223 @@
+{
+  "evidenceRoot": "data/realtime-workshop/asr-overlap-paired-01",
+  "status": "complete",
+  "providerRequests": 0,
+  "probeSha256": "248f344364a08ce801f40be6da23ee40944bd147ea508f92dba693aa70dc6433",
+  "warmRule": "Exclude first endpoint (both arms see identical4s, first invocation cold); remaining4endpoints times2counterbalanced orders.",
+  "metrics": [
+    {
+      "sourceId": "mit-oscillations",
+      "arm": "independent",
+      "inferenceMs": {
+        "n": 8,
+        "min": 209.69580000638962,
+        "median": 214.57250000536442,
+        "max": 220.40559999644756,
+        "mean": 214.89952500350773
+      },
+      "endpointToReceiptMs": {
+        "n": 8,
+        "min": 215.21500000000015,
+        "median": 333.7170499999984,
+        "max": 479.4459999999999,
+        "mean": 340.87712499999907
+      },
+      "newestIntervalStartToReceiptMs": {
+        "n": 8,
+        "min": 4215.215,
+        "median": 4333.717049999998,
+        "max": 4479.446,
+        "mean": 4340.877124999999
+      }
+    },
+    {
+      "sourceId": "mit-oscillations",
+      "arm": "rolling",
+      "inferenceMs": {
+        "n": 8,
+        "min": 226.39230002462864,
+        "median": 232.83880000561476,
+        "max": 248.46040001511574,
+        "mean": 234.4127875044942
+      },
+      "endpointToReceiptMs": {
+        "n": 8,
+        "min": 231.47789999999804,
+        "median": 350.6264999999985,
+        "max": 460.0694999999996,
+        "mean": 348.7167499999987
+      },
+      "newestIntervalStartToReceiptMs": {
+        "n": 8,
+        "min": 4231.477899999998,
+        "median": 4350.6264999999985,
+        "max": 4460.0695,
+        "mean": 4348.716749999999
+      }
+    },
+    {
+      "sourceId": "local-lecture",
+      "arm": "independent",
+      "inferenceMs": {
+        "n": 8,
+        "min": 214.47229999303818,
+        "median": 221.29209999740124,
+        "max": 247.69369998574257,
+        "mean": 224.96842499636114
+      },
+      "endpointToReceiptMs": {
+        "n": 8,
+        "min": 221.38950000000477,
+        "median": 354.33110000001034,
+        "max": 498.7282000000123,
+        "mean": 354.637575000007
+      },
+      "newestIntervalStartToReceiptMs": {
+        "n": 8,
+        "min": 4221.389500000005,
+        "median": 4354.33110000001,
+        "max": 4498.728200000012,
+        "mean": 4354.637575000007
+      }
+    },
+    {
+      "sourceId": "local-lecture",
+      "arm": "rolling",
+      "inferenceMs": {
+        "n": 8,
+        "min": 231.79959999024868,
+        "median": 248.92854999005795,
+        "max": 268.90380001068115,
+        "mean": 247.8103500008583
+      },
+      "endpointToReceiptMs": {
+        "n": 8,
+        "min": 237.4087000000145,
+        "median": 358.2273000000023,
+        "max": 527.7023000000045,
+        "mean": 368.93693750000693
+      },
+      "newestIntervalStartToReceiptMs": {
+        "n": 8,
+        "min": 4237.4087000000145,
+        "median": 4358.227300000002,
+        "max": 4527.7023000000045,
+        "mean": 4368.936937500007
+      }
+    }
+  ],
+  "checks": [
+    {
+      "run": "mit-oscillations-independent-first",
+      "releases": 5,
+      "noEarlySourceReads": true,
+      "noEarlyInferenceSend": true,
+      "rawPCMHashMatches": true,
+      "wordSpansOutsideWindow": 0
+    },
+    {
+      "run": "mit-oscillations-rolling-first",
+      "releases": 5,
+      "noEarlySourceReads": true,
+      "noEarlyInferenceSend": true,
+      "rawPCMHashMatches": true,
+      "wordSpansOutsideWindow": 0
+    },
+    {
+      "run": "local-lecture-independent-first",
+      "releases": 5,
+      "noEarlySourceReads": true,
+      "noEarlyInferenceSend": true,
+      "rawPCMHashMatches": true,
+      "wordSpansOutsideWindow": 0
+    },
+    {
+      "run": "local-lecture-rolling-first",
+      "releases": 5,
+      "noEarlySourceReads": true,
+      "noEarlyInferenceSend": true,
+      "rawPCMHashMatches": true,
+      "wordSpansOutsideWindow": 0
+    }
+  ],
+  "repeatText": [
+    {
+      "sourceId": "mit-oscillations",
+      "identicalAcrossOrders": true
+    },
+    {
+      "sourceId": "local-lecture",
+      "identicalAcrossOrders": true
+    }
+  ],
+  "modelRevision": "ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66",
+  "modelFiles": [
+    {
+      "name": "config.json",
+      "bytes": 2309,
+      "sha256": "56a6d8110d311f19c8f0471e562832c7527f146b567275bfca59fcf7c184da9a",
+      "matchesDownload": true
+    },
+    {
+      "name": "model.bin",
+      "bytes": 145217532,
+      "sha256": "d01c3014881c9c6f3133c182f3d2887eb6ca1c789a7538c5c007196857a0a6a9",
+      "matchesDownload": true
+    },
+    {
+      "name": "tokenizer.json",
+      "bytes": 2203239,
+      "sha256": "fb7b63191e9bb045082c79fd742a3106a12c99513ab30df4a0d47fa6cb6fd0ab",
+      "matchesDownload": true
+    },
+    {
+      "name": "vocabulary.txt",
+      "bytes": 459861,
+      "sha256": "34ce3fe1c5041027b3f8d42912270993f986dbc4bb34cf27f951e34a1e453913",
+      "matchesDownload": true
+    }
+  ],
+  "audio": [
+    {
+      "id": "mit-oscillations",
+      "path": "data/realtime-workshop/media/mit-oscillations/t0885-0905.wav",
+      "bytes": 640666,
+      "sha256": "07169f7a7c2749a8d22c9b53e4d2aab159e9483f8cebe61d3a8e8aad0016f3f3"
+    },
+    {
+      "id": "local-lecture",
+      "path": "data/realtime-workshop/media/local-lecture/t0885-0905.wav",
+      "bytes": 640078,
+      "sha256": "f2ddf7ef7aad08512fd9407f95bcf99e207a3394bd2c584f0beaf97559d59493"
+    }
+  ],
+  "protocol": {
+    "releaseSeconds": 4,
+    "independentSeconds": 4,
+    "rollingMaximumSeconds": 8,
+    "uniqueSecondsPerRun": 20,
+    "decodedSecondsPerRun": 56,
+    "runs": 4,
+    "trials": 40,
+    "order": "independent-first then rolling-first for each source",
+    "sameWorkerPerPair": true
+  },
+  "findings": {
+    "englishBoundaryAt901": "independent software; rolling soft; both incorrect",
+    "englishBoundaryAt905": "rolling recovers solved this problem at next endpoint",
+    "remainingEnglishErrors": [
+      "Professor D",
+      "square instead of squared",
+      "naturally instead of actually"
+    ],
+    "germanAccuracy": "Mixed qualitative behavior; no reference transcript or WER; private words excluded",
+    "referenceCheck": "Uses existing local-asr-checkpoint caption comparison; no new caption verification or decoder reference input"
+  },
+  "limits": [
+    "No semantic reconciliation or automatic promotion",
+    "Endpoint receipt timing includes paired serial-worker overhead",
+    "No end-to-end animation deadline measurement",
+    "Estimated word times are not causal availability times",
+    "Small local sample; repeatability is not accuracy"
+  ]
+}
