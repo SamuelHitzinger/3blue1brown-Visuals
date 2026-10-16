@@ -489,3 +489,37 @@ test('runProbe rejects invalid parameter options before opening a runtime',async
   await expect(probe.runProbe(args,{retainedParameters:'yes' as unknown as boolean,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
   expect(opened).toBe(false);
 });
+
+test('frozen experiment system prompt reaches runtime verbatim while strict tool contract remains',async()=>{
+  const {directory,args}=await requestArgs('world'),system=join(directory,'..','system.txt');
+  const frozen='Frozen experiment instructions.\nPreserve this exact prompt.';
+  await writeFile(system,frozen);
+  const wire={...call,name:'submit_world',arguments:parametersWorld},message=terminalFor(wire);
+  let observed:any;
+  const createRuntime=(async()=>({
+    getModel:()=>({id:'offline-test-model',api:'openai-responses',reasoning:true,maxTokens:2048}),
+    stream:(_model:unknown,context:unknown,options:StreamOptions)=>{
+      observed=context;
+      return (async function*(){
+        const tools=convertResponsesTools([submissionTool('world','require',false,true)],{supportsStrictMode:true});
+        await options.onPayload!({tools,tool_choice:'required',service_tier:'priority'},{} as Parameters<NonNullable<StreamOptions['onPayload']>>[1]);
+        yield {type:'toolcall_end',contentIndex:0,toolCall:wire,partial:message};
+        yield {type:'done',reason:'toolUse',message};
+      })();
+    },
+  })) as unknown as typeof createModelRuntime;
+  const result=await probe.runProbe([...args,`--system-file=${system}`],{retainedParameters:true,exactSystemPrompt:true,createRuntime});
+  expect(result.report.status).toBe('complete');
+  expect(result.report.exactSystemPrompt).toBe(true);
+  expect(observed.systemPrompt).toBe(frozen);
+  expect(observed.tools).toEqual([submissionTool('world','require',false,true)]);
+  expect(JSON.parse(await readFile(join(directory,'prompt.json'),'utf8')).systemPrompt).toBe(frozen);
+});
+
+test('exact system prompt requires a provided system file and boolean opt-in before runtime',async()=>{
+  const {args}=await requestArgs();let opened=false;
+  const createRuntime=(async()=>{opened=true;throw Error('Must not open');}) as typeof createModelRuntime;
+  await expect(probe.runProbe(args,{exactSystemPrompt:true,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
+  await expect(probe.runProbe(args,{exactSystemPrompt:'yes' as unknown as boolean,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
+  expect(opened).toBe(false);
+});

@@ -256,6 +256,8 @@ export interface ProbeRunOptions {
   speechAnchors?: boolean;
   /** Opt-in world-only numeric control updates; host validates exposed IDs and bounds. */
   retainedParameters?: boolean;
+  /** Preserve a frozen experiment's supplied system prompt; strict tool validation still applies. */
+  exactSystemPrompt?: boolean;
   /** Reuse or inject the existing provider runtime without changing request settings. */
   createRuntime?: typeof createModelRuntime;
 }
@@ -280,6 +282,8 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   if(typeof speechAnchors!=='boolean'||speechAnchors&&kind!=='world')throw new AgentError('CONFIG','Speech anchors require world submissions.');
   const retainedParameters=options.retainedParameters??false;
   if(typeof retainedParameters!=='boolean'||retainedParameters&&kind!=='world')throw new AgentError('CONFIG','Retained parameters require world submissions.');
+  const exactSystemPrompt=options.exactSystemPrompt??false;
+  if(typeof exactSystemPrompt!=='boolean'||exactSystemPrompt&&!flags['system-file'])throw new AgentError('CONFIG','Exact system prompts require a boolean opt-in and a system file.');
   const which = (flags.case ?? 'cube') as ProbeCase | 'external', action = (flags.action ?? 'create') as 'create' | 'edit';
   if (!flags.model || !flags.thinking || !flags.out || !['priority', 'default'].includes(flags['service-tier'])
     || !['scene', 'brief', 'world'].includes(kind) || !['require', 'prefer'].includes(strict)
@@ -293,9 +297,11 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
     : { systemPrompt: 'Read the supplied evidence and produce a compact causal visual brief. Ground claims and objects in the evidence IDs provided in the prompt. State uncertainty; do not invent unreadable details.', prompt: '' };
   if (flags['prompt-file']) prompts.prompt = await promptFile(flags['prompt-file']);
   if (flags['system-file']) prompts.systemPrompt = await promptFile(flags['system-file']);
+  if(!exactSystemPrompt){
   prompts.systemPrompt += `\n\nSubmission contract: call ${nameFor(kind)} exactly once with the complete ${kind === 'scene' ? 'native scene source in its source field' : kind === 'world' ? 'world branch in the specified fields: add uses native source and empty changes/remove; edit uses empty source and existing stable IDs, nullable unchanged properties, and explicit durations; add/edit require empty reason. If evidence is insufficient or ambiguous, defer with a specific evidence-grounded reason (at most 512 UTF-8 bytes) and empty source/changes/remove. Never fabricate a scene or edit to fill missing evidence' : 'causal brief in the specified fields'}. Do not put the submission in prose or a code fence. This is a single request; tools will not execute and no repair turn follows.`;
   if(speechAnchors)prompts.systemPrompt+=' Speech anchor contract: speechAnchor is a required object. For speech-grounded add/edit, reference exact supplied evidenceId/version and spoken phrase (at most 1000 UTF-8 bytes); use occurrence or utteranceId only to disambiguate, otherwise null. Host resolves measured words; do not calculate or invent timestamps. For frame-only operations and every deferral, set all five speechAnchor fields to null. Schema validity does not prove phrase matching or evidence availability.';
   if(retainedParameters)prompts.systemPrompt+=parameterContract+(speechAnchors?' Speech-grounded parameter operations use the same exact supplied speechAnchor evidence contract.':'');
+  }
   const images: ImageContent[] = [];
   let imageMetadata: { path: string; sha256: string; bytes: number; mimeType: string } | null = null;
   if (flags.image) {
@@ -319,6 +325,7 @@ export async function runProbe(args: string[], options: ProbeRunOptions = {}) {
   const identity = { schemaVersion: 1, evidenceKind: 'single-structured-model-submission', kind, case: which, action,
     ...(speechAnchors?{speechAnchors:true}:{}),
     ...(retainedParameters?{retainedParameters:true}:{}),
+    ...(exactSystemPrompt?{exactSystemPrompt:true}:{}),
     format: kind === 'scene' ? 'native-js' : kind === 'world' ? 'world-operation' : 'causal-brief', model: config.model, provider: config.provider, authMode: config.authMode,
     thinkingRequested: config.thinking, serviceTierRequested: flags['service-tier'], strictRequested: strict,
     maxTokensRequested: maxTokens, timeoutMs, maxRetries: 0, transportRequested: 'sse', systemPromptOverridden: !!flags['system-file'],
