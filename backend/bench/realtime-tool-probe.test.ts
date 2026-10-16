@@ -7,11 +7,66 @@ import { convertResponsesTools } from '../../node_modules/@earendil-works/pi-ai/
 import type { AssistantMessage, AssistantMessageEvent, StreamOptions, ToolCall } from '@earendil-works/pi-ai';
 import type { createModelRuntime } from '../src/agents/auth.js';
 import * as probe from './realtime-tool-probe.js';
-import { LiveWorld } from './realtime-world/world.js';
+import { LiveWorld, WORLD_LIMITS } from './realtime-world/world.js';
 import { submissionTool, validateSubmission, acceptSubmission, preparePayload, submissionTrace, observeSubmission } from './realtime-tool-probe.js';
 
 const source = 'export default scene({}, s => {\n  s.text("label", { text: "quoted \\\"word\\\"" });\n});';
 const call = { type: 'toolCall' as const, id: 'call-1', name: 'submit_scene', arguments: { source } };
+
+test('source budget reaches actual strict schema and cannot be widened by adapter',()=>{
+ for(const kind of ['scene','world'] as const){
+  const tool=submissionTool(kind,'require',false,false,false,1600);
+  expect((tool.parameters as any).properties.source.maxLength).toBe(1600);
+  const payload={tools:convertResponsesTools([tool],{supportsStrictMode:true}),tool_choice:'required',service_tier:'priority'};
+  expect(preparePayload(payload,kind,'require','priority',false,false,false,1600).metadata.tools[0].parameters.properties.source.maxLength).toBe(1600);
+  expect(()=>preparePayload(payload,kind,'require','priority')).toThrow('schema');
+  const widened={...payload,tools:convertResponsesTools([submissionTool(kind)],{supportsStrictMode:true})};
+  expect(()=>preparePayload(widened,kind,'require','priority',false,false,false,1600)).toThrow('schema');
+ }
+ expect((submissionTool('world').parameters as any).properties.source.maxLength).toBe(WORLD_LIMITS.sourceBytes);
+ expect((submissionTool('scene').parameters as any).properties.source).not.toHaveProperty('maxLength');
+});
+
+test('source budget validates range and rejects brief before opening runtime',async()=>{
+ let opened=false;const createRuntime=(async()=>{opened=true;throw Error('Must not dispatch');}) as typeof createModelRuntime;
+ const {args}=await requestArgs();
+ for(const sourceMaxChars of [63,WORLD_LIMITS.sourceBytes+1,64.5,NaN,Infinity,'1600' as unknown as number]){
+  expect(()=>submissionTool('scene','require',false,false,false,sourceMaxChars)).toThrow();
+  await expect(probe.runProbe(args,{sourceMaxChars,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
+ }
+ const brief=await requestArgs('brief');
+ await expect(probe.runProbe(brief.args,{sourceMaxChars:1600,createRuntime})).rejects.toMatchObject({code:'CONFIG'});
+ expect(()=>submissionTool('brief','require',false,false,false,1600)).toThrow();
+ expect(opened).toBe(false);
+});
+
+test('runProbe enforces source budget on receipt even when provider ignores schema',async()=>{
+ for(const length of [64,65]){
+  const {args,directory}=await requestArgs('world'),system=join(directory,'..','system.txt');await writeFile(system,'Source budget test.');
+  const wire={...call,name:'submit_world',arguments:{action:'add',reason:'',source:'x'.repeat(length),changes:[],remove:[]}},message=terminalFor(wire);
+  let submittedLimit:unknown;
+  const createRuntime=(async()=>({
+   getModel:()=>({id:'offline-test-model',api:'openai-responses',reasoning:true,maxTokens:2048}),
+   stream:(_model:unknown,context:any,options:StreamOptions)=>(async function*(){
+    submittedLimit=context.tools[0].parameters.properties.source.maxLength;
+    const tools=convertResponsesTools(context.tools,{supportsStrictMode:true});
+    await options.onPayload!({tools,tool_choice:'required',service_tier:'priority'},{} as Parameters<NonNullable<StreamOptions['onPayload']>>[1]);
+    yield {type:'toolcall_end',contentIndex:0,toolCall:wire,partial:message};yield {type:'done',reason:'toolUse',message};
+   })(),
+  })) as unknown as typeof createModelRuntime;
+  const result=await probe.runProbe([...args,`--system-file=${system}`],{sourceMaxChars:64,createRuntime});
+  expect(submittedLimit).toBe(64);expect(result.report.sourceMaxChars).toBe(64);
+  expect(result.report.status).toBe(length===64?'complete':'failed');
+  if(length===65){expect(result.submission).toBeNull();expect(result.report.validToolCallCompleteMs).toBeNull();}
+  else expect(result.submission).toMatchObject({source:'x'.repeat(64)});
+ }
+ // JSON Schema maxLength counts Unicode code points, while existing byte limits remain in force.
+ expect(validateSubmission('scene',{source:'😀'.repeat(64)},false,false,false,64)).toEqual({source:'😀'.repeat(64)});
+ expect(()=>validateSubmission('scene',{source:'😀'.repeat(65)},false,false,false,64)).toThrow();
+ const replacement={action:'replace',reason:'',source:'x'.repeat(65),changes:[],remove:[],motionChanges:[],replacementProgramId:'program'};
+ expect(()=>validateSubmission('world',replacement,false,false,true,64)).toThrow();
+ expect(validateSubmission('world',replacement,false,false,true)).toMatchObject({source:'x'.repeat(65)});
+});
 
 test('stream text and partial argument deltas cannot contaminate completed source or satisfy completion', () => {
   const trace = submissionTrace();
@@ -233,7 +288,7 @@ test('world rejects branch mixing, unsupported properties, malformed bounds and 
     { ...editWorld, remove: ['dot'] }, { ...editWorld, remove: ['@bad'] },
     { ...editWorld, changes: Array.from({length:257},(_,i)=>({...editWorld.changes[0],id:'d'+i})) },
     { ...editWorld, remove: Array.from({length:257},(_,i)=>'d'+i) },
-    change({}), change({radius:1}), change({position:[0,0]}), change({position:[0,0,NaN]}), change({rotation:[0,Infinity,0]}),
+    change({radius:1}), change({position:[0,0]}), change({position:[0,0,NaN]}), change({rotation:[0,Infinity,0]}),
     change({position:[1000001,0,0]}), change({scale:-1}), change({scale:1000001}), change({opacity:1.01}),
     change({fill:'#ff0000'}), change({fill:{color:'BLUE',opacity:.5}}), change({scale:1},{duration:61}),
     change({scale:1},{duration:NaN}), change({scale:1},{id:'bad id'}), change({scale:1},{extra:1}),
@@ -241,6 +296,41 @@ test('world rejects branch mixing, unsupported properties, malformed bounds and 
     JSON.parse('{"action":"edit","source":"","changes":[],"remove":["old"],"__proto__":{}}'),
   ]) expect(() => validateSubmission('world', invalid)).toThrow();
   expect(validateSubmission('world', {action:'edit',reason:'',source:'',changes:[],remove:['old']})).toEqual({action:'edit',source:'',changes:[],remove:['old']});
+});
+
+test('world edit removes validated all-null entries while retaining meaningful edits or removals',()=>{
+ const noop={id:'edgeAB',props:propsWire(),duration:0};
+ const mixed={...editWorld,changes:[...editWorld.changes,noop]};
+ expect(validateSubmission('world',mixed)).toEqual(validateSubmission('world',editWorld));
+ expect(validateSubmission('world',{...editWorld,changes:[noop]})).toEqual({action:'edit',source:'',changes:[],remove:['old']});
+ const complete={...mixed,parameterProgramId:'',parameterValues:[],motionChanges:[],replacementProgramId:'',speechAnchor:emptySpeechAnchor};
+ const wire={...call,name:'submit_world',arguments:complete};
+ expect(acceptSubmission('world',[wire],[wire],true,true,true,true)).toMatchObject({action:'edit',changes:[{id:'dot',props:{position:[2,0,0],fill:'TEAL'},duration:2}],speechAnchor:null});
+ // Normalization must never make different raw provider receipts agree.
+ const changed={...wire,arguments:{...complete,changes:editWorld.changes}};
+ expect(()=>acceptSubmission('world',[wire],[changed],true,true,true,true)).toThrow('wire');
+});
+
+test('all-null world edits become explicit deferral without claiming an animation or speech anchor',()=>{
+ const noop={...editWorld,changes:[{id:'edgeAB',props:propsWire(),duration:0}],remove:[]};
+ expect(validateSubmission('world',noop)).toEqual({action:'defer',reason:'No property changes requested.',source:'',changes:[],remove:[]});
+ expect(validateSubmission('world',{...noop,parameterProgramId:'',parameterValues:[],motionChanges:[],replacementProgramId:'',speechAnchor},true,true,true))
+  .toEqual({action:'defer',reason:'No property changes requested.',source:'',changes:[],remove:[],parameterProgramId:'',parameterValues:[],motionChanges:[],replacementProgramId:'',speechAnchor:null});
+});
+
+test('no-op normalization still rejects invalid fields, durations and duplicate identities',()=>{
+ const noop={id:'edgeAB',props:propsWire(),duration:0};
+ const edit={...editWorld,changes:[noop],remove:[]};
+ for(const changes of [
+  [{...noop,id:'bad id'}],[{...noop,duration:-1}],[{...noop,duration:61}],[{...noop,duration:NaN}],
+  [{...noop,extra:true}],[{...noop,props:{...noop.props,radius:null}}],[{...noop,props:{}}],
+  [{...noop,props:{...noop.props,fill:'BLACK_UNKNOWN'}}],[noop,noop],
+  [noop,{...editWorld.changes[0],id:'edgeAB'}],
+ ])expect(()=>validateSubmission('world',{...edit,changes})).toThrow();
+ expect(()=>validateSubmission('world',{...edit,remove:['edgeAB']})).toThrow();
+ expect(()=>validateSubmission('world',{...edit,remove:['bad id']})).toThrow();
+ expect(()=>validateSubmission('world',{...edit,remove:['old','old']})).toThrow();
+ expect(()=>validateSubmission('world',{...edit,speechAnchor:{...speechAnchor,version:-1}},true)).toThrow();
 });
 
 test('world deferral requires a bounded evidence reason, empty operation and exact terminal agreement', () => {

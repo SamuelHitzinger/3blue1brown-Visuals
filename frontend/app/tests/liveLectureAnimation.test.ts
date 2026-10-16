@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { LiveAnimationLoop, LiveAnimationTiming, acceptLiveAnimation, markLiveAnimationRendered, readLiveAnimationReply } from '../src/liveLectureAnimation.ts'
+import { LiveAnimationHttpError, LiveAnimationLoop, LiveAnimationTiming, acceptLiveAnimation, markLiveAnimationRendered, readLiveAnimationReply } from '../src/liveLectureAnimation.ts'
 import type { LiveAnimationTimingEvent } from '../src/liveLectureAnimation.ts'
 import type { LiveAnimationReply } from '../src/liveLectureAnimation.ts'
 import * as runtime from 'animlib/live'
@@ -49,6 +49,61 @@ test('provider failure stops without retries and disposal blocks late publicatio
   loop.start(); await tick(); loop.wake(); await tick()
   assert.equal(requests, 1); assert.equal(failures, 1); assert.equal(loop.active, false); assert.equal(loop.sourceCursor, 0)
   loop.dispose(); loop.start(); assert.equal(requests, 1); assert.equal(accepted, 0)
+})
+
+test('HTTP 504 retries twice with one-second backoff, same cursor and no concurrent request', async () => {
+  const times: number[] = [], cursors: number[] = [], messages: string[] = []
+  let accepted = 0, active = 0, peak = 0
+  const loop = new LiveAnimationLoop({ request: async cursor => {
+    active++; peak = Math.max(peak, active); cursors.push(cursor); times.push(performance.now())
+    try { throw new LiveAnimationHttpError(504, 'Animation request timed out.') } finally { active-- }
+  }, accept: async () => { accepted++; return '' }, status: (_active, message) => { messages.push(message) } })
+  try {
+    loop.start(); await tick(); loop.wake(); await tick()
+    assert.equal(loop.active, true); assert.equal(times.length, 1)
+    assert.match(messages.at(-1)!, /Update delayed; retrying/)
+    await new Promise(resolve => setTimeout(resolve, 2150))
+    assert.deepEqual(cursors, [0, 0, 0]); assert.equal(peak, 1); assert.equal(accepted, 0)
+    assert.ok(times[1] - times[0] >= 950); assert.ok(times[2] - times[1] >= 950)
+    assert.equal(loop.sourceCursor, 0); assert.equal(loop.active, false)
+    assert.equal(messages.at(-1), 'Animation request timed out.')
+  } finally { loop.dispose() }
+})
+
+test('successful publication resets timeout retry allowance and advances only accepted cursor', async () => {
+  const cursors: number[] = [], accepted: number[] = []
+  const loop = new LiveAnimationLoop({ request: async cursor => {
+    cursors.push(cursor)
+    if ([1, 2, 4, 5].includes(cursors.length)) throw new LiveAnimationHttpError(504, 'timeout')
+    return packet(cursor + 1, 0, { action: 'defer', reason: 'pending' })
+  }, accept: async reply => { accepted.push(reply.sourceCursor); return 'ready' }, status() {}, pollMs: 250 })
+  try {
+    loop.start(); await new Promise(resolve => setTimeout(resolve, 4400)); loop.stop()
+    assert.deepEqual(cursors, [0, 0, 0, 1, 1, 1]); assert.deepEqual(accepted, [1, 2]); assert.equal(loop.sourceCursor, 2)
+  } finally { loop.dispose() }
+})
+
+test('stop and disposal cancel pending timeout backoff', async () => {
+  for (const dispose of [false, true]) {
+    let requests = 0
+    const loop = new LiveAnimationLoop({ request: async () => { requests++; throw new LiveAnimationHttpError(504, 'timeout') }, accept: async () => '', status() {} })
+    loop.start(); await tick(); assert.equal(loop.active, true)
+    if (dispose) loop.dispose(); else loop.stop('Updates paused.')
+    await new Promise(resolve => setTimeout(resolve, 1050))
+    assert.equal(requests, 1); assert.equal(loop.sourceCursor, 0); assert.equal(loop.active, false); loop.dispose()
+  }
+})
+
+test('non-504 HTTP and local acceptance failures never retry', async () => {
+  for (const status of [400, 409, 502]) {
+    let requests = 0
+    const loop = new LiveAnimationLoop({ request: async () => { requests++; throw new LiveAnimationHttpError(status, 'failed') }, accept: async () => '', status() {} })
+    loop.start(); await tick(); assert.equal(loop.active, false); assert.equal(requests, 1); loop.dispose()
+  }
+  let requests = 0
+  const loop = new LiveAnimationLoop({ request: async () => { requests++; return packet(1, 0, { action: 'defer', reason: 'pending' }) },
+    accept: async () => { throw new LiveAnimationHttpError(504, 'local validation failure') }, status() {} })
+  loop.start(); await tick(); assert.equal(loop.active, false); assert.equal(requests, 1); assert.equal(loop.sourceCursor, 0); loop.dispose()
 })
 
 test('unmount or suspension during preparation prevents the pending commit and cursor advance', async () => {

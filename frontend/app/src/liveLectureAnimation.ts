@@ -1,5 +1,11 @@
 import type { CommittedContextJournal, LectureSubmission, LiveWorld, OperationEvidenceRef } from 'animlib/live'
 
+/** HTTP failures are distinct from local validation and rendering failures. */
+export class LiveAnimationHttpError extends Error {
+  readonly status: number
+  constructor(status: number, message: string) { super(message); this.name = 'LiveAnimationHttpError'; this.status = status }
+}
+
 export type LiveAnimationReply = { sourceCursor: number; baseRevision: number; idle: true }
   | { sourceCursor: number; baseRevision: number; programId: string; submission: LectureSubmission; evidence: { changes: OperationEvidenceRef[]; context: OperationEvidenceRef[] } }
 
@@ -18,7 +24,8 @@ export function readLiveAnimationReply(value: unknown, sourceCursor: number): Li
 }
 
 /** One lane owns requests and commits. Stop invalidates late results; explicit
- * Start may resume only after the previous lane has settled. Failures never retry.
+ * Start may resume only after the previous lane has settled. Only request HTTP
+ * 504 failures retry, at most twice per successful update, with one-second delay.
  */
 export class LiveAnimationLoop {
   private enabled = false
@@ -55,15 +62,33 @@ export class LiveAnimationLoop {
     const generation = this.generation, controller = new AbortController()
     this.controller = controller
     const guard = () => { controller.signal.throwIfAborted(); if (this.disposed || !this.enabled || generation !== this.generation) throw Error('Live animation update cancelled.') }
+    let timeoutRetries = 0
     try {
       while (this.enabled && generation === this.generation && !this.disposed) {
         guard()
-        const reply = readLiveAnimationReply(await this.options.request(this.cursor, controller.signal), this.cursor)
+        let response: unknown
+        try { response = await this.options.request(this.cursor, controller.signal) }
+        catch (error) {
+          guard()
+          if (!(error instanceof LiveAnimationHttpError) || error.status !== 504 || timeoutRetries >= 2) throw error
+          timeoutRetries++
+          this.options.status(true, `Update delayed; retrying… (${timeoutRetries}/2)`)
+          // New-source wakeups must not bypass backoff. Stop aborts it immediately.
+          await new Promise<void>(resolve => {
+            const done = () => { clearTimeout(timer); controller.signal.removeEventListener('abort', done); resolve() }
+            const timer = setTimeout(done, 1000)
+            controller.signal.addEventListener('abort', done, { once: true })
+            if (controller.signal.aborted) done()
+          })
+          guard(); continue
+        }
+        const reply = readLiveAnimationReply(response, this.cursor)
         guard()
         const message = await this.options.accept(reply, controller.signal, guard)
         // accept guards immediately before publication. Once accepted, preserve
         // its cursor even if Stop arrives in the following microtask.
         this.cursor = reply.sourceCursor
+        timeoutRetries = 0
         guard(); this.options.status(true, message)
         await new Promise<void>(resolve => {
           const done = () => { clearTimeout(timer); if (this.waiting === done) this.waiting = undefined; resolve() }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { acceptLiveAnimation, LiveAnimationLoop, LiveAnimationTiming, markLiveAnimationRendered, readLiveAnimationReply } from './liveLectureAnimation'
+import { acceptLiveAnimation, LiveAnimationHttpError, LiveAnimationLoop, LiveAnimationTiming, markLiveAnimationRendered, readLiveAnimationReply } from './liveLectureAnimation'
 import type { LiveAnimationReply } from './liveLectureAnimation'
 import './live-lecture-canvas.css'
 
@@ -67,8 +67,11 @@ export default function LiveLectureCanvas({ lectureId, suspended, sourceRevision
           headers: { 'Content-Type': 'application/json' }, signal: AbortSignal.any([signal, AbortSignal.timeout(30000)]),
           body: JSON.stringify({ sourceCursor, baseRevision: revision, world }) })
         let result: unknown
-        try { result = await response.json() } catch { throw Error('The live animation service could not respond. Try again.') }
-        if (!response.ok) throw Error(typeof (result as { detail?: unknown })?.detail === 'string' ? (result as { detail: string }).detail : 'The live animation could not update. Try again.')
+        try { result = await response.json() } catch {
+          if (response.status === 504) throw new LiveAnimationHttpError(504, 'Animation request timed out.')
+          throw Error('The live animation service could not respond. Try again.')
+        }
+        if (!response.ok) throw new LiveAnimationHttpError(response.status, typeof (result as { detail?: unknown })?.detail === 'string' ? (result as { detail: string }).detail : 'The live animation could not update. Try again.')
         const reply = readLiveAnimationReply(result, sourceCursor)
         if (reply.baseRevision !== revision) throw Error('The animation response does not match the requested scene.')
         if (requestId !== undefined) timing?.responded(requestId, reply)
