@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Retained geometry comparison</title>
+<style>
+body{background:#101318;color:#e9eef4;font:15px/1.5 system-ui;margin:24px}h1{font-size:24px;margin-bottom:4px}p{max-width:1100px;color:#b5c0cd}button,select,input{font:inherit}button,select{padding:8px 12px;background:#202a36;color:inherit;border:1px solid #526173;border-radius:5px}nav{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:18px 0}#seek{width:220px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}figure{margin:0}figcaption{margin:8px 0}canvas{width:100%;aspect-ratio:16/9;background:#000;display:block}.narrow canvas{aspect-ratio:4/3}#status{color:#7bd3c1}#metrics{white-space:pre-wrap} @media(max-width:850px){.pair{grid-template-columns:1fr}}
+</style></head><body>
+<h1>Same geometry, two update paths</h1>
+<p>Left: fresh construction with final parameter values. Right: existing construction changed through retained numeric parameters. Both share scene time and rendering settings. Handwritten runtime fixtures; no model-generation speed or visual-quality verdict implied.</p>
+<nav><label>Case <select id="case"></select></label><button id="play" disabled>Play</button><button id="restart" disabled>Restart</button><input id="seek" aria-label="Comparison time" type="range" min="0" max="4" step="0.01" value="0" disabled><span id="time">0.00 s</span><label>Viewport <select id="aspect"><option value="wide">16:9</option><option value="narrow">4:3</option></select></label></nav>
+<div class="pair"><figure><figcaption>Baseline · fresh construction</figcaption><canvas id="baseline"></canvas></figure><figure><figcaption>Candidate · retained update</figcaption><canvas id="candidate"></canvas></figure></div>
+<p id="status">Loading fixtures…</p><p id="metrics"></p><script type="module" src="/main.ts"></script></body></html>

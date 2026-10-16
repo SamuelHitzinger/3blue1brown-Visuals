@@ -1,0 +1,627 @@
+{
+  "schemaVersion": 1,
+  "run": "data/realtime-workshop/retained-parameters/rkdjgWq",
+  "createdAt": "2026-10-16T03:49:55.937Z",
+  "measurement": "Local runtime only: deterministic source construction, native compilation, retained parameter update and sampling. Controlled world time is separate from performance.now elapsed work.",
+  "limitations": [
+    "This is not model generation, retrieval, live presentation or a ten-second end-to-end benchmark.",
+    "Sequential local compile timings are descriptive, not a randomized cold/warm speed comparison; parameter update excludes later sampling and rendering.",
+    "Both arms are deterministic local sources. Exact numeric native-frame parity does not establish visual or explanatory quality.",
+    "Caffeine uses the tracked computed PubChem conformer with all atoms and bonds; rigid rotation is not a chemical or molecular dynamics claim.",
+    "Four sampled instants do not establish full-motion behavior. Snapshot renderer inputs have not been rendered by this harness."
+  ],
+  "cases": [
+    {
+      "id": "slope-low",
+      "subject": "slope",
+      "detail": "low",
+      "geometry": {
+        "curveSamples": 17
+      },
+      "sourceBytes": 866,
+      "baselineSourceBytes": 867,
+      "updateBytes": 65,
+      "sourceSha256": "8c6d54918059abb64f9f4764fa721b878defd01cdf49e66f3bde4bf6a438f8ef",
+      "baselineSourceSha256": "15bd23f5e8bb010c98c63adc2d5e415541f0899c8ec1d84e9a253885425f762b",
+      "localElapsedMs": {
+        "initialCompile": 37.74010000000001,
+        "freshCompile": 16.02849999999998,
+        "retainedUpdate": 0.6151999999999873,
+        "candidateSampling": 1.1557999999999993,
+        "baselineSampling": 0.9043000000000347
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 134,
+          "candidateSha256": "8f34d76b03b2d5330da30dfb52471861f6a0d4ed0041975424608770cfc39247",
+          "baselineSha256": "8f34d76b03b2d5330da30dfb52471861f6a0d4ed0041975424608770cfc39247"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 134,
+          "candidateSha256": "5863499c4c28d151cb5d9692e1c177b5c38471d17d35cb99b067630ed66e3176",
+          "baselineSha256": "5863499c4c28d151cb5d9692e1c177b5c38471d17d35cb99b067630ed66e3176"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 134,
+          "candidateSha256": "9c9c0c8b81d84ca17ca2f31d7e719455c921f695d9dceb9274edd33fadf218b1",
+          "baselineSha256": "9c9c0c8b81d84ca17ca2f31d7e719455c921f695d9dceb9274edd33fadf218b1"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 134,
+          "candidateSha256": "b71e9f0bc4f56aaee7b865962434d9a0b67d893129cb9170939701f25c92f660",
+          "baselineSha256": "b71e9f0bc4f56aaee7b865962434d9a0b67d893129cb9170939701f25c92f660"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "slope-high",
+      "subject": "slope",
+      "detail": "high",
+      "geometry": {
+        "curveSamples": 129
+      },
+      "sourceBytes": 870,
+      "baselineSourceBytes": 871,
+      "updateBytes": 65,
+      "sourceSha256": "ebec4ae2b7307188ee0ee40c4acb2ebd34446de07affae0a1bd2a84bf47c3cfa",
+      "baselineSourceSha256": "040a652c4c636e7e27c7cffdd16c75e75d4d58aae8152273d7999027d4dd73b9",
+      "localElapsedMs": {
+        "initialCompile": 15.167100000000005,
+        "freshCompile": 13.970100000000002,
+        "retainedUpdate": 0.4706999999999937,
+        "candidateSampling": 1.835800000000006,
+        "baselineSampling": 1.261699999999962
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 470,
+          "candidateSha256": "579f4fdf8d4eff0fb269ce708f6441ed99a21272e62ccc0c335ecf48edd380d3",
+          "baselineSha256": "579f4fdf8d4eff0fb269ce708f6441ed99a21272e62ccc0c335ecf48edd380d3"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 470,
+          "candidateSha256": "1ce3d59a8d159b43c3f2f57a54680007e17f54bce6cd71c0393ebcfafc8af7fd",
+          "baselineSha256": "1ce3d59a8d159b43c3f2f57a54680007e17f54bce6cd71c0393ebcfafc8af7fd"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 470,
+          "candidateSha256": "9e67bdc9bb7233355f72ee0d33b3c00e4d99c3d306bc8b275e6aba1df87cc38d",
+          "baselineSha256": "9e67bdc9bb7233355f72ee0d33b3c00e4d99c3d306bc8b275e6aba1df87cc38d"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 470,
+          "candidateSha256": "5fee1804ade9fde32ffe5cd47e6091d1b9318a894522e268428e2e1bc98b3837",
+          "baselineSha256": "5fee1804ade9fde32ffe5cd47e6091d1b9318a894522e268428e2e1bc98b3837"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "waves-low",
+      "subject": "waves",
+      "detail": "low",
+      "geometry": {
+        "curves": 3,
+        "curveSamples": 33
+      },
+      "sourceBytes": 865,
+      "baselineSourceBytes": 865,
+      "updateBytes": 64,
+      "sourceSha256": "8229340a2a9201761fef7e92229e72de5fec76e69b17a449ed0207de7824d956",
+      "baselineSourceSha256": "f60a6a2ee3e885cfc2a494dcb87835759cd20f891f9b3592ea91046c9c53b46f",
+      "localElapsedMs": {
+        "initialCompile": 15.14779999999999,
+        "freshCompile": 13.676999999999964,
+        "retainedUpdate": 0.6333000000000197,
+        "candidateSampling": 2.6316999999999666,
+        "baselineSampling": 2.3602000000000203
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 385,
+          "candidateSha256": "a1b7ab4c65953cb6903d328a917841d3f1123710baac2f377342ea68fbf09d53",
+          "baselineSha256": "a1b7ab4c65953cb6903d328a917841d3f1123710baac2f377342ea68fbf09d53"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 385,
+          "candidateSha256": "f8a8071b8039ed05e04e5a56121e34b265f3298203be2fa25c03d8cb2f18a840",
+          "baselineSha256": "f8a8071b8039ed05e04e5a56121e34b265f3298203be2fa25c03d8cb2f18a840"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 385,
+          "candidateSha256": "e217e9d614c8aff6fb6faa39d0ae508f0e62ec07485cae83800781d8526bfa80",
+          "baselineSha256": "e217e9d614c8aff6fb6faa39d0ae508f0e62ec07485cae83800781d8526bfa80"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 385,
+          "candidateSha256": "bef412b16e36c0ccc2d37e0e226bbb14a51c1a20ce28ca9bb81f238ca081f5f5",
+          "baselineSha256": "bef412b16e36c0ccc2d37e0e226bbb14a51c1a20ce28ca9bb81f238ca081f5f5"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "waves-high",
+      "subject": "waves",
+      "detail": "high",
+      "geometry": {
+        "curves": 3,
+        "curveSamples": 129
+      },
+      "sourceBytes": 869,
+      "baselineSourceBytes": 869,
+      "updateBytes": 64,
+      "sourceSha256": "dfc4b4fde2b0700ffeb21a9edade0802de0d6dabcc10b780b4ec95fe2b8fd297",
+      "baselineSourceSha256": "29b39e951f05bb3ed682947514dd39f38a844d7b6f7fd3567f13b83474e103a9",
+      "localElapsedMs": {
+        "initialCompile": 16.864700000000028,
+        "freshCompile": 15.845300000000009,
+        "retainedUpdate": 1.0653999999999542,
+        "candidateSampling": 5.416100000000029,
+        "baselineSampling": 5.754000000000019
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 1249,
+          "candidateSha256": "00a5771958290670b1af696cb2ce31335a4775db4302a3d0a88dfc87ece4b792",
+          "baselineSha256": "00a5771958290670b1af696cb2ce31335a4775db4302a3d0a88dfc87ece4b792"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 1249,
+          "candidateSha256": "94dea638920b9620f94299a7c010512839a9bf5c61674455961005d526926b23",
+          "baselineSha256": "94dea638920b9620f94299a7c010512839a9bf5c61674455961005d526926b23"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 1249,
+          "candidateSha256": "21a997c8c7f6d1c8d591e7626a80953b510e37765ae5e5bbb28f306abdd402e7",
+          "baselineSha256": "21a997c8c7f6d1c8d591e7626a80953b510e37765ae5e5bbb28f306abdd402e7"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 1249,
+          "candidateSha256": "19f1ba44bdf687638c4170847168881d4d6d1dbef0aa586ef85ac7ce3d150b28",
+          "baselineSha256": "19f1ba44bdf687638c4170847168881d4d6d1dbef0aa586ef85ac7ce3d150b28"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "gaussian-low",
+      "subject": "gaussian",
+      "detail": "low",
+      "geometry": {
+        "curves": 2,
+        "curveSamples": 33
+      },
+      "sourceBytes": 839,
+      "baselineSourceBytes": 840,
+      "updateBytes": 65,
+      "sourceSha256": "8e93549d6882ac66b5ca2b7c03e5b77f7fdc4c7d05c8ceb4db9eb24d583b2079",
+      "baselineSourceSha256": "18f62d7c6e14b42914c84da897fb731083bb3f637ee6e3d8cbf1255566baac4f",
+      "localElapsedMs": {
+        "initialCompile": 14.794899999999984,
+        "freshCompile": 12.879500000000007,
+        "retainedUpdate": 0.2977999999999952,
+        "candidateSampling": 0.8923999999999523,
+        "baselineSampling": 0.5812999999999988
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 275,
+          "candidateSha256": "190563d30a340281082796faf533707cc79b4eea147adb3a75f8171598e5e07d",
+          "baselineSha256": "190563d30a340281082796faf533707cc79b4eea147adb3a75f8171598e5e07d"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 275,
+          "candidateSha256": "b8005f1699106cd941189cf7da892715e740e577f2e65f03b06152ef5770130f",
+          "baselineSha256": "b8005f1699106cd941189cf7da892715e740e577f2e65f03b06152ef5770130f"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 275,
+          "candidateSha256": "511d63752c8ba58c763a00368490226568505deb063e3835d68e1dd1b7aa62e5",
+          "baselineSha256": "511d63752c8ba58c763a00368490226568505deb063e3835d68e1dd1b7aa62e5"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 275,
+          "candidateSha256": "e1e8e792ef346eae82ee7605a441680396e197351f5a7a5dda2042e1be6ab7b0",
+          "baselineSha256": "e1e8e792ef346eae82ee7605a441680396e197351f5a7a5dda2042e1be6ab7b0"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "gaussian-high",
+      "subject": "gaussian",
+      "detail": "high",
+      "geometry": {
+        "curves": 2,
+        "curveSamples": 129
+      },
+      "sourceBytes": 843,
+      "baselineSourceBytes": 844,
+      "updateBytes": 65,
+      "sourceSha256": "8b52d107d8bf2f5be5187ff39a8cb919164b6e0b02871bc7a31d3e3d36a24c1c",
+      "baselineSourceSha256": "5848d6c4c132f27e50a7021295dfdd6e7654c43f1db3f183b5c4ae23440f5502",
+      "localElapsedMs": {
+        "initialCompile": 14.795900000000017,
+        "freshCompile": 15.082899999999995,
+        "retainedUpdate": 0.7434999999999832,
+        "candidateSampling": 1.1731000000000336,
+        "baselineSampling": 0.8279999999999745
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 851,
+          "candidateSha256": "d0473f73ea45f1c396023f0a53d92813f42e821ad6b35318d16441e84d5b1f0a",
+          "baselineSha256": "d0473f73ea45f1c396023f0a53d92813f42e821ad6b35318d16441e84d5b1f0a"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 851,
+          "candidateSha256": "c446a62436dba7ed5a358e8eb38717f86ae94de8c0a851a1265c0b211fa2920a",
+          "baselineSha256": "c446a62436dba7ed5a358e8eb38717f86ae94de8c0a851a1265c0b211fa2920a"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 851,
+          "candidateSha256": "3f97d5236a5841a01fd80a47e4064d3b17d8a62e6c4bd81a4978d5b8bfcca9a8",
+          "baselineSha256": "3f97d5236a5841a01fd80a47e4064d3b17d8a62e6c4bd81a4978d5b8bfcca9a8"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 851,
+          "candidateSha256": "7f6e8140a2594c5672cbdc973b43468f260aa6f40ea8241af45a319483616d83",
+          "baselineSha256": "7f6e8140a2594c5672cbdc973b43468f260aa6f40ea8241af45a319483616d83"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "saddle-low",
+      "subject": "saddle",
+      "detail": "low",
+      "geometry": {
+        "vertices": 121,
+        "triangles": 200,
+        "traceSamples": 129
+      },
+      "sourceBytes": 1091,
+      "baselineSourceBytes": 1091,
+      "updateBytes": 64,
+      "sourceSha256": "9debb15a27c348f6296ba8bffcd730bcba8b1a482e912bddbb480c98e999b8fd",
+      "baselineSourceSha256": "88743f2cd841e076fad5b10eb236a771c08720cd1f9ebf08959a02093d22d6a2",
+      "localElapsedMs": {
+        "initialCompile": 17.351300000000037,
+        "freshCompile": 16.49520000000001,
+        "retainedUpdate": 1.146000000000015,
+        "candidateSampling": 4.560600000000079,
+        "baselineSampling": 4.030800000000056
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 1897,
+          "candidateSha256": "cc9ad8d674eff5940e47aa286867b3cf33ee890b27f8957dbe726b367de8c9a9",
+          "baselineSha256": "cc9ad8d674eff5940e47aa286867b3cf33ee890b27f8957dbe726b367de8c9a9"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 1897,
+          "candidateSha256": "c655aabc11352187599c0994758bde83c15ac4af4ab939be05926c639a109206",
+          "baselineSha256": "c655aabc11352187599c0994758bde83c15ac4af4ab939be05926c639a109206"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 1897,
+          "candidateSha256": "d040124de28f07e7065617d6f02f49065875c23d6bfd30b3e9c04de82d4c05dc",
+          "baselineSha256": "d040124de28f07e7065617d6f02f49065875c23d6bfd30b3e9c04de82d4c05dc"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 1897,
+          "candidateSha256": "c5c0fb01b18cc87f18f1b5b23ae046b03f62d294a3e8f6563f5df582af243766",
+          "baselineSha256": "c5c0fb01b18cc87f18f1b5b23ae046b03f62d294a3e8f6563f5df582af243766"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "saddle-high",
+      "subject": "saddle",
+      "detail": "high",
+      "geometry": {
+        "vertices": 1681,
+        "triangles": 3200,
+        "traceSamples": 129
+      },
+      "sourceBytes": 1091,
+      "baselineSourceBytes": 1091,
+      "updateBytes": 64,
+      "sourceSha256": "709d81d3365371ad5f5113ff6df432d05ead994a080cbab0f4c01e6bde47f644",
+      "baselineSourceSha256": "99e2b5cb62ffc174b27e8fc87ec7eefbf1f1ce659a2feaa511e266d5760273a9",
+      "localElapsedMs": {
+        "initialCompile": 42.32140000000004,
+        "freshCompile": 45.15840000000003,
+        "retainedUpdate": 5.652000000000044,
+        "candidateSampling": 11.08870000000013,
+        "baselineSampling": 7.8595000000000255
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 15577,
+          "candidateSha256": "90d1fdcd12acee9277d582438183482a6c2d3bcc1da3abeec65dd6dcc2b5e14b",
+          "baselineSha256": "90d1fdcd12acee9277d582438183482a6c2d3bcc1da3abeec65dd6dcc2b5e14b"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 15577,
+          "candidateSha256": "6d57f7e2b0da0a03a8a91fb38f2be7e318fce6f18dd9801a1325780baa3e05a2",
+          "baselineSha256": "6d57f7e2b0da0a03a8a91fb38f2be7e318fce6f18dd9801a1325780baa3e05a2"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 15577,
+          "candidateSha256": "dcff1d116e4919a546fbc617f562d016494eba05dc3df86c06e42471c0276507",
+          "baselineSha256": "dcff1d116e4919a546fbc617f562d016494eba05dc3df86c06e42471c0276507"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 15577,
+          "candidateSha256": "642925d74fa09b36465969b440161d1643ed8d7f36575efa1444f5cf86c0692c",
+          "baselineSha256": "642925d74fa09b36465969b440161d1643ed8d7f36575efa1444f5cf86c0692c"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "caffeine-low",
+      "subject": "caffeine",
+      "detail": "low",
+      "geometry": {
+        "atoms": 24,
+        "bonds": 25,
+        "bondStrokes": 29,
+        "atomTriangles": 192
+      },
+      "sourceBytes": 3953,
+      "baselineSourceBytes": 3953,
+      "updateBytes": 65,
+      "sourceSha256": "7c8bd7ac06091c3a0fd20e6c8d3219f1ca43316faf05d6dfb2f5359971cbf5df",
+      "baselineSourceSha256": "574189d5b6ea9cbdce6c1820bb7a74698ed8d93bccee19d056dff668665dc2b1",
+      "localElapsedMs": {
+        "initialCompile": 23.012899999999945,
+        "freshCompile": 21.613900000000058,
+        "retainedUpdate": 0.1491000000000895,
+        "candidateSampling": 2.6342999999999392,
+        "baselineSampling": 2.2439000000000533
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 2599,
+          "candidateSha256": "91b10f52f0171ff752e8be0e52aaa0227a48751bc44e12fc4ec16a9d54ad5990",
+          "baselineSha256": "91b10f52f0171ff752e8be0e52aaa0227a48751bc44e12fc4ec16a9d54ad5990"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 2599,
+          "candidateSha256": "93141070c1d5b9b735bd679387829bcd38ee14e6fb205baa992437f63ab39eb0",
+          "baselineSha256": "93141070c1d5b9b735bd679387829bcd38ee14e6fb205baa992437f63ab39eb0"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 2599,
+          "candidateSha256": "d4936bc1a29bbc66fdc9b0633b49b88b951ffc567f0d3f35976f9a134ffbfd8c",
+          "baselineSha256": "d4936bc1a29bbc66fdc9b0633b49b88b951ffc567f0d3f35976f9a134ffbfd8c"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 2599,
+          "candidateSha256": "1ccb0d4fe9fb5bf5d9c67fde45908fa559a0a780bea470cc9dc12f77d1c5d281",
+          "baselineSha256": "1ccb0d4fe9fb5bf5d9c67fde45908fa559a0a780bea470cc9dc12f77d1c5d281"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    },
+    {
+      "id": "caffeine-high",
+      "subject": "caffeine",
+      "detail": "high",
+      "geometry": {
+        "atoms": 24,
+        "bonds": 25,
+        "bondStrokes": 29,
+        "atomTriangles": 3072
+      },
+      "sourceBytes": 3953,
+      "baselineSourceBytes": 3953,
+      "updateBytes": 65,
+      "sourceSha256": "d22774455008f63e4cd908d43f278b323334cce6773b20c3b3684723937b07ae",
+      "baselineSourceSha256": "f9e306887572a5cadfc70d9550ae1cc2ce620360a2b1b5eb95bab4b4b190c985",
+      "localElapsedMs": {
+        "initialCompile": 53.54600000000005,
+        "freshCompile": 52.50380000000007,
+        "retainedUpdate": 0.15170000000000528,
+        "candidateSampling": 8.410100000000057,
+        "baselineSampling": 5.976600000000076
+      },
+      "comparisons": [
+        {
+          "timeSeconds": 3,
+          "maxAbsoluteError": 0,
+          "numericValues": 19879,
+          "candidateSha256": "23d04ffb42e86588ba7419680cf6e3b77c74d8162b2154ffa22962589c9bc89f",
+          "baselineSha256": "23d04ffb42e86588ba7419680cf6e3b77c74d8162b2154ffa22962589c9bc89f"
+        },
+        {
+          "timeSeconds": 4,
+          "maxAbsoluteError": 0,
+          "numericValues": 19879,
+          "candidateSha256": "6024f83ebac56e0a6323853eca7341d78cf8a4ad0b57f4a84fd32549c2268c49",
+          "baselineSha256": "6024f83ebac56e0a6323853eca7341d78cf8a4ad0b57f4a84fd32549c2268c49"
+        },
+        {
+          "timeSeconds": 5,
+          "maxAbsoluteError": 0,
+          "numericValues": 19879,
+          "candidateSha256": "7b94163efeb508b62efb7c1f8e9089e9830354d86b14dbd3ccf7a6761c20e270",
+          "baselineSha256": "7b94163efeb508b62efb7c1f8e9089e9830354d86b14dbd3ccf7a6761c20e270"
+        },
+        {
+          "timeSeconds": 6,
+          "maxAbsoluteError": 0,
+          "numericValues": 19879,
+          "candidateSha256": "665d13891415bc114520882c4e93ebb8da9e4fe949d66636cebb938a91f8ad48",
+          "baselineSha256": "665d13891415bc114520882c4e93ebb8da9e4fe949d66636cebb938a91f8ad48"
+        }
+      ],
+      "invariants": {
+        "epochPreserved": true,
+        "parameterChanged": true,
+        "cameraPreserved": true,
+        "topologyPreserved": true
+      }
+    }
+  ],
+  "nativeReadback": {
+    "totals": {
+      "pairs": 20,
+      "pngByteMismatches": 3,
+      "pixelMismatches": 3,
+      "failedCases": 0,
+      "offlineProcessElapsedMs": 5888.3681
+    },
+    "exactPairs": 17,
+    "maximumChannelDifference": 1,
+    "maximumDifferingPixelsPerPair": 13,
+    "workerSha256": "2d734edfea29d2917fa0408c57d0b981de45086d52c01ceac2f108d9b9c675f7",
+    "rendererModuleSha256": "6625b8dc134d9a4cab69b6d666f609e92de8cf3ad066788171ff167809cfae4f",
+    "oldRun": "data/realtime-workshop/retained-parameters/rmgqSNK",
+    "unchangedInputRepeatsNonidentical": 7,
+    "unchangedInputRepeats": 8,
+    "limitations": [
+      "Each image is a frozen actual-world sample at local time 3 seconds, rendered in a separate offline Node process.",
+      "Process timings include Node startup, sandbox compilation of the snapshot wrapper, GPU preparation, rendering and PNG I/O; they are not live latency or hardware presentation times.",
+      "Pixel equivalence is not semantic or explanatory quality, scientific validation, continuous-motion evidence or a model-generation benchmark."
+    ]
+  },
+  "framing": {
+    "uniformScale": 0.7,
+    "minimumCheckedSphereMarginPixels": 85.69321670824036,
+    "times": [
+      3,
+      4,
+      5,
+      6,
+      7
+    ],
+    "sourceCoordinatesAndTopologyPreserved": true
+  },
+  "review": {
+    "reviewer": "/root/live_inventory_host_audit",
+    "scope": "Informed paired caffeine browser screenshot; matching visible detail and framing. Not blind acceptance or lesson-quality approval."
+  }
+}

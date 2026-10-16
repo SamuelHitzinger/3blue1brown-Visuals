@@ -118,6 +118,7 @@ or arbitrary-subject guarantees.
 | [Local asset index](realtime-local-asset-index-2026-10-16.md) | Bounded lexical lookup and exact static payload/provenance loading | Semantic retrieval/general asset discovery; installed corpus has no animation clips |
 | [Inventory design](live-model-inventory-design.md) | Contract and implementation plan for append-only admission | No cross-subject or end-to-end quality result follows from this design or its unit tests |
 | [Late model admission proof](live-model-inventory-checkpoint.md) | Empty inventory to local 1CRN, 10,784 intact triangles, retained graph/surface/motion, one decoded geometry read, offline pixel checks | Automatic retrieval, semantic suitability, model authoring, full-motion quality, same live renderer and lecture-to-display latency |
+| [Retained numeric parameters](retained-parameters-checkpoint.md) | Ten handwritten cases across five subjects/two detail levels, 40 exact native-state comparisons, retained edits and paired snapshot readbacks; full caffeine topology preserved | Model uptake/speed, unseen subjects, source-grounded teaching quality, blind motion acceptance and live ten-second delivery |
 
 The next workshop evidence must fill the missing cells with paired native outputs,
 source-grounded audits, independent review and causal timing. This document adds
