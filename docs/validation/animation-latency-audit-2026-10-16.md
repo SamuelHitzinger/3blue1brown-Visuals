@@ -44,6 +44,24 @@ These creation/edit observations are **not a paired causal speed comparison**. T
 
 All **forty successful provider receipts inspected** requested priority and reported actual tier **default**, with **zero cache-read tokens**: sixteen original complexity attempts, eight Luna complexity attempts, nine direct-source/brief/tool probes, one retained edit and six joined-lecture decisions. Thus neither actual priority service nor cache acceleration is demonstrated by this evidence. Failed local attempts are excluded from this configuration count.
 
+Local adapter follow-up: the installed Pi 1.1.0 Codex adapter forwards
+`serviceTier` as `service_tier` before the probe's inspected payload is serialized.
+The probe reads raw provider events, before the adapter's separate pricing helper
+maps a reported `default` tier back to requested `priority`/`flex`. That pricing
+fallback is not evidence of delivered priority service. No forwarding defect was
+found. The public [Fast mode guide](https://developers.openai.com/api/docs/guides/fast-mode)
+says `priority` and `fast` request the same supported mode and that response tier
+identifies delivery; it also documents possible downgrades. These API docs do not
+establish why this subscription-backed Codex route reported default. Do not infer
+account eligibility, a downgrade cause or a speed multiplier from these receipts.
+
+The same installed Codex request builder does not emit `max_output_tokens` from
+the supplied `maxTokens`; the retained-edit receipt records
+`payloadSent.maxOutputTokens: null`. Therefore `maxTokensRequested` is a requested
+setting, not an enforced output ceiling on this route. Timeouts, schema validation
+and complete-response acceptance remain separate controls. No adapter, account
+setting or dependency was changed during this inspection.
+
 The faster Luna complexity screen completed seven of eight provider responses within ten seconds, but only the simple line passed sampled visual review. The direct-source physics and biology attempts also failed technical or explanatory acceptance despite shorter model times. The joined lecture produced five deferrals and one static addition, with no edits; fast decisions did not provide meaningful animation coverage. Short output is not a quality gate.
 
 Existing reviews retain those distinctions: [original complexity screen](complexity-screen-checkpoint.md), [faster configuration screen](fast-config-screen-2026-10-16.md), [direct-source attempts](realtime-direct-source-checkpoint.md), [retained edit](retained-complex-edit-probe.md), and [joined lecture](lecture-join-checkpoint.md). These are sampled reviews, not blanket full-motion approval. None of the model-only timings establishes the complete ten-second input-to-useful-animation goal.
