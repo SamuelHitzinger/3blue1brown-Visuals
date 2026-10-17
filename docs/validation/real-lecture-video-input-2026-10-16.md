@@ -30,6 +30,7 @@ The user approved the audio and frame/transcript destinations, then explicitly r
 | `real-lecture-live-07` | Compact prompt and source budget completed model request in 3.342 s, but shortened prompt omitted the required scene-module wrapper. Compiler rejected the bare body; no scene was published. Wrapper contract was restored before the next trial. |
 | `real-lecture-live-08` | First rendered scaffold reached next browser frame opportunity 7.419 s after replay start. Initial model call 7.203 s; following edits 2.402–3.821 s. No timeout in eight requests; final request failed validation because one all-null property entry accompanied otherwise valid edits. The scaffold rendered, but explanatory coverage remained incomplete. |
 | `real-lecture-live-09` | First scene and an edit rendered without timeout, then the model requested an edit to `C`, which had never been created. Renderer correctly rejected it; existing scene stayed visible. This exposed the need to constrain edit target IDs in the generation schema rather than relying only on prose. |
+| `real-lecture-live-10` | First scene reached the next-frame opportunity at 3.420 seconds. One HTTP 504 recovered automatically. Later, the model submitted the same `AD`/`DB`/`AB` diagram source twice; the second addition failed with `Duplicate or previously owned entity ID: AD`. This was a naming collision and a redundant visual addition, not successful visual coverage. |
 
 All directories are beneath `data/realtime-workshop/`; each contains `events.jsonl`, provider receipts, and screenshots. Inputs are in `real-lecture-audio-01/manifest-video.json`. Frames were extracted at exact excerpt times 0, 5, …, 55 seconds, using explicit input seeks. Failed trials are evidence, not successful quality results.
 
@@ -55,3 +56,15 @@ Fully validated all-null property entries now normalize away instead of rejectin
 Live edit, removal and motion targets are also constrained to IDs in the current sampled world, both in the model tool schema and receipt validation. Visible letters and geometric vertices are not automatically object IDs. Newly authored source can still create fresh IDs. Runtime revision and target checks remain authoritative; this generation constraint does not grant permissions or establish the truth of client state.
 
 Verification: probe and animation suites 60 tests / 600 assertions pass; focused live-loop tests 11 pass; production app build passes. Real playback verification is recorded separately from these offline checks.
+
+## Object-ID correction (2026-10-17)
+
+The live screen now opts into per-program entity namespaces. Source retains local IDs such as `AD`; compiled objects receive host-generated IDs such as `p1/AD`. Independent additions may reuse local names. Replacement retains its program's prefix, epoch, parameters and host motion. Cancelled or stale admissions consume their prefix without publishing objects. Legacy callers keep the previous behavior unless they opt in.
+
+Typed compiler references are remapped together: group children, lifecycle records, animation targets and starting states, attachments, connectors, behavior targets and reactive output targets. Source strings, labels, TeX part names, assets and control IDs are untouched. Unsupported custom behavior references and previous-frame handoffs reject explicitly. Qualified IDs exceeding 128 characters reject rather than truncate. World context includes the program namespace; edit/remove/motion requests must use exact qualified IDs from the sampled inventory.
+
+An offline replay used the two exact, unmodified source submissions that caused run 10's collision. Legacy mode reproduced the `AD` error at revision 1; namespaced mode accepted both at revision 2 with eight distinct IDs. Geometry matched after removing only the ID prefixes. Local evidence: `data/realtime-workshop/real-lecture-live-10/object-id-replay.json`. No model calls or new lecture playback were used for this verification.
+
+Verification: native suite 1,263 tests passed; its only failure was Windows sandbox `EPERM` creating the temporary junction in `gltf-files.test.ts`. That test passed when rerun outside the sandbox. All 79 realtime-world tests, 60 probe/animation tests, and 213 app tests passed. Production app build passed; existing browser-externalization and chunk-size warnings remain. Read-only review found no blocking defect.
+
+This prevents ID collisions from stopping live updates. It does not deduplicate repeated diagrams, resolve text overlap, or establish the ten-second end-to-end target.

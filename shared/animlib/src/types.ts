@@ -609,6 +609,9 @@ export interface PlayerState {
 }
 
 export interface CompileInput {
+  /** Opt-in host prefix for entity IDs only. Source and controls remain local.
+   * Requires a fresh scene (no previous frame); qualified IDs are at most 128 characters. */
+  entityNamespace?: string;
   /** Descriptor-only catalog; no bytes or resolver capabilities enter the VM. */
   assetCatalog?: AssetDescriptor[];
   models?: Record<string, ModelMetadata>;

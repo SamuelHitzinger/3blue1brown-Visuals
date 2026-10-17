@@ -39,7 +39,7 @@ export default function LiveLectureCanvas({ lectureId, suspended, sourceRevision
         const canvas = document.createElement('canvas')
         canvas.setAttribute('aria-label', 'Live lecture animation'); canvas.setAttribute('role', 'img'); target.append(canvas)
         let renderer: Resources['renderer']
-        const world = new runtime.LiveWorld({ clock: () => performance.now() / 1000,
+        const world = new runtime.LiveWorld({ namespaceEntities: true, clock: () => performance.now() / 1000,
           prepare: async (scene, assets, signal) => { signal.throwIfAborted(); await renderer.prepare([scene], assets); signal.throwIfAborted() } })
         renderer = new runtime.CanvasRenderer(canvas, undefined, world.assetGeometry)
         resources = { runtime, world, renderer, journal: new runtime.CommittedContextJournal() }

@@ -30,6 +30,7 @@ import { Color, enforceScenePalette, paletteResolver, validateColor } from "./pa
 import type { CameraState, CompileInput, CompiledScene, ControlValue, Diagnostic, ElementState, Geometry, ReactiveUpdate } from "./types.js";
 import { mergeReactiveUpdates, validateReactiveBindings } from './reactive.js';
 import {normalizeFocus} from './depth-focus.js';
+import {namespaceScene,validateEntityNamespace} from './entity-namespace.js';
 
 export class SceneCompileError extends Error {
   constructor(public diagnostic: Diagnostic) { super(diagnostic.message); this.name = "SceneCompileError"; }
@@ -358,6 +359,11 @@ export async function createSceneProgram(source: string, input: CompileInput = {
   let vm: ReturnType<Awaited<ReturnType<typeof getQuickJS>>["newContext"]> | undefined;
   let retained = false;
   try {
+    const namespace=input.entityNamespace;
+    if(namespace!==undefined){
+      validateEntityNamespace(namespace);
+      check(input.previous===undefined,'Entity namespace cannot be combined with a previous frame');
+    }
     for (const m of Object.values(input.models ?? {})) validateModelMetadata(m);
     const resolver = paletteResolver(input.palette);
     validateAssetCatalog(input.assetCatalog);
@@ -426,9 +432,11 @@ export async function createSceneProgram(source: string, input: CompileInput = {
     check(importedTriangles<=500000,'Scene imported model budget exceeded (500,000 triangles across instances)');
     for (const t of compiled.tracks) if (t.action.geometry) { check(t.action.geometry.kind !== 'model', 'Model geometry cannot be morphed'); verifyModel(t.action.geometry); }
     enforceScenePalette(compiled, resolver);
+    const namespaced=namespace===undefined?undefined:namespaceScene(compiled,namespace);
+    if(namespaced)validateCompiledScene(namespaced.scene,input.assetCatalog);
     retained = true;
     return {
-      scene: compiled,
+      scene: namespaced?.scene??compiled,
       update(values, changed, time, duration = compiled.duration) {
         if (!vm) throw new Error('Scene runtime is disposed');
         // Audio preparation can extend the host scene after this worker program
@@ -440,7 +448,7 @@ export async function createSceneProgram(source: string, input: CompileInput = {
         check(json && json.length <= 1024 * 1024, 'Invalid or oversized reactive update');
         const updates = JSON.parse(json) as ReactiveUpdate[];
         mergeReactiveUpdates(compiled, updates, changed, time);
-        return updates;
+        return namespaced?namespaced.updates(updates):updates;
       },
       dispose() { vm?.dispose(); vm = undefined; },
     };

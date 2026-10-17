@@ -18,6 +18,8 @@ import type { AssetRegistry } from './asset-types.js';
 import type { CameraState, ColorPalette, ColorValue, CompiledScene, ElementState, Frame, ReactiveProperties } from './types.js';
 
 export interface WorldOptions {
+  /** Qualify local source IDs per program; host patches use qualified runtime IDs. */
+  namespaceEntities?: boolean;
   /** Same monotonic seconds domain as method arguments. */
   clock?: () => number;
   palette?: ColorPalette;
@@ -57,7 +59,7 @@ type Property = keyof ReactiveProperties;
 type Override = { from: unknown; to: unknown; start: number; duration: number };
 type Motion = { origin: [number,number,number]; velocity: [number,number,number]; start: number };
 type ParameterState = { values: Record<string,number>; snapshot: CompiledScene; terminalScene?: Promise<CompiledScene> };
-type Program = { id: string; source: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean;
+type Program = { id: string; source: string; entityNamespace?: string; compiler: SourceCompiler; scene: CompiledScene; ids: Set<string>; epoch: number; readers: number; retired: boolean;
   state: ParameterState; parameterPending?: boolean };
 type Candidate = { id: string; compiler: SourceCompiler; controller: AbortController; scene?: CompiledScene };
 type Sample = { program: Program; scene: CompiledScene };
@@ -121,6 +123,7 @@ function ownedProperties(properties:ReactiveProperties):string[]{
 
 export class LiveWorld {
   private version=0;
+  private nextEntityNamespace=0;
   private inventoryVersion=0;
   private stopped=false;
   private programs=new Map<string,Program>();
@@ -214,13 +217,15 @@ export class LiveWorld {
     check(!this.programs.has(request.id)&&![...this.pending].some(candidate=>candidate.id===request.id),'Duplicate program ID');
     // Copy before awaiting: callers cannot change the submitted transaction.
     const input=structuredClone(request),models=this.models;
+    // Allocate before any await. Failed/cancelled admissions never reuse a prefix.
+    const entityNamespace=this.options.namespaceEntities?`p${++this.nextEntityNamespace}`:undefined;
     const candidate:Candidate={id:input.id,compiler:new SourceCompiler(),controller:new AbortController()};
     const cancel=()=>candidate.controller.abort(options.signal?.reason);
     options.signal?.addEventListener('abort',cancel,{once:true});
     this.pending.add(candidate);let published=false;
     try{
       // No previous frame: the sandbox cannot acquire or mutate existing IDs.
-      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models}));
+      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models,entityNamespace}));
       this.fresh(input.baseRevision);candidate.controller.signal.throwIfAborted();this.inspect(scene);
       this.assetGeometry.prepare(scene);
       if(this.options.prepare)await aborted(candidate.controller.signal,this.options.prepare(scene,this.assetGeometry,candidate.controller.signal));
@@ -228,7 +233,7 @@ export class LiveWorld {
       check(this.programs.size<this.maxPrograms,'World program limit exceeded');const ids=this.inspect(scene);
       beforeCommit(options);
       const committedAt=this.now(nowSeconds);
-      const program:Program={id:input.id,source:input.source,compiler:candidate.compiler,scene,ids,epoch:committedAt,readers:0,retired:false,
+      const program:Program={id:input.id,source:input.source,entityNamespace,compiler:candidate.compiler,scene,ids,epoch:committedAt,readers:0,retired:false,
         state:{values:Object.fromEntries(scene.controls.map(control=>[control.id,control.value as number])),snapshot:scene}};
       // No awaits or host hooks between these final checks and publication.
       candidate.controller.signal.throwIfAborted();this.fresh(input.baseRevision);
@@ -351,7 +356,7 @@ export class LiveWorld {
     options.signal?.addEventListener('abort',cancel,{once:true});this.pending.add(candidate);let published=false;
     const assertCurrent=()=>{candidate.controller.signal.throwIfAborted();this.fresh(input.baseRevision);check(this.programs.get(input.id)===previous&&!previous.retired,'Stale replacement program');};
     try{
-      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models:this.models}));
+      const scene=candidate.scene=await aborted(candidate.controller.signal,candidate.compiler.compile(input.source,{palette:this.palette,assetCatalog:this.options.assets?.catalog,models:this.models,entityNamespace:previous.entityNamespace}));
       assertCurrent();const ids=this.inspect(scene,previous),values=Object.fromEntries(scene.controls.map(control=>[control.id,control.value as number]));
       const common=scene.controls.filter(control=>Object.hasOwn(previous.state.values,control.id));
       for(const control of common){
@@ -389,7 +394,7 @@ export class LiveWorld {
         }
         if(motion)this.assertHostProperty(scene,key,'position');
       }
-      const program:Program={id:input.id,source:input.source,compiler:candidate.compiler,scene,ids,epoch:previous.epoch,readers:0,retired:false,state:{values,snapshot}};
+      const program:Program={id:input.id,source:input.source,entityNamespace:previous.entityNamespace,compiler:candidate.compiler,scene,ids,epoch:previous.epoch,readers:0,retired:false,state:{values,snapshot}};
       // Validation above is synchronous. No await or host hook until publication.
       this.programs.set(input.id,program);
       for(const key of previous.ids)if(!ids.has(key)){this.removed.add(key);this.owners.delete(key);this.overrides.delete(key);this.motions.delete(key);}
@@ -537,7 +542,7 @@ export class LiveWorld {
   programSource(programId:string):string|undefined{this.alive();return this.programs.get(programId)?.source;}
   summary(){return {revision:this.version,disposed:this.stopped,pendingPrograms:this.pending.size,
     motions:[...this.motions].map(([id,motion])=>({id,...structuredClone(motion)})),
-    programs:[...this.programs.values()].map(program=>({id:program.id,epoch:program.epoch,duration:program.scene.duration,ids:[...program.ids].filter(key=>!this.removed.has(key)),
+    programs:[...this.programs.values()].map(program=>({id:program.id,epoch:program.epoch,duration:program.scene.duration,...(program.entityNamespace?{entityNamespace:program.entityNamespace}:{}),ids:[...program.ids].filter(key=>!this.removed.has(key)),
       parameters:program.scene.controls.map(control=>({id:control.id,label:control.label,default:control.default as number,value:program.state.values[control.id],min:control.min!,max:control.max!,step:control.step,
         dependents:(program.scene.reactiveBindings??[]).filter(binding=>binding.controls.includes(control.id)).map(binding=>({target:binding.target,properties:ownedProperties(binding.properties)}))}))})),
     entityIds:[...this.owners.keys()].filter(key=>!this.removed.has(key)),reservedIdCount:this.reserved.size,

@@ -156,3 +156,20 @@ test('app acceptance applies real add → late motion → replacement with conti
     assert.equal(world.revision, 3)
   } finally { world.dispose(); Object.defineProperty(globalThis, 'Worker', { configurable: true, writable: true, value: previousWorker }) }
 })
+
+test('live acceptance keeps repeated local IDs distinct and sends qualified targets back in context', async () => {
+  const world = new runtime.LiveWorld({ namespaceEntities: true, clock: () => 100 })
+  const journal = new runtime.CommittedContextJournal(), signal = new AbortController().signal
+  const source = 'export default scene({end:"hold"},s=>{s.circle("AD");s.wait(8)});'
+  const apply = (reply: LiveAnimationReply) => acceptLiveAnimation(runtime, world, journal, 'lecture-ids', reply, signal, () => {}, 100)
+  try {
+    await apply(packet(1, 0, { action: 'add', source }))
+    await apply(packet(2, 1, { action: 'add', source }))
+    await apply(packet(3, 2, { action: 'edit', changes: [{ id: 'p2/AD', props: { position: [2, 0, 0] } }], remove: [] }))
+    const frame = await world.sample(100)
+    assert.deepEqual(frame.elements.map(e => [e.id, e.position]), [['p1/AD', [0, 0, 0]], ['p2/AD', [2, 0, 0]]])
+    const context = runtime.buildWorldContext({ summary: world.summary(), sampledRevision: world.revision, sampledAt: 100, frame, journal, requestOverheadBytes: 80000 })
+    assert.deepEqual(context.elements.map(e => e.id), ['p1/AD', 'p2/AD'])
+    assert.equal(journal.snapshot(20000).records[0].operation.source, source)
+  } finally { world.dispose() }
+})

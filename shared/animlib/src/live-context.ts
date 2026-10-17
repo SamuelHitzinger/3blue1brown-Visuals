@@ -18,6 +18,8 @@ type ContextParameter=Omit<Parameter,'label'|'dependents'> & {
   usable:boolean;reason?:'dependent-target-removed';opaque:boolean;
 };
 type ContextProgram=Omit<Summary['programs'][number],'ids'|'parameters'> & {
+  // entityNamespace, when present, qualifies source-local IDs as `${namespace}/${localId}`.
+  // All ids and dependent targets below are exact runtime IDs; control IDs stay local.
   ids:string[];parameters:ContextParameter[];omittedIdCount:number;omittedParameterCount:number;
 };
 type ContextElement=Pick<Frame['elements'][number],'id'|'position'|'rotation'|'scale'|'opacity'|'fill'> & {kind:Frame['elements'][number]['geometry']['kind']};
@@ -79,7 +81,7 @@ export function buildWorldContext(input:WorldContextInput){
   // preserve breadth across programs when the complete inventory cannot fit.
   const included:{source:typeof infos[number];context:ContextProgram}[]=[];
   for(const info of infos.slice(0,32)){
-    const program=info.program,context:ContextProgram={id:program.id,epoch:program.epoch,duration:program.duration,
+    const program=info.program,context:ContextProgram={id:program.id,epoch:program.epoch,duration:program.duration,...(program.entityNamespace?{entityNamespace:program.entityNamespace}:{}),
       ids:[],parameters:[],omittedIdCount:program.ids.length,omittedParameterCount:program.parameters.length};
     if(attempt(()=>{description.summary.programs.push(context);description.omissions.programs--;},()=>{description.summary.programs.pop();description.omissions.programs++;}))included.push({source:info,context});
   }
