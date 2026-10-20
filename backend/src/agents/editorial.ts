@@ -14,6 +14,7 @@ import { logEvent, logStage } from '../logging.js';
 import { INSTRUCTION_VERSION, instructionSnapshot, loadPrompt } from './prompts.js';
 import { bundledModelCatalog } from '../bundled-models.js';
 import { compactVideoRequestContext } from '../scene-requests.js';
+import { prepareStylePacket, styleAudit, styleImages, styleInstructions } from './visual-references.js';
 
 export interface EditorialReview {
   schemaVersion: 1; verdict: 'pass' | 'revise'; summary: string;
@@ -25,9 +26,12 @@ export interface ReviewedLesson extends PlannedLesson {
   instructionVersion: typeof INSTRUCTION_VERSION;
   /** Host-owned link to the immutable approved draft/review pair. */
   editorialReview: { runId: string; attempt: number; draftSha256: string };
+  visualReferences?: ReturnType<typeof styleAudit>;
 }
 
 export interface EditorialCapabilities {
+  /** Host-controlled catalog location; useful for isolated validation environments. */
+  styleCatalogPath?: string;
   publishModel?: AgentTask['publishModel'];
   modelAssets?: () => unknown;
   modelAssetContext?: () => unknown;
@@ -98,7 +102,12 @@ export function parseEditorialReview(output: string, lesson: PlannedLesson): Edi
 export async function authorReviewedLesson(runner: AgentRunner, request: VideoRequest, directory: string,
   signal: AbortSignal, images?: AgentTask['images'], videoId?: string, capabilities: EditorialCapabilities = {}): Promise<ReviewedLesson> {
   signal.throwIfAborted();
-  const contextHash = createHash('sha256').update(JSON.stringify({ requestDigest: requestDigest(request, images), instructionVersion: INSTRUCTION_VERSION })).digest('hex');
+  const styles = await prepareStylePacket(JSON.stringify(compactVideoRequestContext(request)), join(directory, 'lesson.styles.json'),
+    capabilities.styleCatalogPath, runner.routeStyles?.bind(runner), signal);
+  const visualReferences = styleAudit(styles), attached = styleImages(styles, images);
+  const molecular = styles.families.some(f => f.id === 'molecular-mechanisms');
+  const styleGuidance = `${styleInstructions(styles)}${molecular ? '\n\n' + await loadPrompt('molecular-planning') : ''}\n\n${attached.roleMap}`;
+  const contextHash = createHash('sha256').update(JSON.stringify({ requestDigest: requestDigest(request, images), instructionVersion: INSTRUCTION_VERSION, visualReferences })).digest('hex');
   const checkpoint = join(directory, 'editorial-state.json');
   type Progress = { contextHash: string; runId: string; attempt: number; lesson?: PlannedLesson;
     repair?: { lesson: PlannedLesson; issues: EditorialReview['issues'] } };
@@ -111,7 +120,7 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
   const { runId } = state, runDirectory = join(directory, 'editorial', runId);
   await mkdir(runDirectory, { recursive: true, mode: 0o700 });
   await atomicWrite(join(runDirectory, 'request.sha256'), requestDigest(request, images));
-  const modelCatalog=await bundledModelCatalog();
+  const modelCatalog=molecular ? await bundledModelCatalog() : [];
   const promptRequest = compactVideoRequestContext(request);
   const messages = await buildStorylineMessages('', request.sceneRequest);
   const modelContext = () => ({ modelCatalog, modelAssets: capabilities.modelAssets?.() ?? {}, modelAssetContext: capabilities.modelAssetContext?.() ?? {} });
@@ -134,9 +143,9 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
       ? `Revise the complete lesson and plan to correct the material editorial errors below. Preserve sound content, requested scope, stable entity IDs/meanings, and scene IDs where possible. Update narration and nonspoken planning together. Return the full planning envelope.\n${JSON.stringify({ request: promptRequest, draft: repair.lesson, issues: repair.issues, ...modelContext() })}`
       : `Write ${request.sceneRequest ? "one inserted scene" : "a complete visual explanation at the pace required for understanding"} and its plan from this request:\n${JSON.stringify({ ...promptRequest, ...modelContext() })}`;
     const task: AgentTask = {
-      systemPrompt: `${messages[0].content}\n\n${PLANNING_CONTRACT}${capabilities.publishModel ? '\n\nPrepare any required model with publish_model before finishing this plan. Use the returned asset ID, node names, and scientific provenance as evidence; modelAssets and modelAssetContext list assets already prepared for this job. The editorial reviewer receives updated prepared asset evidence.' : ''}`,
+      systemPrompt: `${messages[0].content}\n\n${styleGuidance}\n\n${PLANNING_CONTRACT}${capabilities.publishModel ? '\n\nPrepare any required model with publish_model before finishing this plan. Use the returned asset ID, node names, and scientific provenance as evidence; modelAssets and modelAssetContext list assets already prepared for this job. The editorial reviewer receives updated prepared asset evidence.' : ''}`,
       prompt: draftPrompt(),
-      signal, images, publishModel: capabilities.publishModel, validate: async output => { parsePlannedLesson(output, request); },
+      signal, images: attached.images, publishModel: capabilities.publishModel, validate: async output => { parsePlannedLesson(output, request); },
       logContext: { videoId, stage: 'draft' },
     };
     await atomicWrite(join(runDirectory, `lesson-draft-${attempt}.instructions.json`), JSON.stringify(instructionSnapshot(task.systemPrompt)));
@@ -148,9 +157,9 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
     await atomicWrite(join(runDirectory, `lesson-draft-${attempt}.json`), draft);
     state.lesson = lesson; await save();
     const reviewTask: AgentTask = {
-      systemPrompt: `${guidance}\n\nExplanation guidance:\n${messages[0].content}\n\nAuthoring contract to check (do not return its format):\n${PLANNING_CONTRACT}\n\nThe review response contract takes priority over all authoring output formats and return instructions above.`,
+      systemPrompt: `${guidance}\n\nExplanation guidance:\n${messages[0].content}\n\n${styleGuidance}\n\nAuthoring contract to check (do not return its format):\n${PLANNING_CONTRACT}\n\nThe review response contract takes priority over all authoring output formats and return instructions above.`,
       prompt: `Review this complete lesson before speech synthesis. Source images are attached in the same order as the authoring call.\n${JSON.stringify({ request: promptRequest, draft: lesson, parsedScenes: parseStoryline(lesson.markdown).beats, ...modelContext() })}`,
-      signal, images, validate: async output => { parseEditorialReview(output, lesson); },
+      signal, images: attached.images, validate: async output => { parseEditorialReview(output, lesson); },
       logContext: { videoId, stage: 'review' },
     };
     await atomicWrite(join(runDirectory, `lesson-review-${attempt}.instructions.json`), JSON.stringify(instructionSnapshot(reviewTask.systemPrompt)));
@@ -160,7 +169,7 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
     signal.throwIfAborted();
     await atomicWrite(join(runDirectory, `lesson-review-${attempt}.json`), JSON.stringify(review, null, 2));
     logEvent(review.verdict === 'pass' ? 'script.approved' : 'script.revision_requested', { videoId, attempt: attempt + 1, sceneCount: lesson.plan.scenes.length });
-    if (review.verdict === 'pass') return { ...lesson, instructionVersion: INSTRUCTION_VERSION, editorialReview: { runId, attempt, draftSha256: createHash('sha256').update(draft).digest('hex') } };
+    if (review.verdict === 'pass') return { ...lesson, instructionVersion: INSTRUCTION_VERSION, visualReferences, editorialReview: { runId, attempt, draftSha256: createHash('sha256').update(draft).digest('hex') } };
     state = { contextHash, runId, attempt: attempt + 1, repair: { lesson, issues: review.issues.filter(issue => issue.severity === 'error') } };
     await save();
   }

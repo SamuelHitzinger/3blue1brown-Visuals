@@ -15,6 +15,7 @@ import { logStage, logEvent } from '../logging.js';
 import { AgentError } from './config.js';
 import { validationMessage } from './runtime.js';
 import { MAX_REVIEW_ROUNDS, runWithValidationRecovery, waitForRecovery } from './recovery.js';
+import { styleImages, styleAudit, type StylePacket } from './visual-references.js';
 
 /** Bound image cost while sampling actual action interiors, holds and camera transitions. */
 export function sampleReviewTimes(scene: CompiledScene): number[] {
@@ -38,6 +39,7 @@ export interface SceneVerificationInput {
   videoMode?: 'classic' | 'interactive'; legacyPlan?: boolean;
   /** Absent in historical scene packets, before targeted orbit became policy. */
   instructionVersion?: number;
+  visualReferences?: ReturnType<typeof styleAudit>;
   previousFrame?: Frame; planning: { current?: ScenePlan };
 }
 
@@ -49,6 +51,8 @@ export interface VisualGateInput {
   renderFrames?: FrameRenderer;
   models?: RenderModelAssets;
   recoveryWait?: typeof waitForRecovery;
+  stylePacket?: StylePacket;
+  sourceImages?: AgentTask['images'];
 }
 
 interface VisualProgress {
@@ -58,6 +62,7 @@ interface VisualProgress {
   phase: 'review' | 'repair';
   history: VisualVerification[];
   rewrite?: boolean;
+  evidenceSheets?: string[];
 }
 
 /** Every candidate must pass validation, actual rendering and independent review.
@@ -67,11 +72,13 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
   const { runner, input, directory, index, videoId, signal } = options;
   const wait = options.recoveryWait ?? waitForRecovery;
   signal.throwIfAborted();
-  const [guidance, repairGuidance, style] = await Promise.all([
+  const [genericGuidance, repairGuidance] = await Promise.all([
     loadPrompt('scene-verify'), loadPrompt('scene-repair'),
-    readFile(new URL('../../prompts/visual-style-reference.jpg', import.meta.url)),
   ]);
-  const contextHash = sourceHash(JSON.stringify(input));
+  const guidance = genericGuidance + (options.stylePacket?.families.some(f => f.id === 'molecular-mechanisms')
+    ? '\n\n' + await loadPrompt('molecular-verify') : '');
+  const contextHash = sourceHash(JSON.stringify({ input, visualReferences: options.stylePacket && styleAudit(options.stylePacket),
+    sourceImages: options.sourceImages }));
   const checkpoint = join(directory, `scene-${index}.visual-state.json`);
   let state: VisualProgress = { contextHash, source: options.source, attempt: 0, phase: 'review', history: [] };
   try {
@@ -97,10 +104,14 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
     if (state.attempt >= MAX_REVIEW_ROUNDS) throw new AgentError('RECOVERY_EXHAUSTED', 'Visual review reached 50 rounds.');
     const attemptDirectory = join(directory, `scene-${index}.visual`, String(state.attempt));
     await mkdir(attemptDirectory, { recursive: true });
+    // A repaired candidate needs new evidence; old frames must never describe it.
+    if (state.phase === 'review') state.evidenceSheets = [];
     await save();
     // Keep rendered evidence bounded independently of the number of repairs.
     if (state.attempt >= 3) await rm(join(directory, `scene-${index}.visual`, String(state.attempt - 3)), { recursive: true, force: true });
-    let images: AgentTask['images'];
+    let evidenceImages = await Promise.all((state.evidenceSheets ?? []).map(async path =>
+      ({ type: 'image' as const, mimeType: 'image/png', data: (await readFile(path)).toString('base64') })));
+    let attached = styleImages(options.stylePacket, options.sourceImages, evidenceImages);
     if (state.phase === 'review') {
       await atomicWrite(join(attemptDirectory, 'candidate.js'), state.source);
       let evidence: Awaited<ReturnType<FrameRenderer>> | undefined;
@@ -126,13 +137,15 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
       }
       if (evidence) {
         signal.throwIfAborted();
-        images = await Promise.all(evidence.sheets.map(async sheet => ({ type: 'image' as const, mimeType: 'image/png', data: (await readFile(sheet.path)).toString('base64') })));
-        images.push({ type: 'image', mimeType: 'image/jpeg', data: style.toString('base64') });
-        const sampleMap = evidence.sheets.map((sheet, i) => ({ image: i + 1, width: sheet.width, height: sheet.height, columns: sheet.columns, times: sheet.times }));
+        state.evidenceSheets = evidence.sheets.map(sheet => sheet.path);
+        evidenceImages = await Promise.all(evidence.sheets.map(async sheet => ({ type: 'image' as const, mimeType: 'image/png', data: (await readFile(sheet.path)).toString('base64') })));
+        attached = styleImages(options.stylePacket, options.sourceImages, evidenceImages);
+        const offset = (options.sourceImages?.length ?? 0) + (options.stylePacket?.references.length ?? 0);
+        const sampleMap = evidence.sheets.map((sheet, i) => ({ image: offset + i + 1, width: sheet.width, height: sheet.height, columns: sheet.columns, times: sheet.times }));
         const output = await run({
           systemPrompt: `${authorContract}\n\n${guidance}`,
-          prompt: `Verify these actual native WebGPU frames. Contact sheets read left-to-right, then top-to-bottom; each cell is one whole viewport. Sampling map: ${JSON.stringify(sampleMap)}. Last image is style reference.\nEarlier verification (preserve corrections): ${JSON.stringify(state.history)}\nAuthoritative request and narration:\n${options.task.prompt}\nCurrent candidate source (SHA-256 ${sourceHash(state.source)}):\n${state.source}`,
-          images, signal, outputMode: 'submit-only', logContext: { videoId, sceneIndex: index, stage: 'review' },
+          prompt: `Verify these actual native WebGPU frames. Contact sheets read left-to-right, then top-to-bottom; each cell is one whole viewport. Sampling map: ${JSON.stringify(sampleMap)}. ${attached.roleMap}\nEarlier verification (preserve corrections): ${JSON.stringify(state.history)}\nAuthoritative request and narration:\n${options.task.prompt}\nCurrent candidate source (SHA-256 ${sourceHash(state.source)}):\n${state.source}`,
+          images: attached.images, signal, outputMode: 'submit-only', logContext: { videoId, sceneIndex: index, stage: 'review' },
           validate: async output => { parseVisualVerification(output, input.scene.durationSec); },
         }, attemptDirectory, 'review');
         const review = parseVisualVerification(output, input.scene.durationSec);
@@ -173,8 +186,8 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
       try {
         const patch = await run({
           systemPrompt: `${authorContract}\n\n${repairGuidance}`,
-          prompt: `Repair these verified findings (zero-based indexes): ${JSON.stringify(review.findings)}.\nPreserve corrections from earlier reviews: ${JSON.stringify(state.history.slice(0, -1))}.\nAuthoritative request and narration:\n${options.task.prompt}\nOriginal candidate sourceSha256: ${sourceHash(originalSource)}\n${originalSource}`,
-          images, signal, outputMode: 'submit-only', logContext: { videoId, sceneIndex: index, stage: 'repair' },
+          prompt: `Repair these verified findings (zero-based indexes): ${JSON.stringify(review.findings)}.\n${attached.roleMap}\nPreserve corrections from earlier reviews: ${JSON.stringify(state.history.slice(0, -1))}.\nAuthoritative request and narration:\n${options.task.prompt}\nOriginal candidate sourceSha256: ${sourceHash(originalSource)}\n${originalSource}`,
+          images: attached.images, signal, outputMode: 'submit-only', logContext: { videoId, sceneIndex: index, stage: 'repair' },
           validate: async output => { await validatePatch(output); },
         }, attemptDirectory, 'repair', 3);
         state.source = await validatePatch(patch);
@@ -190,13 +203,14 @@ export async function reviewGeneratedScene(options: VisualGateInput): Promise<st
       logEvent('scene.regenerating', { videoId, sceneIndex: index, attempt: state.attempt }, 'warn');
       state.source = await run({
         systemPrompt: `${authorContract}\n\nReturn complete replacement scene JavaScript, without markdown fences. Preserve the authoritative narration, exact duration, inherited IDs, planned controls and earlier corrections.`,
-        prompt: `Repair this scene with a complete implementation. The targeted patch or rendering path could not finish. Simplify the implementation where needed; do not relax its required behavior.\nFindings: ${JSON.stringify(state.history)}\nAuthoritative request:\n${options.task.prompt}\nCurrent source:\n${originalSource}`,
-        signal, outputMode: 'text', logContext: { videoId, sceneIndex: index, stage: 'repair' }, validate: async output => { await options.validate(output); },
+        prompt: `Repair this scene with a complete implementation. The targeted patch or rendering path could not finish. Simplify the implementation where needed; do not relax its required behavior.\n${attached.roleMap}\nFindings: ${JSON.stringify(state.history)}\nAuthoritative request:\n${options.task.prompt}\nCurrent source:\n${originalSource}`,
+        signal, images: attached.images, outputMode: 'text', logContext: { videoId, sceneIndex: index, stage: 'repair' }, validate: async output => { await options.validate(output); },
       }, attemptDirectory, 'repair');
     }
     signal.throwIfAborted();
     state.attempt++;
     state.phase = 'review';
+    state.evidenceSheets = [];
     state.rewrite = false;
     await save();
   }

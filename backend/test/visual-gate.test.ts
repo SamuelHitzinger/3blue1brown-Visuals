@@ -8,6 +8,7 @@ import type { AgentTask } from '../src/agents/runtime.js';
 import { sourceHash } from '../src/agents/visual-edits.js';
 import { createModelGLB, parseModelGLB } from 'animlib/core';
 import { loadPrompt } from '../src/agents/prompts.js';
+import { AgentError } from '../src/agents/config.js';
 const roots:string[]=[];
 afterEach(async()=>{await Promise.all(roots.splice(0).map(root=>rm(root,{recursive:true,force:true})));});
 const source=`export default scene({audio:'voice',end:'hold'},s=>{s.text('label',{text:'DNA',position:[5,0]});s.wait(4);});`;
@@ -47,7 +48,7 @@ test('image rejection produces an automatically repaired candidate that must be 
   const result=await reviewGeneratedScene({...input,runner,renderFrames});
   expect(result).toBe(repair);expect(rendered).toEqual([source,repair]);
   expect(tasks.map(task=>task.logContext?.stage)).toEqual(['review','repair','review']);
-  expect(tasks[0].images).toHaveLength(2);expect(tasks[2].images).toHaveLength(2);
+  expect(tasks[0].images).toHaveLength(1);expect(tasks[2].images).toHaveLength(1);
   expect(tasks[2].prompt).toContain(repair);
   expect(tasks[0].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-verify')}`);
   expect(tasks[1].systemPrompt).toBe(`${input.task.systemPrompt}\n\n${await loadPrompt('scene-repair')}`);
@@ -147,8 +148,28 @@ test('sampling includes camera transition interior, end points and a nonzero ope
 
 test('visual cap survives restart without starting round 51',async()=>{
   const input=await fixture();
-  await writeFile(join(input.directory,'scene-0.visual-state.json'),JSON.stringify({contextHash:sourceHash(JSON.stringify(input.input)),source,attempt:50,phase:'review',history:[]}));
+  await writeFile(join(input.directory,'scene-0.visual-state.json'),JSON.stringify({contextHash:sourceHash(JSON.stringify({input:input.input})),source,attempt:50,phase:'review',history:[]}));
   let calls=0;
   await expect(reviewGeneratedScene({...input,runner:{async run(){calls++;return '';}}})).rejects.toMatchObject({code:'RECOVERY_EXHAUSTED'});
   expect(calls).toBe(0);
+});
+
+test('consecutive render failures clear stale evidence before bounded directory cleanup',async()=>{
+  const input=await fixture();let reviews=0,rewrites=0;
+  const result=await reviewGeneratedScene({...input,renderFrames:async args=>{
+    const attempt=Number(args.directory.split(/[\\/]/).at(-1));
+    if(attempt===1||attempt===2)throw new AgentError('RENDER_SOURCE','Candidate cannot render');
+    const path=join(args.directory,'frame.png');await writeFile(path,`candidate-${attempt}`);
+    return {backend:'test',frames:[],sheets:[{path,width:100,height:100,times:[0],columns:1}]};
+  },runner:{async run(task){
+    if(task.logContext?.stage==='repair'){
+      if(task.outputMode==='text'){rewrites++;expect(task.images).toEqual([]);return repair;}
+      return JSON.stringify({sourceSha256:sourceHash(source),edits:[{finding:0,before:'[5,0]',after:'[0,0]'}]});
+    }
+    reviews++;
+    expect(task.systemPrompt).toContain('Submit only JSON:');
+    expect(task.systemPrompt).not.toContain('The last image is the default style reference');
+    return JSON.stringify(reviews===1?{approved:false,findings:[{timeSec:0,objectIds:['label'],problem:'Clipped',fix:'Move'}]}:{approved:true,findings:[]});
+  }}});
+  expect(result).toBe(repair);expect(reviews).toBe(2);expect(rewrites).toBe(2);
 });

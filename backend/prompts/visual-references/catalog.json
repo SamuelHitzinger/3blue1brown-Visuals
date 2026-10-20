@@ -1,0 +1,1036 @@
+{
+  "schemaVersion": 1,
+  "version": "2026-10-20.1",
+  "description": "Visual grammar first; subjects map to applicable operations. Each family holds at least five inspected reference images. Runtime loads only selected images and instructions.",
+  "selectionPolicy": {
+    "maxFamilies": 2,
+    "maxReferencesPerFamily": 3,
+    "maxReferencesTotal": 5,
+    "fallback": "No credible match: no unrelated default reference.",
+    "pacing": "Complete the understanding plan, script and visual instructions before deriving runtime.",
+    "usage": "Attributed internal references only. Generate original scene assets; do not insert creator screenshots, logos, watermarks or captions into output.",
+    "evidence": "Frames and illustrations inspected for static composition. Continuous motion, narration and learner comprehension are not inferred from still images."
+  },
+  "families": [
+    {
+      "id": "analytical-canvas",
+      "label": "Analytical canvas",
+      "summary": "Flat mathematical objects, curves, local magnification and transformations. Algebra and calculus share this visual grammar.",
+      "subjects": [
+        "algebra",
+        "calculus",
+        "2D linear algebra",
+        "signals",
+        "mathematical physics"
+      ],
+      "routingTerms": [
+        "algebra",
+        "calculus",
+        "derivative",
+        "integral",
+        "function",
+        "curve",
+        "graph of a function",
+        "tangent",
+        "slope",
+        "equation",
+        "wavelet",
+        "signal",
+        "2d vector",
+        "2d transformation"
+      ],
+      "instructions": "Use a quiet high-contrast mathematical canvas. Make relationships visible with curves, areas, anchored vectors, matching colors and retained before-states. Algebra and calculus belong together when the visual operation is the same; do not impose a separate decorative theme. Start with one concrete quantity, show what changes, then explain why. Zoom into a local change while retaining its location in the larger picture. Introduce each axis, scale and symbol before use. Equations appear only when needed for intuition or calculation; attach every term to an established object. Build dense reference compositions in separate explanatory beats. Never infer pacing from a still or source runtime.",
+      "references": [
+        {
+          "id": "3b1b-linear-233-setup",
+          "file": "frames/3b1b-linear-233-setup.jpg",
+          "title": "Linear transformations and matrices | Chapter 3, Essence of linear algebra",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "linear algebra",
+            "vectors",
+            "coordinate transformations",
+            "kinematics"
+          ],
+          "operation": "setup",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=kYB8IZa5AuE&t=233s",
+          "timestampSec": 233,
+          "purpose": "A learner must connect spatial change with an algebraic representation.",
+          "observed": "Green i-hat and red j-hat share an origin on a fixed Cartesian grid. Color and nearby labels establish basis identity.",
+          "limitations": [
+            "Do not begin with the dense final expression. Establish vector identity, scale and direction separately before transforming the construction."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "3b1b-linear-263-operation",
+          "file": "frames/3b1b-linear-263-operation.jpg",
+          "title": "Linear transformations and matrices | Chapter 3, Essence of linear algebra",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "linear algebra",
+            "vectors",
+            "coordinate transformations",
+            "kinematics"
+          ],
+          "operation": "operation",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=kYB8IZa5AuE&t=263s",
+          "timestampSec": 263,
+          "purpose": "A learner must connect spatial change with an algebraic representation.",
+          "observed": "Skewed cyan grid retains a faint original grid. Transformed basis arrows retain green/red identity; yellow v is linked to the visible -1 i-hat + 2 j-hat expression.",
+          "limitations": [
+            "Do not begin with the dense final expression. Establish vector identity, scale and direction separately before transforming the construction."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "3b1b-linear-278-result",
+          "file": "frames/3b1b-linear-278-result.jpg",
+          "title": "Linear transformations and matrices | Chapter 3, Essence of linear algebra",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "linear algebra",
+            "vectors",
+            "coordinate transformations",
+            "kinematics"
+          ],
+          "operation": "result",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=kYB8IZa5AuE&t=278s",
+          "timestampSec": 278,
+          "purpose": "A learner must connect spatial change with an algebraic representation.",
+          "observed": "Scaled transformed basis arrows form the yellow resultant. Explicit transformed-v expression uses the same object colors.",
+          "limitations": [
+            "Do not begin with the dense final expression. Establish vector identity, scale and direction separately before transforming the construction."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "artem-wavelets-0971",
+          "file": "frames/artem-wavelets-0971.jpg",
+          "title": "Wavelets: a mathematical microscope",
+          "creator": "Artem Kirsanov",
+          "topics": [
+            "signals",
+            "wavelets",
+            "convolution",
+            "pattern matching",
+            "local measurement"
+          ],
+          "operation": "Contrast cases",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=jnxqHcObNK4&t=971s",
+          "timestampSec": 971,
+          "purpose": "A learner needs to see what matching means before a similarity score or integral is introduced.",
+          "observed": "Side-by-side good and poor local fit compare wavelets with background signals. Green/red encode comparison outcome; the poor-fit case is emphasized.",
+          "limitations": [
+            "Do not inherit oversized text, a formula-first introduction or assumed wavelet knowledge. Explain the two curves and what one local comparison means. The sampled sequence does not show a finished numerical measurement."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "artem-wavelets-0991",
+          "file": "frames/artem-wavelets-0991.jpg",
+          "title": "Wavelets: a mathematical microscope",
+          "creator": "Artem Kirsanov",
+          "topics": [
+            "signals",
+            "wavelets",
+            "convolution",
+            "pattern matching",
+            "local measurement"
+          ],
+          "operation": "Expose criterion",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=jnxqHcObNK4&t=991s",
+          "timestampSec": 991,
+          "purpose": "A learner needs to see what matching means before a similarity score or integral is introduced.",
+          "observed": "Green filled regions mark where two overlaid curves share a sign. Matching becomes a visible local criterion rather than only a label.",
+          "limitations": [
+            "Do not inherit oversized text, a formula-first introduction or assumed wavelet knowledge. Explain the two curves and what one local comparison means. The sampled sequence does not show a finished numerical measurement."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "official-calculus-rise-run",
+          "file": "frames/official-calculus-rise-run.png",
+          "title": "Local rise and run",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "calculus",
+            "derivatives",
+            "local change"
+          ],
+          "operation": "local magnification",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/derivatives/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2017/derivatives/figure-5.50.svg",
+          "timestampSec": null,
+          "purpose": "Preserve context while enlarging the small change; color-match input nudge and output response to their geometric distances.",
+          "observed": "Cyan distance-time curve has a small boxed region near time 3 and enlarged inset at lower right. Yellow horizontal dt and red vertical ds are attached directly to the enlarged triangle.",
+          "limitations": [
+            "Inset uses separate scale. Explain magnification and notation before deriving a ratio.",
+            "Static composition inspected; narration and temporal pacing not evaluated."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/png"
+        },
+        {
+          "id": "official-calculus-tangent",
+          "file": "frames/official-calculus-tangent.png",
+          "title": "Tangent line interpretation",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "calculus",
+            "derivatives",
+            "local change"
+          ],
+          "operation": "local approximation",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/derivatives/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2017/derivatives/figure-9.44.svg",
+          "timestampSec": null,
+          "purpose": "Use an anchored tangent and highlighted contact point to connect local behavior to an approximation.",
+          "observed": "Cyan distance-time curve has a green tangent through a circled green point. A nearby green-bordered label describes best constant approximation around a point.",
+          "limitations": [
+            "The constant approximation concerns rate of change, not constant function value. Explain that distinction in narration. This image does not itself demonstrate the limiting process.",
+            "Static composition inspected; narration and temporal pacing not evaluated."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/png"
+        }
+      ]
+    },
+    {
+      "id": "spatial-geometry",
+      "label": "Spatial geometry and higher-dimensional views",
+      "summary": "Depth, basis frames, projection, surfaces and transparent solids; explicit representations of 4D.",
+      "subjects": [
+        "3D and 4D linear algebra",
+        "geometry",
+        "mechanics",
+        "dimensionality reduction",
+        "spatial data"
+      ],
+      "routingTerms": [
+        "3d",
+        "4d",
+        "three dimensional",
+        "four dimensional",
+        "higher dimensional",
+        "quaternion",
+        "projection",
+        "spatial",
+        "basis",
+        "rotation",
+        "plane",
+        "volume",
+        "pca",
+        "principal component",
+        "geometry",
+        "mechanics",
+        "rigid body"
+      ],
+      "instructions": "Use genuine spatial structure: perspective, restrained lighting, depth ordering, occlusion and selectively transparent surfaces. Establish axes, frame and camera before movement; retain an orientation landmark. Distinguish moving the camera from changing the object. Match object identities across original and projected views. For four-dimensional objects, explicitly name the projection or slice into three/two dimensions and the missing coordinate; explain distortions and information loss. A 3D rendering is not a literal view of 4D. Teach the lower-dimensional analogy before the higher-dimensional construction. Use equations only to name an already understood relation or perform the necessary calculation.",
+      "references": [
+        {
+          "id": "visually-pca-0111",
+          "file": "frames/visually-pca-0111.jpg",
+          "title": "Principal Component Analysis (PCA)",
+          "creator": "Visually Explained",
+          "topics": [
+            "geometry",
+            "projections",
+            "dimensionality reduction",
+            "data representation",
+            "approximation"
+          ],
+          "operation": "Make correspondence visible",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=FD4DeN81ODY&t=111s",
+          "timestampSec": 111,
+          "purpose": "A learner must connect an abstract reduction to an explicit spatial operation on a recognizable point.",
+          "observed": "Original point x is joined to projected point x-prime on the line. Pink/yellow mathematical terms match object colors.",
+          "limitations": [
+            "Do not import the formula or the phrase “information preserved” without defining the quantity. For PCA, explain centered data, unit direction and variance before the optimization objective. One point-to-line picture is not a complete PCA explanation."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "visually-pca-0121",
+          "file": "frames/visually-pca-0121.jpg",
+          "title": "Principal Component Analysis (PCA)",
+          "creator": "Visually Explained",
+          "topics": [
+            "geometry",
+            "projections",
+            "dimensionality reduction",
+            "data representation",
+            "approximation"
+          ],
+          "operation": "Return to data",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=FD4DeN81ODY&t=121s",
+          "timestampSec": 121,
+          "purpose": "A learner must connect an abstract reduction to an explicit spatial operation on a recognizable point.",
+          "observed": "Country markers appear in a three-axis data space labeled GDP, Life and Social, reconnecting the geometric operation to a concrete dataset.",
+          "limitations": [
+            "Do not import the formula or the phrase “information preserved” without defining the quantity. For PCA, explain centered data, unit direction and variance before the optimization objective. One point-to-line picture is not a complete PCA explanation."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "spatial-basis-0110",
+          "file": "frames/spatial-basis-0110.jpg",
+          "title": "Three-dimensional linear transformations",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "3D linear algebra",
+            "basis",
+            "spatial frame"
+          ],
+          "operation": "establish a spatial basis",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=rHLEWRxRGiM&t=110s",
+          "timestampSec": 110,
+          "purpose": "Establish a visible orientation frame before moving a basis.",
+          "observed": "Red, green and blue basis arrows sit inside a wireframe cube and coordinate axes.",
+          "limitations": [
+            "Explain perspective and each axis; reference still does not establish transformation timing."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "spatial-transform-0160",
+          "file": "frames/spatial-transform-0160.jpg",
+          "title": "Three-dimensional linear transformations",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "3D linear algebra",
+            "basis",
+            "transformation"
+          ],
+          "operation": "transform a spatial basis",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=rHLEWRxRGiM&t=160s",
+          "timestampSec": 160,
+          "purpose": "Keep a basis recognizable while demonstrating a three-dimensional mapping.",
+          "observed": "Colored basis directions change within the retained cube and coordinate context.",
+          "limitations": [
+            "Distinguish the transformed vectors from camera movement; pair with an explained before-state."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "spatial-quaternion-equator-1279",
+          "file": "frames/spatial-quaternion-equator-1279.jpg",
+          "title": "Visualizing quaternions",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "4D",
+            "quaternions",
+            "stereographic projection",
+            "hypersphere"
+          ],
+          "operation": "identify an equator in a higher-dimensional representation",
+          "dimension": "4d-projection",
+          "sourceURL": "https://www.youtube.com/watch?v=d4EgbgTm0Bg&t=1279s",
+          "timestampSec": 1279,
+          "purpose": "Use transparency and coordinate-linked color to locate a constrained subset while explaining a 4D-to-3D representation.",
+          "observed": "Transparent gridded sphere with i,j,k axes, a pink point and a real-part-zero quaternion.",
+          "limitations": [
+            "This is a 3D representation in a 4D mapping explanation, not a literal 4D camera view. Explain stereographic projection and the zero-real-part subset before interpreting the sphere.",
+            "Introduce the four components individually; do not begin with the completed equation."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "spatial-quaternion-projection-1339",
+          "file": "frames/spatial-quaternion-projection-1339.jpg",
+          "title": "Visualizing quaternions",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "4D",
+            "quaternions",
+            "stereographic projection",
+            "unit constraint"
+          ],
+          "operation": "connect four components to projected position",
+          "dimension": "4d-projection",
+          "sourceURL": "https://www.youtube.com/watch?v=d4EgbgTm0Bg&t=1339s",
+          "timestampSec": 1339,
+          "purpose": "Connect an explicit fourth coordinate to a point in the projected representation while preserving orientation.",
+          "observed": "Pink point and color-matched quaternion components accompany a transparent reference sphere and four-component unit constraint.",
+          "limitations": [
+            "Projection changes distances and scale; explicitly describe what the spatial view preserves and distorts.",
+            "Constraint is a late consolidation step; require the geometric explanation first."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "id": "discrete-computation",
+      "label": "Discrete state and information flow",
+      "summary": "Items, trees, networks, arrays and relation matrices with stable identity and visible state changes.",
+      "subjects": [
+        "algorithms",
+        "data structures",
+        "AI inference",
+        "neural networks",
+        "attention",
+        "information theory"
+      ],
+      "routingTerms": [
+        "algorithm",
+        "sorting",
+        "search",
+        "tree",
+        "graph traversal",
+        "recursion",
+        "data structure",
+        "huffman",
+        "compression",
+        "neural network",
+        "attention",
+        "transformer",
+        "token",
+        "dataflow",
+        "array",
+        "matrix of relations",
+        "computation"
+      ],
+      "instructions": "Represent discrete entities with legible cards, nodes, cells or token columns. Keep positions and identity stable while highlighting one state change or dependency. Explain what a link carries and its direction before animating information through it. Trace one small input by hand before expanding the system. Show the rule, its local consequence, and the retained previous state. Use matrices for pairwise relationships, not as decorative blocks of numbers. Neural-network schematics and algorithms share this grammar when showing computation; geometric embeddings instead belong to spatial geometry. Dense networks are late recaps, never opening frames. Perspective may group data but must not imply physical space.",
+      "references": [
+        {
+          "id": "reducible-huffman-1454-setup",
+          "file": "frames/reducible-huffman-1454-setup.jpg",
+          "title": "Huffman Codes: An Information Theory Perspective",
+          "creator": "Reducible",
+          "topics": [
+            "algorithms",
+            "data structures",
+            "information theory",
+            "compression",
+            "recursion"
+          ],
+          "operation": "setup",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=B3y0RsVCyrw&t=1454s",
+          "timestampSec": 1454,
+          "purpose": "A learner must follow how repeated small operations build a larger structure.",
+          "observed": "Five symbol cards show D .15, E .16, A .17, C .17, B .35 in a vertical pool; symbols and probabilities are visually adjacent.",
+          "limitations": [
+            "Do not show only the completed tree or substitute a row of screenshots for explaining why the smallest two groups merge. Explain what a branch means before reading a code."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "reducible-huffman-1464-merge",
+          "file": "frames/reducible-huffman-1464-merge.jpg",
+          "title": "Huffman Codes: An Information Theory Perspective",
+          "creator": "Reducible",
+          "topics": [
+            "algorithms",
+            "data structures",
+            "information theory",
+            "compression",
+            "recursion"
+          ],
+          "operation": "operation",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=B3y0RsVCyrw&t=1464s",
+          "timestampSec": 1464,
+          "purpose": "A learner must follow how repeated small operations build a larger structure.",
+          "observed": "D and E now connect under parent .31; remaining A, C and B cards stay in a separate pool. State change preserves child identities.",
+          "limitations": [
+            "Do not show only the completed tree or substitute a row of screenshots for explaining why the smallest two groups merge. Explain what a branch means before reading a code."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "reducible-huffman-1509-result",
+          "file": "frames/reducible-huffman-1509-result.jpg",
+          "title": "Huffman Codes: An Information Theory Perspective",
+          "creator": "Reducible",
+          "topics": [
+            "algorithms",
+            "data structures",
+            "information theory",
+            "compression",
+            "recursion"
+          ],
+          "operation": "result",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=B3y0RsVCyrw&t=1509s",
+          "timestampSec": 1509,
+          "purpose": "A learner must follow how repeated small operations build a larger structure.",
+          "observed": "Completed probability tree sums to 1.0. B .35 is shallow; A/C and D/E remain paired below .34 and .31 beneath .65.",
+          "limitations": [
+            "Do not show only the completed tree or substitute a row of screenshots for explaining why the smallest two groups merge. Explain what a branch means before reading a code."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "3b1b-neural-network-overview",
+          "file": "frames/3b1b-neural-network-overview.jpg",
+          "title": "But what is a Neural Network? — layered network overview",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "AI",
+            "neural networks",
+            "weights",
+            "features"
+          ],
+          "operation": "Show how an input, intermediate states and a selected output belong to one computational structure.",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/neural-networks/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2017/neural-networks/plain-vanilla.jpg",
+          "timestampSec": null,
+          "purpose": "Show how an input, intermediate states and a selected output belong to one computational structure.",
+          "observed": "A digit image sits beside four columns of circular units. Filled states vary; fine connections join adjacent layers. The output associated with 4 is highlighted.",
+          "limitations": [
+            "Introduce one unit and one connection first. Build layers progressively; reserve the dense graph for a recap, with inactive connections subdued.",
+            "Static composition inspected; no video timestamp claimed."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "3b1b-neural-edge-target",
+          "file": "frames/3b1b-neural-edge-target.jpg",
+          "title": "But what is a Neural Network? — one local feature and one target unit",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "AI",
+            "neural networks",
+            "weights",
+            "features"
+          ],
+          "operation": "Isolate a single computational target and the concrete feature it is intended to respond to.",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/neural-networks/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2017/neural-networks/desired-edge.jpg",
+          "timestampSec": null,
+          "purpose": "Isolate a single computational target and the concrete feature it is intended to respond to.",
+          "observed": "Many input circles converge on one unit. A separate square pixel grid contains one short white horizontal patch.",
+          "limitations": [
+            "Explicitly map pixels to input units before showing aggregation. Present the feature as a designed teaching example, not a universal claim about learned neurons.",
+            "Static composition inspected; no video timestamp claimed."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "3b1b-neural-weight-grid",
+          "file": "frames/3b1b-neural-weight-grid.jpg",
+          "title": "But what is a Neural Network? — weights across connected representations",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "AI",
+            "neural networks",
+            "weights",
+            "features"
+          ],
+          "operation": "Connect link-level influence to a spatial weight arrangement and, only after those meanings are established, a compact calculation.",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/neural-networks/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2017/neural-networks/weights-square-blue.jpg",
+          "timestampSec": null,
+          "purpose": "Connect link-level influence to a spatial weight arrangement and, only after those meanings are established, a compact calculation.",
+          "observed": "Blue and red connections converge on one unit. A blue/red weight grid sits beside a white feature on a pixel grid; a weighted sum appears above.",
+          "limitations": [
+            "Start with one pixel, one weight and its contribution. Demonstrate positive and negative effects visually. The full expression is a late-stage reference, never an opening template.",
+            "Static composition inspected; no video timestamp claimed."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "3b1b-attention-context-routing",
+          "file": "frames/3b1b-attention-context-routing.jpg",
+          "title": "Attention in transformers — context routed between token representations",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "AI",
+            "transformers",
+            "attention",
+            "tokens",
+            "pairwise relations"
+          ],
+          "operation": "Keep token identity visible while indicating that contextual information changes a representation.",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/attention/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2024/attention/passEmbedding.jpg",
+          "timestampSec": null,
+          "purpose": "Keep token identity visible while indicating that contextual information changes a representation.",
+          "observed": "Separate word boxes align with numerical columns inside a translucent block. Curved highlighted links connect selected columns.",
+          "limitations": [
+            "Explain the contextual ambiguity in ordinary words first. Introduce the meaning of one column and one connecting arc before numerical detail. Perspective is a grouping aid, not a claim about physical space.",
+            "Static composition inspected; no video timestamp claimed."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "3b1b-attention-match-matrix",
+          "file": "frames/3b1b-attention-match-matrix.jpg",
+          "title": "Attention in transformers — pairwise relation matrix",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "AI",
+            "transformers",
+            "attention",
+            "tokens",
+            "pairwise relations"
+          ],
+          "operation": "Make a collection of pairwise comparisons legible through a matrix with stable row and column identity.",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/attention/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2024/attention/DotProduct.jpg",
+          "timestampSec": null,
+          "purpose": "Make a collection of pairwise comparisons legible through a matrix with stable row and column identity.",
+          "observed": "Words label rows and columns. Keys and queries use distinct colors. Different-size grey dots mark pairwise strengths, including large dots at selected adjective/noun intersections.",
+          "limitations": [
+            "Build one row, one column and one cell before revealing the full matrix. Explain dot size and direction of influence. Do not inherit the full equation density or treat the illustrative adjective/noun behavior as a verified property of every attention head.",
+            "Static composition inspected; no video timestamp claimed."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "id": "statistical-ensembles",
+      "label": "Populations, distributions and uncertainty",
+      "summary": "Repeated cases, filtering, proportionate area and histograms connect individuals to aggregate behavior.",
+      "subjects": [
+        "probability",
+        "statistics",
+        "population biology",
+        "sampling",
+        "uncertainty in AI",
+        "experimental inference"
+      ],
+      "routingTerms": [
+        "probability",
+        "statistics",
+        "distribution",
+        "histogram",
+        "sampling",
+        "ensemble",
+        "population",
+        "uncertainty",
+        "bayes",
+        "likelihood",
+        "random",
+        "central limit",
+        "frequency",
+        "variance",
+        "confidence"
+      ],
+      "instructions": "Begin with an individual case and define what one mark represents. Build populations from repeated marks; preserve excluded cases dimly during filtering. Translate counts into area or bins with explicit one-to-one correspondence and labeled denominators. Distinguish probability, sample frequency and density. Introduce bins, axes, normalization and changed scales before using them. Compare one sample with an ensemble, then show how aggregation changes the distribution. Never replace an unfamiliar population with a finished bell curve without explaining the bridge. Use formulas only after their populations and quantities are visible. Population biology uses this style when counting organisms, not molecular machinery.",
+      "references": [
+        {
+          "id": "official-bayes-population",
+          "file": "frames/official-bayes-population.jpg",
+          "title": "Representative sample",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "probability",
+            "bayes",
+            "populations",
+            "proportions"
+          ],
+          "operation": "discrete population",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/bayes-theorem/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2019/bayes-theorem/representative-sample.jpg",
+          "timestampSec": null,
+          "purpose": "Represent actual counts with repeated equal-sized marks before introducing percentages.",
+          "observed": "Ten grey book-holding figures occupy one column; two hundred green wheat-holding figures fill twenty columns. Braces label group sizes 10 and 200. Uniform icon size makes the base-rate imbalance visible.",
+          "limitations": [
+            "Do not copy profession icons into unrelated subjects. Establish one mark equals one case.",
+            "Static composition inspected; narration and temporal pacing not evaluated."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "official-bayes-filtered-population",
+          "file": "frames/official-bayes-filtered-population.jpg",
+          "title": "Evidence filters sample",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "probability",
+            "bayes",
+            "populations",
+            "proportions"
+          ],
+          "operation": "filtering a population",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/bayes-theorem/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2019/bayes-theorem/who-fits.jpg",
+          "timestampSec": null,
+          "purpose": "Keep original population visible but dim excluded cases; compare surviving counts before introducing conditional notation.",
+          "observed": "Same grid retains object positions. Most figures are dimmed; four grey figures at left and twenty green figures along the bottom remain emphasized over blue rectangles. Braces label 40% and 10%.",
+          "limitations": [
+            "Explain why cases are filtered and why denominator changes.",
+            "Static composition inspected; narration and temporal pacing not evaluated."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "official-bayes-restricted-space",
+          "file": "frames/official-bayes-restricted-space.jpg",
+          "title": "Restricted possibility space",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "probability",
+            "bayes",
+            "populations",
+            "proportions"
+          ],
+          "operation": "counts-to-area bridge",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/bayes-theorem/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2019/bayes-theorem/key-bayes-concepts.jpg",
+          "timestampSec": null,
+          "purpose": "Transform a known population into area while preserving its partition and color identity; carry visible pieces into the ratio.",
+          "observed": "Three horizontal stages show full possibility square, blue evidence subsets within dimmed square, then a ratio assembled from the same blue shapes. Book/wheat icons preserve category identity; words identify all possibilities and evidence.",
+          "limitations": [
+            "Build the three stages sequentially. This completed composite does not establish suitable presentation speed.",
+            "Static composition inspected; narration and temporal pacing not evaluated."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "official-bayes-area-hypothesis",
+          "file": "frames/official-bayes-area-hypothesis.jpg",
+          "title": "Hypothesis partitions area",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "probability",
+            "bayes",
+            "populations",
+            "proportions"
+          ],
+          "operation": "single variable area encoding",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/bayes-theorem/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2019/bayes-theorem/hypothesis-left.jpg",
+          "timestampSec": null,
+          "purpose": "Introduce one probability quantity as a visible fraction of a whole; defer further partitions.",
+          "observed": "Simple square has a narrow yellow strip at left and grey remainder. One brace below the strip labels P(H), with H matching yellow.",
+          "limitations": [
+            "Teach what the whole represents and why strip width corresponds to proportion.",
+            "Static composition inspected; narration and temporal pacing not evaluated."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "official-bayes-changing-likelihoods",
+          "file": "frames/official-bayes-changing-likelihoods.jpg",
+          "title": "Different likelihoods change proportions",
+          "creator": "3Blue1Brown / Grant Sanderson",
+          "topics": [
+            "probability",
+            "bayes",
+            "populations",
+            "proportions"
+          ],
+          "operation": "comparing conditional proportions",
+          "dimension": "2d",
+          "sourceURL": "https://www.3blue1brown.com/lessons/bayes-theorem/",
+          "assetURL": "https://storage.googleapis.com/3blue1brown-website-bucket/lessons/2019/bayes-theorem/different-likelihoods.jpg",
+          "timestampSec": null,
+          "purpose": "Make unequal likelihoods change visible retained area so viewers can compare their consequences.",
+          "observed": "Narrow left blue region is tall; wide right blue region is shallow. Width and heights have adjacent probability labels. Excluded area is almost black.",
+          "limitations": [
+            "Needs previous state or animation to demonstrate change. A still alone establishes only the final comparison.",
+            "Static composition inspected; narration and temporal pacing not evaluated."
+          ],
+          "sourceType": "official-lesson-image",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "statistics-sum-distribution-0544",
+          "file": "frames/statistics-sum-distribution-0544.jpg",
+          "title": "But what is the Central Limit Theorem?",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "probability",
+            "distribution",
+            "central limit theorem",
+            "dice",
+            "sums"
+          ],
+          "operation": "compare an individual outcome distribution with a sum",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=zeJD6dqJ5lo&t=544s",
+          "timestampSec": 544,
+          "purpose": "Connect a familiar discrete experiment with its aggregate distribution using aligned chart grammar.",
+          "observed": "Six equal bars for a fair die appear above a narrow bell-shaped distribution of the sum of 69 dice.",
+          "limitations": [
+            "Define one trial, independence, sum, and axis scale before comparison. Different vertical scales require explicit explanation.",
+            "Do not present the limiting bell shape without showing accumulation from individual cases."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "statistics-sampled-sums-0409",
+          "file": "frames/statistics-sampled-sums-0409.jpg",
+          "title": "But what is the Central Limit Theorem?",
+          "creator": "3Blue1Brown",
+          "topics": [
+            "sampling",
+            "probability",
+            "empirical distribution",
+            "dice",
+            "sums"
+          ],
+          "operation": "build a distribution from individual sampled sums",
+          "dimension": "2d",
+          "sourceURL": "https://www.youtube.com/watch?v=zeJD6dqJ5lo&t=409s",
+          "timestampSec": 409,
+          "purpose": "Keep the input probability distribution visible while individual outcomes accumulate on a separate number line.",
+          "observed": "Unequal dice probabilities remain at upper left; four sampled sums occupy the lower number line, with the newest mark highlighted yellow.",
+          "limitations": [
+            "Explain that each lower mark is a sum of several dice, not an individual face. Distinguish source probability from empirical counts.",
+            "Use the highlighted sample as one narrated step before accelerating repetition; the still does not specify pacing."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        }
+      ]
+    },
+    {
+      "id": "molecular-mechanisms",
+      "label": "Molecular bodies and mechanisms",
+      "summary": "Complex biological assemblies, molecular chains, selective transparency and context-to-interaction scale changes.",
+      "subjects": [
+        "molecular biology",
+        "microbiology mechanisms",
+        "biochemistry",
+        "protein structure",
+        "DNA/RNA processes"
+      ],
+      "routingTerms": [
+        "molecule",
+        "molecular",
+        "microbiology",
+        "protein",
+        "ribosome",
+        "enzyme",
+        "dna",
+        "rna",
+        "cellular mechanism",
+        "biochemistry",
+        "folding",
+        "translation",
+        "transcription",
+        "recombination",
+        "binding",
+        "molecular machine"
+      ],
+      "instructions": "Use recognizable complex molecular bodies, chains and assemblies with meaningful 3D structure. Do not substitute generic spheres or flat labeled boxes for a molecular mechanism. Choose scientifically justified structural detail and explain what the representation omits; do not invent atomic coordinates. Establish each participant, its role and relative scale before revealing interaction. Preserve chain and subunit identity across folding, binding and assembly. Use cutaways, translucency or an exploded view to reveal the active site while retaining outer context. Reduce background contrast to isolate the current action. Make proximity, contact, conformational change and resulting function visible in successive beats. Return from the local mechanism to its biological consequence. Molecular detail supports explanation; it does not prove biological correctness.",
+      "references": [
+        {
+          "id": "protein-folding-0015",
+          "file": "frames/protein-folding-0015.jpg",
+          "title": "Protein Folding",
+          "creator": "AskaBiologist",
+          "topics": [
+            "molecular biology",
+            "protein structure",
+            "folding",
+            "sequence to structure"
+          ],
+          "operation": "Expose sequence structure",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=yZ2aY5lxEGE&t=15s",
+          "timestampSec": 15,
+          "purpose": "Remove environment when tracing one object is central; use sequence color continuity. Highlight local interaction candidates while retaining whole-chain identity. Keep colors and object identity stable across unfolding/folding states.",
+          "observed": "Extended multicolored molecular chain arranged against empty black background.",
+          "limitations": [
+            "Do not equate visual realism with explanation. Establish each actor, interaction and consequence before adding detail.",
+            "Original upload is visibly low resolution. Page links official HD replacement https://www.youtube.com/watch?v=nQbnqO3lEzc ; captures here remain from user-specified upload.",
+            "Static samples show representation continuity, not explanation of physical causes. Generated lessons must teach forces explicitly."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "protein-folding-0100",
+          "file": "frames/protein-folding-0100.jpg",
+          "title": "Protein Folding",
+          "creator": "AskaBiologist",
+          "topics": [
+            "molecular biology",
+            "protein structure",
+            "folding",
+            "sequence to structure"
+          ],
+          "operation": "Shape transformation with identity preserved",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=yZ2aY5lxEGE&t=60s",
+          "timestampSec": 60,
+          "purpose": "Remove environment when tracing one object is central; use sequence color continuity. Highlight local interaction candidates while retaining whole-chain identity. Keep colors and object identity stable across unfolding/folding states.",
+          "observed": "Chain becomes more compact and three-dimensional; rainbow progression still identifies corresponding sections.",
+          "limitations": [
+            "Do not equate visual realism with explanation. Establish each actor, interaction and consequence before adding detail.",
+            "Original upload is visibly low resolution. Page links official HD replacement https://www.youtube.com/watch?v=nQbnqO3lEzc ; captures here remain from user-specified upload.",
+            "Static samples show representation continuity, not explanation of physical causes. Generated lessons must teach forces explicitly."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "protein-synthesis-0247",
+          "file": "frames/protein-synthesis-0247.jpg",
+          "title": "How Your Body Creates Proteins",
+          "creator": "Nucleus Medical Media",
+          "topics": [
+            "molecular biology",
+            "translation",
+            "protein synthesis",
+            "codons"
+          ],
+          "operation": "Exploded assembly before interaction",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=LCIkd-WwC7o&t=167s",
+          "timestampSec": 167,
+          "purpose": "Show parts and spatial relationship separately before joining into mechanism. Place necessary symbolic labels directly on their referents; transparency exposes action site.",
+          "observed": "Two brown ribosome parts sit on opposite sides of simple green RNA chain against black background.",
+          "limitations": [
+            "Do not equate visual realism with explanation. Establish each actor, interaction and consequence before adding detail.",
+            "oEmbed returned unauthorized but normal browser playback succeeded.",
+            "Capture at3:11 shows symbolic letters attached to structure; viewer needs codon and anticodon meanings established beforehand."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "protein-synthesis-0311",
+          "file": "frames/protein-synthesis-0311.jpg",
+          "title": "How Your Body Creates Proteins",
+          "creator": "Nucleus Medical Media",
+          "topics": [
+            "molecular biology",
+            "translation",
+            "protein synthesis",
+            "codons"
+          ],
+          "operation": "Symbol bound to physical location",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=LCIkd-WwC7o&t=191s",
+          "timestampSec": 191,
+          "purpose": "Show parts and spatial relationship separately before joining into mechanism. Place necessary symbolic labels directly on their referents; transparency exposes action site.",
+          "observed": "Translucent ribosome exposes green RNA; codon labels ACG and AUG sit on corresponding chain segments.",
+          "limitations": [
+            "Do not equate visual realism with explanation. Establish each actor, interaction and consequence before adding detail.",
+            "oEmbed returned unauthorized but normal browser playback succeeded.",
+            "Capture at3:11 shows symbolic letters attached to structure; viewer needs codon and anticodon meanings established beforehand."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "dna-repair-0044",
+          "file": "frames/dna-repair-0044.jpg",
+          "title": "DNA Break Repair by Homologous Recombination (2024) Drew Berry wehi.tv",
+          "creator": "Drew Berry / WEHI",
+          "topics": [
+            "molecular biology",
+            "DNA repair",
+            "homologous recombination",
+            "molecular machines"
+          ],
+          "operation": "Focus hierarchy within complex environment",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=Xe-83tBcxhs&t=44s",
+          "timestampSec": 44,
+          "purpose": "Use saturation, brightness and depth to isolate active participants without losing environment. Zoom to exact change; label action rather than presenting detached explanatory paragraph. Return to wider context after local operation so learner can locate consequence within system.",
+          "observed": "Bright orange DNA runs into blue molecular complex; background molecular material remains dark and subdued.",
+          "limitations": [
+            "Do not equate visual realism with explanation. Establish each actor, interaction and consequence before adding detail.",
+            "Rich molecular detail is useful only when task needs it; scaffold each actor and simplify context for novices.",
+            "These samples establish visual operations, not correctness or comprehension of whole molecular sequence."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "dna-repair-0151",
+          "file": "frames/dna-repair-0151.jpg",
+          "title": "DNA Break Repair by Homologous Recombination (2024) Drew Berry wehi.tv",
+          "creator": "Drew Berry / WEHI",
+          "topics": [
+            "molecular biology",
+            "DNA repair",
+            "homologous recombination",
+            "molecular machines"
+          ],
+          "operation": "Local action close-up",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=Xe-83tBcxhs&t=111s",
+          "timestampSec": 111,
+          "purpose": "Use saturation, brightness and depth to isolate active participants without losing environment. Zoom to exact change; label action rather than presenting detached explanatory paragraph. Return to wider context after local operation so learner can locate consequence within system.",
+          "observed": "Close DNA junction is shown with consistent colored substructures and brief action label describing unwinding.",
+          "limitations": [
+            "Do not equate visual realism with explanation. Establish each actor, interaction and consequence before adding detail.",
+            "Rich molecular detail is useful only when task needs it; scaffold each actor and simplify context for novices.",
+            "These samples establish visual operations, not correctness or comprehension of whole molecular sequence."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        },
+        {
+          "id": "dna-repair-0236",
+          "file": "frames/dna-repair-0236.jpg",
+          "title": "DNA Break Repair by Homologous Recombination (2024) Drew Berry wehi.tv",
+          "creator": "Drew Berry / WEHI",
+          "topics": [
+            "molecular biology",
+            "DNA repair",
+            "homologous recombination",
+            "molecular machines"
+          ],
+          "operation": "Return from detail to connected system",
+          "dimension": "3d",
+          "sourceURL": "https://www.youtube.com/watch?v=Xe-83tBcxhs&t=156s",
+          "timestampSec": 156,
+          "purpose": "Use saturation, brightness and depth to isolate active participants without losing environment. Zoom to exact change; label action rather than presenting detached explanatory paragraph. Return to wider context after local operation so learner can locate consequence within system.",
+          "observed": "Two DNA strands and several distinctly colored complexes appear together; strand path connects regions.",
+          "limitations": [
+            "Do not equate visual realism with explanation. Establish each actor, interaction and consequence before adding detail.",
+            "Rich molecular detail is useful only when task needs it; scaffold each actor and simplify context for novices.",
+            "These samples establish visual operations, not correctness or comprehension of whole molecular sequence."
+          ],
+          "sourceType": "video-frame",
+          "mimeType": "image/jpeg"
+        }
+      ]
+    }
+  ]
+}

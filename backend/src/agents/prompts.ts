@@ -1,10 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 
-export type PromptName = 'guidance' | 'understanding' | 'scene-request-guidance' | 'scene-verify' | 'scene-repair' | 'scene-craft' | 'story-review' | 'topics-system' | 'topics-format' | 'thumbnail';
+export type PromptName = 'guidance' | 'understanding' | 'scene-request-guidance' | 'scene-verify' | 'scene-repair' | 'scene-craft' | 'story-review' | 'topics-system' | 'topics-format' | 'thumbnail' | 'molecular-planning' | 'molecular-craft' | 'molecular-verify';
 
 /** Version of the host-enforced lesson policy; saved jobs retain their original contract. */
-export const INSTRUCTION_VERSION = 4;
+export const INSTRUCTION_VERSION = 5;
 
 export function loadPrompt(name: PromptName): Promise<string> {
   return readFile(new URL(`../../prompts/${name}.md`, import.meta.url), 'utf8');

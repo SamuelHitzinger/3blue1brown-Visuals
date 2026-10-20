@@ -83,7 +83,7 @@ const headings = [
 ];
 
 /** Production scene-authoring reference; preserves retained sections verbatim (LF). */
-export function buildAuthoringReference(reference: string): string {
+export function buildAuthoringReference(reference: string, options?: { familyIds: readonly string[] }): string {
   const lines = reference.replaceAll('\r\n', '\n').split('\n');
   const sections: { heading: string; line: number }[] = [];
   let fence: { marker: string; length: number } | undefined;
@@ -116,5 +116,23 @@ export function buildAuthoringReference(reference: string): string {
     }
     return lines.slice(from, to).join('\n').trim();
   });
-  return ['# animlib scene-authoring reference', ...selected].join('\n\n') + '\n';
+  let output = ['# animlib scene-authoring reference', ...selected].join('\n\n') + '\n';
+  if (options && !options.familyIds.includes('molecular-mechanisms')) {
+    output = output.replace(/### Molecular display beads\n[\s\S]*?(?=### Curved paths and organic shapes)/, '')
+      .replace(/### Molecular and biological animation recipes\n[\s\S]*?(?=### Execution environment)/, '');
+  }
+  if (options) {
+    const recipeFamilies: Record<string, string[]> = {
+      'Coordinate maps, basis vectors, and algebra': ['analytical-canvas', 'spatial-geometry'],
+      'Function plots and a visible residual': ['analytical-canvas'],
+      'Graph traversal and compact frontiers': ['discrete-computation'],
+      'Stable identity in collections': ['discrete-computation', 'statistical-ensembles'],
+      'Scientific traces and projected state': ['statistical-ensembles', 'spatial-geometry'],
+      'Surfaces, fields, and informative views': ['spatial-geometry'],
+    };
+    for (const [heading, families] of Object.entries(recipeFamilies)) if (!families.some(id => options.familyIds.includes(id))) {
+      output = output.replace(new RegExp(`#### ${heading}\\n[\\s\\S]*?(?=^#{1,4} )`, 'm'), '');
+    }
+  }
+  return output;
 }

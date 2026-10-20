@@ -1,7 +1,7 @@
 import { loadPrompt } from "./agents/prompts.js";
 
 export function extractScenePlanningGuidance(guidance: string): string {
-  const sharedPlanning = /^## Plan feasible visuals\r?\n[\s\S]*?(?=^## 3Blue1Brown reference lessons)/m.exec(guidance)?.[0];
+  const sharedPlanning = /^## Plan feasible visuals\r?\n[\s\S]*?(?=^## (?:Context-selected visual references|3Blue1Brown reference lessons))/m.exec(guidance)?.[0];
   if (!sharedPlanning) throw new Error('Missing shared visual planning guidance for inserted scenes.');
   return sharedPlanning.trim();
 }

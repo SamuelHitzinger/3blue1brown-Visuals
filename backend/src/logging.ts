@@ -4,7 +4,7 @@ import { AgentError } from './agents/config.js';
 export interface LogFields {
   videoId?: string;
   narrationId?: string;
-  stage?: 'sources' | 'script' | 'draft' | 'review' | 'repair' | 'narration' | 'scene' | 'thumbnail';
+  stage?: 'sources' | 'script' | 'draft' | 'review' | 'repair' | 'narration' | 'scene' | 'thumbnail' | 'style-route';
   sceneIndex?: number;
   sceneCount?: number;
   attempt?: number;

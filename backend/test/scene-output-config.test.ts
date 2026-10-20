@@ -80,6 +80,12 @@ for (const outputMode of [undefined, 'text', 'validated-reference'] as const) {
     expect(tasks[2].sceneTools?.inspect).toBeFunction();
     expect(tasks[2].sceneTools?.preview).toBeUndefined();
     expect(tasks[2].prompt).toContain('saved-narration.beat-1');
+    for (const task of tasks) {
+      expect(task.prompt).toContain('"modelCatalog":[]');
+      expect(task.prompt).not.toContain('"fixtureId":"1crn-surface"');
+      expect(task.systemPrompt).not.toContain('# Molecular planning');
+      expect(task.systemPrompt).not.toContain('# Molecular scene craft');
+    }
   });
 }
 
@@ -165,14 +171,18 @@ test('model publication rejects unknown fixture selectors and mixed sources with
 test('the same compact protein inventory reaches planning, review, repair and scene authoring', async () => {
   const root=await mkdtemp(join(tmpdir(),'aha-protein-inventory-'));roots.push(root);
   const tasks:AgentTask[]=[],stop=new Error('Inventory captured');let drafts=0;
+  const molecularLesson = structuredClone(lesson);
+  molecularLesson.markdown = '# Molecular structure\n\n## Beat 1\n\nContent needed: Compare molecular residue anchors and atoms.\n\nNarration: One protein.';
+  Object.assign(molecularLesson.plan.scenes[0], { purpose: 'Compare molecular residue anchors and atoms',
+    keyPoints: ['Protein molecular representation'], visualDescription: 'A molecular protein model with its residue anchors' });
   const narration={available:true,async submit(){return {id:packet.id,status:'complete'};},async scenePackage(){return packet;}} as unknown as NarrationService;
   const runner={async run(task:AgentTask){
     tasks.push(task);
-    if(task.logContext?.stage==='draft'){drafts++;return JSON.stringify(lesson);}
+    if(task.logContext?.stage==='draft'){drafts++;return JSON.stringify(molecularLesson);}
     if(task.logContext?.stage==='review')return JSON.stringify({schemaVersion:1,verdict:drafts===1?'revise':'pass',summary:'Use the structure accurately',issues:drafts===1?[{severity:'error',sceneId:'beat-1',detail:'Keep the distinction between residue anchors and atoms.'}]:[],checks:['Representation accuracy']});
     throw stop;
   }};
-  await expect(createPiGenerator(runner,narration,root)({title:'Counting',topic:'One dot',documents:[]},0,{videoId:crypto.randomUUID(),owner:'test',signal:new AbortController().signal})).rejects.toBe(stop);
+  await expect(createPiGenerator(runner,narration,root)({title:'Molecular structure',topic:'Compare molecular protein residue anchors with atoms',documents:[]},0,{videoId:crypto.randomUUID(),owner:'test',signal:new AbortController().signal})).rejects.toBe(stop);
   expect(tasks).toHaveLength(5);
   for(const task of tasks){
     expect(task.prompt).toContain('"fixtureId":"1crn-surface"');

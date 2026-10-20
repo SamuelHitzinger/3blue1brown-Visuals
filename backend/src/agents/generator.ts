@@ -19,6 +19,7 @@ import { validateSceneQuality } from './scene-quality.js';
 import { validateScenePlan, validateViewingMode } from './scene-plan.js';
 import { instructionSnapshot, loadPrompt } from './prompts.js';
 import { buildAuthoringReference } from './authoring-reference.js';
+import { prepareStylePacket, styleAudit, styleImages, styleInstructions } from './visual-references.js';
 import { validationMessage } from './runtime.js';
 import { runWithValidationRecovery } from './recovery.js';
 import { logEvent, logStage } from '../logging.js';
@@ -36,6 +37,7 @@ export function sceneSource(output: string): string {
 /** Host-owned stages. Script and narration identity survive restarts; model tools cannot access disk. */
 export function createPiGenerator(runner: AgentRunner, narration: NarrationService, root: string, options: {
   outputMode?: AgentTask['outputMode']; timingMode?: 'inline' | 'host'; preview?: ScenePreviewRenderer; visualGate?: typeof reviewGeneratedScene;
+  styleCatalogPath?: string;
 } = {}): Generator {
   return async (request, index, context?: GenerationContext) => {
     if (!context) throw new AgentError("CONTEXT", "Pi generation requires a video job context.");
@@ -89,7 +91,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       return work;
     };
     const { markdown, story, plan, legacyPlan, instructionVersion } = await prepareLesson(runner, request, directory, context,
-      { publishModel, modelAssets: modelMetadata, modelAssetContext });
+      { publishModel, modelAssets: modelMetadata, modelAssetContext, styleCatalogPath: options.styleCatalogPath });
     if (index >= story.beats.length) return null;
     const progress = { sceneIndex: index, totalScenes: request.sceneRequest ? 1 : story.beats.length };
     context.onProgress?.({ stage: 'narration', ...progress });
@@ -138,11 +140,20 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     let source = await readSaved(path);
     if (!source) {
       context.onProgress?.({ stage: 'scene', ...progress });
-      const modelCatalog=await bundledModelCatalog();
-      const sceneInput=()=>({...packet,modelAssets:modelMetadata(),modelAssetContext:modelAssetContext(),modelCatalog});
+      // Route this scene's reasoning, never copy the whole lesson's style selection.
+      const styleContext = JSON.stringify(planning.current ? {
+        purpose: planning.current.purpose, visualDescription: planning.current.visualDescription,
+        keyPoints: planning.current.keyPoints, view: planning.current.view,
+      } : { title: story.beats[index].title, context: story.beats[index].context });
+      const styles = await prepareStylePacket(styleContext, join(directory, `scene-${index}.styles.json`),
+        options.styleCatalogPath, runner.routeStyles?.bind(runner), signal);
+      const visualReferences = styleAudit(styles), attached = styleImages(styles, context.images);
+      const molecular = visualReferences.familyIds.includes('molecular-mechanisms');
+      const modelCatalog=molecular ? await bundledModelCatalog() : [];
+      const sceneInput=()=>({...packet,visualReferences,modelAssets:modelMetadata(),modelAssetContext:modelAssetContext(),modelCatalog});
       const scenePrompt=()=>`Generate this scene using the authoritative narration packet and lesson plan:${options.timingMode === 'host' ? '\n' + TIMING_PRELUDE_INSTRUCTIONS : ''}\n${JSON.stringify(sceneInput())}`;
       const [reference, craft] = await Promise.all([
-        readFile(new URL("../../../shared/animlib/docs/reference.md", import.meta.url), "utf8").then(buildAuthoringReference),
+        readFile(new URL("../../../shared/animlib/docs/reference.md", import.meta.url), "utf8").then(value => buildAuthoringReference(value, { familyIds: visualReferences.familyIds })),
         loadPrompt('scene-craft'),
       ]);
       const reviewDirectory = join(directory, 'scene-inspection', `${index}-${crypto.randomUUID()}`);
@@ -182,8 +193,8 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
         systemPrompt: `Use publish_model when imported or custom mesh assets help the explanation. Existing model assets are listed in the input. Geometry/image bytes belong in assets, never scene code.\n${instructions.replace("Return animlib SceneSource { id, source }.", "Return only JavaScript with one default-exported scene, without a JSON wrapper.")}\nFor video delivery, end your timeline at exactly durationSec using a final s.wait() as needed. Validate your complete output using inspect_scene or validate_output before finishing. The host output/timing contract and viewing-mode policy take priority over illustrative API examples; implement the approved plan within those constraints.
 Before final submission, call inspect_scene on your complete candidate. Reuse the returned candidateId for later tool calls; send source again only when revising it. Inspect relevant reveal/settled timestamps and specific object bounds as needed. Reports are advisory: distinguish intentional entrances, exits and overlaps from defects. Four inspections are available.
 ${options.preview ? 'Then call preview_scene to see up to six actual rendered frames. Choose important reveals, settled layouts and at least one transition midpoint using local narration times. Two preview batches are available: review once, repair concrete defects if needed, and use the second to verify. Optional focusObjectId crops one object. Avoid cosmetic iteration. If rendering is unavailable, use analytical feedback and finish; never claim you saw unavailable frames.' : 'Visual preview is unavailable for this run; use analytical feedback.'}
-Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned interactions during repairs. Inspection and preview never submit the scene.\n\n${craft}\n\n${reference}`,
-        prompt: scenePrompt(), validate, signal,
+Still samples do not establish continuous motion, occlusion-free visibility, interactive-control correctness or acoustic sync. Preserve narration, timing, carry/cleanup and planned interactions during repairs. Inspection and preview never submit the scene.\n\n${craft}\n\n${styleInstructions(styles)}${molecular ? '\n\n' + await loadPrompt('molecular-craft') : ''}\n\n${attached.roleMap}\n\n${reference}`,
+        prompt: scenePrompt(), validate, signal, images: attached.images,
         logContext: { videoId, sceneIndex: index, stage: 'scene' as const }, sceneTools,
       };
       await atomicWrite(join(directory, `scene-${index}.instructions.json`), JSON.stringify(instructionSnapshot(task.systemPrompt)));
@@ -197,7 +208,8 @@ Still samples do not establish continuous motion, occlusion-free visibility, int
         await atomicWrite(pendingPath, source);
       }
       context.onProgress?.({ stage: 'validating', ...progress });
-      source = await (options.visualGate ?? reviewGeneratedScene)({ runner, source, input: packet, task: { ...task, prompt: scenePrompt() },
+      source = await (options.visualGate ?? reviewGeneratedScene)({ runner, source, input: { ...packet, visualReferences }, task: { ...task, prompt: scenePrompt() },
+        stylePacket: styles, sourceImages: context.images,
         directory, index, videoId, signal, validate: validateSource, models: await modelStore.forRendering(assets) });
       const finalFrame = await validateSource(source);
       signal.throwIfAborted();

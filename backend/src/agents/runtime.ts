@@ -70,10 +70,15 @@ export const AGENT_COMPLETION_INSTRUCTIONS: Record<NonNullable<AgentTask['output
   submit: '\n\nOutput completion protocol: validate_output is an optional nonterminal check. When your complete output is ready as your final answer, call submit_output with it, as the only tool call in that turn. A successful submission ends the task; errors are returned for repair. Do not submit a draft or repeat the source afterward. This replaces earlier final-output formatting and mandatory validate_output instructions only; all content and quality requirements still apply.',
   'submit-only': '\n\nOutput completion protocol: submit_output is the only output validation tool. Web research tools are available for gathering evidence before submission. submit_output validates your complete final output and finishes the task on success. If validation fails, it returns errors so you can repair and resubmit. When satisfied with correctness and explanatory quality, call submit_output with the complete final output as the only tool call in that turn. Do not submit a draft or repeat the source afterward. This replaces earlier final-output formatting and mandatory validate_output instructions only; all content and quality requirements still apply.',
 };
-export interface AgentRunner { run(task: AgentTask): Promise<string> }
+export interface AgentRunner {
+  run(task: AgentTask): Promise<string>;
+  /** Production semantic routing; lightweight offline runners may use metadata scoring. */
+  routeStyles?(task: AgentTask): Promise<string>;
+}
 
 /** One credential runtime, a fresh conversation for every script or scene. */
 export class PiAgentRunner implements AgentRunner {
+  routeStyles(task: AgentTask): Promise<string> { return this.run(task); }
   private runtime?: Promise<ModelRuntime>;
   constructor(readonly config: AgentConfig = agentConfig(), private runtimeFactory = () => createModelRuntime(config),
     private wait: (ms: number, signal?: AbortSignal) => Promise<void> = async (ms, signal) => { await delay(ms, undefined, { signal }); }) {}
