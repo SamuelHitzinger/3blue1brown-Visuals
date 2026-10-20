@@ -21,6 +21,14 @@ Prefer a visible operation and plain-language explanation. Admit an equation onl
 
 Teach each arrow's role before relying on it: what starts it, what its direction means, and whether its length encodes anything. Use stable objects and color relationships, but explicitly state the connection; matching colors alone do not teach it. Avoid a dense accumulated diagram that requires the novice to reconstruct the explanation unaided.
 
+## Keep the learner with the same construction
+
+Plan a local explanation as establish the object and its meaning -> direct attention to the relevant part -> perform a valid change -> inspect the consequence -> explain the connection. Budget speech and reveal time for that sequence before synthesis. Do not spend the entire cue introducing vocabulary and leave its visible demonstration to rush at the end.
+
+When a small local relationship is the evidence, enlarge or reframe the original construction before introducing a detached copy. Preserve the same point, curve, chord and semantic colors through the approach so the viewer knows where they are. For chord-to-tangent convergence, let the viewer watch the second point approach along the same circle/curve and inspect the shrinking chord at a useful scale; a separate direction-copy inset cannot replace that observation. A comparison copy is useful only when its correspondence is taught and the simultaneous comparison adds evidence. This is not a requirement to move the camera in every scene.
+
+Distinguish a physically valid demonstration from a hypothetical comparison. A warning against finite motion of an unsolved constrained linkage does not prohibit moving a correctly modeled isolated bar/point, zooming the same construction, or showing explicitly identified comparison ghosts. Never imply that an instantaneous velocity diagram validates a finite configuration change of the complete mechanism.
+
 ## Pace opportunities for understanding
 
 After a new operation, let its result settle and guide attention to the relevant relationship before asking for the next inference. Script deliberate inspection/thinking pauses where needed, using the existing spoken invitation and Pause syntax. A pause must have a clear cognitive purpose, not compensate for an omitted explanation. Protect this time during revision and animation. If silence is prohibited, use a slower sequence of explanatory observations; do not add competing information during the inspection opportunity. Any estimate of reading or thinking speed is a design assumption, not evidence of mastery.

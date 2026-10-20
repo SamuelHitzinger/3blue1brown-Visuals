@@ -17,6 +17,15 @@ import { buildStorylineMessages } from "../src/storyline-prompt.js";
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
 const settings = settingsFromEnv({ ELEVENLABS_VOICE_ID: "test-voice" });
+test("teaching speech defaults to a calmer slower delivery and validates explicit speed", () => {
+  expect(settings.voiceSettings).toEqual({ stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true, speed: 0.9 });
+  for (const speed of [0.7, 0.85, 1, 1.2]) {
+    expect(settingsFromEnv({ ELEVENLABS_SPEED: String(speed) }).voiceSettings.speed).toBe(speed);
+  }
+  for (const speed of ["", " ", "fast", "NaN", "Infinity", "0", "0.69", "1.21"]) {
+    expect(() => settingsFromEnv({ ELEVENLABS_SPEED: speed })).toThrow("ELEVENLABS_SPEED");
+  }
+});
 const script = `# Counting\n\n## Beat 1 — Question\n\nContent needed: Two dots; do not reveal the answer.\n\nNarration:\nOne, two.\n\nPause: 3s\n\nReveal (spoken):\nTwo dots.\n\n## Beat 2 — Check\n\nNarration:\nTwo again.`;
 function alignment(text: string): Alignment {
   const characters = Array.from(text);
@@ -29,6 +38,24 @@ async function setup(synthesize = async (input: { text: string }) => speech(inpu
   const provider: SpeechProvider = { settings, synthesize: async input => { inputs.push(input); return synthesize(input); } };
   return { root, inputs, provider, service: new NarrationService({ root, provider }) };
 }
+
+test("slower speech gets a new job and synthesis instead of reusing cached fast audio", async () => {
+  const root = await mkdtemp(join(tmpdir(), "aha-speech-speed-")); roots.push(root);
+  const spoken = "Narration: Follow one point.", calls: number[] = [];
+  const fastSettings = { ...settings, voiceSettings: { ...settings.voiceSettings, speed: 1.12 } };
+  const provider = (configured: typeof settings): SpeechProvider => ({ settings: configured,
+    async synthesize(input) { calls.push(configured.voiceSettings.speed); return speech(input.text); } });
+  const fast = new NarrationService({ root, provider: provider(fastSettings) });
+  const old = await fast.submit("learner", spoken); await fast.idle();
+  const calm = new NarrationService({ root, provider: provider(settings) });
+  const current = await calm.submit("learner", spoken); await calm.idle();
+  expect(current.id).not.toBe(old.id);
+  expect(calls).toEqual([1.12, 0.9]);
+  expect((await calm.package("learner", current.id)).settings.voiceSettings.speed).toBe(0.9);
+  expect((await calm.package("learner", old.id)).settings.voiceSettings.speed).toBe(1.12);
+  expect((await calm.submit("learner", spoken)).id).toBe(current.id); await calm.idle();
+  expect(calls).toEqual([1.12, 0.9]);
+});
 test("independent narration jobs synthesize concurrently and identical submissions are deduplicated", async () => {
   const started: string[] = [];
   let release!: () => void;
@@ -206,7 +233,7 @@ test("ElevenLabs uses normalized speech, masks provider messages, and only retri
   const output = await provider.synthesize({ text: "64", previousText: "Before", nextText: "After" });
   expect(sent).toHaveLength(2); expect(sleeps).toEqual([1000]);
   expect(sent[0].body).toMatchObject({ text: "64", previous_text: "Before", next_text: "After", model_id: "eleven_multilingual_v2",
-    voice_settings: { stability: 0.15, similarity_boost: 0.75, style: 0.9, use_speaker_boost: true, speed: 1.12 } });
+    voice_settings: { stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true, speed: 0.9 } });
   expect(alignWords(output.normalizedAlignment, "u", 0).words.map(w => w.text)).toEqual(["sixty", "four"]);
   const auth = createElevenLabs(settings, "secret", (async () => Response.json({ detail: "secret echo" }, { status: 401 })) as unknown as typeof fetch);
   await expect(auth.synthesize({ text: "Hi", previousText: "", nextText: "" })).rejects.toMatchObject({ code: "PROVIDER_AUTH" });
