@@ -38,6 +38,8 @@ Place each short label near the object or quantity it names, with a readable off
 
 Check labels against the full path of moving geometry. Remove an obsolete label before geometry crosses it, or place it outside that path. Separate outgoing and incoming annotations when their overlap would obscure meaning; inspect both glyph layers during formula morphs.
 
+For whole-sentence or whole-equation replacement, fade the old content completely out, change its content at zero opacity, then reveal the replacement within the original cue interval. Do not use a visible `morphTo` with an empty map as a whole-expression replacement: it paints both glyph layers simultaneously. Use named-part mapping only for meaningful conserved terms. Inspect the middle of each text replacement, not only its endpoints; preserve fixed narration timing and the final reading hold.
+
 Only essential active notation belongs on screen. Remove obsolete equations and definitions completely, including dimmed copies. Worked solutions may use many expressions over time, retaining only steps being compared or transformed. Give each annotation a reveal and an exit tied to measured narration. Retire introductory titles after establishing the object. Keep source credits and preparation jargon in metadata or a brief closing credit; label the visible meaning in learner vocabulary, not asset terminology. Keep fixed explanations outside the 3D viewport rectangle, which can occlude screen text even where its background looks empty. Retire gesture hints once introduced; player controls remain available.
 
 ## Coherent construction
