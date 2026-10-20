@@ -10,6 +10,10 @@
     "@xmldom/xmldom": "0.9.12"
   },
   "scripts": {
+    "studio:build": "npm run build --workspace animlib && node plugins/animlib-studio/scripts/build.mjs",
+    "studio:start": "node plugins/animlib-studio/src/server.mjs --serve",
+    "studio:package": "npm run studio:build && node plugins/animlib-studio/scripts/package.mjs",
+    "studio:test": "bun test plugins/animlib-studio/tests/session.test.ts && node --test plugins/animlib-studio/tests/transport.test.mjs",
     "agents:login": "npm run agents:login --workspace @aha/backend",
     "agents:status": "npm run agents:status --workspace @aha/backend",
     "agents:check": "npm run agents:check --workspace @aha/backend",

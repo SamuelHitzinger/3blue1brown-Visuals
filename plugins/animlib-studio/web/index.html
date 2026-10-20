@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Animlib Studio</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0a101b;color:#eef3ff;font:14px system-ui;overflow:hidden}
+header{height:62px;display:flex;align-items:center;gap:18px;padding:0 24px;border-bottom:1px solid #253146}
+h1{font-size:17px;letter-spacing:.02em;margin:0}#title{color:#93aac9;flex:1}button{background:#18263d;color:#eef3ff;border:1px solid #314764;border-radius:8px;padding:8px 16px;cursor:pointer}button:disabled{opacity:.4;cursor:wait}
+main{height:calc(100vh - 105px);position:relative}canvas{display:block;width:100%;height:100%}
+footer{height:43px;padding:12px 24px;color:#93aac9;display:flex;gap:20px}#status{flex:1}
+</style></head><body>
+<header><h1>Animlib Studio</h1><span id="title">Persistent animation canvas</span><button id="pause" disabled>Pause</button></header>
+<main><canvas aria-label="Animation scene"></canvas></main>
+<footer><span id="status" role="status">Preparing renderer…</span><span id="revision"></span></footer>
+<script type="module" src="/viewer.ts"></script></body></html>

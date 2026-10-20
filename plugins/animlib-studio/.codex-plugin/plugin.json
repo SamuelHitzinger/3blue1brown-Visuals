@@ -1,0 +1,19 @@
+{
+  "name": "animlib-studio",
+  "version": "0.1.0",
+  "description": "Persistent native animlib scenes, compact patches and local animation flow.",
+  "author": {"name": "Aha"},
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "requires_local_executor": true,
+  "interface": {
+    "displayName": "Animlib Studio",
+    "shortDescription": "Fast direct animation authoring with the Aha animation library",
+    "longDescription": "Retained local GPU viewer, structured geometry, native sandbox programs, atomic patches, sequenced animation cues, verification and PNG previews. Derived from the Desmos Studio transport with animlib rendering.",
+    "developerName": "Aha",
+    "category": "Productivity",
+    "capabilities": ["Read", "Write", "Interactive"],
+    "defaultPrompt": ["Create an animlib animation", "Edit my existing animation"],
+    "brandColor": "#58C4DD"
+  }
+}

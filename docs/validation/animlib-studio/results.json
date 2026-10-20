@@ -1,0 +1,377 @@
+{
+  "date": "2026-10-20T12:30:38.168Z",
+  "results": [
+    {
+      "name": "cold-browser-and-viewer",
+      "ms": 665.5669
+    },
+    {
+      "name": "create-2d",
+      "ms": 99.45920000000001,
+      "accepted": true,
+      "revision": 1,
+      "committedAt": 0.41039999999850985,
+      "paused": false,
+      "playheadMs": 448.3999999985099,
+      "programs": [
+        {
+          "id": "base",
+          "epoch": 0.41039999999850985,
+          "duration": 3600,
+          "ids": [
+            "ball",
+            "destination"
+          ],
+          "parameters": []
+        }
+      ],
+      "objectCount": 2,
+      "flow": {
+        "queued": 0,
+        "endMs": 410.5,
+        "lastError": null
+      },
+      "limitations": [
+        "Reactive sliders are host parameters only; no control UI, behavior/input, cross-program attachments, audio, or per-program views/camera animation",
+        "First committed program chooses world camera; later program camera defaults are ignored",
+        "Time callbacks stop at the authored program duration",
+        "Animated edits to time-callback-owned properties require a separate rebase policy",
+        "No history replay before committed mutations"
+      ],
+      "semanticQuality": "not-assessed",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "id": "ball",
+            "property": "radius",
+            "expected": 0.55,
+            "actual": 0.55,
+            "passed": true
+          }
+        ],
+        "scope": "requested numeric/property checks only"
+      },
+      "rendering": {
+        "status": "submitted",
+        "backend": "webgpu",
+        "revision": 1
+      },
+      "persistence": {
+        "saved": true
+      },
+      "timings": {
+        "applyMs": 54,
+        "totalMs": 91.89999999850988,
+        "scope": "viewer execution, rendering submission and checkpoint; excludes model and transport"
+      },
+      "preview": {
+        "path": "C:\\Users\\samue\\Stuff\\3yellow3white\\.tmp\\studio-mcp-OwMasi\\exports\\5492c38e-07b6-4284-a795-2e92e46ba65e.png",
+        "format": "png"
+      },
+      "pixels": {
+        "width": 1100,
+        "height": 655,
+        "coloredPixels": 7268
+      }
+    },
+    {
+      "name": "patch-verified",
+      "ms": 8.940600000000018,
+      "accepted": true,
+      "revision": 2,
+      "committedAt": 0.4908000000007451,
+      "paused": false,
+      "playheadMs": 496,
+      "programs": [
+        {
+          "id": "base",
+          "epoch": 0.41039999999850985,
+          "duration": 3600,
+          "ids": [
+            "ball",
+            "destination"
+          ],
+          "parameters": []
+        }
+      ],
+      "objectCount": 2,
+      "flow": {
+        "queued": 0,
+        "endMs": 490.8999999985099,
+        "lastError": null
+      },
+      "limitations": [
+        "Reactive sliders are host parameters only; no control UI, behavior/input, cross-program attachments, audio, or per-program views/camera animation",
+        "First committed program chooses world camera; later program camera defaults are ignored",
+        "Time callbacks stop at the authored program duration",
+        "Animated edits to time-callback-owned properties require a separate rebase policy",
+        "No history replay before committed mutations"
+      ],
+      "semanticQuality": "not-assessed",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "id": "ball",
+            "property": "position",
+            "expected": [
+              2,
+              0,
+              0
+            ],
+            "actual": [
+              2,
+              0,
+              0
+            ],
+            "passed": true
+          }
+        ],
+        "scope": "requested numeric/property checks only"
+      },
+      "rendering": {
+        "status": "submitted",
+        "backend": "webgpu",
+        "revision": 2
+      },
+      "persistence": {
+        "saved": true
+      },
+      "timings": {
+        "applyMs": 0.5999999977648258,
+        "totalMs": 5.800000000745058,
+        "scope": "viewer execution, rendering submission and checkpoint; excludes model and transport"
+      },
+      "preview": {
+        "path": "C:\\Users\\samue\\Stuff\\3yellow3white\\.tmp\\studio-mcp-OwMasi\\exports\\07ae6a36-5201-4551-a61e-b9643acd4c1a.png",
+        "format": "png"
+      }
+    },
+    {
+      "name": "failed-check-keeps-applied-and-saved",
+      "ms": 5.144500000000107
+    },
+    {
+      "name": "flow-interrupt",
+      "ackMs": 5.078600000000051,
+      "revision": 5,
+      "paused": false,
+      "playheadMs": 1142.0000000000002,
+      "programs": [
+        {
+          "id": "base",
+          "epoch": 0.41039999999850985,
+          "duration": 3600,
+          "ids": [
+            "ball",
+            "destination"
+          ],
+          "parameters": []
+        }
+      ],
+      "objectCount": 2,
+      "flow": {
+        "queued": 0,
+        "endMs": 977.60000000149,
+        "lastError": null
+      },
+      "limitations": [
+        "Reactive sliders are host parameters only; no control UI, behavior/input, cross-program attachments, audio, or per-program views/camera animation",
+        "First committed program chooses world camera; later program camera defaults are ignored",
+        "Time callbacks stop at the authored program duration",
+        "Animated edits to time-callback-owned properties require a separate rebase policy",
+        "No history replay before committed mutations"
+      ],
+      "semanticQuality": "not-assessed",
+      "verification": {
+        "passed": true,
+        "checks": [
+          {
+            "id": "ball",
+            "property": "position",
+            "expected": [
+              0,
+              0,
+              0
+            ],
+            "actual": [
+              0,
+              0,
+              0
+            ],
+            "passed": true
+          }
+        ],
+        "scope": "requested numeric/property checks only"
+      },
+      "rendering": {
+        "status": "submitted",
+        "backend": "webgpu",
+        "revision": 5
+      },
+      "persistence": {
+        "saved": true
+      },
+      "timings": {
+        "applyMs": 0.19999999925494194,
+        "totalMs": 5.5,
+        "scope": "viewer execution, rendering submission and checkpoint; excludes model and transport"
+      },
+      "preview": {
+        "path": "C:\\Users\\samue\\Stuff\\3yellow3white\\.tmp\\studio-mcp-OwMasi\\exports\\75692f64-972f-4e33-8e71-87e412594de2.png",
+        "format": "png"
+      }
+    },
+    {
+      "name": "paired-warm-edit",
+      "patchMs": {
+        "n": 12,
+        "p50": 3.7203999999996995,
+        "p95": 5.669300000000021,
+        "raw": [
+          4.046799999999848,
+          3.8558000000000447,
+          3.6269999999999527,
+          3.458900000000085,
+          5.669300000000021,
+          3.8398000000001957,
+          3.3108000000001994,
+          3.7203999999996995,
+          3.894000000000233,
+          3.5294999999996435,
+          3.6310999999996056,
+          3.6336999999998625
+        ]
+      },
+      "replaceMs": {
+        "n": 12,
+        "p50": 35.85050000000001,
+        "p95": 40.087299999999914,
+        "raw": [
+          40.087299999999914,
+          37.679600000000164,
+          35.572400000000016,
+          36.14309999999978,
+          36.9037000000003,
+          36.37950000000001,
+          35.423899999999776,
+          35.85050000000001,
+          35.169000000000324,
+          35.25720000000001,
+          34.945900000000165,
+          34.64800000000014
+        ]
+      },
+      "patchPayloadBytes": 107,
+      "replacePayloadBytes": 265,
+      "scope": "Complete stdio MCP call through registered local HTTP runtime including native render submission and checkpoint. Alternating arms use separate warm worlds with equal geometry, verified after both arms. Excludes model generation."
+    },
+    {
+      "name": "reconnect-paused",
+      "revision": 17,
+      "paused": true,
+      "playheadMs": 1870.8000000007453,
+      "programs": [
+        {
+          "id": "base",
+          "epoch": 0.41039999999850985,
+          "duration": 3600,
+          "ids": [
+            "ball",
+            "destination"
+          ],
+          "parameters": []
+        }
+      ],
+      "objectCount": 2,
+      "flow": {
+        "queued": 0,
+        "endMs": 1860.3999999985099,
+        "lastError": null
+      },
+      "limitations": [
+        "Reactive sliders are host parameters only; no control UI, behavior/input, cross-program attachments, audio, or per-program views/camera animation",
+        "First committed program chooses world camera; later program camera defaults are ignored",
+        "Time callbacks stop at the authored program duration",
+        "Animated edits to time-callback-owned properties require a separate rebase policy",
+        "No history replay before committed mutations"
+      ],
+      "semanticQuality": "not-assessed",
+      "rendering": {
+        "status": "submitted",
+        "backend": "webgpu",
+        "revision": 17
+      },
+      "persistence": {
+        "saved": true
+      },
+      "timings": {
+        "applyMs": 0,
+        "totalMs": 2.300000000745058,
+        "scope": "viewer execution, rendering submission and checkpoint; excludes model and transport"
+      }
+    },
+    {
+      "name": "native-3d",
+      "ms": 77.75059999999985,
+      "accepted": true,
+      "revision": 1,
+      "committedAt": 0.1235,
+      "paused": false,
+      "playheadMs": 144.09999999776485,
+      "programs": [
+        {
+          "id": "scene-1",
+          "epoch": 0.1235,
+          "duration": 3600,
+          "ids": [
+            "oxygen",
+            "hydrogen-left",
+            "hydrogen-right",
+            "bond-left",
+            "bond-right"
+          ],
+          "parameters": []
+        }
+      ],
+      "objectCount": 5,
+      "flow": {
+        "queued": 0,
+        "endMs": 123.59999999776483,
+        "lastError": null
+      },
+      "limitations": [
+        "Reactive sliders are host parameters only; no control UI, behavior/input, cross-program attachments, audio, or per-program views/camera animation",
+        "First committed program chooses world camera; later program camera defaults are ignored",
+        "Time callbacks stop at the authored program duration",
+        "Animated edits to time-callback-owned properties require a separate rebase policy",
+        "No history replay before committed mutations"
+      ],
+      "semanticQuality": "not-assessed",
+      "rendering": {
+        "status": "submitted",
+        "backend": "webgpu",
+        "revision": 1
+      },
+      "persistence": {
+        "saved": true
+      },
+      "timings": {
+        "applyMs": 51.399999998509884,
+        "totalMs": 71.89999999850988,
+        "scope": "viewer execution, rendering submission and checkpoint; excludes model and transport"
+      },
+      "preview": {
+        "path": "C:\\Users\\samue\\Stuff\\3yellow3white\\.tmp\\studio-mcp-OwMasi\\exports\\72fbda87-a1ed-474c-a710-0a568e50e0fe.png",
+        "format": "png"
+      },
+      "pixels": {
+        "width": 1100,
+        "height": 655,
+        "coloredPixels": 6300
+      }
+    }
+  ],
+  "errors": []
+}

@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "animlib-studio": {
+      "command": "node",
+      "args": ["src/server.mjs"],
+      "cwd": ".",
+      "env_vars": ["ANIMLIB_STUDIO_HOME", "ANIMLIB_STUDIO_PORT"],
+      "startup_timeout_sec": 20,
+      "tool_timeout_sec": 60
+    }
+  }
+}
