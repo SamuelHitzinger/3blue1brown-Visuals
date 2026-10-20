@@ -55,16 +55,16 @@ From the repository root, install dependencies with `npm ci`, copy `backend/.env
 - `ELEVENLABS_API_KEY`: server-only ElevenLabs key, with text-to-speech access.
 - `ELEVENLABS_VOICE_ID`: `CQcj2MsUgZyAgfHH6yJV`, **Alexander - Smooth, Deep and Round**. Ensure this voice is available to the runtime account; add it from the ElevenLabs Voice Library if needed. Existing local environment files must also be updated to this ID.
 - `ELEVENLABS_MODEL_ID`: defaults to `eleven_multilingual_v2`.
-- `ELEVENLABS_SPEED`: defaults to `0.90` for calm teaching. Optional values must be finite numbers from `0.7` to `1.2`; empty or invalid values fail configuration. Compose also accepts this setting through its runtime environment file.
+- `ELEVENLABS_SPEED`: defaults to `1.0` for calm teaching. Optional values must be finite numbers from `0.7` to `1.2`; empty or invalid values fail configuration. Compose also accepts this setting through its runtime environment file.
 - `NARRATION_DATA_DIR`: an absolute writable directory, e.g. a `.narration` directory in the checkout.
 - `NARRATION_ALLOW_LOCAL=1`: is a legacy local binding option; the backend then defaults to a loopback bind. It refuses a shared bind with this bypass enabled and ignores it in production.
 - Omit `NARRATION_PUBLIC_ORIGIN` locally. Behind the production gateway set it to the exact public browser origin, `https://11.hackathon.ethz.ch`.
 
 Never use `VITE_` for credentials. `.env` files and generated audio are ignored by Git. The checked-in example contains no API key.
 
-Narration keeps Alexander and uses stability `0.50`, style exaggeration `0.20`, and default speed `0.90`, with similarity `0.75` and speaker boost enabled. This replaces the earlier speed `1.12` and highly exaggerated delivery with a slower teaching pace and more consistent natural emphasis. The provider's speed setting is not an exact words-per-minute guarantee; review the synthesized speech alongside its visual reasoning and leave inspection pauses where needed. Delivery directions and emotion tags remain excluded from spoken text. ElevenLabs documents the [speed range and slower-than-normal settings](https://elevenlabs.io/docs/help-center/product/core-capabilities/text-to-speech/can-i-change-the-pace-of-the-voice) and [stability/style controls](https://elevenlabs.io/docs/api-reference/voices/settings/update).
+Narration keeps Alexander and uses stability `0.50`, style exaggeration `0.20`, and default speed `1.0`, with similarity `0.75` and speaker boost enabled. This replaces the earlier speed `1.12` and highly exaggerated delivery with normal-speed teaching and more consistent natural emphasis. The provider's speed setting is not an exact words-per-minute guarantee; review the synthesized speech alongside its visual reasoning and leave inspection pauses where needed. Delivery directions and emotion tags remain excluded from spoken text. ElevenLabs documents the [speed range and slower-than-normal settings](https://elevenlabs.io/docs/help-center/product/core-capabilities/text-to-speech/can-i-change-the-pace-of-the-voice) and [stability/style controls](https://elevenlabs.io/docs/api-reference/voices/settings/update).
 
-Restart or redeploy after changing speech settings. Both narration job IDs and chunk-cache keys include the complete settings, so a new submission with slower settings synthesizes fresh audio instead of reusing the earlier fast narration. Existing published videos keep their recorded audio; regenerate a video to change its delivery. Downstream scene timing comes from the newly measured audio and alignment. Do not shorten it with playback acceleration or audio time compression.
+Restart or redeploy after changing speech settings. Both narration job IDs and chunk-cache keys include the complete settings, so a new submission with changed settings synthesizes fresh audio instead of reusing the earlier fast narration. Existing published videos keep their recorded audio; regenerate a video to change its delivery. Downstream scene timing comes from the newly measured audio and alignment. Do not shorten it with playback acceleration or audio time compression.
 
 Generate the smoke sample before starting the backend worker:
 
@@ -117,7 +117,7 @@ All utterance, sentence, word, and pause timestamps are **local to their scene**
 
 The provider's normalized text supplies spoken word boundaries, including expanded numbers. Original character alignment is retained separately; original and normalized words are not assumed to map one-to-one. Provider timestamps can round up to one millisecond beyond the PCM boundary; canonical word times are bounded to the audio length while raw alignment is preserved. Larger mismatches fail. Timing precision is not a promise of perfect acoustic alignment.
 
-Audio uses signed 16-bit mono PCM at 24 kHz wrapped in WAV. Default voice settings are stability 0.15, similarity 0.75, style 0.9, speaker boost enabled, and speed 1.12. Adjacent text is supplied for vocal continuity. An animation selects its assigned audio asset at local time zero; visuals may finish early and hold, but cannot run past the narration duration. Animlib owns playback, seeking, pause/resume, and mute synchronization.
+Audio uses signed 16-bit mono PCM at 24 kHz wrapped in WAV. Default voice settings are stability 0.50, similarity 0.75, style 0.20, speaker boost enabled, and speed 1.0. Adjacent text is supplied for vocal continuity. An animation selects its assigned audio asset at local time zero; visuals may finish early and hold, but cannot run past the narration duration. Animlib owns playback, seeking, pause/resume, and mute synchronization.
 
 ## Persistence, failures, and deployment
 

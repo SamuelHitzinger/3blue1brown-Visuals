@@ -5,7 +5,7 @@ import type { SpeechResult, SpeechSettings, SynthesisInput } from "./types.js";
 
 export function settingsFromEnv(env: Record<string, string | undefined> = process.env): SpeechSettings {
   const configuredSpeed = env.ELEVENLABS_SPEED;
-  const speed = configuredSpeed === undefined ? 0.9 : Number(configuredSpeed);
+  const speed = configuredSpeed === undefined ? 1.0 : Number(configuredSpeed);
   if (configuredSpeed?.trim() === "" || !Number.isFinite(speed) || speed < 0.7 || speed > 1.2) {
     throw new NarrationError("CONFIG", "ELEVENLABS_SPEED must be a number from 0.7 to 1.2.", 503);
   }
