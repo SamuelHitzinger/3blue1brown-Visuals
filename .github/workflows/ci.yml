@@ -31,16 +31,8 @@ jobs:
           python3 scripts/test-cleanup-images.py
       - run: npm ci
       - run: npm ci --prefix frontend/app
-      - run: npm run build
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run typecheck --workspace @aha/backend
-      - run: npm run test --workspace @aha/backend
-      - name: Test scene insertion integration
-        run: npm run test:scene-insertion
-      - run: npm run app:test
-      - run: npm run app:build
-      - run: npm run demo:build
+      - name: Build and check all application packages
+        run: npm run check
       - name: Build, test container lifecycle, and package the Docker image
         env:
           DEPLOY_REVISION: ${{ github.sha }}
@@ -62,7 +54,7 @@ jobs:
     timeout-minutes: 25
     environment:
       name: production
-      url: https://11.hackathon.ethz.ch
+      url: ${{ vars.APP_PUBLIC_ORIGIN }}
     concurrency:
       group: production-deployment
       cancel-in-progress: false
@@ -83,38 +75,7 @@ jobs:
           VM_HOST: ${{ vars.VM_HOST }}
           VM_SSH_USER: ${{ vars.VM_SSH_USER }}
         run: |
-          python3 - <<'PY'
-          import os, re
-          from pathlib import Path
-          for name in ('VM_SSH_PRIVATE_KEY', 'VM_SSH_KNOWN_HOSTS', 'VM_HOST', 'VM_SSH_USER'):
-              if not os.environ.get(name):
-                  raise SystemExit(f'Missing deployment setting: {name}')
-          host, user = os.environ['VM_HOST'], os.environ['VM_SSH_USER']
-          if not re.fullmatch(r'[a-zA-Z0-9][a-zA-Z0-9.-]*', host):
-              raise SystemExit('Invalid VM_HOST')
-          if not re.fullmatch(r'[a-z_][a-z0-9_-]*', user):
-              raise SystemExit('Invalid VM_SSH_USER')
-          directory = Path(os.environ['RUNNER_TEMP']) / 'aha-ssh'
-          directory.mkdir(mode=0o700)
-          for name, value in [('key', os.environ['VM_SSH_PRIVATE_KEY']), ('known_hosts', os.environ['VM_SSH_KNOWN_HOSTS'])]:
-              path = directory / name
-              path.write_text(value.rstrip() + '\n')
-              path.chmod(0o600)
-          config = directory / 'config'
-          config.write_text(f"""Host aha-prod
-            HostName {host}
-            User {user}
-            IdentityFile {directory}/key
-            UserKnownHostsFile {directory}/known_hosts
-            IdentitiesOnly yes
-            BatchMode yes
-            StrictHostKeyChecking yes
-            ConnectTimeout 15
-            ServerAliveInterval 15
-            ServerAliveCountMax 4
-          """)
-          config.chmod(0o600)
-          PY
+          python3 scripts/prepare-deployment.py ssh
       - name: Skip a superseded main revision
         id: current
         env:
@@ -136,23 +97,9 @@ jobs:
           # Alexander - Smooth, Deep and Round; runtime account needs voice access.
           ELEVENLABS_VOICE_ID: CQcj2MsUgZyAgfHH6yJV
           ELEVENLABS_MODEL_ID: eleven_multilingual_v2
-          NARRATION_PUBLIC_ORIGIN: https://11.hackathon.ethz.ch
+          NARRATION_PUBLIC_ORIGIN: ${{ vars.APP_PUBLIC_ORIGIN }}
         run: |
-          python3 - <<'PY'
-          import os
-          from pathlib import Path
-          os.umask(0o077)
-          lines = []
-          for name in ('ELEVENLABS_API_KEY', 'ELEVENLABS_VOICE_ID', 'ELEVENLABS_MODEL_ID', 'NARRATION_PUBLIC_ORIGIN'):
-              value = os.environ.get(name, '')
-              if not value or any(char in value for char in '\r\n\x00'):
-                  raise SystemExit(f'Missing or invalid deployment setting: {name}')
-              escaped = value.replace('\\', '\\\\').replace('"', '\\"')
-              lines.append(f'{name}="{escaped}"\n')
-          path = Path(os.environ['RUNNER_TEMP']) / 'aha-ssh' / 'deployment.env'
-          path.write_text(''.join(lines))
-          path.chmod(0o600)
-          PY
+          python3 scripts/prepare-deployment.py env
           (cd release && sha256sum --check release.sha256)
           config="$RUNNER_TEMP/aha-ssh/config"
           remote_dir=".cache/aha-deploy/$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"

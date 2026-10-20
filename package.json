@@ -27,7 +27,9 @@
     "backend:dev": "npm run build && npm run dev --workspace @aha/backend",
     "backend:start": "npm run build && npm run start --workspace @aha/backend",
     "backend:test": "npm run build && npm run test --workspace @aha/backend",
-    "backend:typecheck": "npm run build && npm run typecheck --workspace @aha/backend"
+    "backend:typecheck": "npm run build && npm run typecheck --workspace @aha/backend",
+    "build:release": "npm run build && npm --prefix frontend/app --ignore-scripts run build",
+    "check": "npm run build:release && npm run typecheck && npm test && npm run typecheck --workspace @aha/backend && npm run test --workspace @aha/backend && bun test scripts/scene-insertion-integration.test.ts && npm --prefix frontend/app --ignore-scripts test && npm run demo:build"
   },
   "devDependencies": {
     "bun": "1.4.2"

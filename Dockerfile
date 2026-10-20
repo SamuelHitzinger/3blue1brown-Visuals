@@ -12,7 +12,7 @@ COPY scripts/smoke-release.ts scripts/smoke-release.ts
 COPY scripts/container-health.ts scripts/container-health.ts
 COPY scripts/smoke-scene-preview.ts scripts/smoke-scene-preview.ts
 RUN npm ci --prefix frontend/app --no-audit --no-fund \
-    && npm run build && npm run app:build
+    && npm run build:release
 ARG APP_REVISION
 RUN echo "$APP_REVISION" | grep -Eq '^[0-9a-f]{40}$' \
     && printf '%s\n' "$APP_REVISION" > REVISION \

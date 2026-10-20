@@ -8,8 +8,8 @@ const read = (p: string) => readFile(new URL(`../../${p}`, import.meta.url), 'ut
 const guidance = await read('backend/prompts/guidance.md');
 const review = await read('backend/prompts/story-review.md');
 const capabilities = await read('shared/animlib/docs/capabilities.md');
-const viewingMode = await read('backend/prompts/viewing-mode.md');
-const quality = await read('backend/prompts/animation-quality.md');
+const viewingMode = await read('research/story-prompt-eval/legacy-prompts/viewing-mode.md');
+const quality = await read('research/story-prompt-eval/legacy-prompts/animation-quality.md');
 await writeFile(`${base}/${tag}/guidance.md`, guidance);
 await writeFile(`${base}/${tag}/story-review.md`, review);
 await writeFile(`${base}/${tag}-system.txt`, `${guidance}\n\n${viewingMode}\n\n${capabilities}\n\n${PLANNING_CONTRACT}\n\n${quality}`);

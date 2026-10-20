@@ -11,8 +11,8 @@ for (const name of files) {
   if (!(await Bun.file(destination).exists())) await writeFile(destination, await readFile(new URL(name, prompts), 'utf8'));
 }
 const capabilities = await readFile(new URL('../../shared/animlib/docs/capabilities.md', import.meta.url), 'utf8');
-const viewingMode = await readFile(new URL('viewing-mode.md', prompts), 'utf8');
-const quality = await readFile(new URL('animation-quality.md', prompts), 'utf8');
+const viewingMode = await readFile(new URL('./legacy-prompts/viewing-mode.md', import.meta.url), 'utf8');
+const quality = await readFile(new URL('./legacy-prompts/animation-quality.md', import.meta.url), 'utf8');
 const old = await readFile(`${base}/baseline/guidance.md`, 'utf8');
 if (!(await Bun.file(`${base}/baseline-system.txt`).exists()))
   await writeFile(`${base}/baseline-system.txt`, `${old}\n\n${viewingMode}\n\n${capabilities}\n\n${PLANNING_CONTRACT}\n\n${quality}`);

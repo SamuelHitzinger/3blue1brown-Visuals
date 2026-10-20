@@ -2,10 +2,8 @@
 import importlib.util
 import json
 import os
-import re
 import subprocess
 import tempfile
-import textwrap
 import unittest
 from unittest.mock import patch
 from pathlib import Path
@@ -113,15 +111,13 @@ class EnvironmentTests(unittest.TestCase):
             self.assertEqual((release / 'runtime.env').stat().st_mode & 0o777, 0o600)
 
     def test_workflow_serializes_private_narration_settings_and_rejects_invalid_secrets(self):
-        workflow = Path(__file__).parent.parent / '.github/workflows/ci.yml'
-        step = workflow.read_text().split('      - name: Deploy the tested Docker image over SSH\n', 1)[1]
-        script = textwrap.dedent(re.search(r"          python3 - <<'PY'\n(.*?)          PY\n", step, re.S)[1])
+        command = [config.sys.executable, str(Path(__file__).with_name('prepare-deployment.py')), 'env']
         with tempfile.TemporaryDirectory() as root:
             (Path(root) / 'aha-ssh').mkdir(mode=0o700)
             values = {'ELEVENLABS_API_KEY': 'literal$secret\\value"quote', 'ELEVENLABS_VOICE_ID': 'alice',
                       'ELEVENLABS_MODEL_ID': 'eleven_multilingual_v2', 'NARRATION_PUBLIC_ORIGIN': 'https://example.test'}
             env = dict(os.environ, **values, RUNNER_TEMP=root)
-            result = subprocess.run([config.sys.executable, '-c', script], env=env, capture_output=True, text=True)
+            result = subprocess.run(command, env=env, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout, '')
             path = Path(root) / 'aha-ssh/deployment.env'
@@ -129,10 +125,40 @@ class EnvironmentTests(unittest.TestCase):
             self.assertEqual(path.stat().st_mode & 0o777, 0o600)
             for invalid in ['', 'secret\nINJECTED=value']:
                 env['ELEVENLABS_API_KEY'] = invalid
-                result = subprocess.run([config.sys.executable, '-c', script], env=env, capture_output=True, text=True)
+                result = subprocess.run(command, env=env, capture_output=True, text=True)
                 self.assertNotEqual(result.returncode, 0)
                 self.assertIn('ELEVENLABS_API_KEY', result.stderr)
                 self.assertNotIn('INJECTED', result.stderr)
+
+
+    def test_ssh_files_are_private_and_host_checked(self):
+        with tempfile.TemporaryDirectory() as root:
+            env = dict(os.environ, RUNNER_TEMP=root, VM_HOST='example.test', VM_SSH_USER='deploy',
+                       VM_SSH_PRIVATE_KEY='private-key', VM_SSH_KNOWN_HOSTS='example.test ssh-ed25519 fixture')
+            command = [config.sys.executable, str(Path(__file__).with_name('prepare-deployment.py')), 'ssh']
+            result = subprocess.run(command, env=env, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(result.stdout, '')
+            directory = Path(root) / 'aha-ssh'
+            self.assertEqual(directory.stat().st_mode & 0o777, 0o700)
+            for name in ('key', 'known_hosts', 'config'):
+                self.assertEqual((directory / name).stat().st_mode & 0o777, 0o600)
+            self.assertEqual((directory / 'key').read_text(), 'private-key\n')
+            self.assertIn('StrictHostKeyChecking yes', (directory / 'config').read_text())
+
+    def test_ssh_rejects_missing_settings_and_injection(self):
+        for name, value in [('VM_SSH_PRIVATE_KEY', ''), ('VM_SSH_KNOWN_HOSTS', ''),
+                            ('VM_HOST', 'example.test\nProxyCommand unsafe'), ('VM_SSH_USER', '-option')]:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as root:
+                env = dict(os.environ, RUNNER_TEMP=root, VM_HOST='example.test', VM_SSH_USER='deploy',
+                           VM_SSH_PRIVATE_KEY='private-value', VM_SSH_KNOWN_HOSTS='fixture')
+                env[name] = value
+                result = subprocess.run([config.sys.executable, str(Path(__file__).with_name('prepare-deployment.py')), 'ssh'],
+                                        env=env, capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn(name, result.stderr)
+                self.assertNotIn('private-value', result.stderr)
+                self.assertFalse((Path(root) / 'aha-ssh').exists())
 
 
 if __name__ == '__main__':

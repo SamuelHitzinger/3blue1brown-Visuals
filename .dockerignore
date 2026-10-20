@@ -25,7 +25,8 @@ frontend/site
 docs/
 research/
 scenegen/
-.tmp/
+.tmp*/
+.test-tmp/
 out/
 exports/
 **/*.log

@@ -71,7 +71,7 @@ If the failed container cannot be removed, rollback retains its recovery files
 and leaves the previous application stopped (and legacy systemd disabled at boot)
 to prevent competing database writers.
 
-The public address remains <https://11.hackathon.ethz.ch>. VISCon handles TLS and
+Set `APP_PUBLIC_ORIGIN` to your production HTTPS origin. Your reverse proxy handles TLS and
 access control and forwards to VM port 8080. Deployment does not install a new
 reverse proxy or change SSH settings. Docker publishes the same application port.
 
@@ -82,8 +82,10 @@ The existing repository configuration is reused:
 - Secret `VM_SSH_PRIVATE_KEY`: dedicated deployment private key.
 - Secret `VM_SSH_KNOWN_HOSTS`: verified VM host-key line.
 - Secret `ELEVENLABS_API_KEY`: demo account key with text-to-speech access.
-- Variable `VM_HOST`: `11-direct.viscon-hackathon.ch`.
-- Variable `VM_SSH_USER`: `deploy`.
+- Variable `VM_HOST`: your production SSH hostname.
+- Variable `VM_SSH_USER`: your deployment account (for example, `deploy`).
+- Variable `APP_PUBLIC_ORIGIN`: your production HTTPS origin.
+- Variable `DEPLOY_ENABLED`: `true` only when these settings and secrets are configured.
 
 The matching public key belongs in `/home/deploy/.ssh/authorized_keys` with the
 `restrict` prefix. The workflow uses the GitHub `production` environment and is
@@ -131,12 +133,18 @@ The three data directories must be separate, without nesting. Paths must be outs
 ownership is not changed. Configured paths should match those used by the old
 service before migration.
 
-The workflow sets `NARRATION_PUBLIC_ORIGIN=https://11.hackathon.ethz.ch` for both
+The workflow sets `NARRATION_PUBLIC_ORIGIN` from `APP_PUBLIC_ORIGIN` for both
 video and narration origin validation behind the gateway, and supplies
 `ELEVENLABS_API_KEY` and `ELEVENLABS_VOICE_ID`. Manual deployments can supply
 `deployment.env` beside the archive or configure these values in the VM files.
 Never run a second writer
 or the narration CLI against the active data directory. See [narration](narration.md).
+
+## Local build and checks
+
+After `npm ci` and `npm ci --prefix frontend/app`, run `npm run check` for the same application checks as CI: release assets, library/backend typechecks and tests, frontend tests, scene-insertion integration, and demo build. `npm run build:release` builds only the release assets. Both compile the shared library and scene preview once; direct frontend commands retain their prerequisite build hooks. Docker uses the same release build command in its isolated builder.
+
+Deployment configuration is prepared by `scripts/prepare-deployment.py`, with private file permissions and validation before writing credentials. No hackathon host or public origin is selected by default. Bash scripts use LF line endings on every platform. Run the Python deployment tests and Bash checks under Linux or WSL.
 
 ## Build and verify without activating production
 

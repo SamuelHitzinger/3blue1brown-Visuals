@@ -107,7 +107,7 @@ The planner receives `guidance.md` and the code-owned planning contract. The
 editorial reviewer receives those rules plus `story-review.md`. Compact visual
 cohesion and reusable-object requirements live in guidance; the planner describes
 what must be shown and why, leaving exact API choices to the scene author.
-`capabilities.md`, `viewing-mode.md`, and `animation-quality.md` are not loaded.
+`capabilities.md`, `viewing-mode.md`, and `animation-quality.md` are retired and absent from the runtime prompt bundle.
 Scene authors receive `scene-craft.md`, including interaction policy, and selected
 authoring sections of the current animlib reference.
 

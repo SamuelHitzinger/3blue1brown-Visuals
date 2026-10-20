@@ -13,3 +13,6 @@ shared/animlib/demo/proofs/data/*.json -text
 shared/animlib/fixtures/**/*.bin binary
 shared/animlib/fixtures/**/*.pdb -text -whitespace
 shared/animlib/fixtures/**/*.cif -text -whitespace
+
+# Release scripts run in Linux CI/containers and WSL on Windows.
+*.sh text eol=lf

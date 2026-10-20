@@ -15,7 +15,7 @@ This is the maintainer map of active instructions. It is not injected into model
 | [thumbnail.md](../backend/prompts/thumbnail.md) | Thumbnail artwork style | Thumbnail author, with the separate SVG examples asset |
 | [reference.md](../shared/animlib/docs/reference.md) | Actual animlib APIs and semantics | Scene author receives selected sections; developers use the full reference |
 
-`capabilities.md`, `viewing-mode.md`, `animation-quality.md`, and `scene-review.md` are not loaded by the active pipeline. Their files remain for reference; the optional `agents:review` command has been removed. `narration-smoke.md` is a sample lesson, not another instruction layer. READMEs and `docs/` explain operation and design; they do not override runtime prompts.
+`capabilities.md`, `viewing-mode.md`, `animation-quality.md`, and `scene-review.md` are not loaded by the active pipeline. The optional `agents:review` command and its prompt have been removed. Historical story-prompt evaluations retain frozen viewing-mode and animation-quality fixtures in `research/story-prompt-eval/legacy-prompts/`; production never loads them. Git history retains the removed review prompt. `narration-smoke.md` is a sample lesson, not another instruction layer. READMEs and `docs/` explain operation and design; they do not override runtime prompts.
 
 Code owns machine-readable contracts: `PLANNING_CONTRACT` in `planning.ts` specifies the lesson envelope; `COURSE_CLASSIFICATION` in `study-plan.ts` extends course output with grouping and duration fields; narration handoff and optional timing-prelude code specify measured scene timing. Keep these contracts beside their validators rather than maintaining independent Markdown schemas.
 
@@ -38,6 +38,10 @@ The standard backend does not load `scenegen/prompts/planning.md` or `scenegen/p
 Prepared molecular catalogs and published asset evidence reach planning, editorial review and scene authoring. Bundled 1CRN representations and RCSB preparation publish through the existing model tool; provenance, units, common origin, named parts and representation limits travel with the asset. Scientific fidelity belongs in guidance and scene craft, with stage-specific checks. Do not reappend the retired animation-quality/viewing-mode layers.
 
 The merged teaching rules favor setting, guided visual intuition, explanation and essential formalization; retire obsolete notation. Relevant 3D receives explicit shape/operation acceptance conditions. Viewer navigation keeps explanatory overlays fixed and referent labels attached. Molecular element colors and structural identity must survive imported materials and representation changes.
+
+## Pipeline ownership
+
+`agents/generation-input.ts` prepares the durable lesson and narration inputs: request fingerprint, approved lesson or legacy script reuse, editorial approval, subtitle timing, and speech-job resume/polling. `agents/generator.ts` then assembles scene inputs, manages model assets, validates and inspects candidates, runs rendered verification, and publishes the scene package. This split preserves stage order, cancellation, saved filenames, and compatibility checks.
 
 ## Validation and snapshots
 

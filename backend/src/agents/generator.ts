@@ -1,3 +1,4 @@
+import { prepareLesson, prepareNarration, readSaved } from './generation-input.js';
 import { ModelAssets } from '../model-assets.js';
 import { bundledModelCatalog, describeBundledModel, prepareBundledModel } from '../bundled-models.js';
 import { prepareMolecularModel } from '../molecular-models.js';
@@ -5,19 +6,15 @@ import { createModelGLB } from 'animlib/core';
 import type { ModelAsset, GeneratedModel } from 'animlib/core';
 import { mkdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { createHash } from "node:crypto";
 import type { Frame } from 'animlib/core';
 import type { Generator, GenerationContext } from "../videos.js";
-import { parseStoryline } from "../narration/markdown.js";
 import { buildSceneAgentInput, validateSceneAgainstNarration } from "../narration/handoff.js";
 import { atomicWrite } from "../narration/service.js";
 import type { NarrationService } from "../narration/service.js";
 import { AgentError } from "./config.js";
 import { attachTimingPrelude, TIMING_PRELUDE_INSTRUCTIONS } from "./timing-prelude.js";
 import type { AgentRunner, AgentTask } from "./runtime.js";
-import { parsePlannedLesson, scenePlanningContext, validateStory } from './planning.js';
-import { authorReviewedLesson } from './editorial.js';
-import type { LessonPlan } from './planning.js';
+import { scenePlanningContext } from './planning.js';
 import { validateSceneQuality } from './scene-quality.js';
 import { validateScenePlan, validateViewingMode } from './scene-plan.js';
 import { instructionSnapshot, loadPrompt } from './prompts.js';
@@ -25,9 +22,7 @@ import { buildAuthoringReference } from './authoring-reference.js';
 import { validationMessage } from './runtime.js';
 import { runWithValidationRecovery } from './recovery.js';
 import { logEvent, logStage } from '../logging.js';
-import { buildSubtitlePackage } from '../narration/subtitles.js';
-import { silence, wav, hash } from '../narration/audio.js';
-import type { NarrationScenePackage } from '../narration/types.js';
+import { silence, wav } from '../narration/audio.js';
 import { reviewGeneratedScene } from './visual-gate.js';
 import { inspectInWorker, sampleInWorker } from './scene-inspection-client.js';
 import type { SceneCandidate } from './scene-inspection.js';
@@ -36,11 +31,6 @@ import type { ScenePreviewRenderer } from './scene-preview.js';
 export function sceneSource(output: string): string {
   const fenced = /^```(?:js|javascript)?\s*\n([\s\S]*?)\n```$/.exec(output.trim());
   return (fenced ? fenced[1] : output).trim();
-}
-
-async function saved(path: string): Promise<string | undefined> {
-  try { return await readFile(path, "utf8"); }
-  catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined; throw error; }
 }
 
 /** Host-owned stages. Script and narration identity survive restarts; model tools cannot access disk. */
@@ -58,7 +48,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
     await mkdir(directory, { recursive: true, mode: 0o700 });
     const modelStore = new ModelAssets();
     const assetsPath = join(directory, 'model-assets.json');
-    const assets: Record<string,ModelAsset> = JSON.parse(await saved(assetsPath) ?? '{}');
+    const assets: Record<string,ModelAsset> = JSON.parse(await readSaved(assetsPath) ?? '{}');
     const modelMetadata = () => Object.fromEntries(Object.entries(assets).map(([id,a]) => [id,a.metadata]));
     const assetProvenance=await modelStore.provenance(assets);
     const modelAssetContext=()=>Object.fromEntries(Object.entries(assetProvenance).flatMap(([id,p])=>p.scientific?[[id,describeBundledModel(p.scientific)]]:[]));
@@ -98,69 +88,12 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       publication = work.catch(() => undefined);
       return work;
     };
-    const fingerprint = createHash("sha256").update(JSON.stringify({ owner, request })).digest("hex");
-    const prior = await saved(join(directory, "request.sha256"));
-    if (prior && prior !== fingerprint) throw new AgentError("CONTEXT", "Saved generation belongs to a different request.");
-    if (!prior) await atomicWrite(join(directory, "request.sha256"), fingerprint);
-    const lessonPath = join(directory, 'lesson.json');
-    const cachedLesson = await saved(lessonPath);
-    let plan: LessonPlan | undefined;
-    let markdown: string | undefined;
-    let legacyPlan = false;
-    let instructionVersion: number | undefined;
-    if (cachedLesson) {
-      instructionVersion = JSON.parse(cachedLesson).instructionVersion;
-      legacyPlan = instructionVersion === undefined;
-      const lesson = parsePlannedLesson(cachedLesson, request, { legacy: legacyPlan });
-      markdown = lesson.markdown; plan = lesson.plan;
-    } else {
-      markdown = await saved(join(directory, 'script.md')); // Resume videos authored before structured planning.
-      legacyPlan = !!markdown;
-    }
-    if (!markdown) {
-      context.onProgress?.({ stage: 'script' });
-      const lesson = await logStage({ videoId, stage: 'script' }, () => authorReviewedLesson(runner, request, directory, signal, context.images, videoId,
-        {publishModel,modelAssets:modelMetadata,modelAssetContext}));
-      markdown = lesson.markdown; plan = lesson.plan; instructionVersion = lesson.instructionVersion;
-      signal.throwIfAborted();
-      await atomicWrite(join(directory, 'storyline.prompt.md'), await readFile(join(directory, 'editorial', lesson.editorialReview.runId,
-        `lesson-draft-${lesson.editorialReview.attempt}.prompt.md`), 'utf8'));
-      // The atomic envelope is authoritative; script.md is a readable export for local review.
-      await atomicWrite(lessonPath, JSON.stringify(lesson, null, 2));
-      await atomicWrite(join(directory, "script.md"), markdown);
-    } else logEvent('script.reused', { videoId, cached: true });
-    const story = parseStoryline(markdown); validateStory(story);
+    const { markdown, story, plan, legacyPlan, instructionVersion } = await prepareLesson(runner, request, directory, context,
+      { publishModel, modelAssets: modelMetadata, modelAssetContext });
     if (index >= story.beats.length) return null;
     const progress = { sceneIndex: index, totalScenes: request.sceneRequest ? 1 : story.beats.length };
     context.onProgress?.({ stage: 'narration', ...progress });
-    const pkg: NarrationScenePackage = subtitles ? await (async () => {
-      const path = join(directory, 'subtitles.json');
-      const cached = await saved(path);
-      const packet: NarrationScenePackage = cached ? JSON.parse(cached) : buildSubtitlePackage(story);
-      if (packet.scriptHash !== hash(markdown) || packet.timingBasis !== 'subtitle-reading') throw new AgentError('CONTEXT', 'Subtitle timing belongs to a different script.');
-      if (!cached) await atomicWrite(path, JSON.stringify(packet));
-      return packet;
-    })() : await (async () => {
-      const narrationId = await saved(join(directory, "narration-id"));
-      const job = narrationId ? await narration.get(owner, narrationId) : await narration.submit(owner, markdown);
-      if (!narrationId) await atomicWrite(join(directory, "narration-id"), job.id);
-      if (job.status === 'interrupted' || job.status === 'failed') await narration.retry(owner, job.id);
-      return await logStage({ videoId, narrationId: job.id, stage: 'narration', sceneIndex: index }, async () => {
-        // Poll only local durable state; the speech service owns its work and retry policy.
-        while (true) {
-          signal.throwIfAborted();
-          const ready = await narration.scenePackage(owner, job.id, index);
-          if (ready) return ready;
-          const status = await narration.get(owner, job.id);
-          if (status.status === "failed" || status.status === "interrupted") throw new AgentError(status.error?.code ?? "NARRATION", "Narration is waiting for recovery.");
-          await new Promise<void>((resolve, reject) => {
-            const abort = () => { clearTimeout(timer); reject(signal.reason); };
-            const timer = setTimeout(() => { signal.removeEventListener("abort", abort); resolve(); }, 200);
-            signal.addEventListener("abort", abort, { once: true });
-          });
-        }
-      });
-    })();
+    const pkg = await prepareNarration(narration, request, markdown, story, directory, index, context);
     const scene = pkg.scenes[index];
     if (!scene) return null;
     const { instructions, ...input } = buildSceneAgentInput(pkg, scene.id, previousFrame);
@@ -202,7 +135,7 @@ export function createPiGenerator(runner: AgentRunner, narration: NarrationServi
       structuredClone((await validateCandidate(output, checkQuality)).finalFrame);
     const validate = async (output: string) => { await validateSource(assemble(output)); };
     const path = join(directory, subtitles ? `scene-${index}.subtitles.js` : `scene-${index}.js`);
-    let source = await saved(path);
+    let source = await readSaved(path);
     if (!source) {
       context.onProgress?.({ stage: 'scene', ...progress });
       const modelCatalog=await bundledModelCatalog();
@@ -257,7 +190,7 @@ Still samples do not establish continuous motion, occlusion-free visibility, int
       await atomicWrite(join(directory, `scene-${index}.prompt.md`), `${task.systemPrompt}\n\n${task.prompt}`);
       await atomicWrite(join(directory, `scene-${index}.input.json`), JSON.stringify(sceneInput()));
       const pendingPath = join(directory, `scene-${index}.candidate.js`);
-      source = await saved(pendingPath);
+      source = await readSaved(pendingPath);
       if (!source) {
         source = assemble(await logStage({ videoId, sceneIndex: index, stage: 'scene' }, () => runWithValidationRecovery(runner, task,
           { diagnosticsPath: join(directory, `scene-${index}.author-retries.json`), prompt: scenePrompt })));
