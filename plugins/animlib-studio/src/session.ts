@@ -1,4 +1,4 @@
-import {LiveWorld,type WorldOptions} from '../../../shared/animlib/src/live-world.js';
+import {LiveWorld,WORLD_LIMITS,type WorldOptions} from '../../../shared/animlib/src/live-world.js';
 import {validateReactiveProperties} from '../../../shared/animlib/src/reactive.js';
 import type {CompiledScene,Frame,ReactiveProperties} from '../../../shared/animlib/src/types.js';
 import {assert,identifier,plain,recipeSource,sceneSource} from './scene.js';
@@ -54,7 +54,13 @@ export class StudioSession{
       const id=p.programId??`scene-${++this.counter}`;identifier(id);
       entry={at,kind:'program',params:{id,source:p.recipe?recipeSource(p.recipe):sceneSource(p.scene),baseRevision}};
     }
-    if(record)this.capacity(entry);
+    // Parameter callbacks are pure absolute updates. Only the latest values in
+    // an uninterrupted parameter run are needed to restore the current world.
+    const previous=this.records.at(-1);
+    const compact=record&&entry.kind==='parameters'&&previous?.kind==='parameters'&&previous.params.programId===entry.params.programId
+      &&Object.keys({...previous.params.values,...entry.params.values}).length<=WORLD_LIMITS.parameterChanges;
+    const savedEntry=compact?{...entry,params:{...entry.params,values:{...previous!.params.values,...entry.params.values}}}:entry;
+    if(record)this.capacity(savedEntry,compact);
     const q=entry.params;
     let commit;
     if(entry.kind==='program'){
@@ -71,13 +77,14 @@ export class StudioSession{
     }else throw Error(`Unknown command: ${kind}`);
     if(record){
       // Epochs must replay at actual publication time, not before compilation.
-      entry.at=commit.committedAt;this.records.push(entry);
+      savedEntry.at=commit.committedAt;
+      if(compact)this.records[this.records.length-1]=savedEntry;else this.records.push(savedEntry);
     }
     return {accepted:true,revision:commit.revision,committedAt:commit.committedAt};
   }
-  private capacity(entry:RecordEntry){
-    assert(this.records.length<MAX_RECORDS,'Session history full; create a new session');
-    assert(bytes({...this.checkpoint(),records:[...this.records,entry]})<=MAX_BYTES,'Session checkpoint limit exceeded');
+  private capacity(entry:RecordEntry,replace=false){
+    assert(replace||this.records.length<MAX_RECORDS,'Session history full; create a new session');
+    assert(bytes({...this.checkpoint(),records:[...(replace?this.records.slice(0,-1):this.records),entry]})<=MAX_BYTES,'Session checkpoint limit exceeded');
   }
   private inspect(){
     const summary=this.world.summary();
@@ -170,9 +177,14 @@ export class StudioSession{
     try{
       for(const record of state.records){
         assert(Number.isFinite(record.at)&&record.at>=last&&record.at<=state.time,'Invalid checkpoint order');
-        this.replayAt=record.at;await this.mutate(record.kind,record.params,false);last=record.at;
+        // Revisions belong to the live renderer. Compacted histories replay
+        // fewer publications; rebase each restored record to the new world.
+        this.replayAt=record.at;
+        const params={...record.params,baseRevision:this.world.revision};
+        await this.mutate(record.kind,params,false);
+        this.records.push({...structuredClone(record),params:structuredClone(params)});last=record.at;
       }
-      this.records=structuredClone(state.records);this.offset=state.time;this.paused=true;this.replayAt=undefined;
+      this.offset=state.time;this.paused=true;this.replayAt=undefined;
       this.queue=structuredClone(state.queue);this.sequences=new Map(state.sequences);this.endMs=state.endMs;
       this.counter=state.records.length;
     }catch(error){this.dispose();throw error;}

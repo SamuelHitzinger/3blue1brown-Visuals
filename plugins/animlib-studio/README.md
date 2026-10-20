@@ -75,6 +75,20 @@ source while retaining compatible host overrides and original epoch.
 Tools also expose inspect, verify, pause/resume/cancel and cross-process runtime
 connect. Optional `baseRevision` rejects edits based on stale state.
 
+## Interactive viewer
+
+Reactive native sliders appear automatically below the canvas, with their
+authored labels and ranges. Dragging updates the retained scene without a
+recompile; the status bar shows local edit latency. The latest pointer value
+wins when inputs arrive faster than rendering. MCP changes update these same
+controls.
+
+For 3D scenes, drag the canvas to orbit. Shift-drag (or right-drag) pans; the
+mouse wheel zooms. **Reset view** restores the authored camera. With the canvas
+focused, arrow keys orbit, `+`/`-` zoom, and `0` resets. Sliders also support
+standard keyboard navigation. Camera exploration is local to this viewer;
+parameter values are checkpointed and restored on reload.
+
 ## Guarantees and limits
 
 - Existing LiveWorld validates atomic patches, object ownership, resources and
@@ -87,7 +101,11 @@ connect. Optional `baseRevision` rejects edits based on stale state.
   0–60 seconds. Cues over one second late are skipped and reported. Browser
   throttling means this is not a hard realtime scheduler.
 - Checkpoints record at most 512 mutations/2 MB. Start a new session when full.
+  Consecutive parameter updates to the same program compact into bounded
+  batches, so continuous slider dragging does not consume one record per frame.
   Replay runs the same sandbox at recorded virtual times and restores paused.
+  Revisions are local to a renderer and may rebase after compacted replay;
+  inspect after reconnecting before supplying a new `baseRevision`.
   Pure deterministic callbacks are required, as in LiveWorld. No undo UI.
 - Numeric checks sample now; they do not wait for a transition endpoint.
   Acceptance, renderer submission, checks and semantic quality are separate.

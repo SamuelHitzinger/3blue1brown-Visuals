@@ -7,6 +7,40 @@ function fixture(){let time=0;const s=new StudioSession({clock:()=>time});sessio
 const scene={mode:'2d',objects:[{id:'ball',type:'circle',props:{radius:.5,fill:'BLUE'}}]};
 const ball=async(s:StudioSession)=>(await s.sample()).elements.find(e=>e.id==='ball')!;
 
+test('continuous slider edits compact and restore final parameters with later patches',async()=>{
+  const {s,set}=fixture();
+  await s.execute('program',{id:'sliders',source:`export default scene({end:'hold'},s=>{
+    const a=s.slider('amplitude',{reactive:true,default:1,min:0,max:2});
+    const p=s.slider('phase',{reactive:true,default:0,min:0,max:7});
+    const ball=s.circle('ball',{radius:.5});s.bind(ball,[a,p],(a,p)=>({position:[a,p,0]}));s.wait(3600);
+  });`});
+  for(let i=0;i<550;i++){set(i/100);await s.execute('parameters',{programId:'sliders',values:{amplitude:i/550}});}
+  await s.execute('parameters',{programId:'sliders',values:{phase:3.14}});
+  expect(s.checkpoint().records).toHaveLength(2);
+  const before=s.checkpoint();
+  await expect(s.execute('parameters',{programId:'sliders',values:{amplitude:99}})).rejects.toThrow();
+  expect(s.checkpoint().records).toEqual(before.records);
+  await s.execute('patch',{changes:[{id:'ball',props:{fill:'RED'}}]});
+  const restored=fixture();await restored.s.restore(s.checkpoint());
+  expect((await ball(restored.s)).position).toEqual((await ball(s)).position);
+  await restored.s.execute('parameters',{programId:'sliders',values:{amplitude:.55}});
+  const again=fixture();await again.s.restore(restored.s.checkpoint());
+  expect((await ball(again.s)).position).toEqual([.55,3.14,0]);
+});
+test('parameter compaction respects replay batch limits',async()=>{
+  const {s}=fixture();
+  await s.execute('program',{id:'many',source:`export default scene({end:'hold'},s=>{
+    for(let i=0;i<33;i++){
+      const value=s.slider('p'+i,{reactive:true,default:0,min:0,max:1});
+      const shape=s.circle('c'+i,{radius:.1});s.bind(shape,[value],x=>({position:[x,0,0]}));
+    }s.wait(3600);
+  });`});
+  for(let i=0;i<33;i++)await s.execute('parameters',{programId:'many',values:{['p'+i]:.5}});
+  expect(s.checkpoint().records).toHaveLength(3);
+  const restored=fixture();await restored.s.restore(s.checkpoint());
+  expect((await restored.s.execute('inspect')).programs[0].parameters.every((p:any)=>p.value===.5)).toBe(true);
+});
+
 test('structured geometry compiles once; patches keep identity and other motion',async()=>{
   const {s,set}=fixture();await s.execute('scene',{scene});
   await s.execute('motion',{changes:[{id:'ball',velocity:[1,0,0]}]});
