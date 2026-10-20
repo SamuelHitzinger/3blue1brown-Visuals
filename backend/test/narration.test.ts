@@ -76,7 +76,7 @@ test("guidance production example is accepted by the actual parser", async () =>
   expect(parsed.beats[1].blocks.filter(b => b.kind === "pause")).toHaveLength(0);
   const messages = await buildStorylineMessages("Explain binary search.");
   expect(messages[0].role).toBe("system");
-  expect(messages[0].content).toBe(guidance);
+  expect(messages[0].content.startsWith(guidance)).toBe(true);
   expect(messages[1]).toEqual({ role: "user", content: "Explain binary search." });
 });
 test("oversized passages split without losing or duplicating words", () => {

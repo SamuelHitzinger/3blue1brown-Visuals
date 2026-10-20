@@ -2,6 +2,12 @@
 
 Make the scene's purpose visible: use motion to explain the approved operation, show its concrete result, then reveal the rule or notation at its spoken cue. Every causal claim needs visible evidence, such as a correspondence, comparison, or quantities changing with geometry. Preserve the plan's example values, order, and reveal guards; do not rewrite fixed narration or move reveals against its cues. A caption alone is not evidence. The installed reference defines the API; this file defines visual craft and interaction policy.
 
+## Understanding before notation
+
+Follow the approved sequence of questions, visual evidence, explicit connections and earned conclusions. An arrow must have a taught meaning and a clear referent; connect its origin, direction or length to the observed motion/quantity before using it in an inference. Reveal equations only for the current calculation or an indispensable intuitive relationship. Show the quantities first, connect each term to its object, then retire notation when its purpose is complete. Do not turn staged reasoning into a simultaneous overview of all arrows and answers.
+
+The measured duration is a result of the approved explanation, not a brevity goal. Preserve its thinking pauses and inspection holds. Never speed up speech or remove an essential operation to meet an earlier requested runtime.
+
 ## Narration and continuity
 
 Usually make one major explanatory change at a time, then hold its result so the viewer can inspect it. Parts that express the same operation should move together; unrelated camera, geometry, and formula changes should not compete. Fit setup, operation, and reading hold to measured audio cues and duration; do not extend the scene, compress speech, or shift audio. Keep answers hidden during thinking pauses, including labels and highlights. Use available quiet time to let an insight settle, not for idle orbit, pulsing, or decorative drift. Static comparisons and motivated cuts remain valid.

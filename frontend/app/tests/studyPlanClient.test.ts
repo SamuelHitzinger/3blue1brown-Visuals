@@ -3,14 +3,14 @@ import assert from 'node:assert/strict'
 import { topicLessonText } from '../src/studyPlanClient.ts'
 import type { StudyPlan } from '../src/plan.ts'
 
-test('topic handoff uses original distill.py topic_notes wording', () => {
+test('topic handoff preserves source notes without asserting mastery of earlier topics', () => {
   const plan: StudyPlan = { version: 1, title: 'Course', sourceName: 'lecture.pdf', chapters: [{ id: 'c', title: 'Chapter', segments: [
     { id: 'basis', title: 'Basis vectors', text: 'Original basis text.', minutes: 3 },
     { id: 'maps', title: 'Maps', text: 'Original map text.', minutes: 4, summary: 'Understand a map', whyVisual: 'Transform a grid', keyIdeas: ['Linearity'], requires: ['basis'], sourceReference: 'Pages 2–3', sourceKind: 'notes' },
   ] }] }
   assert.equal(topicLessonText(plan.chapters[0].segments[0], plan), 'Original basis text.')
   const packet = topicLessonText(plan.chapters[0].segments[1], plan)
-  assert.equal(packet, 'From: Course (Pages 2–3)\n\nSummary: Understand a map\n\nWhat makes it visual: Transform a grid\n\nKey ideas, in order:\n- Linearity\n\nSource notes:\nOriginal map text.\n\nAlready explained in earlier films (build on it, do not re-teach): Basis vectors')
+  assert.equal(packet, 'From: Course (Pages 2–3)\n\nSummary: Understand a map\n\nWhat makes it visual: Transform a grid\n\nKey ideas, in order:\n- Linearity\n\nSource notes:\nOriginal map text.\n\nEarlier planned topics (coverage is not proof of understanding; reactivate needed ideas): Basis vectors')
 })
 
 const completed: StudyPlan = { version: 1, title: 'Linear algebra', sourceName: 'Notes', chapters: [{ id: 'vectors', title: 'Vectors', segments: [{ id: 'basis', title: 'Basis', text: 'Coordinates describe a vector.', minutes: 3 }] }] }
@@ -69,3 +69,22 @@ test('screenshots and notes are submitted together with background processing re
   })
   assert.deepEqual(await requestMaterialPlan({ name: 'Algebra', files: [screenshot], text: 'Explain these equations' }, new AbortController().signal), completed)
 })
+
+test('topic handoff carries learner assumptions as assumptions, even for a manual outline', () => {
+  const plan: StudyPlan = { ...completed, audience: 'New to vectors', assumed: ['Arithmetic'] };
+  const packet = topicLessonText(plan.chapters[0].segments[0], plan);
+  assert.match(packet, /New to vectors/);
+  assert.match(packet, /Arithmetic/);
+  assert.match(packet, /assumptions/i);
+  assert.match(packet, /Coordinates describe a vector/);
+});
+
+test('empty manual lesson includes its outline context alongside learner assumptions', () => {
+  const plan: StudyPlan = { ...completed, audience: 'Biology newcomer' };
+  const topic = { id: 'transport', title: 'Transport', text: '' };
+  const fallback = 'Explain Transport in Cell membranes, Biology. Only a chapter outline was provided.';
+  const packet = topicLessonText(topic, plan, fallback);
+  assert.match(packet, /Biology newcomer/);
+  assert.match(packet, /Cell membranes/);
+  assert.match(packet, /Only a chapter outline was provided/);
+});

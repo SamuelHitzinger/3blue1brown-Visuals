@@ -65,7 +65,7 @@ function MaterialUpload({ subject, nextNote, onAdd, onCancel }: { subject: Cours
   }}>
     <div className="subject-upload-intro">
       <span className="subject-upload-symbol"><BookOpen size={24}/></span>
-      <div className="subject-upload-copy"><h3>Add your course material</h3><p>AI groups your material into topics. Each lesson becomes one short video.</p></div>
+      <div className="subject-upload-copy"><h3>Add your course material</h3><p>AI groups your material into topics. Each lesson becomes a video paced for understanding.</p></div>
       <div className="subject-upload-actions"><button type="button" className="primary-button subject-submit" disabled={busy || (!files.length && !text.trim())} onClick={() => { void addMaterial() }}>{busy ? <LoaderCircle className="material-spinner" size={16}/> : <Plus size={16}/>} {busy ? 'Adding…' : 'Add'}</button>{onCancel && <button type="button" className="icon-button" onClick={onCancel} aria-label="Close material upload"><X size={18}/></button>}</div>
     </div>
     <div className="subject-input-tabs" role="tablist" aria-label="Course material input">

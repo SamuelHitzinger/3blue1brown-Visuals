@@ -28,8 +28,8 @@ export default function LessonGrid({ subject, material, chapter, chapterIndex, p
       generating={pendingLessons.some(item => item.subjectId === subject.id && item.materialId === material.id && item.chapterId === chapter.id && item.lessonId === lesson.id)}
       onDelete={() => remove(lesson.id)} onMakeVideo={() => onMakeVideo({
         courseLesson: reference(lesson.id), title: lesson.title,
-        text: topicLessonText(lesson, material.plan) || `Explain the topic “${lesson.title}” from the chapter “${chapter.title}” in ${subject.title}. Only a chapter outline was provided.`,
-        subject: subject.title, color: subject.color, chapter: chapter.title, sourceName: material.plan.sourceName, minutes: lesson.minutes,
+        text: topicLessonText(lesson, material.plan, `Explain the topic “${lesson.title}” from the chapter “${chapter.title}” in ${subject.title}. Only a chapter outline was provided.`),
+        subject: subject.title, color: subject.color, chapter: chapter.title, sourceName: material.plan.sourceName,
       })}
     />)}
     <li><NewLessonTile topic={chapter.title} onAdd={onAdd}/></li>
@@ -45,7 +45,7 @@ function LessonCard({ lesson, number, generating, onMakeVideo, onDelete }: { les
       <span className="topic-widget-number">{number}</span>
       <span className="topic-widget-title">{lesson.title}</span>
       {generating ? <span className="lesson-generating" role="status"><LoaderCircle size={13} className="material-spinner"/>Generating…</span>
-        : <><span className="topic-widget-duration">~{lesson.minutes} min lesson</span><span className="topic-widget-cta" aria-hidden="true"><span>Make me a video <ArrowRight size={15}/></span></span></>}
+        : <><span className="topic-widget-duration">Length follows explanation</span><span className="topic-widget-cta" aria-hidden="true"><span>Make me a video <ArrowRight size={15}/></span></span></>}
     </button>
     {!confirming && <button type="button" ref={deleteButton} className="lesson-delete-button" aria-label={`Delete ${lesson.title} lesson`} title="Delete lesson" onClick={() => setConfirming(true)}><Trash size={15}/></button>}
     {confirming && <div className="lesson-delete-confirm" role="group" aria-label={`Delete ${lesson.title} lesson?`}>

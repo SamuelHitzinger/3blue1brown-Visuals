@@ -181,3 +181,15 @@ test('only completed videos with exact course lesson references remove their sou
   assert.equal(videos.length, 1)
   assert.equal(removeGeneratedCourseLessons(next, videos), next)
 })
+
+test('plans without premature runtime estimates and legacy estimates both survive storage', () => {
+  const plan = script();
+  for (const chapter of plan.chapters) for (const segment of chapter.segments) delete (segment as { minutes?: number }).minutes;
+  assert.equal(isStudyPlan(plan), true);
+  const saved = appendSubjectMaterials(empty(), 'analysis', [plan]);
+  assert.deepEqual(loadSubjectPlans(store({ [subjectPlansKey]: JSON.stringify(saved) }), exampleCurriculum), JSON.parse(JSON.stringify(saved)));
+  plan.chapters[0].segments[0].minutes = 12;
+  assert.equal(isStudyPlan(plan), true);
+  plan.chapters[0].segments[0].minutes = -1;
+  assert.equal(isStudyPlan(plan), false);
+});

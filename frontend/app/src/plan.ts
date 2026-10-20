@@ -16,26 +16,6 @@ function headingLevel(line: DocumentLine): number | undefined {
   if (words(text).length >= 2 && words(text).length <= 10 && text === text.toUpperCase() && /[A-Z]{3}/.test(text)) return 1
 }
 
-function splitContent(lines: DocumentLine[], limit: number): DocumentLine[][] {
-  const chunks: DocumentLine[][] = []
-  let chunk: DocumentLine[] = [], count = 0
-  for (const line of lines) {
-    // Keep sentences together where possible, including very long PDF paragraphs.
-    const sentences = line.text.split(/(?<=[.!?])\s+(?=[A-Z])/u)
-    for (const sentence of sentences) {
-      const tokens = words(sentence)
-      for (let offset = 0; offset < tokens.length; offset += limit) {
-        const part = tokens.slice(offset, offset + limit)
-        if (count && count + part.length > limit) { chunks.push(chunk); chunk = []; count = 0 }
-        chunk.push({ text: part.join(' '), page: line.page })
-        count += part.length
-      }
-    }
-  }
-  if (chunk.length) chunks.push(chunk)
-  return chunks
-}
-
 function excerptTitle(text: string, fallback: string): string {
   const sentence = text.split(/[.!?]/)[0].trim()
   if (sentence.length >= 4 && sentence.length <= 80) return sentence
@@ -43,9 +23,8 @@ function excerptTitle(text: string, fallback: string): string {
   return firstWords.length >= 4 ? `${firstWords}…` : fallback
 }
 
-/** A local outline suggestion, based on source headings and bounded reading chunks. */
-export function createStudyPlan(document: PlanDocument, targetMinutes = 4): StudyPlan {
-  const limit = Math.max(2, Math.min(5, targetMinutes)) * 140
+/** A local outline based on source headings, without guessing explanation runtime. */
+export function createStudyPlan(document: PlanDocument): StudyPlan {
   const lines = document.lines.map(line => ({ ...line, text: line.text.trim(), heading: headingLevel(line) }))
     .filter(line => line.text && !/^\d+$/.test(line.text) && !/\.{3,}\s*\d+$/.test(line.text))
   if (words(lines.map(line => line.text).join(' ')).length < 20) throw new Error('Add more material so we can suggest a useful plan — at least a few paragraphs or a chapter outline.')
@@ -68,21 +47,14 @@ export function createStudyPlan(document: PlanDocument, targetMinutes = 4): Stud
 
   const flushTopic = () => {
     if (!content.length && !topic) return
-    const chunks = splitContent(content, limit)
-    if (!chunks.length) chunks.push([])
-    chunks.forEach((chunk, index) => {
-      const text = chunk.map(line => line.text).join(' ').trim()
-      const base = topic || excerptTitle(text, chapter.title)
-      const pages = chunk.flatMap(line => line.page ? [line.page] : [])
-      const minutes = Math.max(2, Math.min(5, Math.ceil(words(text).length / 140)))
-      chapter.segments.push({
-        id: `segment-${++sequence}`,
-        title: chunks.length > 1 ? `${base} · Part ${index + 1}` : base,
-        text,
-        minutes,
-        pageStart: pages.length ? Math.min(...pages) : topicPage,
-        pageEnd: pages.length ? Math.max(...pages) : topicPage,
-      })
+    const text = content.map(line => line.text).join(' ').trim()
+    const pages = content.flatMap(line => line.page ? [line.page] : [])
+    chapter.segments.push({
+      id: `segment-${++sequence}`,
+      title: topic || excerptTitle(text, chapter.title),
+      text,
+      pageStart: pages.length ? Math.min(...pages) : topicPage,
+      pageEnd: pages.length ? Math.max(...pages) : topicPage,
     })
     content = []; topic = ''; topicPage = undefined
   }
@@ -108,14 +80,6 @@ export function createStudyPlan(document: PlanDocument, targetMinutes = 4): Stud
   }
   flushChapter()
 
-  // Unstructured notes still become short segments, grouped into manageable chapters.
-  if (!levels.length && chapters[0]?.segments.length > 5) {
-    const segments = chapters[0].segments
-    chapters.length = 0
-    for (let i = 0; i < segments.length; i += 5) {
-      chapters.push({ id: `chapter-${i / 5 + 1}`, title: i === 0 ? 'Getting started' : `Continue learning · ${i / 5 + 1}`, segments: segments.slice(i, i + 5) })
-    }
-  }
   if (!chapters.length) throw new Error('We couldn’t find enough readable content. Try another document or paste your notes.')
   return { version: 1, title, sourceName: document.name, sourcePages: document.pages, chapters }
 }

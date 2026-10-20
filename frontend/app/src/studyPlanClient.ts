@@ -73,21 +73,23 @@ export async function requestMaterialPlan(material: { name: string; files: File[
   return waitForStudyPlan(response, signal, onProgress)
 }
 
-/** Original distill.py:topic_notes wording, with app field-name adapters only. */
-export function topicLessonText(topic: VideoSegment, plan: StudyPlan): string {
-  if (!topic.summary) return topic.text
+/** Carry source content and explicit learner assumptions without claiming prior mastery. */
+export function topicLessonText(topic: VideoSegment, plan: StudyPlan, outlineContext = ''): string {
+  const learner = [plan.audience ? `Audience: ${plan.audience}` : '', plan.assumed?.length ? `Prerequisite assumptions (not verified understanding): ${plan.assumed.join(', ')}` : ''].filter(Boolean)
+  if (!topic.summary) return [...learner, topic.text.trim() ? topic.text : outlineContext].filter(Boolean).join('\n\n')
   const all = plan.chapters.flatMap(chapter => chapter.segments)
   const earlier = (topic.requires ?? []).flatMap(id => {
     const found = all.find(t => t.id === id)
     return found ? [found.title] : []
   })
   const parts = [
+    ...learner,
     `From: ${plan.title} (${topic.sourceReference ?? ''})`,
     `Summary: ${topic.summary}`,
     `What makes it visual: ${topic.whyVisual ?? ''}`,
     'Key ideas, in order:\n' + (topic.keyIdeas ?? []).map(k => `- ${k}`).join('\n'),
     'Source notes:\n' + topic.text,
   ]
-  if (earlier.length) parts.push('Already explained in earlier films (build on it, do not re-teach): ' + earlier.join(', '))
+  if (earlier.length) parts.push('Earlier planned topics (coverage is not proof of understanding; reactivate needed ideas): ' + earlier.join(', '))
   return parts.join('\n\n')
 }

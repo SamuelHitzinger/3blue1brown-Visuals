@@ -23,21 +23,20 @@ test('numbered script chapters retain their source page references', () => {
   assert.equal(plan.sourcePages, 8)
 })
 
-test('long topics split into short segments without losing decimals or formulas', () => {
+test('local outlines preserve a topic without splitting it to fit a runtime', () => {
   const paragraph = 'The value 0.5 scales a vector by one half. Matrix A maps each point to its new coordinates, and A² applies the same mapping twice.'
   const text = Array(60).fill(paragraph).join(' ')
   const plan = createStudyPlan({ name: 'Matrices', lines: [{ text: '# Matrices' }, { text: '## Matrix multiplication' }, { text }] })
   const segments = plan.chapters.flatMap(chapter => chapter.segments)
-  assert.ok(segments.length >= 3)
+  assert.equal(segments.length, 1)
   assert.equal(segments.map(segment => segment.text).join(' '), text)
-  assert.ok(segments.every(segment => segment.text.split(/\s+/).length <= 560))
-  assert.ok(segments.every(segment => segment.minutes <= 4))
+  assert.ok(segments.every(segment => segment.minutes === undefined))
 })
 
 test('unstructured material remains usable and preserves all source text', () => {
   const text = Array(3000).fill('coordinate').join(' ')
   const plan = createStudyPlan({ name: 'Notes.txt', lines: [{ text }] })
-  assert.equal(plan.chapters.length, 2)
+  assert.equal(plan.chapters.length, 1)
   assert.equal(plan.chapters.flatMap(chapter => chapter.segments).map(segment => segment.text).join(' '), text)
 })
 

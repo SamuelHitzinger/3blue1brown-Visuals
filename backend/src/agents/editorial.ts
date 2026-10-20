@@ -132,7 +132,7 @@ export async function authorReviewedLesson(runner: AgentRunner, request: VideoRe
     }
     const draftPrompt = () => repair
       ? `Revise the complete lesson and plan to correct the material editorial errors below. Preserve sound content, requested scope, stable entity IDs/meanings, and scene IDs where possible. Update narration and nonspoken planning together. Return the full planning envelope.\n${JSON.stringify({ request: promptRequest, draft: repair.lesson, issues: repair.issues, ...modelContext() })}`
-      : `Write ${request.sceneRequest ? "one inserted scene" : "a concise visual lesson"} and its plan from this request:\n${JSON.stringify({ ...promptRequest, ...modelContext() })}`;
+      : `Write ${request.sceneRequest ? "one inserted scene" : "a complete visual explanation at the pace required for understanding"} and its plan from this request:\n${JSON.stringify({ ...promptRequest, ...modelContext() })}`;
     const task: AgentTask = {
       systemPrompt: `${messages[0].content}\n\n${PLANNING_CONTRACT}${capabilities.publishModel ? '\n\nPrepare any required model with publish_model before finishing this plan. Use the returned asset ID, node names, and scientific provenance as evidence; modelAssets and modelAssetContext list assets already prepared for this job. The editorial reviewer receives updated prepared asset evidence.' : ''}`,
       prompt: draftPrompt(),

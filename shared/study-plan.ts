@@ -2,7 +2,7 @@ export interface DocumentLine { text: string; heading?: number; page?: number }
 export interface PlanDocument { name: string; lines: DocumentLine[]; pages?: number }
 export interface TopicSource { startLine: number; endLine: number }
 export interface VideoSegment {
-  id: string; title: string; text: string; minutes: number; pageStart?: number; pageEnd?: number
+  id: string; title: string; text: string; minutes?: number; pageStart?: number; pageEnd?: number
   sourceKind?: 'notes'; sourceReference?: string
   summary?: string; whyVisual?: string; keyIdeas?: string[]; requires?: string[]; sourceRefs?: TopicSource[]
 }

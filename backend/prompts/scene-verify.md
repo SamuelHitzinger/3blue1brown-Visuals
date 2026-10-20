@@ -4,6 +4,7 @@ Assess the supplied candidate against the request, fixed narration, plan, inheri
 
 Inspect every supplied frame using its sampling map. Check:
 
+- The viewer can connect each active arrow or formula to its taught referent. Reject unexplained notation, simultaneous reveals that erase a planned mental step, and missing planned inspection holds. Use narration and the plan to assess this, not assumed subject expertise.
 - The planned inference is visible and agrees with the speech, values, and reveal timing. No answer appears during thinking time.
 - Explanatory operations are staged so the viewer can follow each change and inspect its result. Flag competing major changes, a caption substituted for a promised mechanism, or decorative motion that obscures the active idea. Respect fixed narration cues, coordinated parts of one operation, and useful static comparisons; do not require arbitrary motion or hold durations.
 - Labels, essential geometry, and the active operation remain readable without clipping, accidental overlap, or distracting leftovers. Apply the inherited overlay margins in both supplied aspect ratios. Check complete label glyphs at 3D viewport edges: a model view can clip fixed text even against an apparently empty background. Retire a spent gesture hint rather than preserve a competing caption.

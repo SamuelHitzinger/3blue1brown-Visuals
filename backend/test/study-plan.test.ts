@@ -98,9 +98,9 @@ test('AI classifications group focused video lessons into distinct course topics
   ] };
   const plan = parseTopicPlan(JSON.stringify(value), document);
   expect(plan.chapters.map(c => [c.title, c.segments.length])).toEqual([['Vectors', 2], ['Linear maps', 1]]);
-  expect(plan.chapters[1].segments[0].minutes).toBe(5);
+  expect(plan.chapters[1].segments[0].minutes).toBeUndefined();
   value.topics[2].minutes = 12;
-  expect(() => parseTopicPlan(JSON.stringify(value), document)).toThrow('2–5 minute');
+  expect(parseTopicPlan(JSON.stringify(value), document).chapters[1].segments[0].minutes).toBeUndefined();
   value.topics[2].minutes = 4;
   value.topics[1].group = 'Linear maps';
   value.topics[2].group = 'Vectors';
@@ -180,4 +180,10 @@ test('background jobs time out without leaving the planner busy forever', async 
 test('short formulas are valid material, while empty source is rejected', () => {
   expect(parsePlanDocument({ name: 'Screenshot', lines: [{ text: 'AᵀA x = Aᵀb' }] }).lines).toHaveLength(1);
   expect(() => parsePlanDocument({ name: 'Empty', lines: [{ text: '  ' }] })).toThrow();
+});
+
+// An outline has no completed narration from which to derive a runtime.
+test('course outlines never invent a video duration before explanation planning', () => {
+  const plan = parseTopicPlan(JSON.stringify(output()), document);
+  expect(plan.chapters.flatMap(chapter => chapter.segments).every(segment => segment.minutes === undefined)).toBe(true);
 });

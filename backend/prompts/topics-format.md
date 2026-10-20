@@ -19,8 +19,9 @@ JSON format:
 Rules:
 - Cover the material's main ideas in teaching order; skip administrative text,
   exercises without new ideas, and pure bookkeeping.
-- One topic = one film of a few minutes with one central question. Split big chapters;
-  merge tiny fragments into the topic they belong to.
+- One topic = one coherent learning goal with its necessary prerequisite bridges and examples.
+  Split big chapters by conceptual boundaries, never by a time budget; merge tiny fragments
+  into the topic they help explain. Runtime is determined after full explanation planning.
 - "requires" may only name earlier topic ids.
 - Notes must stay faithful to the source's definitions and notation; do not invent
   content the source does not support.

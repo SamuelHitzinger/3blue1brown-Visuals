@@ -14,7 +14,6 @@ export interface TopicVideoRequest {
   color: SubjectColor
   chapter: string
   sourceName: string
-  minutes: number
 }
 export const subjectPlansKey = 'aha-subject-plans-v1'
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value)
@@ -22,7 +21,7 @@ const record = (value: unknown): value is Record<string, unknown> => !!value && 
 export function isStudyPlan(value: unknown): value is StudyPlan {
   return record(value) && value.version === 1 && typeof value.title === 'string' && typeof value.sourceName === 'string'
     && (value.sourceNames === undefined || (Array.isArray(value.sourceNames) && value.sourceNames.every(name => typeof name === 'string')))
-    && Array.isArray(value.chapters) && value.chapters.length > 0 && value.chapters.every(chapter => record(chapter) && typeof chapter.id === 'string' && typeof chapter.title === 'string' && Array.isArray(chapter.segments) && chapter.segments.every(segment => record(segment) && typeof segment.id === 'string' && typeof segment.title === 'string' && typeof segment.text === 'string' && typeof segment.minutes === 'number' && Number.isFinite(segment.minutes) && segment.minutes > 0))
+    && Array.isArray(value.chapters) && value.chapters.length > 0 && value.chapters.every(chapter => record(chapter) && typeof chapter.id === 'string' && typeof chapter.title === 'string' && Array.isArray(chapter.segments) && chapter.segments.every(segment => record(segment) && typeof segment.id === 'string' && typeof segment.title === 'string' && typeof segment.text === 'string' && (segment.minutes === undefined || (typeof segment.minutes === 'number' && Number.isFinite(segment.minutes) && segment.minutes > 0))))
 }
 
 export function loadSubjectPlans(storage: Pick<Storage, 'getItem'>, curriculum: Curriculum): SubjectPlans {
@@ -78,7 +77,7 @@ export function addSubjectTopic(current: SubjectPlans, subjectId: string, name: 
   const updated = parent ? existing.map(material => material.id !== parent.materialId ? material : {
     ...material,
     plan: { ...material.plan, chapters: material.plan.chapters.map(item => item.id !== parent.chapterId ? item : {
-      ...item, segments: [...item.segments, { id: crypto.randomUUID(), title, text: '', minutes: 4 }],
+      ...item, segments: [...item.segments, { id: crypto.randomUUID(), title, text: '' }],
     }) },
   }) : [...existing, {
     id: crypto.randomUUID(),

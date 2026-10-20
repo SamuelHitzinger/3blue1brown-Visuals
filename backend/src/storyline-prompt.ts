@@ -13,6 +13,7 @@ export async function buildStorylineMessages(material: string, sceneRequest = fa
   if (sceneRequest) {
     content = `${await loadPrompt("scene-request-guidance")}\n\n${extractScenePlanningGuidance(guidance)}`;
   }
+  content += `\n\n${await loadPrompt("understanding")}`;
   return [
     { role: "system" as const, content },
     { role: "user" as const, content: material },
