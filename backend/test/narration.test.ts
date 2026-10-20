@@ -17,12 +17,12 @@ import { buildStorylineMessages } from "../src/storyline-prompt.js";
 const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map(root => rm(root, { recursive: true, force: true }))); });
 const settings = settingsFromEnv({ ELEVENLABS_VOICE_ID: "test-voice" });
-test("teaching speech defaults to a calmer normal-speed delivery and validates explicit speed", () => {
+test("teaching speech defaults to a calmer normal-speed delivery and rejects non-normal deployment speed", () => {
   expect(settings.voiceSettings).toEqual({ stability: 0.5, similarity_boost: 0.75, style: 0.2, use_speaker_boost: true, speed: 1.0 });
-  for (const speed of [0.7, 0.85, 1, 1.2]) {
+  for (const speed of [1]) {
     expect(settingsFromEnv({ ELEVENLABS_SPEED: String(speed) }).voiceSettings.speed).toBe(speed);
   }
-  for (const speed of ["", " ", "fast", "NaN", "Infinity", "0", "0.69", "1.21"]) {
+  for (const speed of ["", " ", "fast", "NaN", "Infinity", "0", "0.69", "0.85", "1.12", "1.2", "1.21"]) {
     expect(() => settingsFromEnv({ ELEVENLABS_SPEED: speed })).toThrow("ELEVENLABS_SPEED");
   }
 });

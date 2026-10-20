@@ -143,7 +143,7 @@ test('cancellation during repair prevents re-render and approval',async()=>{
 });
 test('sampling includes camera transition interior, end points and a nonzero opening frame',async()=>{
   const compiled=await compileSource(`export default scene({mode:'3d'},s=>{s.wait(1);s.play(s.camera.to2D(),{duration:2});s.wait(5);});`);
-  const times=sampleReviewTimes(compiled);expect(times).toContain(0);expect(times).toContain(8);expect(times).toContain(2);expect(times.some(t=>t>0&&t<1)).toBe(true);expect(times.length).toBeLessThanOrEqual(12);
+  const times=sampleReviewTimes(compiled);expect(times).toContain(0);expect(times).toContain(8);expect(times).toContain(2);expect(times.some(t=>t>0&&t<1)).toBe(true);expect(times.length).toBeLessThanOrEqual(16);
 });
 
 test('visual cap survives restart without starting round 51',async()=>{
@@ -172,4 +172,24 @@ test('consecutive render failures clear stale evidence before bounded directory 
     return JSON.stringify(reviews===1?{approved:false,findings:[{timeSec:0,objectIds:['label'],problem:'Clipped',fix:'Move'}]}:{approved:true,findings:[]});
   }}});
   expect(result).toBe(repair);expect(reviews).toBe(2);expect(rewrites).toBe(2);
+});
+
+
+test('short annotation motion is prioritized over evenly spaced overview frames',async()=>{
+  const compiled=await compileSource(`export default scene({},s=>{
+    const label=s.text('label',{text:'enzyme',position:[-2,0]});
+    s.wait(3.11);s.play(label.moveTo([2,0]),{duration:.1});s.wait(100);
+  });`);
+  expect(sampleReviewTimes(compiled).some(t=>t>3.11&&t<3.21)).toBe(true);
+});
+
+
+test('crowded annotation transitions retain late-scene review coverage',async()=>{
+  const compiled=await compileSource(`export default scene({},s=>{
+    const label=s.text('label',{text:'step'});
+    for(let i=0;i<20;i++){s.play(label.moveTo([i%2,0]),{duration:.1});s.wait(1);}
+  });`);
+  const times=sampleReviewTimes(compiled);
+  expect(times.some(t=>Math.abs(t-(19*1.1+.05))<1e-6)).toBe(true);
+  expect(times.length).toBeLessThanOrEqual(16);
 });

@@ -80,3 +80,9 @@ When the host supplies `legacyPlan: true`, preserve the saved job's approved int
 Follow the host's inspection and submission protocol. Use available source diagnostics and rendered samples to check the visual argument, narration synchronization, intermediate relationships, readable framing, and final carry/cleanup state. Compiler success alone cannot establish these. Correct demonstrated defects while preserving working content; do not spend the tool budget on cosmetic alternatives or claim to have inspected unavailable frames.
 
 For constrained direct manipulation, use built-in `s.behavior(target, {type:"drag", plane:"xy", bounds:{min:[...],max:[...]}})` or `path:{points:[[...],...],closed:true}` on a fixed world plane. Bounds constrain the target origin, so account for its footprint. Paths visit neighboring segments through their shared corners and cannot jump across a block. Do not invent a host behavior for these constraints. They do not provide vehicle heading, collision detection, or accumulated clearing state. Follow the full reference for limits and post-release semantics.
+
+## Pipeline-wide acceptance checks
+
+Keep narration and playback at normal 1x. Obtain thinking time through the approved script and inspection holds, never speed manipulation. Preserve referents through motion across every subject, not just geometric examples. Before a camera move or object transformation, retire obsolete labels or move them along clear paths; fade a label out before relocating it across occupied content. Restore it next to its actual referent after the move.
+
+Validation checks projected glyph intersections at 16:9 and 4:3, including moving labels and transition interiors, and rejects visible unmapped whole-expression crossfades. Fix the source when validation fails. These samples do not certify all frames or label-to-geometry clearance: inspect rendered motion, including lines, arrows, bodies and overlay margins, before approval.

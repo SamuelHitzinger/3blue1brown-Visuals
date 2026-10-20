@@ -6,8 +6,8 @@ import type { SpeechResult, SpeechSettings, SynthesisInput } from "./types.js";
 export function settingsFromEnv(env: Record<string, string | undefined> = process.env): SpeechSettings {
   const configuredSpeed = env.ELEVENLABS_SPEED;
   const speed = configuredSpeed === undefined ? 1.0 : Number(configuredSpeed);
-  if (configuredSpeed?.trim() === "" || !Number.isFinite(speed) || speed < 0.7 || speed > 1.2) {
-    throw new NarrationError("CONFIG", "ELEVENLABS_SPEED must be a number from 0.7 to 1.2.", 503);
+  if (configuredSpeed?.trim() === "" || !Number.isFinite(speed) || speed !== 1) {
+    throw new NarrationError("CONFIG", "ELEVENLABS_SPEED must be 1.0: generated lessons use normal-speed speech. Add explanation time and pauses instead of retiming narration.", 503);
   }
   return { voiceId: env.ELEVENLABS_VOICE_ID ?? "", modelId: env.ELEVENLABS_MODEL_ID ?? "eleven_multilingual_v2", outputFormat: "pcm_24000",
     // Calm teaching delivery leaves time to track the visible reasoning.

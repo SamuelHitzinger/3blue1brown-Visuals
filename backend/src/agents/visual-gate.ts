@@ -22,11 +22,19 @@ export function sampleReviewTimes(scene: CompiledScene): number[] {
   const duration=scene.duration, times=new Set([0,Math.min(0.5,duration/4),duration]);
   const candidates=new Set<number>();
   for(let i=1;i<12;i++)candidates.add(duration*i/12);
-  const cameraMids=scene.tracks.filter(t=>t.action.type==='camera').map(t=>t.start+t.duration/2);
-  for(const t of cameraMids.slice(0,4))times.add(t);
+  // Prioritize label changes and camera motion; farthest-gap sampling alone
+  // consistently skips short but unreadable annotation transitions.
+  const critical=scene.tracks.filter(t=>t.duration>0 && (t.action.type==='camera' || t.action.type==='morph' ||
+    Object.values(t.from).some(e=>['text','latex','group'].includes(e.geometry.kind))))
+    .map(t=>t.start+t.duration/2);
+  const uniqueCritical=[...new Set(critical)].sort((a,b)=>a-b);
+  // Spread a crowded priority set across the whole scene, including late changes.
+  const priority=uniqueCritical.length<=13 ? uniqueCritical :
+    Array.from({length:13},(_,i)=>uniqueCritical[Math.round(i*(uniqueCritical.length-1)/12)]!);
+  for(const t of priority)times.add(t);
   for(const track of scene.tracks)for(const t of [track.start,track.start+track.duration/2,track.start+track.duration])candidates.add(t);
   for(const event of scene.lifecycle)candidates.add(event.time);
-  while(times.size<12) {
+  while(times.size<16) {
     let best:number|undefined,gap=1e-6;
     for(const t of candidates){if(t<0||t>duration)continue;const distance=Math.min(...[...times].map(other=>Math.abs(other-t)));if(distance>gap){best=t;gap=distance;}}
     if(best===undefined)break;times.add(best);

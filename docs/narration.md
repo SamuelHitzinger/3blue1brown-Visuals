@@ -55,7 +55,7 @@ From the repository root, install dependencies with `npm ci`, copy `backend/.env
 - `ELEVENLABS_API_KEY`: server-only ElevenLabs key, with text-to-speech access.
 - `ELEVENLABS_VOICE_ID`: `CQcj2MsUgZyAgfHH6yJV`, **Alexander - Smooth, Deep and Round**. Ensure this voice is available to the runtime account; add it from the ElevenLabs Voice Library if needed. Existing local environment files must also be updated to this ID.
 - `ELEVENLABS_MODEL_ID`: defaults to `eleven_multilingual_v2`.
-- `ELEVENLABS_SPEED`: defaults to `1.0` for calm teaching. Optional values must be finite numbers from `0.7` to `1.2`; empty or invalid values fail configuration. Compose also accepts this setting through its runtime environment file.
+- `ELEVENLABS_SPEED`: defaults to `1.0` for calm teaching. If supplied, it must equal `1.0`; empty, invalid, slower or faster values fail configuration. Plan breathing room and inspection pauses in the content rather than changing the speech rate. Compose also accepts this setting through its runtime environment file.
 - `NARRATION_DATA_DIR`: an absolute writable directory, e.g. a `.narration` directory in the checkout.
 - `NARRATION_ALLOW_LOCAL=1`: is a legacy local binding option; the backend then defaults to a loopback bind. It refuses a shared bind with this bypass enabled and ignores it in production.
 - Omit `NARRATION_PUBLIC_ORIGIN` locally. Behind the production gateway set it to the exact public browser origin, `https://11.hackathon.ethz.ch`.
