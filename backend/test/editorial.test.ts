@@ -43,7 +43,7 @@ test.each(['classic', 'interactive', undefined] as const)('viewing preference %s
     expect((index === 0 ? payload : payload.request).videoMode).toBe(videoMode);
     expect(task.systemPrompt).toContain('Use `classic` when `videoMode` is absent');
     expect(task.systemPrompt).toContain('empty `interactions` arrays');
-    expect(task.systemPrompt).toContain('Prefer direct manipulation over sliders');
+    expect(task.systemPrompt).toContain('prefer direct manipulation when supported movement');
     expect(task.systemPrompt).not.toContain('0–2');
   });
 });
