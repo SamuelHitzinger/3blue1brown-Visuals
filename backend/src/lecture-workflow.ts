@@ -1,6 +1,5 @@
 import { LectureService } from './lectures.js';
 import { LectureCaptureService } from './lecture-capture.js';
-import { LectureLiveBridge } from './lecture-live-bridge.js';
 import { createLectureMediaExtractor } from './lecture-media.js';
 import { lectureTranscriptionConfig } from './lecture-transcription.js';
 import { lectureAgentConfig, lectureWorkflowConfig } from './agents/lecture-config.js';
@@ -35,18 +34,15 @@ export function createLectureWorkflow(env: Environment = process.env, dependenci
     { visualize: visualConfig ? createLectureVisualGenerator(createRunner(visualConfig), visualConfig.dataDir,
       { preview, reviewRunner: createRunner(lectureAgentConfig('visual-review', env)) }) : undefined,
       synthesisDebounceMs: 150, concurrency: 3 });
-  const liveBridge = new LectureLiveBridge(settings.liveBridgeDbPath, lectures);
   const transcription = lectureTranscriptionConfig(env);
   const captures = new LectureCaptureService(settings.captureDbPath, lectures, {
     extract: notesRunner ? createLectureMediaExtractor(notesRunner, { transcription }) : undefined,
     publicOrigin: env.CAPTURE_PUBLIC_ORIGIN,
     photo: !!notesRunner, audio: !!notesRunner && !!transcription.apiKey,
     transcriptionProvider: transcription.provider === 'deepgram' ? 'Deepgram' : 'ElevenLabs',
-    onPhotoAccepted: (...args) => liveBridge.recordPhoto(...args),
   });
-  return { lectures, captures, liveBridge, async close() {
+  return { lectures, captures, async close() {
     await captures.close();
-    liveBridge.close();
     await lectures.close();
     await preview?.close();
   } };

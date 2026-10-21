@@ -9,7 +9,6 @@ processes or independent provider quotas.
 flowchart LR
   T[Typed lecture text] --> S[Immutable lecture sources]
   C[Phone audio and photos] --> E[Transcription and photo extraction]
-  L[ChatGPT Live speech and photos] --> S
   E --> S
   S --> N[Incremental notes synthesis and validation]
   N --> D[Private lecture database]
@@ -26,7 +25,7 @@ flowchart LR
 
 ## Notes creation
 
-1. Text, transcribed audio, extracted photo evidence and Live bridge material become
+1. Text, transcribed audio and extracted photo evidence become
    immutable source chunks. Sources are saved before model work starts. Source IDs,
    ordering and capture metadata preserve provenance.
 2. `LectureService` schedules notes work and tracks source and synthesis revisions.
@@ -51,7 +50,7 @@ flowchart LR
 | Concern | Notebook workflow | Full-video workflow |
 | --- | --- | --- |
 | Composition | `backend/src/lecture-workflow.ts` | `backend/src/video-workflow.ts` |
-| Orchestration | `LectureService`, capture service, Live bridge | `VideoService`, video generator, narration service |
+| Orchestration | `LectureService`, capture service | `VideoService`, video generator, narration service |
 | Main output | Structured notes and private concept visuals | Planned, timed scenes and video library records |
 | Main model | `LECTURE_MODEL` | `AGENT_MODEL` |
 | Optional visual model | `LECTURE_VISUAL_MODEL`, optional `LECTURE_VISUAL_REVIEW_MODEL` | `AGENT_MODEL` |

@@ -76,7 +76,7 @@ export async function main(args=process.argv.slice(2)) {
     },
   });
   const animation=new LectureAnimationService(lectures,{resolveFrame:(owner,lectureId,sourceId)=>captures.readAnimationFrame(owner,lectureId,sourceId)});
-  const handler=createHandler(args[2]?resolve(args[2]):undefined,undefined,undefined,undefined,lectures,captures,undefined,animation);
+  const handler=createHandler(args[2]?resolve(args[2]):undefined,undefined,undefined,undefined,lectures,captures,animation);
   const ownerRequest=(path:string,body:unknown)=>new Request(`${origin}${path}`,{method:'POST',headers:{Origin:origin,'Content-Type':'application/json','Idempotency-Key':randomUUID()},body:JSON.stringify(body)});
   const created=await handler(ownerRequest('/api/lectures',{title:plan.title||'Speech-to-screen latency · synthetic audio'}));
   if(!created.ok)throw Error(`Lecture creation failed (${created.status}).`);

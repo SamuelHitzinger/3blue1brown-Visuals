@@ -1,9 +1,0 @@
-{
-  "name": "aha-live-lecture",
-  "version": "0.1.0",
-  "description": "Send ChatGPT Live speech notes and inspect phone camera photos in one selected local Aha lecture.",
-  "author": { "name": "3yellow3white" },
-  "mcpServers": "./.mcp.json",
-  "requires_local_executor": true,
-  "interface": { "displayName": "Aha Live Lecture", "shortDescription": "Live speech notes and camera photos for your lecture" }
-}

@@ -11,7 +11,7 @@ and creates reviewed visual explanations using the existing animation catalog.
 2. Configure the existing server AI connection. Photos and notes use that
    connection; audio uses `ELEVENLABS_API_KEY` in `backend/.env.local` by default.
    Alternatively set `LECTURE_TRANSCRIPTION_PROVIDER=deepgram` and `DEEPGRAM_API_KEY`.
-   Keys stay on the server. No ChatGPT Live session or plugin is needed.
+   Keys stay on the server.
 3. From the repository root, run `npm install`,
    `npm --prefix frontend/app install`, then `npm run phone:start`.
 4. Open `http://127.0.0.1:8080/lectures`, choose a course, and click **Add lecture**.

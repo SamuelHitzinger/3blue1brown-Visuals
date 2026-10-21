@@ -27,6 +27,5 @@ out/
 *.tsbuildinfo
 /backend/node-compile-cache/
 /exports/
-/plugins/live-lecture/.local/
 # Private local model comparisons served through the existing static route.
 /frontend/site/review/

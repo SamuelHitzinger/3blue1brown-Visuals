@@ -60,7 +60,7 @@ and notes remain saved, but unreviewed visuals are not published.
 overrides remain supported. When upgrading another deployment that previously
 set a custom `VIDEO_DB_PATH` without `LECTURE_DB_PATH`, set `LECTURE_DB_PATH` to
 the existing adjacent `lectures.sqlite` before restarting; no data is moved.
-Capture and live-bridge databases still default beside the lecture database. Include this file
+The capture database still defaults beside the lecture database. Include this file
 and its WAL in consistent SQLite backups. Temporary private generation artifacts
 under `LECTURE_AGENT_DATA_DIR/lectures` (default `data/lecture-agents/lectures`)
 are removed when each job ends; public scientific

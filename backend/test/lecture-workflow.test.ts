@@ -24,7 +24,7 @@ test('lecture roles retain separate models, reasoning, paths and opt-out switche
   const env = { LECTURE_GENERATOR: 'disabled', LECTURE_VISUAL_GENERATOR: 'pi', LECTURE_MODEL: 'notes-model', LECTURE_VISUAL_MODEL: 'visual-model',
     LECTURE_VISUAL_REVIEW_MODEL: 'review-model', LECTURE_AGENT_DATA_DIR: 'private/notes', LECTURE_DB_PATH: 'private/lectures.sqlite', LECTURE_SCENE_PREVIEW: '0' };
   expect(lectureWorkflowConfig(env)).toMatchObject({ notesEnabled: false, visualsEnabled: true, previewEnabled: false,
-    dbPath: 'private/lectures.sqlite', captureDbPath: join('private', 'lecture-capture.sqlite'), liveBridgeDbPath: join('private', 'lecture-live-bridge.sqlite') });
+    dbPath: 'private/lectures.sqlite', captureDbPath: join('private', 'lecture-capture.sqlite') });
   expect(lectureAgentConfig('notes', env)).toMatchObject({ model: 'notes-model', thinking: 'medium', dataDir: resolve('private/notes') });
   expect(lectureAgentConfig('live-notes', env).thinking).toBe('minimal');
   expect(lectureAgentConfig('visual', env)).toMatchObject({ model: 'visual-model', thinking: 'medium' });

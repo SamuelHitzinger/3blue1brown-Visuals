@@ -154,6 +154,6 @@ test('fits whole maximally escaped source and bounded client world without clipp
  expect(JSON.stringify(input).length).toBeLessThanOrEqual(123000);expect((await response.json()).sourceCursor).toBe(1);
 });
 test('server routes the main-app animation endpoint to the injected service',async()=>{
- const {id,lectures,animation}=await setup();const app=createHandler(undefined,undefined,undefined,undefined,lectures,undefined,undefined,animation);
+ const {id,lectures,animation}=await setup();const app=createHandler(undefined,undefined,undefined,undefined,lectures,undefined,animation);
  expect(await (await app(request(id))).json()).toEqual({sourceCursor:0,baseRevision:0,idle:true});
 });

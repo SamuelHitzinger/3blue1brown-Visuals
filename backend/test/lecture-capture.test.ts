@@ -6,7 +6,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { LectureService } from '../src/lectures.js';
 import { LectureCaptureService } from '../src/lecture-capture.js';
-import { LectureLiveBridge } from '../src/lecture-live-bridge.js';
 import type { CaptureClaim, CaptureMetadata, CapturePairing, CaptureStatus } from '../../shared/lecture-capture.js';
 
 const cleanup: (() => Promise<unknown>)[] = [];
@@ -183,15 +182,6 @@ test('legacy capture stores gain optional photo columns without changing existin
   expect(s.lectures.getOwned('user:alice', s.lecture.id)?.sources[0].text).toBe('A vector has direction.');
 });
 
-test('camera sharing observes new acceptance exactly once, never resurrects a retried upload', async () => {
-  const shared: Array<{ id: string; bytes: Uint8Array }> = [];
-  const s = await setup({ onPhotoAccepted: (_owner, _lecture, id, _meta, _mime, bytes) => shared.push({ id, bytes }) });
-  const first = await (await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()))).json();
-  await until(s.status, value => value.processed === 1);
-  await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()));
-  expect(shared).toHaveLength(1); expect(shared[0].id).toBe(first.id); expect(shared[0].bytes).toEqual(jpeg);
-});
-
 test('phone status reports notes backlog and failure without exposing notes or source text', async () => {
   const s = await setup();
   await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()));
@@ -201,30 +191,6 @@ test('phone status reports notes backlog and failure without exposing notes or s
     pendingSources: 1, pendingSince: expect.any(String) });
   expect(JSON.stringify(status)).not.toContain('A vector has direction.');
   expect(JSON.stringify(status)).not.toContain('personalNotes');
-});
-
-test('optional bridge cache failure cannot block accepted photo extraction', async () => {
-  const s = await setup({ onPhotoAccepted: () => { throw new Error('Synthetic bridge storage failure'); } });
-  const accepted = await s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form()));
-  expect(accepted.status).toBe(202);
-  await until(s.status, value => value.processed === 1);
-  expect(s.lectures.getOwned('user:alice', s.lecture.id)?.sources).toHaveLength(1);
-});
-
-test('retries cannot share pre-opt-in photos or revive frames after rotation or expiry', async () => {
-  let bridge!: LectureLiveBridge, now = Date.now();
-  const s = await setup({ onPhotoAccepted: (...args) => bridge.recordPhoto(...args) });
-  bridge = new LectureLiveBridge(':memory:', s.lectures, () => now); cleanup.push(async () => bridge.close());
-  const grant = async () => (await (await bridge.handleOwner(ownerRequest(`/api/lectures/${s.lecture.id}/live-bridge`, 'POST'))).json()).token as string;
-  const frames = async (token: string) => (await (await bridge.handlePlugin(new Request('http://localhost/api/live-bridge/frames', { headers: { Authorization: `Bearer ${token}` } }))).json()).frames;
-  const upload = (clientId: string) => s.capture.handleDevice(deviceRequest('/items', s.token, 'POST', form(metadata(clientId))));
-  await upload('before'); let token = await grant(); await upload('before');
-  expect(await frames(token)).toHaveLength(0);
-  await upload('during'); expect(await frames(token)).toHaveLength(1);
-  token = await grant(); await upload('during'); expect(await frames(token)).toHaveLength(0);
-  await upload('new-grant'); expect(await frames(token)).toHaveLength(1);
-  now += 16 * 60_000; expect(await frames(token)).toHaveLength(0);
-  await upload('new-grant'); expect(await frames(token)).toHaveLength(0);
 });
 
 test('pairing claims are retryable for one token, owner scoped, and expose no lecture content', async () => {

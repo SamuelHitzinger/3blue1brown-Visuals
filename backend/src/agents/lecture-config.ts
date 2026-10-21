@@ -32,6 +32,5 @@ export function lectureWorkflowConfig(env: Environment = process.env) {
     previewEnabled: env.LECTURE_SCENE_PREVIEW !== '0',
     dbPath,
     captureDbPath: env.CAPTURE_DB_PATH ?? join(dirname(dbPath), 'lecture-capture.sqlite'),
-    liveBridgeDbPath: env.LIVE_BRIDGE_DB_PATH ?? join(dirname(dbPath), 'lecture-live-bridge.sqlite'),
   };
 }

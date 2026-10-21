@@ -34,7 +34,6 @@ export interface LectureCaptureOptions {
   maxPendingPerLecture?: number;
   maxPendingGlobal?: number;
   now?: () => number;
-  onPhotoAccepted?: (owner: string, lecture: string, id: string, metadata: CaptureMetadata, mime: string, bytes: Uint8Array) => void;
 }
 const hash = (value: string | Uint8Array) => createHash('sha256').update(value).digest('hex');
 const ownerOf = (request: Request) => { const user = proxyUser(request); return user ? `user:${user.id}` : 'local'; };
@@ -429,8 +428,6 @@ export class LectureCaptureService {
       if (metadata.kind === 'photo') {
         this.animationFrames.set(id,{owner:pair.owner,lecture:pair.lecture,bytes:new Uint8Array(media)});
         while(this.animationFrames.size>8)this.animationFrames.delete(this.animationFrames.keys().next().value!);
-        try { this.options.onPhotoAccepted?.(pair.owner, pair.lecture, id, metadata, mime, media); }
-        catch { console.warn('A captured photo could not be shared with the lecture bridge. Normal extraction will continue.'); }
       }
       const accepted = this.publicItem(this.item(id)!); this.kick(); return json(accepted, 202);
     });
